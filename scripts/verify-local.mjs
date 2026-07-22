@@ -148,6 +148,9 @@ try {
   sockets.forEach((socket, index) => {
     socket.on("room:view", (view) => latestViews.set(index, view));
   });
+  await Promise.all(
+    sockets.map((socket, index) => emit(socket, "room:set-seat", index + 1))
+  );
   await Promise.all(sockets.map((socket) => emit(socket, "room:set-ready", true)));
   const roleViews = sockets.map((socket) =>
     waitForView(socket, (view) => view.room.phase === "role-reveal")

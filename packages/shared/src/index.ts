@@ -45,7 +45,7 @@ export interface RoomSessionResponse {
 export interface PublicPlayerView {
   id: string;
   nickname: string;
-  seat: number;
+  seat: number | null;
   ready: boolean;
   connected: boolean;
   roleConfirmed?: boolean;
@@ -201,7 +201,7 @@ export interface SocketAck {
 
 export interface ClientToServerEvents {
   "room:set-ready": (ready: boolean, callback: (ack: SocketAck) => void) => void;
-  "room:set-seat": (seat: number, callback: (ack: SocketAck) => void) => void;
+  "room:set-seat": (seat: number | null, callback: (ack: SocketAck) => void) => void;
   "room:start": (callback: (ack: SocketAck) => void) => void;
   "clocktower:confirm-role": (callback: (ack: SocketAck) => void) => void;
   "clocktower:night-select": (

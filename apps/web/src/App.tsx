@@ -10,9 +10,7 @@ import {
   Moon,
   RefreshCw,
   ShieldCheck,
-  Skull,
   Spade,
-  Users
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type PointerEvent } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
@@ -28,6 +26,8 @@ import type {
 import { createRoom, joinRoom, recoverRoom } from "./api";
 import { AppShell } from "./components/AppShell";
 import { ClocktowerDay } from "./components/ClocktowerDay";
+import { ClocktowerReferenceButton } from "./components/ClocktowerReferenceDialog";
+import { ClocktowerTable } from "./components/ClocktowerTable";
 import { getActiveSession, getSession, saveSession, type StoredSession } from "./session";
 
 function HomePage() {
@@ -104,7 +104,7 @@ function ClocktowerEntryPage() {
   };
 
   return (
-    <AppShell title="血染钟楼" backTo="/">
+    <AppShell title="血染钟楼" backTo="/" actions={<ClocktowerReferenceButton />}>
       <section className="entry-layout">
         <div className="entry-heading">
           <Clock3 size={36} />
@@ -261,13 +261,18 @@ function ClocktowerRoomPage() {
     view?.self.isOwner &&
     view.room.phase === "lobby" &&
     view.room.players.length >= 5 &&
-    view.room.players.every((player) => player.ready);
+    view.room.players.every((player) => player.seat !== null && player.ready);
 
   return (
     <AppShell
       title={`房间 ${roomCode}`}
       backTo="/clocktower"
-      actions={<ConnectionStatus connected={connected} />}
+      actions={
+        <>
+          <ClocktowerReferenceButton />
+          <ConnectionStatus connected={connected} />
+        </>
+      }
     >
       {error ? <div className="notice notice--error">{error}</div> : null}
       {actionError ? <div className="notice notice--error">{actionError}</div> : null}
@@ -311,6 +316,13 @@ function ClocktowerRoomPage() {
               }
             />
           ) : null}
+
+          <ClocktowerTable
+            view={view}
+            onSetSeat={(seat) =>
+              send((callback) => socket?.emit("room:set-seat", seat, callback))
+            }
+          />
 
           {view.room.phase === "first-night" || view.room.phase === "night" ? (
             <NightPanel
@@ -365,80 +377,6 @@ function ClocktowerRoomPage() {
             />
           ) : null}
 
-          <section className="panel">
-            <div className="panel-heading">
-              <div>
-                <span className="summary-label">实体座位顺序</span>
-                <h2>玩家</h2>
-              </div>
-              <span className="player-count">
-                <Users size={16} /> {view.room.players.length}/15
-              </span>
-            </div>
-            <div className="player-list">
-              {view.room.players.map((player) => (
-                <div
-                  className={`player-row ${view.room.clocktowerDay?.currentVote?.currentVoterPlayerId === player.id ? "is-current-voter" : ""}`}
-                  key={player.id}
-                >
-                  {player.id === view.self.playerId && view.room.phase === "lobby" ? (
-                    <select
-                      className="seat-select"
-                      value={player.seat}
-                      aria-label="选择座位"
-                      onChange={(event) =>
-                        send((callback) =>
-                          socket?.emit("room:set-seat", Number(event.target.value), callback)
-                        )
-                      }
-                    >
-                      {Array.from({ length: 15 }, (_, index) => index + 1).map((seat) => (
-                        <option
-                          value={seat}
-                          key={seat}
-                          disabled={view.room.players.some(
-                            (candidate) => candidate.id !== player.id && candidate.seat === seat
-                          )}
-                        >
-                          {seat}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="seat-number">{player.seat}</span>
-                  )}
-                  <span className={`presence-dot ${player.connected ? "is-online" : ""}`} />
-                  <span className="player-name">
-                    {player.nickname}
-                    {player.id === view.room.ownerPlayerId ? <small>房主</small> : null}
-                  </span>
-                  {view.room.phase === "lobby" ? (
-                    <span className={`ready-state ${player.ready ? "is-ready" : ""}`}>
-                      {player.ready ? <Check size={15} /> : null}
-                      {player.ready ? "已准备" : "未准备"}
-                    </span>
-                  ) : view.room.phase === "role-reveal" ? (
-                    <span
-                      className={`ready-state ${player.roleConfirmed ? "is-ready" : ""}`}
-                    >
-                      {player.roleConfirmed ? <Check size={15} /> : null}
-                      {player.roleConfirmed ? "已确认" : "查看中"}
-                    </span>
-                  ) : player.alive === false ? (
-                    <span className="player-life is-dead">
-                      <Skull size={14} />
-                      {player.ghostVoteAvailable ? "死亡 · 有票" : "死亡 · 已投票"}
-                    </span>
-                  ) : player.alive === true ? (
-                    <span className="player-life is-alive">存活</span>
-                  ) : (
-                    <span className="ready-state">对局中</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
           <section className="session-strip">
             <ShieldCheck size={18} />
             <span>
@@ -451,6 +389,7 @@ function ClocktowerRoomPage() {
               <button
                 className={selfPlayer?.ready ? "secondary-button" : "primary-button"}
                 type="button"
+                disabled={selfPlayer?.seat === null}
                 onClick={() =>
                   send((callback) =>
                     socket?.emit("room:set-ready", !selfPlayer?.ready, callback)

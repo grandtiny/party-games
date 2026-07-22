@@ -13,6 +13,7 @@
     "start": "pnpm --filter @party-games/server start",
     "test": "pnpm build:packages && pnpm --filter @party-games/clocktower test && pnpm --filter @party-games/server test",
     "typecheck": "pnpm -r typecheck",
+    "demo:room": "node scripts/demo-room.mjs",
     "verify:local": "node scripts/verify-local.mjs"
   },
   "devDependencies": {

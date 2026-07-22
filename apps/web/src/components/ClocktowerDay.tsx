@@ -1,7 +1,5 @@
 import {
-  BookOpen,
   Check,
-  ChevronDown,
   CircleDot,
   Crosshair,
   Hand,
@@ -94,7 +92,6 @@ export function ClocktowerDay({
         writable={chatWritable}
         onSend={onSendChat}
       />
-      <RulesReference />
     </>
   );
 }
@@ -315,7 +312,7 @@ function ActionPicker({
           <option value="">请选择</option>
           {players.map((player) => (
             <option value={player.id} key={player.id}>
-              {player.seat}. {player.nickname}
+              {player.seat ?? "?"}. {player.nickname}
             </option>
           ))}
         </select>
@@ -398,7 +395,7 @@ function VotingPanel({
       <div className="vote-status">
         <span>
           <small>当前玩家</small>
-          <strong>{currentVoter ? `${currentVoter.seat}. ${currentVoter.nickname}` : "结算中"}</strong>
+          <strong>{currentVoter ? `${currentVoter.seat ?? "?"}. ${currentVoter.nickname}` : "结算中"}</strong>
         </span>
         <span className="vote-countdown" aria-label={`距离锁票 ${remainingSeconds.toFixed(1)} 秒`}>
           {remainingSeconds.toFixed(1)}s
@@ -573,7 +570,7 @@ function ChatPanel({
           <select value={privatePlayerId} onChange={(event) => setPrivatePlayerId(event.target.value)}>
             {otherPlayers.map((player) => (
               <option value={player.id} key={player.id}>
-                {player.seat}. {player.nickname}
+                {player.seat ?? "?"}. {player.nickname}
               </option>
             ))}
           </select>
@@ -626,29 +623,11 @@ function ChatMessage({
   return (
     <div className={`chat-message ${own ? "is-own" : ""}`}>
       <span className="chat-message__meta">
-        {own ? "我" : sender ? `${sender.seat}. ${sender.nickname}` : "未知玩家"}
+        {own ? "我" : sender ? `${sender.seat ?? "?"}. ${sender.nickname}` : "未知玩家"}
         <time>{formatTime(message.createdAt)}</time>
       </span>
       <p>{message.content}</p>
     </div>
-  );
-}
-
-function RulesReference() {
-  return (
-    <details className="rules-reference">
-      <summary>
-        <BookOpen size={18} />
-        <span>规则与角色资料</span>
-        <ChevronDown size={17} />
-      </summary>
-      <div>
-        <p>每名存活玩家每天最多提名一次，每名玩家每天最多被提名一次。投票从被提名者开始，按实体座位顺时针锁定。</p>
-        <p>死亡玩家失去角色能力，但整局仍保留一张死亡票；死亡票一旦投出便不能再次使用。</p>
-        <a href="https://wiki.bloodontheclocktower.com/Trouble_Brewing" target="_blank" rel="noreferrer">暗流涌动角色资料</a>
-        <a href="https://wiki.bloodontheclocktower.com/Rules_Explanation" target="_blank" rel="noreferrer">官方规则说明</a>
-      </div>
-    </details>
   );
 }
 
@@ -688,7 +667,7 @@ function eventText(event: DayPublicEventView, playerById: Map<string, PlayerView
 
 function playerName(playerById: Map<string, PlayerView>, playerId: string): string {
   const player = playerById.get(playerId);
-  return player ? `${player.seat}. ${player.nickname}` : "未知玩家";
+  return player ? `${player.seat ?? "?"}. ${player.nickname}` : "未知玩家";
 }
 
 function formatTime(value: string): string {

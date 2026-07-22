@@ -8,7 +8,7 @@ import type {
 export interface InternalPlayer {
   id: string;
   nickname: string;
-  seat: number;
+  seat: number | null;
   ready: boolean;
 }
 

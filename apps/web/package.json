@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@party-games/clocktower": "workspace:*",
     "@party-games/shared": "workspace:*",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",

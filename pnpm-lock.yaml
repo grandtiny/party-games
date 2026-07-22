@@ -48,6 +48,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@party-games/clocktower':
+        specifier: workspace:*
+        version: link:../../packages/clocktower
       '@party-games/shared':
         specifier: workspace:*
         version: link:../../packages/shared

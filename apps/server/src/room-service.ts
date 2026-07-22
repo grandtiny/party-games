@@ -48,11 +48,20 @@ import {
   hashSecret,
   verifyPassword
 } from "./auth.js";
-import type { InternalRoomState, RoomEvent } from "./domain.js";
+import type { InternalPlayer, InternalRoomState, RoomEvent } from "./domain.js";
 import type { PresenceTracker } from "./presence.js";
 import type { SqliteRoomRepository } from "./repository.js";
 
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function comparePlayersBySeat(left: InternalPlayer, right: InternalPlayer): number {
+  if (left.seat === null && right.seat === null) {
+    return left.nickname.localeCompare(right.nickname, "zh-CN");
+  }
+  if (left.seat === null) return 1;
+  if (right.seat === null) return -1;
+  return left.seat - right.seat;
+}
 
 export class RoomService {
   readonly #locks = new Map<string, Promise<void>>();
@@ -86,7 +95,7 @@ export class RoomService {
         {
           id: playerId,
           nickname: input.nickname,
-          seat: 1,
+          seat: null,
           ready: false
         }
       ]
@@ -131,22 +140,16 @@ export class RoomService {
       const playerId = randomUUID();
       const sessionToken = createSessionToken();
       const recoveryCode = createRecoveryCode();
-      const occupied = new Set(state.players.map((player) => player.seat));
-      const seat = Array.from({ length: 15 }, (_, index) => index + 1).find(
-        (candidate) => !occupied.has(candidate)
-      );
-      if (!seat) throw new Error("没有可用座位");
-
       const nextState = this.#nextState(state, {
         players: [
           ...state.players,
-          { id: playerId, nickname: input.nickname, seat, ready: false }
+          { id: playerId, nickname: input.nickname, seat: null, ready: false }
         ]
       });
       const event: RoomEvent = {
         type: "PLAYER_JOINED",
         actorPlayerId: playerId,
-        payload: { nickname: input.nickname, seat }
+        payload: { nickname: input.nickname, seat: null }
       };
 
       this.repository.commit(state.version, nextState, event, {
@@ -246,7 +249,7 @@ export class RoomService {
           : {}),
         ...(game ? { clocktowerDay: this.#dayView(game) } : {}),
         players: [...state.players]
-          .sort((left, right) => left.seat - right.seat)
+          .sort(comparePlayersBySeat)
           .map((player) => ({
             id: player.id,
             nickname: player.nickname,
@@ -281,6 +284,8 @@ export class RoomService {
   async setReady(roomCode: string, playerId: string, ready: boolean): Promise<void> {
     await this.#mutate(roomCode, playerId, "PLAYER_READY_SET", { ready }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能修改准备状态");
+      const player = state.players.find((candidate) => candidate.id === playerId);
+      if (ready && player?.seat === null) throw new Error("请先选择座位");
       return {
         players: state.players.map((player) =>
           player.id === playerId ? { ...player, ready } : player
@@ -289,14 +294,19 @@ export class RoomService {
     });
   }
 
-  async setSeat(roomCode: string, playerId: string, seat: number): Promise<void> {
-    if (!Number.isInteger(seat) || seat < 1 || seat > 15) {
-      throw new Error("座位必须在 1 到 15 之间");
-    }
-
+  async setSeat(roomCode: string, playerId: string, seat: number | null): Promise<void> {
     await this.#mutate(roomCode, playerId, "PLAYER_SEAT_SET", { seat }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能调整座位");
-      if (state.players.some((player) => player.id !== playerId && player.seat === seat)) {
+      if (
+        seat !== null &&
+        (!Number.isInteger(seat) || seat < 1 || seat > state.players.length)
+      ) {
+        throw new Error(`座位必须在 1 到 ${state.players.length} 之间`);
+      }
+      if (
+        seat !== null &&
+        state.players.some((player) => player.id !== playerId && player.seat === seat)
+      ) {
         throw new Error("该座位已被占用");
       }
       return {
@@ -315,13 +325,16 @@ export class RoomService {
       if (state.players.length < 5 || state.players.length > 15) {
         throw new Error("暗流涌动需要 5 到 15 名玩家");
       }
+      if (state.players.some((player) => player.seat === null)) {
+        throw new Error("仍有玩家未入座");
+      }
       if (state.players.some((player) => !player.ready)) {
         throw new Error("仍有玩家未准备");
       }
 
       const seed = randomBytes(32).toString("hex");
       const orderedPlayerIds = [...state.players]
-        .sort((left, right) => left.seat - right.seat)
+        .sort(comparePlayersBySeat)
         .map((player) => player.id);
       const setup = createTroubleBrewingSetup(orderedPlayerIds, seed);
       const seedCommitment = createHash("sha256")
@@ -893,6 +906,7 @@ export class RoomService {
   #nightPlayerView(state: InternalRoomState, playerId: string): NightPlayerView {
     const player = state.players.find((candidate) => candidate.id === playerId);
     if (!player) throw new Error("夜间目标玩家不存在");
+    if (player.seat === null) throw new Error("游戏玩家缺少座位");
     return {
       playerId,
       nickname: player.nickname,

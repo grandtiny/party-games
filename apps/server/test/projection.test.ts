@@ -47,6 +47,9 @@ describe("room projections", () => {
       );
     }
 
+    for (let index = 0; index < sessions.length; index += 1) {
+      await service.setSeat(owner.roomCode, sessions[index]?.playerId ?? "", index + 1);
+    }
     for (const session of sessions) {
       await service.setReady(owner.roomCode, session.playerId, true);
     }
