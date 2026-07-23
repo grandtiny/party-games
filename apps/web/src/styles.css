@@ -1,4 +1,8 @@
 :root {
+  --action-background: #1f2421;
+  --action-border: #1f2421;
+  --action-focus: rgb(31 36 33 / 11%);
+  --game-accent: #1f2421;
   color: #1f2421;
   background: #f4f5f2;
   font-family:
@@ -245,7 +249,7 @@ h2 {
   align-items: center;
   gap: 14px;
   margin-bottom: 28px;
-  color: #a31f29;
+  color: var(--game-accent);
 }
 
 .entry-heading h1 {
@@ -308,8 +312,8 @@ h2 {
 }
 
 .entry-form input:focus {
-  border-color: #b4232d;
-  box-shadow: 0 0 0 3px rgb(180 35 45 / 11%);
+  border-color: var(--action-background);
+  box-shadow: 0 0 0 3px var(--action-focus);
 }
 
 .primary-button,
@@ -326,8 +330,8 @@ h2 {
 }
 
 .primary-button {
-  border: 1px solid #a91f29;
-  background: #b4232d;
+  border: 1px solid var(--action-border);
+  background: var(--action-background);
   color: #fff;
 }
 

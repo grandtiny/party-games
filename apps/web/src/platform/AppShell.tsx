@@ -7,11 +7,18 @@ interface AppShellProps {
   title?: string;
   backTo?: string;
   actions?: ReactNode;
+  scope?: "platform" | "clocktower";
 }
 
-export function AppShell({ children, title = "聚会游戏", backTo, actions }: AppShellProps) {
+export function AppShell({
+  children,
+  title = "聚会游戏",
+  backTo,
+  actions,
+  scope = "platform"
+}: AppShellProps) {
   return (
-    <div className="app-shell">
+    <div className={`app-shell app-shell--${scope}`} data-scope={scope}>
       <header className="topbar">
         <div className="topbar__leading">
           {backTo ? (

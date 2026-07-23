@@ -6,7 +6,7 @@ import {
 import { BookOpen, ExternalLink, X } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import type { RulesAnswerResponse } from "@party-games/shared";
-import { askClocktowerRules } from "../api";
+import { askClocktowerRules } from "../../../api";
 
 const ROLE_TYPES: Array<{ type: RoleType; label: string }> = [
   { type: "townsfolk", label: "镇民" },

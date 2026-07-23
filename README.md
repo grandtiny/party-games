@@ -59,3 +59,16 @@ pnpm verify:local
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。
 
 当前实现边界见 [docs/mvp-scope.md](docs/mvp-scope.md)。
+
+## 模块结构
+
+```text
+packages/game-core/              游戏模块契约与注册表
+packages/clocktower/             暗流涌动规则状态机与本地资料
+apps/server/src/platform/        房间平台接口
+apps/server/src/games/           服务端游戏适配器
+apps/web/src/platform/           大厅、设置和通用外壳
+apps/web/src/games/clocktower/   血染钟楼页面、组件和主题作用域
+```
+
+服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。
