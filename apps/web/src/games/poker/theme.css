@@ -252,8 +252,25 @@
 }
 
 .poker-player-seat.is-action {
-  border-color: #e5c45f;
-  box-shadow: 0 0 0 4px rgb(240 202 84 / 42%), 0 8px 20px rgb(18 30 23 / 20%);
+  border-color: #d5a91f;
+  background: #fffbed;
+  box-shadow:
+    0 0 0 5px rgb(247 204 64 / 48%),
+    0 10px 24px rgb(18 30 23 / 26%);
+}
+
+.poker-player-seat.is-folded {
+  border-color: #b8beb9;
+  background: #ecefec;
+  box-shadow: 0 5px 12px rgb(18 30 23 / 10%);
+}
+
+.poker-player-seat.is-folded > :not(.poker-player-state-badge, .poker-position-badges) {
+  opacity: 0.58;
+}
+
+.poker-player-seat.is-all-in {
+  border-color: #ad3c44;
 }
 
 .poker-player-seat.is-away {
@@ -406,15 +423,48 @@
 }
 
 .poker-player-seat__topline,
-.poker-player-seat__stack {
+.poker-player-seat__metrics,
+.poker-player-seat__stack,
+.poker-player-seat__bet {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 5px;
 }
 
 .poker-player-seat__topline strong {
   flex: 1;
+}
+
+.poker-player-state-badge {
+  position: absolute;
+  z-index: 4;
+  top: -12px;
+  left: 5px;
+  display: flex;
+  height: 22px;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgb(20 26 22 / 25%);
+  border-radius: 4px;
+  padding: 0 6px;
+  box-shadow: 0 2px 6px rgb(13 20 16 / 20%);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.poker-player-state-badge.is-action {
+  background: #f4ca3d;
+  color: #2f2814;
+}
+
+.poker-player-state-badge.is-folded {
+  background: #555e58;
+  color: #fff;
+}
+
+.poker-player-state-badge.is-all-in {
+  background: #a72f39;
+  color: #fff;
 }
 
 .poker-position-badges {
@@ -457,16 +507,106 @@
   color: #fff;
 }
 
-.poker-player-seat__stack {
-  color: #2d493a;
-  font-size: 12px;
-  font-weight: 760;
+.poker-player-seat__metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
 }
 
-.poker-player-seat__bet,
+.poker-player-seat__metrics.has-investment {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.poker-player-seat__stack,
+.poker-player-seat__bet {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  border: 1px solid #d9ded9;
+  border-radius: 4px;
+  padding: 3px 2px;
+  background: #f7f9f7;
+  line-height: 1.05;
+}
+
+.poker-player-seat__stack small,
+.poker-player-seat__bet small {
+  color: #727a75;
+  font-size: 8px;
+}
+
+.poker-player-seat__stack strong,
+.poker-player-seat__bet strong {
+  max-width: none;
+  overflow: visible;
+  color: #2d493a;
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: clip;
+}
+
+.poker-player-seat__bet {
+  border-color: #dfc46d;
+  background: #fff3c5;
+}
+
+.poker-player-seat__bet small,
+.poker-player-seat__bet strong {
+  color: #6d5310;
+}
+
 .poker-player-seat__status {
   color: #737a75;
   font-size: 9px;
+}
+
+.poker-player-seat__status.is-action {
+  color: #725812;
+  font-weight: 800;
+}
+
+.poker-player-seat__status.is-folded {
+  color: #4f5752;
+  font-weight: 800;
+}
+
+.poker-board__status,
+.poker-board__turn {
+  display: flex;
+  align-items: center;
+}
+
+.poker-board__status {
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px 8px;
+}
+
+.poker-board__turn {
+  min-height: 23px;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 4px;
+  padding: 3px 7px;
+  background: rgb(7 42 29 / 46%);
+  color: rgb(255 255 255 / 82%);
+  font-size: 9px;
+}
+
+.poker-board__turn strong {
+  color: #fff4c4;
+  font-size: 11px;
+}
+
+.poker-board__turn {
+  max-width: 150px;
+}
+
+.poker-board__turn strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mini-hand {
@@ -833,7 +973,7 @@
 
   .poker-lobby-seat,
   .poker-player-seat {
-    min-height: 70px;
+    min-height: 82px;
     padding: 6px;
   }
 
@@ -841,6 +981,12 @@
     width: 28px;
     height: 28px;
     font-size: 10px;
+  }
+
+  .poker-player-state-badge {
+    top: auto;
+    bottom: -11px;
+    left: 2px;
   }
 
   .poker-board {
@@ -935,7 +1081,23 @@
   }
 
   .poker-player-seat__stack {
-    font-size: 10px;
+    padding-inline: 3px;
+  }
+
+  .poker-player-seat__stack small,
+  .poker-player-seat__bet small {
+    font-size: 7px;
+  }
+
+  .poker-player-seat__stack strong,
+  .poker-player-seat__bet strong {
+    font-size: 9px;
+  }
+
+  .poker-player-state-badge {
+    height: 19px;
+    padding-inline: 4px;
+    font-size: 7px;
   }
 
   .mini-hand {

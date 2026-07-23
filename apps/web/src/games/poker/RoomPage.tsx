@@ -414,6 +414,9 @@ function PokerTableStage({
     0,
     table.players.findIndex((player) => player.playerId === selfPlayerId)
   );
+  const actionPlayer = table.players.find(
+    (player) => player.playerId === table.actionPlayerId
+  );
   return (
     <section className="poker-stage" aria-label="德州扑克牌桌">
       <div className="poker-felt poker-felt--game">
@@ -432,6 +435,13 @@ function PokerTableStage({
             <span>第 {table.handNumber} 手</span>
             <span>{streetLabel(table.street)}</span>
           </div>
+          {table.status === "in-hand" && actionPlayer ? (
+            <div className="poker-board__status" aria-label="当前行动玩家">
+              <span className="poker-board__turn">
+                轮到 <strong>{actionPlayer.nickname}</strong>
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {table.players.map((player, index) => {
@@ -441,6 +451,8 @@ function PokerTableStage({
           );
           const isSelf = player.playerId === selfPlayerId;
           const isAction = player.playerId === table.actionPlayerId;
+          const isFolded = player.status === "FOLDED";
+          const isAllIn = player.status === "ALL_IN";
           const isButton = player.playerId === table.buttonPlayerId;
           const isSmallBlind = player.playerId === table.smallBlindPlayerId;
           const isBigBlind = player.playerId === table.bigBlindPlayerId;
@@ -448,8 +460,19 @@ function PokerTableStage({
           return (
             <div className="poker-seat-position" style={position} key={player.playerId}>
               <div
-                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${!player.atTable ? "is-away" : ""}`}
+                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${isFolded ? "is-folded" : ""} ${isAllIn ? "is-all-in" : ""} ${!player.atTable ? "is-away" : ""}`}
+                aria-current={isAction ? "true" : undefined}
               >
+                {isAction ? (
+                  <span className="poker-player-state-badge is-action">
+                    <Play size={10} />
+                    {roomPlayer?.isBot ? "思考中" : "行动"}
+                  </span>
+                ) : isFolded ? (
+                  <span className="poker-player-state-badge is-folded">已弃牌</span>
+                ) : isAllIn ? (
+                  <span className="poker-player-state-badge is-all-in">全下</span>
+                ) : null}
                 {isButton || isSmallBlind || isBigBlind ? (
                   <div className="poker-position-badges" aria-label="牌桌位置">
                     {isButton ? (
@@ -481,20 +504,34 @@ function PokerTableStage({
                   )}
                   <strong>{player.nickname}</strong>
                 </div>
-                <div className="poker-player-seat__stack">
-                  <Coins size={13} /> {player.stack + player.pendingAddOn}
+                <div
+                  className={`poker-player-seat__metrics ${player.totalInvestedThisHand > 0 ? "has-investment" : ""}`}
+                >
+                  <span className="poker-player-seat__stack" title="剩余筹码">
+                    <small>剩余</small>
+                    <strong>{player.stack + player.pendingAddOn}</strong>
+                  </span>
+                  {player.totalInvestedThisHand > 0 ? (
+                    <span
+                      className="poker-player-seat__bet"
+                      title={`本手已投 ${player.totalInvestedThisHand}${player.betThisStreet > 0 ? `，本轮 ${player.betThisStreet}` : ""}`}
+                    >
+                      <small>已投</small>
+                      <strong>{player.totalInvestedThisHand}</strong>
+                    </span>
+                  ) : null}
                 </div>
-                {isAction && roomPlayer?.isBot ? (
-                  <span className="poker-player-seat__status">
-                    AI 思考中{player.betThisStreet > 0 ? ` · 已下注 ${player.betThisStreet}` : ""}
-                  </span>
-                ) : player.betThisStreet > 0 ? (
-                  <span className="poker-player-seat__bet">下注 {player.betThisStreet}</span>
-                ) : (
-                  <span className="poker-player-seat__status">
-                    {player.finishPlace ? `第 ${player.finishPlace} 名` : playerStatusLabel(player.status)}
-                  </span>
-                )}
+                <span
+                  className={`poker-player-seat__status ${isAction ? "is-action" : ""} ${isFolded ? "is-folded" : ""}`}
+                >
+                  {isAction
+                    ? roomPlayer?.isBot
+                      ? "AI 正在思考"
+                      : "等待玩家操作"
+                    : player.finishPlace
+                      ? `第 ${player.finishPlace} 名`
+                      : playerStatusLabel(player.status)}
+                </span>
                 <MiniHand player={player} inHand={table.status === "in-hand"} />
               </div>
             </div>
@@ -965,7 +1002,7 @@ function streetLabel(street: PokerTableView["street"]): string {
 }
 
 function playerStatusLabel(status: PokerTablePlayerView["status"]): string {
-  if (status === "ACTIVE") return "行动中";
+  if (status === "ACTIVE") return "仍在牌局";
   if (status === "FOLDED") return "已弃牌";
   if (status === "ALL_IN") return "全下";
   if (status === "BUSTED") return "已出局";
