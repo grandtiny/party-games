@@ -164,6 +164,73 @@ describe("poker server module", () => {
     ]);
   });
 
+  it("runs a solo room with deterministic AI opponents", async () => {
+    const { repository } = createRepository();
+    const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const owner = await service.createRoom({
+      gameType: "poker",
+      nickname: "Solo Player",
+      password: "secret",
+      poker: {
+        mode: "points",
+        smallBlind: 5,
+        bigBlind: 10,
+        aiPlayerCount: 3
+      }
+    });
+
+    const lobby = service.getView(owner.roomCode, owner.playerId);
+    expect(lobby.room.players).toHaveLength(4);
+    expect(lobby.room.players[0]).toMatchObject({
+      id: owner.playerId,
+      seat: 1,
+      ready: true
+    });
+    expect(lobby.room.players.slice(1)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ isBot: true, seat: 2, ready: true }),
+        expect.objectContaining({ isBot: true, seat: 3, ready: true }),
+        expect.objectContaining({ isBot: true, seat: 4, ready: true })
+      ])
+    );
+    await expect(
+      service.joinRoom({
+        roomCode: owner.roomCode,
+        nickname: "Unexpected Player",
+        password: "secret"
+      })
+    ).rejects.toThrow("单人 AI 房间不接受其他玩家加入");
+
+    await service.startRoom(owner.roomCode, owner.playerId);
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    let view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.status).toBe("in-hand");
+    expect(view.room.pokerTable?.actionPlayerId).toBe(owner.playerId);
+    expect(view.self.poker?.legalActions).toBeDefined();
+    expect(
+      view.room.pokerTable?.actionHistory.some((record) =>
+        view.room.players.some(
+          (player) => player.isBot && player.id === record.playerId
+        )
+      )
+    ).toBe(true);
+
+    const legalActions = view.self.poker?.legalActions;
+    const action = legalActions?.actions.includes("check")
+      ? "check"
+      : legalActions?.actions.includes("call")
+        ? "call"
+        : "fold";
+    await service.actPoker(owner.roomCode, owner.playerId, action);
+    view = service.getView(owner.roomCode, owner.playerId);
+    if (view.room.pokerTable?.status === "in-hand") {
+      expect(view.room.pokerTable.actionPlayerId).toBe(owner.playerId);
+      expect(view.self.poker?.legalActions).toBeDefined();
+    } else {
+      expect(view.room.pokerTable?.status).toBe("waiting-hand");
+    }
+  });
+
   it("advances tournament blinds through the owner-only service boundary", async () => {
     const { repository } = createRepository();
     const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());

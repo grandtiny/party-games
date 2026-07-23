@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼和德州扑克入口；当前已实现暗流涌动从圆桌入座、私密配角、首夜、白天提名投票到普通夜晚和下一天的本地循环，并内置暗流涌动角色与规则资料。
+私人聚会游戏站。首页提供平级的血染钟楼和德州扑克入口；当前已实现暗流涌动完整本地循环，以及复用同一服务端规则内核的德扑多人房间和确定性单人 AI 对局。
 
 ## 本地开发
 
@@ -62,11 +62,14 @@ pnpm build
 $env:BASE_URL = "http://127.0.0.1:18081"
 pnpm verify:local
 pnpm verify:poker-local
+pnpm verify:poker-ai-local
 ```
 
 `verify:local` 默认创建五人房间，自动完成首夜、公屏与私聊、进入提名、顺时针投票、处决、普通夜晚行动，并验证黎明进入第二天。
 
 `verify:poker-local` 创建两人积分桌，验证入座、准备、发牌、底牌隔离、服务端合法行动、弃牌结算、未跟注筹码退回、行动记录、离桌结算、重新入座和筹码守恒。
+
+`verify:poker-ai-local` 创建一名真人和三名 AI 的积分桌，验证自动入座与准备、拒绝额外真人加入、AI 连续行动停回真人、底牌隔离和筹码守恒。
 
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。
 
@@ -82,7 +85,7 @@ apps/server/src/platform/        房间平台接口
 apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
 apps/web/src/games/clocktower/   血染钟楼页面、组件和主题作用域
-apps/web/src/games/poker/        德扑建房、圆桌大厅和多人牌桌
+apps/web/src/games/poker/        德扑建房、圆桌大厅、多人牌桌和单人 AI 对局
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。

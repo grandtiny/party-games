@@ -14,6 +14,7 @@ export interface InternalPlayer {
   nickname: string;
   seat: number | null;
   ready: boolean;
+  isBot?: boolean;
 }
 
 export interface InternalRoomState {

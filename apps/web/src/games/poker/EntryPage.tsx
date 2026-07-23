@@ -1,10 +1,12 @@
 import {
+  Bot,
   KeyRound,
   LogIn,
   Plus,
   RefreshCw,
   Spade,
-  Trash2
+  Trash2,
+  UsersRound
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,11 +16,14 @@ import { AppShell } from "../../platform/AppShell";
 import { saveSession } from "../../session";
 
 type EntryMode = "create" | "join" | "recover";
+type PlayMode = "multiplayer" | "solo";
 
 export function PokerEntryPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<EntryMode>("create");
+  const [playMode, setPlayMode] = useState<PlayMode>("multiplayer");
   const [tableMode, setTableMode] = useState<PokerTableMode>("points");
+  const [aiPlayerCount, setAiPlayerCount] = useState(3);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [roomCode, setRoomCode] = useState("");
@@ -52,12 +57,18 @@ export function PokerEntryPage() {
               password,
               poker:
                 tableMode === "points"
-                  ? { mode: tableMode, smallBlind, bigBlind }
+                  ? {
+                      mode: tableMode,
+                      smallBlind,
+                      bigBlind,
+                      ...(playMode === "solo" ? { aiPlayerCount } : {})
+                    }
                   : {
                       mode: tableMode,
                       smallBlind,
                       bigBlind,
-                      blindStructure: blindLevels
+                      blindStructure: blindLevels,
+                      ...(playMode === "solo" ? { aiPlayerCount } : {})
                     }
             })
           : mode === "join"
@@ -93,7 +104,15 @@ export function PokerEntryPage() {
           <Spade size={36} />
           <div>
             <p className="eyebrow">TEXAS HOLD'EM</p>
-            <h1>多人牌桌</h1>
+            <h1>
+              {mode === "create"
+                ? playMode === "solo"
+                  ? "单人 AI 对局"
+                  : "多人牌桌"
+                : mode === "join"
+                  ? "加入牌桌"
+                  : "恢复牌桌"}
+            </h1>
           </div>
         </div>
 
@@ -115,22 +134,47 @@ export function PokerEntryPage() {
 
         <form className="entry-form" onSubmit={submit}>
           {mode === "create" ? (
-            <div className="segmented poker-mode-switch" role="tablist" aria-label="牌桌类型">
-              <button
-                type="button"
-                className={tableMode === "points" ? "is-active" : ""}
-                onClick={() => setTableMode("points")}
-              >
-                积分桌
-              </button>
-              <button
-                type="button"
-                className={tableMode === "tournament" ? "is-active" : ""}
-                onClick={() => setTableMode("tournament")}
-              >
-                淘汰赛
-              </button>
-            </div>
+            <>
+              <div className="segmented poker-mode-switch" role="tablist" aria-label="对局方式">
+                <button
+                  type="button"
+                  className={playMode === "multiplayer" ? "is-active" : ""}
+                  aria-selected={playMode === "multiplayer"}
+                  onClick={() => setPlayMode("multiplayer")}
+                >
+                  <UsersRound size={16} />
+                  多人房间
+                </button>
+                <button
+                  type="button"
+                  className={playMode === "solo" ? "is-active" : ""}
+                  aria-selected={playMode === "solo"}
+                  onClick={() => setPlayMode("solo")}
+                >
+                  <Bot size={16} />
+                  单人 AI
+                </button>
+              </div>
+
+              <div className="segmented poker-mode-switch" role="tablist" aria-label="牌桌类型">
+                <button
+                  type="button"
+                  className={tableMode === "points" ? "is-active" : ""}
+                  aria-selected={tableMode === "points"}
+                  onClick={() => setTableMode("points")}
+                >
+                  积分桌
+                </button>
+                <button
+                  type="button"
+                  className={tableMode === "tournament" ? "is-active" : ""}
+                  aria-selected={tableMode === "tournament"}
+                  onClick={() => setTableMode("tournament")}
+                >
+                  淘汰赛
+                </button>
+              </div>
+            </>
           ) : null}
 
           {mode !== "create" ? (
@@ -161,6 +205,22 @@ export function PokerEntryPage() {
 
           {mode === "create" ? (
             <>
+              {playMode === "solo" ? (
+                <label className="poker-ai-label">
+                  AI 对手
+                  <select
+                    value={aiPlayerCount}
+                    onChange={(event) => setAiPlayerCount(Number(event.target.value))}
+                  >
+                    {Array.from({ length: 8 }, (_, index) => index + 1).map((count) => (
+                      <option value={count} key={count}>
+                        {count} 位
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
               <div className="poker-number-grid">
                 <label>
                   小盲
@@ -263,12 +323,20 @@ export function PokerEntryPage() {
           <button className="primary-button" type="submit" disabled={busy}>
             {busy ? (
               <RefreshCw className="spin" size={18} />
+            ) : mode === "create" && playMode === "solo" ? (
+              <Bot size={18} />
             ) : mode === "recover" ? (
               <KeyRound size={18} />
             ) : (
               <LogIn size={18} />
             )}
-            {mode === "create" ? "创建牌桌" : mode === "join" ? "加入牌桌" : "恢复身份"}
+            {mode === "create"
+              ? playMode === "solo"
+                ? "创建 AI 对局"
+                : "创建牌桌"
+              : mode === "join"
+                ? "加入牌桌"
+                : "恢复身份"}
           </button>
         </form>
       </section>

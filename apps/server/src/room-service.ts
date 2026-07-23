@@ -47,6 +47,7 @@ export class RoomService {
     const sessionToken = createSessionToken();
     const recoveryCode = createRecoveryCode();
     const now = new Date().toISOString();
+    const aiPlayerCount = input.gameType === "poker" ? (input.poker.aiPlayerCount ?? 0) : 0;
     const state: InternalRoomState = {
       schemaVersion: ROOM_STATE_SCHEMA_VERSION,
       id: randomUUID(),
@@ -61,9 +62,16 @@ export class RoomService {
         {
           id: playerId,
           nickname: input.nickname,
-          seat: null,
-          ready: false
-        }
+          seat: aiPlayerCount > 0 ? 1 : null,
+          ready: aiPlayerCount > 0
+        },
+        ...Array.from({ length: aiPlayerCount }, (_, index) => ({
+          id: `bot:${randomUUID()}`,
+          nickname: `AI ${index + 1}`,
+          seat: index + 2,
+          ready: true,
+          isBot: true
+        }))
       ],
       ...(input.gameType === "poker" ? { poker: { config: input.poker } } : {})
     };
@@ -91,6 +99,9 @@ export class RoomService {
     return this.#withLock(input.roomCode, async () => {
       const state = this.#requireRoom(input.roomCode);
       if (state.phase !== "lobby") throw new Error("游戏已经开始");
+      if (state.gameType === "poker" && (state.poker?.config.aiPlayerCount ?? 0) > 0) {
+        throw new Error("单人 AI 房间不接受其他玩家加入");
+      }
       if (state.players.length >= 15) throw new Error("房间人数已满");
       if (
         state.players.some(
@@ -183,6 +194,7 @@ export class RoomService {
             seat: player.seat,
             ready: player.ready,
             connected: this.presence.isConnected(state.code, player.id),
+            ...(player.isBot ? { isBot: true } : {}),
             ...projection.playerStates[player.id]
           }))
       },

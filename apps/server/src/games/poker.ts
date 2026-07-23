@@ -1,8 +1,10 @@
 import {
   createPokerTable,
+  decidePokerBotAction,
   handlePokerTableCommand,
   migratePokerTable,
   projectPokerTable,
+  restorePokerEngine,
   validatePokerTable,
   validatePokerTableSettings,
   type PokerPlayerAction,
@@ -73,11 +75,14 @@ export class PokerGameModule implements ServerGameModule {
         eventPayload: { mode: poker.config.mode, playerCount: state.players.length }
       };
     }
-    const table = handlePokerTableCommand(
+    let table = handlePokerTableCommand(
       poker.table,
       this.#pokerCommand(command),
       { now: context.now, ownerPlayerId: state.ownerPlayerId }
     );
+    if (command.type === "poker:deal" || command.type === "poker:act") {
+      table = this.#advanceBots(state, table, context);
+    }
     return {
       changes: {
         phase: table.status === "complete" ? "game-over" : "playing",
@@ -308,6 +313,60 @@ export class PokerGameModule implements ServerGameModule {
       now,
       players
     });
+  }
+
+  #advanceBots(
+    state: InternalRoomState,
+    table: ReturnType<typeof createPokerTable>,
+    context: GameRoomHandleContext
+  ): ReturnType<typeof createPokerTable> {
+    let nextTable = table;
+    for (let step = 0; step < 100; step += 1) {
+      if (nextTable.status !== "in-hand") {
+        return this.#rebuyBustedBots(state, nextTable, context.now + step + 1);
+      }
+      const publicTable = projectPokerTable(nextTable).table;
+      const actorPlayerId =
+        publicTable.actionTo === null
+          ? undefined
+          : publicTable.players[publicTable.actionTo]?.id;
+      if (!actorPlayerId) throw new Error("德扑 AI 行动座位不存在");
+      const actor = state.players.find((player) => player.id === actorPlayerId);
+      if (!actor?.isBot) return nextTable;
+
+      const decision = decidePokerBotAction(nextTable, actorPlayerId);
+      nextTable = handlePokerTableCommand(
+        nextTable,
+        {
+          type: "poker:act",
+          actorPlayerId,
+          payload: decision
+        },
+        { now: context.now + step + 1, ownerPlayerId: state.ownerPlayerId }
+      );
+    }
+    throw new Error("德扑 AI 行动次数超过安全上限");
+  }
+
+  #rebuyBustedBots(
+    state: InternalRoomState,
+    table: ReturnType<typeof createPokerTable>,
+    now: number
+  ): ReturnType<typeof createPokerTable> {
+    if (table.mode !== "points" || table.status !== "waiting-hand") return table;
+    let nextTable = table;
+    for (const bot of state.players.filter((player) => player.isBot)) {
+      const tablePlayer = nextTable.players.find((player) => player.playerId === bot.id);
+      if (!tablePlayer?.atTable) continue;
+      const enginePlayer = restorePokerEngine(nextTable.engine).state.players[tablePlayer.seat];
+      if (!enginePlayer || enginePlayer.stack + enginePlayer.pendingAddOn > 0) continue;
+      nextTable = handlePokerTableCommand(
+        nextTable,
+        { type: "poker:rebuy", actorPlayerId: bot.id, payload: {} },
+        { now: now + tablePlayer.seat, ownerPlayerId: state.ownerPlayerId }
+      );
+    }
+    return nextTable;
   }
 }
 

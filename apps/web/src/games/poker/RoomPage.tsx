@@ -1,4 +1,5 @@
 import {
+  Bot,
   Check,
   Coins,
   Copy,
@@ -227,6 +228,11 @@ function PokerConfigBar({ view }: { view: RoomView }) {
   if (!config) return null;
   return (
     <section className="poker-config-bar">
+      <span>
+        {config.aiPlayerCount
+          ? `单人 AI · ${config.aiPlayerCount} 位对手`
+          : "多人房间"}
+      </span>
       <span>{config.mode === "tournament" ? "淘汰赛" : "积分桌"}</span>
       <strong>固定买入 500</strong>
       <span>
@@ -274,13 +280,21 @@ function PokerLobbyTable({
                 disabled={Boolean(player && !isSelf)}
                 onClick={() => onSetSeat(isSelf ? null : seat)}
               >
-                <span className="poker-avatar">
-                  {player ? initials(player.nickname) : <UserRound size={18} />}
+                <span className={`poker-avatar ${player?.isBot ? "is-bot" : ""}`}>
+                  {player?.isBot ? (
+                    <Bot size={18} />
+                  ) : player ? (
+                    initials(player.nickname)
+                  ) : (
+                    <UserRound size={18} />
+                  )}
                 </span>
                 <strong>{player?.nickname ?? `座位 ${seat}`}</strong>
                 <small>
                   {player
-                    ? `${player.id === ownerPlayerId ? "房主 · " : ""}${player.ready ? "已准备" : "未准备"}`
+                    ? player.isBot
+                      ? `AI · ${player.ready ? "已准备" : "未准备"}`
+                      : `${player.id === ownerPlayerId ? "房主 · " : ""}${player.ready ? "已准备" : "未准备"}`
                     : "空位"}
                 </small>
               </button>
@@ -301,7 +315,7 @@ function PokerTableStage({
   roomPlayers: PublicPlayerView[];
   selfPlayerId: string;
 }) {
-  const connectedById = new Map(roomPlayers.map((player) => [player.id, player.connected]));
+  const roomPlayerById = new Map(roomPlayers.map((player) => [player.id, player]));
   const selfIndex = Math.max(
     0,
     table.players.findIndex((player) => player.playerId === selfPlayerId)
@@ -336,6 +350,7 @@ function PokerTableStage({
           const isButton = player.playerId === table.buttonPlayerId;
           const isSmallBlind = player.playerId === table.smallBlindPlayerId;
           const isBigBlind = player.playerId === table.bigBlindPlayerId;
+          const roomPlayer = roomPlayerById.get(player.playerId);
           return (
             <div className="poker-seat-position" style={position} key={player.playerId}>
               <div
@@ -361,7 +376,15 @@ function PokerTableStage({
                   </div>
                 ) : null}
                 <div className="poker-player-seat__topline">
-                  <span className={`presence-dot ${connectedById.get(player.playerId) ? "is-online" : ""}`} />
+                  {roomPlayer?.isBot ? (
+                    <span className="poker-bot-mark" title="AI 玩家" aria-label="AI 玩家">
+                      <Bot size={12} />
+                    </span>
+                  ) : (
+                    <span
+                      className={`presence-dot ${roomPlayer?.connected ? "is-online" : ""}`}
+                    />
+                  )}
                   <strong>{player.nickname}</strong>
                 </div>
                 <div className="poker-player-seat__stack">

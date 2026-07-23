@@ -44,7 +44,8 @@ export const PokerRoomConfigSchema = z
     mode: PokerTableModeSchema,
     smallBlind: z.number().int().min(1).max(1_000_000),
     bigBlind: z.number().int().min(2).max(1_000_000),
-    blindStructure: z.array(PokerBlindLevelSchema).min(1).max(100).optional()
+    blindStructure: z.array(PokerBlindLevelSchema).min(1).max(100).optional(),
+    aiPlayerCount: z.number().int().min(1).max(8).optional()
   })
   .superRefine((config, context) => {
     if (config.bigBlind <= config.smallBlind) {
@@ -195,6 +196,7 @@ export interface PublicPlayerView {
   seat: number | null;
   ready: boolean;
   connected: boolean;
+  isBot?: boolean;
   roleConfirmed?: boolean;
   alive?: boolean;
   ghostVoteAvailable?: boolean;
