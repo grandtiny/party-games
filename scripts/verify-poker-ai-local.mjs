@@ -75,7 +75,13 @@ const owner = await post("/api/rooms", {
   gameType: "poker",
   nickname: "Solo Verify",
   password,
-  poker: { mode: "points", smallBlind: 5, bigBlind: 10, aiPlayerCount: 3 }
+  poker: {
+    mode: "points",
+    smallBlind: 5,
+    bigBlind: 10,
+    aiPlayerCount: 3,
+    aiDifficulty: "hard"
+  }
 });
 await expectJoinRejected(owner.roomCode);
 const socket = await connect(owner);
@@ -89,6 +95,9 @@ try {
   const waiting = await waitingView;
   const bots = waiting.room.players.filter((player) => player.isBot);
   const human = waiting.room.players.find((player) => player.id === owner.playerId);
+  if (waiting.room.pokerConfig?.aiDifficulty !== "hard") {
+    throw new Error("AI difficulty was not persisted and projected correctly");
+  }
   if (bots.length !== 3 || !bots.every((player) => player.ready && player.seat !== null)) {
     throw new Error("AI players were not created, seated, and readied correctly");
   }

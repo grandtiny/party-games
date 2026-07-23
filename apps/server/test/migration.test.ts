@@ -35,6 +35,30 @@ describe("sqlite migrations", () => {
     expect(migrated.clocktower?.timeline).toEqual([]);
   });
 
+  it("backfills normal difficulty for legacy solo AI rooms", () => {
+    const migrated = migrateInternalRoomState({
+      id: "legacy-poker-room",
+      code: "OLDPK1",
+      gameType: "poker",
+      phase: "lobby",
+      ownerPlayerId: "owner",
+      version: 2,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      players: [{ id: "owner", nickname: "Owner", seat: 1, ready: true }],
+      poker: {
+        config: {
+          mode: "points",
+          smallBlind: 5,
+          bigBlind: 10,
+          aiPlayerCount: 3
+        }
+      }
+    });
+
+    expect(migrated.poker?.config.aiDifficulty).toBe("normal");
+  });
+
   it("applies every migration to a new database", () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-migration-new-"));
     const databasePath = join(directory, "test.sqlite");

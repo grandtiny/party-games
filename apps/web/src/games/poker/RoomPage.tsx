@@ -266,6 +266,9 @@ function PokerConfigBar({ view }: { view: RoomView }) {
           ? `单人 AI · ${config.aiPlayerCount} 位对手`
           : "多人房间"}
       </span>
+      {config.aiPlayerCount ? (
+        <span>{pokerAiDifficultyLabel(config.aiDifficulty)}难度</span>
+      ) : null}
       <span>{config.mode === "tournament" ? "淘汰赛" : "积分桌"}</span>
       <strong>固定买入 500</strong>
       <span>
@@ -283,6 +286,12 @@ function PokerConfigBar({ view }: { view: RoomView }) {
       ) : null}
     </section>
   );
+}
+
+function pokerAiDifficultyLabel(difficulty: "easy" | "normal" | "hard" | undefined): string {
+  if (difficulty === "easy") return "简单";
+  if (difficulty === "hard") return "困难";
+  return "普通";
 }
 
 function PokerBlindClock({

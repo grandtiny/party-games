@@ -12,19 +12,106 @@ export interface PokerBotDecision {
   amount?: number;
 }
 
+export type PokerBotDifficulty = "easy" | "normal" | "hard";
+
 export function decidePokerBotAction(
   state: PokerTableState,
-  playerId: string
+  playerId: string,
+  difficulty: PokerBotDifficulty = "normal"
 ): PokerBotDecision {
   const engine = restorePokerEngine(state.engine);
   const player = engine.state.players.find((candidate) => candidate?.id === playerId);
-  const legalActions = projectPokerTable(state, playerId).self?.legalActions;
+  const projection = projectPokerTable(state, playerId);
+  const legalActions = projection.self?.legalActions;
   if (!player || !legalActions) throw new Error("AI 玩家当前没有合法行动");
 
   const random = createDeterministicRandom(
     `${state.engine.tableSeed}:bot:${playerId}:hand:${engine.state.handNumber}:action:${engine.state.actionHistory.length}`
   );
   const confidence = estimateHandConfidence(player.hand, engine.state.board);
+  const totalPot = projection.totalPot;
+
+  if (difficulty === "easy") {
+    return decideEasyAction(legalActions, confidence, player.stack, totalPot, random);
+  }
+  if (difficulty === "hard") {
+    const activeOpponentCount = engine.state.players.filter(
+      (candidate) =>
+        candidate &&
+        candidate.id !== playerId &&
+        (candidate.status === "ACTIVE" || candidate.status === "ALL_IN")
+    ).length;
+    const positionAdjustment = estimatePositionAdjustment(
+      player.seat,
+      engine.state.buttonSeat,
+      projection.blindPositions.smallBlindSeat,
+      projection.blindPositions.bigBlindSeat,
+      engine.state.board.length === 0
+    );
+    return decideHardAction(
+      legalActions,
+      clamp(confidence + positionAdjustment, 0.05, 0.99),
+      player.stack,
+      player.betThisStreet,
+      totalPot,
+      activeOpponentCount,
+      positionAdjustment > 0,
+      random
+    );
+  }
+
+  return decideNormalAction(legalActions, confidence, player.stack, totalPot, random);
+}
+
+function decideEasyAction(
+  legalActions: PokerLegalActions,
+  confidence: number,
+  stack: number,
+  totalPot: number,
+  random: () => number
+): PokerBotDecision {
+  const can = (action: PokerPlayerAction) => legalActions.actions.includes(action);
+
+  if (can("check")) {
+    if (
+      legalActions.aggressiveAction &&
+      random() < 0.1 + confidence * 0.16
+    ) {
+      return easyAggressiveDecision(legalActions.aggressiveAction, legalActions, random);
+    }
+    return { action: "check" };
+  }
+
+  if (can("call")) {
+    const stackPressure = legalActions.callAmount / Math.max(1, stack);
+    const potOdds = legalActions.callAmount / Math.max(1, totalPot + legalActions.callAmount);
+    const roll = random();
+    if (legalActions.aggressiveAction === "raise" && roll >= 0.9) {
+      return easyAggressiveDecision("raise", legalActions, random);
+    }
+    const foldChance = clamp(
+      0.18 + stackPressure * 0.35 + potOdds * 0.2 - confidence * 0.18,
+      0.08,
+      0.58
+    );
+    if (can("fold") && roll < foldChance) return { action: "fold" };
+    return { action: "call" };
+  }
+
+  if (legalActions.aggressiveAction) {
+    return easyAggressiveDecision(legalActions.aggressiveAction, legalActions, random);
+  }
+  if (can("fold")) return { action: "fold" };
+  throw new Error("AI 玩家没有可执行的行动");
+}
+
+function decideNormalAction(
+  legalActions: PokerLegalActions,
+  confidence: number,
+  stack: number,
+  totalPot: number,
+  random: () => number
+): PokerBotDecision {
   const can = (action: PokerPlayerAction) => legalActions.actions.includes(action);
 
   if (can("check")) {
@@ -32,22 +119,27 @@ export function decidePokerBotAction(
       legalActions.aggressiveAction &&
       confidence + random() * 0.28 >= 0.68
     ) {
-      return aggressiveDecision(legalActions.aggressiveAction, legalActions, confidence, random);
+      return normalAggressiveDecision(
+        legalActions.aggressiveAction,
+        legalActions,
+        confidence,
+        random
+      );
     }
     return { action: "check" };
   }
 
   if (can("call")) {
     const callAmount = legalActions.callAmount;
-    const potOdds = callAmount / Math.max(1, projectPokerTable(state).totalPot + callAmount);
-    const stackPressure = callAmount / Math.max(1, player.stack);
+    const potOdds = callAmount / Math.max(1, totalPot + callAmount);
+    const stackPressure = callAmount / Math.max(1, stack);
     const willingness = confidence * 0.78 + random() * 0.22;
     if (
       legalActions.aggressiveAction === "raise" &&
       confidence >= 0.72 &&
       random() >= 0.48
     ) {
-      return aggressiveDecision("raise", legalActions, confidence, random);
+      return normalAggressiveDecision("raise", legalActions, confidence, random);
     }
     if (can("fold") && stackPressure > 0.12 && willingness < potOdds + 0.16) {
       return { action: "fold" };
@@ -56,30 +148,166 @@ export function decidePokerBotAction(
   }
 
   if (legalActions.aggressiveAction) {
-    return aggressiveDecision(legalActions.aggressiveAction, legalActions, confidence, random);
+    return normalAggressiveDecision(
+      legalActions.aggressiveAction,
+      legalActions,
+      confidence,
+      random
+    );
   }
   if (can("fold")) return { action: "fold" };
   throw new Error("AI 玩家没有可执行的行动");
 }
 
-function aggressiveDecision(
+function decideHardAction(
+  legalActions: PokerLegalActions,
+  confidence: number,
+  stack: number,
+  playerBet: number,
+  totalPot: number,
+  activeOpponentCount: number,
+  latePosition: boolean,
+  random: () => number
+): PokerBotDecision {
+  const can = (action: PokerPlayerAction) => legalActions.actions.includes(action);
+  const stackToPotRatio = stack / Math.max(1, totalPot);
+  const multiwayPressure = Math.max(0, activeOpponentCount - 1) * 0.025;
+
+  if (can("check")) {
+    const latePositionBluff = latePosition && confidence >= 0.46 && random() >= 0.94;
+    if (
+      legalActions.aggressiveAction &&
+      (confidence >= 0.69 + multiwayPressure || latePositionBluff)
+    ) {
+      return hardAggressiveDecision(
+        legalActions.aggressiveAction,
+        legalActions,
+        confidence,
+        playerBet,
+        totalPot,
+        stackToPotRatio,
+        random
+      );
+    }
+    return { action: "check" };
+  }
+
+  if (can("call")) {
+    const callAmount = legalActions.callAmount;
+    const potOdds = callAmount / Math.max(1, totalPot + callAmount);
+    const stackPressure = callAmount / Math.max(1, stack);
+    const raiseThreshold = stackToPotRatio <= 2.5 ? 0.67 : 0.75;
+    if (
+      legalActions.aggressiveAction === "raise" &&
+      confidence >= raiseThreshold + multiwayPressure &&
+      random() >= 0.22
+    ) {
+      return hardAggressiveDecision(
+        "raise",
+        legalActions,
+        confidence,
+        playerBet,
+        totalPot,
+        stackToPotRatio,
+        random
+      );
+    }
+
+    const requiredConfidence = potOdds + 0.08 + stackPressure * 0.12 + multiwayPressure;
+    if (can("fold") && confidence + random() * 0.08 < requiredConfidence) {
+      return { action: "fold" };
+    }
+    return { action: "call" };
+  }
+
+  if (legalActions.aggressiveAction) {
+    return hardAggressiveDecision(
+      legalActions.aggressiveAction,
+      legalActions,
+      confidence,
+      playerBet,
+      totalPot,
+      stackToPotRatio,
+      random
+    );
+  }
+  if (can("fold")) return { action: "fold" };
+  throw new Error("AI 玩家没有可执行的行动");
+}
+
+function easyAggressiveDecision(
+  action: "bet" | "raise",
+  legalActions: PokerLegalActions,
+  random: () => number
+): PokerBotDecision {
+  const { minAmount, maxAmount } = aggressiveRange(legalActions);
+  const span = maxAmount - minAmount;
+  const amount =
+    random() >= 0.94
+      ? maxAmount
+      : minAmount + Math.round(span * random() * 0.58);
+  return { action, amount };
+}
+
+function normalAggressiveDecision(
   action: "bet" | "raise",
   legalActions: PokerLegalActions,
   confidence: number,
   random: () => number
 ): PokerBotDecision {
+  const { minAmount, maxAmount } = aggressiveRange(legalActions);
+  const span = maxAmount - minAmount;
+  const amount =
+    confidence >= 0.9 && random() >= 0.72
+      ? maxAmount
+      : Math.min(
+          maxAmount,
+          minAmount + Math.round(span * (0.12 + random() * 0.28))
+        );
+  return { action, amount };
+}
+
+function hardAggressiveDecision(
+  action: "bet" | "raise",
+  legalActions: PokerLegalActions,
+  confidence: number,
+  playerBet: number,
+  totalPot: number,
+  stackToPotRatio: number,
+  random: () => number
+): PokerBotDecision {
+  const { minAmount, maxAmount } = aggressiveRange(legalActions);
+  if (confidence >= 0.9 && stackToPotRatio <= 1.5 && random() >= 0.35) {
+    return { action, amount: maxAmount };
+  }
+
+  const raiseBase = action === "raise" ? playerBet + legalActions.callAmount : playerBet;
+  const potFraction = confidence >= 0.86 ? 0.9 : confidence >= 0.72 ? 0.7 : 0.52;
+  const target = raiseBase + Math.round(totalPot * potFraction * (0.9 + random() * 0.2));
+  return { action, amount: Math.min(maxAmount, Math.max(minAmount, target)) };
+}
+
+function aggressiveRange(legalActions: PokerLegalActions): {
+  minAmount: number;
+  maxAmount: number;
+} {
   if (!legalActions.minAmount || !legalActions.maxAmount) {
     throw new Error("AI 下注范围不存在");
   }
-  const span = legalActions.maxAmount - legalActions.minAmount;
-  const amount =
-    confidence >= 0.9 && random() >= 0.72
-      ? legalActions.maxAmount
-      : Math.min(
-          legalActions.maxAmount,
-          legalActions.minAmount + Math.round(span * (0.12 + random() * 0.28))
-        );
-  return { action, amount };
+  return { minAmount: legalActions.minAmount, maxAmount: legalActions.maxAmount };
+}
+
+function estimatePositionAdjustment(
+  playerSeat: number,
+  buttonSeat: number | null,
+  smallBlindSeat: number | undefined,
+  bigBlindSeat: number | undefined,
+  preflop: boolean
+): number {
+  if (playerSeat === buttonSeat) return preflop ? 0.015 : 0.06;
+  if (playerSeat === smallBlindSeat) return preflop ? -0.04 : -0.05;
+  if (playerSeat === bigBlindSeat) return preflop ? 0.02 : -0.035;
+  return 0;
 }
 
 function estimateHandConfidence(

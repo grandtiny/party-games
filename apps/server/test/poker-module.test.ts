@@ -194,11 +194,13 @@ describe("poker server module", () => {
         mode: "points",
         smallBlind: 5,
         bigBlind: 10,
-        aiPlayerCount: 3
+        aiPlayerCount: 3,
+        aiDifficulty: "hard"
       }
     });
 
     const lobby = service.getView(owner.roomCode, owner.playerId);
+    expect(lobby.room.pokerConfig?.aiDifficulty).toBe("hard");
     expect(lobby.room.players).toHaveLength(4);
     expect(lobby.room.players[0]).toMatchObject({
       id: owner.playerId,

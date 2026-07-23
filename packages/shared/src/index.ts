@@ -23,6 +23,8 @@ export const PokerTableModeSchema = z.enum(["tournament", "points"]);
 export type PokerTableMode = z.infer<typeof PokerTableModeSchema>;
 export const PokerBlindAdvanceModeSchema = z.enum(["manual", "automatic"]);
 export type PokerBlindAdvanceMode = z.infer<typeof PokerBlindAdvanceModeSchema>;
+export const PokerAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
+export type PokerAiDifficulty = z.infer<typeof PokerAiDifficultySchema>;
 
 export const PokerBlindLevelSchema = z
   .object({
@@ -49,7 +51,8 @@ export const PokerRoomConfigSchema = z
     blindStructure: z.array(PokerBlindLevelSchema).min(1).max(100).optional(),
     blindAdvanceMode: PokerBlindAdvanceModeSchema.optional(),
     blindLevelDurationMinutes: z.number().int().min(1).max(60).optional(),
-    aiPlayerCount: z.number().int().min(1).max(8).optional()
+    aiPlayerCount: z.number().int().min(1).max(8).optional(),
+    aiDifficulty: PokerAiDifficultySchema.optional()
   })
   .superRefine((config, context) => {
     if (config.bigBlind <= config.smallBlind) {
@@ -64,6 +67,13 @@ export const PokerRoomConfigSchema = z
         code: "custom",
         message: "积分桌不使用盲注级别",
         path: ["blindStructure"]
+      });
+    }
+    if (config.aiDifficulty !== undefined && config.aiPlayerCount === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "只有单人 AI 房间可以设置 AI 难度",
+        path: ["aiDifficulty"]
       });
     }
     if (

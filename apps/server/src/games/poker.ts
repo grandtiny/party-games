@@ -7,6 +7,7 @@ import {
   restorePokerEngine,
   validatePokerTable,
   validatePokerTableSettings,
+  type PokerBotDifficulty,
   type PokerPlayerAction,
   type PokerTableCommand,
   type PokerTableSettings
@@ -184,7 +185,11 @@ export class PokerGameModule implements ServerGameModule {
       return undefined;
     }
 
-    const decision = decidePokerBotAction(poker.table, actorPlayerId);
+    const decision = decidePokerBotAction(
+      poker.table,
+      actorPlayerId,
+      pokerBotDifficulty(poker.config)
+    );
     let table = handlePokerTableCommand(
       poker.table,
       {
@@ -248,6 +253,7 @@ export class PokerGameModule implements ServerGameModule {
     const poker = this.#requirePokerState(state);
     validatePokerTableSettings(pokerTableSettings(poker.config));
     validateBlindAdvanceConfig(poker.config);
+    validatePokerAiConfig(poker.config);
     if (!poker.table) {
       if (state.phase !== "lobby") throw new Error("非大厅阶段缺少德扑牌桌状态");
       if (poker.blindTimer) throw new Error("大厅阶段不能存在盲注计时器");
@@ -677,6 +683,21 @@ function blindLevelDurationMs(config: PokerRoomConfig): number {
     throw new Error("自动盲注每级时长必须在 1 到 60 分钟之间");
   }
   return (minutes as number) * MINUTE_MS;
+}
+
+function pokerBotDifficulty(config: PokerRoomConfig): PokerBotDifficulty {
+  const difficulty = config.aiDifficulty ?? "normal";
+  if (difficulty !== "easy" && difficulty !== "normal" && difficulty !== "hard") {
+    throw new Error("AI 难度配置无效");
+  }
+  return difficulty;
+}
+
+function validatePokerAiConfig(config: PokerRoomConfig): void {
+  if (config.aiDifficulty !== undefined && config.aiPlayerCount === undefined) {
+    throw new Error("只有单人 AI 房间可以设置 AI 难度");
+  }
+  if (config.aiPlayerCount !== undefined) pokerBotDifficulty(config);
 }
 
 function validateBlindAdvanceConfig(config: PokerRoomConfig): void {

@@ -118,6 +118,19 @@ export function migrateInternalRoomState(value: unknown): InternalRoomState {
               : {})
           }
         }
+      : {}),
+    ...(state.poker
+      ? {
+          poker: {
+            ...state.poker,
+            config: {
+              ...state.poker.config,
+              ...(state.poker.config.aiPlayerCount
+                ? { aiDifficulty: state.poker.config.aiDifficulty ?? "normal" }
+                : {})
+            }
+          }
+        }
       : {})
   };
 }

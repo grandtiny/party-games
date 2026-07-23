@@ -13,6 +13,7 @@ import {
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type {
+  PokerAiDifficulty,
   PokerBlindAdvanceMode,
   PokerBlindLevel,
   PokerTableMode
@@ -33,6 +34,7 @@ export function PokerEntryPage() {
     useState<PokerBlindAdvanceMode>("manual");
   const [blindLevelDurationMinutes, setBlindLevelDurationMinutes] = useState(10);
   const [aiPlayerCount, setAiPlayerCount] = useState(3);
+  const [aiDifficulty, setAiDifficulty] = useState<PokerAiDifficulty>("normal");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [roomCode, setRoomCode] = useState("");
@@ -70,7 +72,7 @@ export function PokerEntryPage() {
                       mode: tableMode,
                       smallBlind,
                       bigBlind,
-                      ...(playMode === "solo" ? { aiPlayerCount } : {})
+                      ...(playMode === "solo" ? { aiPlayerCount, aiDifficulty } : {})
                     }
                   : {
                       mode: tableMode,
@@ -81,7 +83,7 @@ export function PokerEntryPage() {
                       ...(blindAdvanceMode === "automatic"
                         ? { blindLevelDurationMinutes }
                         : {}),
-                      ...(playMode === "solo" ? { aiPlayerCount } : {})
+                      ...(playMode === "solo" ? { aiPlayerCount, aiDifficulty } : {})
                     }
             })
           : mode === "join"
@@ -219,19 +221,45 @@ export function PokerEntryPage() {
           {mode === "create" ? (
             <>
               {playMode === "solo" ? (
-                <label className="poker-ai-label">
-                  AI 对手
-                  <select
-                    value={aiPlayerCount}
-                    onChange={(event) => setAiPlayerCount(Number(event.target.value))}
-                  >
-                    {Array.from({ length: 8 }, (_, index) => index + 1).map((count) => (
-                      <option value={count} key={count}>
-                        {count} 位
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="poker-ai-settings">
+                  <label className="poker-ai-label">
+                    AI 对手
+                    <select
+                      value={aiPlayerCount}
+                      onChange={(event) => setAiPlayerCount(Number(event.target.value))}
+                    >
+                      {Array.from({ length: 8 }, (_, index) => index + 1).map((count) => (
+                        <option value={count} key={count}>
+                          {count} 位
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="poker-difficulty-control">
+                    <strong>AI 难度</strong>
+                    <div
+                      className="segmented poker-difficulty-switch"
+                      role="tablist"
+                      aria-label="AI 难度"
+                    >
+                      {([
+                        ["easy", "简单"],
+                        ["normal", "普通"],
+                        ["hard", "困难"]
+                      ] as const).map(([value, label]) => (
+                        <button
+                          type="button"
+                          className={aiDifficulty === value ? "is-active" : ""}
+                          aria-selected={aiDifficulty === value}
+                          onClick={() => setAiDifficulty(value)}
+                          key={value}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ) : null}
 
               <div className="poker-number-grid">

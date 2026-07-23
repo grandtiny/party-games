@@ -45,6 +45,26 @@
   min-width: 0;
 }
 
+.poker-ai-settings,
+.poker-difficulty-control {
+  display: grid;
+  gap: 10px;
+}
+
+.poker-ai-settings {
+  border-top: 1px solid #e1e5df;
+  padding-top: 16px;
+}
+
+.poker-difficulty-control > strong {
+  color: #334139;
+  font-size: 13px;
+}
+
+.poker-difficulty-switch {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .poker-number-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -48,6 +48,12 @@ export class RoomService {
     const recoveryCode = createRecoveryCode();
     const now = new Date().toISOString();
     const aiPlayerCount = input.gameType === "poker" ? (input.poker.aiPlayerCount ?? 0) : 0;
+    const pokerConfig =
+      input.gameType === "poker" && aiPlayerCount > 0
+        ? { ...input.poker, aiDifficulty: input.poker.aiDifficulty ?? "normal" }
+        : input.gameType === "poker"
+          ? input.poker
+          : undefined;
     const state: InternalRoomState = {
       schemaVersion: ROOM_STATE_SCHEMA_VERSION,
       id: randomUUID(),
@@ -73,7 +79,7 @@ export class RoomService {
           isBot: true
         }))
       ],
-      ...(input.gameType === "poker" ? { poker: { config: input.poker } } : {})
+      ...(pokerConfig ? { poker: { config: pokerConfig } } : {})
     };
     this.#gameModule(state).validate(state);
 
