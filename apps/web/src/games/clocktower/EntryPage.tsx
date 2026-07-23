@@ -29,7 +29,7 @@ export function ClocktowerEntryPage() {
           : mode === "join"
             ? await joinRoom({ roomCode, nickname, password })
             : await recoverRoom({ roomCode, recoveryCode });
-      saveSession(session);
+      saveSession(session, "clocktower");
       navigate(`/clocktower/room/${session.roomCode}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "操作失败");

@@ -17,6 +17,7 @@ import {
 } from "@party-games/shared";
 import { Server as SocketServer } from "socket.io";
 import { AdminService } from "./admin-service.js";
+import { createGameRegistry } from "./games/index.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
@@ -33,10 +34,12 @@ export interface AppOptions {
 
 export async function createApp(options: AppOptions) {
   const app = Fastify({ logger: options.logger ?? true });
+  const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
-  const roomService = new RoomService(repository, presence);
-  const adminService = new AdminService(repository, options.environment ?? process.env);
+  const games = createGameRegistry({ pokerEnabled: enabledFlag(environment.POKER_ENABLED) });
+  const roomService = new RoomService(repository, presence, games);
+  const adminService = new AdminService(repository, environment);
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -52,6 +55,10 @@ export async function createApp(options: AppOptions) {
   app.get("/api/health", async () => ({
     ok: true,
     databaseSchemaVersion: repository.getSchemaVersion()
+  }));
+
+  app.get("/api/platform", async () => ({
+    enabledGames: games.list().map((game) => game.id)
   }));
 
   app.get("/api/admin/status", async (request) => ({
@@ -340,6 +347,46 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("poker:deal", async (callback) => {
+      try {
+        await roomService.dealPokerHand(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:act", async (action, callback) => {
+      try {
+        await roomService.actPoker(roomCode, playerId, action.action, action.amount);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:rebuy", async (callback) => {
+      try {
+        await roomService.rebuyPoker(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:advance-blinds", async (callback) => {
+      try {
+        await roomService.advancePokerBlinds(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("chat:send", async (message, callback) => {
       try {
         roomService.sendChat(roomCode, playerId, message);
@@ -396,6 +443,10 @@ export async function createApp(options: AppOptions) {
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "未知错误";
+}
+
+function enabledFlag(value: string | undefined): boolean {
+  return value === "1" || value?.toLowerCase() === "true" || value?.toLowerCase() === "yes";
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";

@@ -8,6 +8,7 @@ import type {
   AdminSetupRequest,
   CreateRoomRequest,
   JoinRoomRequest,
+  PlatformStatusResponse,
   RecoverRoomRequest,
   RulesAnswerResponse,
   RulesQuestionRequest,
@@ -16,6 +17,10 @@ import type {
 
 export async function createRoom(input: CreateRoomRequest): Promise<RoomSessionResponse> {
   return request("/api/rooms", { method: "POST", body: input });
+}
+
+export async function getPlatformStatus(): Promise<PlatformStatusResponse> {
+  return request("/api/platform");
 }
 
 export async function joinRoom(input: JoinRoomRequest): Promise<RoomSessionResponse> {

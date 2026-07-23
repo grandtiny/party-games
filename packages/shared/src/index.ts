@@ -185,6 +185,10 @@ export interface RoomSessionResponse {
   recoveryCode: string;
 }
 
+export interface PlatformStatusResponse {
+  enabledGames: GameType[];
+}
+
 export interface PublicPlayerView {
   id: string;
   nickname: string;
@@ -414,6 +418,13 @@ export interface PokerSelfView {
   netPoints: number;
 }
 
+export type PokerPlayerActionView = "fold" | "check" | "call" | "bet" | "raise";
+
+export interface PokerActionRequest {
+  action: PokerPlayerActionView;
+  amount?: number;
+}
+
 export interface RoomView {
   room: {
     code: string;
@@ -466,6 +477,10 @@ export interface ClientToServerEvents {
     targetPlayerId: string,
     callback: (ack: SocketAck) => void
   ) => void;
+  "poker:deal": (callback: (ack: SocketAck) => void) => void;
+  "poker:act": (action: PokerActionRequest, callback: (ack: SocketAck) => void) => void;
+  "poker:rebuy": (callback: (ack: SocketAck) => void) => void;
+  "poker:advance-blinds": (callback: (ack: SocketAck) => void) => void;
   "chat:send": (
     message: { recipientPlayerId?: string; content: string },
     callback: (ack: SocketAck) => void

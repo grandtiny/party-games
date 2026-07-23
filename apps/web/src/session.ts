@@ -1,13 +1,14 @@
-import type { RoomSessionResponse } from "@party-games/shared";
+import type { GameType, RoomSessionResponse } from "@party-games/shared";
 
 export interface StoredSession extends RoomSessionResponse {
+  gameType?: GameType;
   savedAt: string;
 }
 
 const ACTIVE_ROOM_KEY = "party-games:active-room";
 
-export function saveSession(session: RoomSessionResponse): StoredSession {
-  const stored: StoredSession = { ...session, savedAt: new Date().toISOString() };
+export function saveSession(session: RoomSessionResponse, gameType: GameType): StoredSession {
+  const stored: StoredSession = { ...session, gameType, savedAt: new Date().toISOString() };
   localStorage.setItem(sessionKey(session.roomCode), JSON.stringify(stored));
   localStorage.setItem(ACTIVE_ROOM_KEY, session.roomCode);
   return stored;

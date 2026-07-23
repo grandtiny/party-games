@@ -9,6 +9,7 @@ import {
 } from "@party-games/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import { PokerGameModule } from "../src/games/poker.js";
+import { createGameRegistry } from "../src/games/index.js";
 import type { ServerGameModule } from "../src/platform/game-module.js";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
@@ -78,6 +79,8 @@ async function createStartedPokerRoom(
 
 describe("poker server module", () => {
   it("validates poker room parameters while keeping the default registry closed", async () => {
+    expect(createGameRegistry().has("poker")).toBe(false);
+    expect(createGameRegistry({ pokerEnabled: true }).has("poker")).toBe(true);
     expect(
       CreateRoomRequestSchema.safeParse({
         gameType: "poker",

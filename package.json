@@ -14,7 +14,8 @@
     "test": "pnpm build:packages && pnpm --filter @party-games/game-core test && pnpm --filter @party-games/clocktower test && pnpm --filter @party-games/poker test && pnpm --filter @party-games/server test",
     "typecheck": "pnpm -r typecheck",
     "demo:room": "node scripts/demo-room.mjs",
-    "verify:local": "node scripts/verify-local.mjs"
+    "verify:local": "node scripts/verify-local.mjs",
+    "verify:poker-local": "node scripts/verify-poker-local.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

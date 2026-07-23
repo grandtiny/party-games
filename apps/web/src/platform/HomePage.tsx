@@ -4,12 +4,23 @@ import {
   Settings as SettingsIcon,
   Spade
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getPlatformStatus } from "../api";
 import { getActiveSession } from "../session";
 import { AppShell } from "./AppShell";
 
 export function HomePage() {
   const active = getActiveSession();
+  const [pokerEnabled, setPokerEnabled] = useState(false);
+
+  useEffect(() => {
+    void getPlatformStatus()
+      .then((status) => setPokerEnabled(status.enabledGames.includes("poker")))
+      .catch(() => setPokerEnabled(false));
+  }, []);
+
+  const activePath = active?.gameType === "poker" ? "poker" : "clocktower";
   return (
     <AppShell
       actions={
@@ -24,7 +35,7 @@ export function HomePage() {
       </section>
 
       {active ? (
-        <Link className="resume-row" to={`/clocktower/room/${active.roomCode}`}>
+        <Link className="resume-row" to={`/${activePath}/room/${active.roomCode}`}>
           <span>
             <strong>继续房间 {active.roomCode}</strong>
             <small>恢复当前设备上的玩家会话</small>
@@ -42,14 +53,25 @@ export function HomePage() {
           </span>
           <ArrowRight size={20} />
         </Link>
-        <div className="game-card game-card--poker" aria-disabled="true">
-          <Spade size={34} strokeWidth={1.8} />
-          <span>
-            <strong>德州扑克</strong>
-            <small>入口已预留</small>
-          </span>
-          <span className="status-label">开发中</span>
-        </div>
+        {pokerEnabled ? (
+          <Link className="game-card game-card--poker" to="/poker">
+            <Spade size={34} strokeWidth={1.8} />
+            <span>
+              <strong>德州扑克</strong>
+              <small>淘汰赛 · 积分桌</small>
+            </span>
+            <ArrowRight size={20} />
+          </Link>
+        ) : (
+          <div className="game-card game-card--poker" aria-disabled="true">
+            <Spade size={34} strokeWidth={1.8} />
+            <span>
+              <strong>德州扑克</strong>
+              <small>入口未启用</small>
+            </span>
+            <span className="status-label">开发中</span>
+          </div>
+        )}
       </section>
     </AppShell>
   );
