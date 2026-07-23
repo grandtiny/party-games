@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { GameType } from "@party-games/shared";
+import type { GameType, RoomPhase } from "@party-games/shared";
 import {
   migrateInternalRoomState,
   type InternalRoomState,
@@ -182,12 +182,15 @@ export class SqliteRoomRepository {
     return row ? migrateInternalRoomState(JSON.parse(row.state_json)) : undefined;
   }
 
-  listRoomCodes(): string[] {
-    return (
-      this.#database.prepare("SELECT code FROM rooms ORDER BY created_at").all() as Array<{
-        code: string;
-      }>
-    ).map((row) => row.code);
+  listRoomCodes(phase?: RoomPhase): string[] {
+    const rows = phase
+      ? this.#database
+          .prepare(
+            "SELECT code FROM rooms WHERE json_extract(state_json, '$.phase') = ? ORDER BY created_at"
+          )
+          .all(phase)
+      : this.#database.prepare("SELECT code FROM rooms ORDER BY created_at").all();
+    return (rows as Array<{ code: string }>).map((row) => row.code);
   }
 
   getPassword(code: string): { salt: string; hash: string } | undefined {

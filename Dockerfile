@@ -13,6 +13,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/server/package.json ./apps/server/package.json
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
+COPY packages/game-core/package.json ./packages/game-core/package.json
 COPY packages/clocktower/package.json ./packages/clocktower/package.json
 
 RUN pnpm install --frozen-lockfile

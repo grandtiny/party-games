@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
+import { migrateInternalRoomState } from "../src/domain.js";
 import { SqliteRoomRepository } from "../src/repository.js";
 
 const cleanupTasks: Array<() => void> = [];
@@ -12,6 +13,28 @@ afterEach(() => {
 });
 
 describe("sqlite migrations", () => {
+  it("backfills clocktower fields used by current validation", () => {
+    const migrated = migrateInternalRoomState({
+      id: "legacy-clocktower-room",
+      code: "OLDCT1",
+      gameType: "clocktower",
+      phase: "role-reveal",
+      ownerPlayerId: "owner",
+      version: 3,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      players: [{ id: "owner", nickname: "Owner", seat: 1, ready: true }],
+      clocktower: {
+        setup: { assignments: [] },
+        seedCommitment: "legacy"
+      }
+    });
+
+    expect(migrated.clocktower?.roleConfirmedPlayerIds).toEqual([]);
+    expect(migrated.clocktower?.dayNumber).toBe(0);
+    expect(migrated.clocktower?.timeline).toEqual([]);
+  });
+
   it("applies every migration to a new database", () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-migration-new-"));
     const databasePath = join(directory, "test.sqlite");

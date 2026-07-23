@@ -409,7 +409,7 @@ export class RoomService {
 
   async tickActiveVotes(now = Date.now()): Promise<string[]> {
     const changedRoomCodes: string[] = [];
-    for (const roomCode of this.repository.listRoomCodes()) {
+    for (const roomCode of this.repository.listRoomCodes("voting")) {
       await this.#withLock(roomCode, async () => {
         const state = this.#requireRoom(roomCode);
         const update = this.#gameModule(state).tick(state, { now });

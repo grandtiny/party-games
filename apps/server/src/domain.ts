@@ -80,6 +80,9 @@ export function migrateInternalRoomState(value: unknown): InternalRoomState {
       ? {
           clocktower: {
             ...state.clocktower,
+            roleConfirmedPlayerIds: state.clocktower.roleConfirmedPlayerIds ?? [],
+            dayNumber:
+              state.clocktower.dayNumber ?? state.clocktower.game?.day.number ?? 0,
             timeline: state.clocktower.timeline ?? [],
             ...(state.clocktower.game
               ? {
