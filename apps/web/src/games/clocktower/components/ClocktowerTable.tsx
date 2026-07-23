@@ -51,6 +51,7 @@ export function ClocktowerTable({
 
       <div className={`clocktower-table__stage ${seatCount > 10 ? "is-dense" : ""}`}>
         <div className="clocktower-table__ring">
+          <div className="clocktower-table__magic-circle" aria-hidden="true" />
           <div className="clocktower-table__center">
             <Clock3 size={24} />
             <strong>暗流涌动</strong>
@@ -61,8 +62,8 @@ export function ClocktowerTable({
             const player = playerBySeat.get(seat);
             const angle = -Math.PI / 2 + ((seat - 1) / seatCount) * Math.PI * 2;
             const position = {
-              "--seat-x": `${50 + Math.cos(angle) * 48}%`,
-              "--seat-y": `${50 + Math.sin(angle) * 48}%`
+              "--seat-x": `${50 + Math.cos(angle) * 50}%`,
+              "--seat-y": `${50 + Math.sin(angle) * 50}%`
             } as CSSProperties;
             const isSelf = player?.id === view.self.playerId;
             const voteState = player ? currentVoteState(currentVote, player.id) : undefined;

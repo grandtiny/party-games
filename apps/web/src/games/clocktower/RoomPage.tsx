@@ -25,6 +25,15 @@ import { ClocktowerDay } from "./components/ClocktowerDay";
 import { ClocktowerReferenceButton } from "./components/ClocktowerReferenceDialog";
 import { ClocktowerTable } from "./components/ClocktowerTable";
 
+/** 哥特分割印章：取代卡片之间的留白 */
+function CtDivider() {
+  return (
+    <div className="ct-divider" aria-hidden="true">
+      <span />
+    </div>
+  );
+}
+
 export function ClocktowerRoomPage() {
   const params = useParams();
   const roomCode = (params.roomCode ?? "").toUpperCase();
@@ -140,19 +149,23 @@ export function ClocktowerRoomPage() {
           </section>
 
           {view.self.privateGame ? (
-            <RoleReveal
-              view={view.self.privateGame}
-              visible={roleVisible}
-              confirmed={Boolean(selfPlayer?.roleConfirmed)}
-              canConfirm={view.room.phase === "role-reveal"}
-              onPointerDown={() => setRoleVisible(true)}
-              onPointerEnd={() => setRoleVisible(false)}
-              onConfirm={() =>
-                send((callback) => socketRef.current?.emit("clocktower:confirm-role", callback))
-              }
-            />
+            <>
+              <CtDivider />
+              <RoleReveal
+                view={view.self.privateGame}
+                visible={roleVisible}
+                confirmed={Boolean(selfPlayer?.roleConfirmed)}
+                canConfirm={view.room.phase === "role-reveal"}
+                onPointerDown={() => setRoleVisible(true)}
+                onPointerEnd={() => setRoleVisible(false)}
+                onConfirm={() =>
+                  send((callback) => socketRef.current?.emit("clocktower:confirm-role", callback))
+                }
+              />
+            </>
           ) : null}
 
+          <CtDivider />
           <ClocktowerTable
             view={view}
             onSetSeat={(seat) =>
@@ -183,24 +196,29 @@ export function ClocktowerRoomPage() {
           />
 
           {view.room.phase === "first-night" || view.room.phase === "night" ? (
-            <NightPanel
-              action={view.self.privateGame?.nightAction}
-              firstNight={view.room.phase === "first-night"}
-              nightNumber={view.room.dayNumber ?? 1}
-              selectedPlayerIds={nightSelection}
-              onSubmit={() =>
-                send((callback) =>
-                  socketRef.current?.emit("clocktower:night-select", nightSelection, callback)
-                )
-              }
-              onAcknowledge={() =>
-                send((callback) => socketRef.current?.emit("clocktower:night-ack", callback))
-              }
-            />
+            <>
+              <CtDivider />
+              <NightPanel
+                action={view.self.privateGame?.nightAction}
+                firstNight={view.room.phase === "first-night"}
+                nightNumber={view.room.dayNumber ?? 1}
+                selectedPlayerIds={nightSelection}
+                onSubmit={() =>
+                  send((callback) =>
+                    socketRef.current?.emit("clocktower:night-select", nightSelection, callback)
+                  )
+                }
+                onAcknowledge={() =>
+                  send((callback) => socketRef.current?.emit("clocktower:night-ack", callback))
+                }
+              />
+            </>
           ) : null}
 
           {view.room.clocktowerDay ? (
-            <ClocktowerDay
+            <>
+              <CtDivider />
+              <ClocktowerDay
               view={view}
               now={now}
               onRequestNominations={() =>
@@ -225,8 +243,10 @@ export function ClocktowerRoomPage() {
                 send((callback) => socketRef.current?.emit("clocktower:rematch", callback))
               }
             />
+            </>
           ) : null}
 
+          <CtDivider />
           <section className="session-strip">
             <ShieldCheck size={18} />
             <span>
