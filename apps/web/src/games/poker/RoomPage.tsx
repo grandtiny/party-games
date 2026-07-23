@@ -3,9 +3,11 @@ import {
   Coins,
   Copy,
   Crown,
+  History,
   Play,
   RefreshCw,
   ShieldCheck,
+  Trophy,
   TrendingUp,
   UserRound
 } from "lucide-react";
@@ -60,13 +62,8 @@ export function PokerRoomPage() {
 
   const table = view?.room.pokerTable;
   const selfTablePlayer = table?.players.find((player) => player.playerId === view?.self.playerId);
-  const highestBet = Math.max(0, ...(table?.players.map((player) => player.betThisStreet) ?? []));
-  const suggestedBet = table && selfTablePlayer
-    ? Math.min(
-        selfTablePlayer.stack + selfTablePlayer.betThisStreet,
-        highestBet > 0 ? highestBet + table.minRaise : table.minRaise
-      )
-    : 0;
+  const legalActions = view?.self.poker?.legalActions;
+  const suggestedBet = legalActions?.minAmount ?? 0;
 
   useEffect(() => {
     setBetAmount(suggestedBet);
@@ -179,6 +176,7 @@ export function PokerRoomPage() {
                 roomPlayers={view.room.players}
                 selfPlayerId={view.self.playerId}
               />
+              <PokerHandSummary table={table} roomPlayers={view.room.players} />
               <PokerControls
                 view={view}
                 table={table}
@@ -293,9 +291,6 @@ function PokerTableStage({
   selfPlayerId: string;
 }) {
   const connectedById = new Map(roomPlayers.map((player) => [player.id, player.connected]));
-  const totalPot =
-    table.pots.reduce((total, pot) => total + pot.amount, 0) +
-    table.players.reduce((total, player) => total + player.betThisStreet, 0);
   const selfIndex = Math.max(
     0,
     table.players.findIndex((player) => player.playerId === selfPlayerId)
@@ -307,7 +302,7 @@ function PokerTableStage({
           <div className="poker-pot">
             <Coins size={16} />
             <span>底池</span>
-            <strong>{totalPot}</strong>
+            <strong>{table.totalPot}</strong>
           </div>
           <div className="community-cards">
             {Array.from({ length: 5 }, (_, index) => (
@@ -356,6 +351,64 @@ function PokerTableStage({
   );
 }
 
+function PokerHandSummary({
+  table,
+  roomPlayers
+}: {
+  table: PokerTableView;
+  roomPlayers: PublicPlayerView[];
+}) {
+  if (table.handNumber === 0) return null;
+  const playerNames = new Map(roomPlayers.map((player) => [player.id, player.nickname]));
+  const settled = table.winners.length > 0;
+  return (
+    <section className="poker-hand-summary" aria-label="本手记录">
+      <div className="poker-hand-summary__heading">
+        <span>
+          {settled ? <Trophy size={17} /> : <History size={17} />}
+          <strong>第 {table.handNumber} 手</strong>
+        </span>
+        <small>{settled ? `已结算 · 总底池 ${table.totalPot}` : "行动记录"}</small>
+      </div>
+
+      {settled ? (
+        <div className="poker-awards">
+          {table.winners.map((winner, index) => (
+            <div className="poker-award-row" key={`${winner.playerId}-${index}`}>
+              <strong>{playerNames.get(winner.playerId) ?? "玩家"}</strong>
+              <span>{winner.handRank ? "赢得" : "净赢"} {winner.amount}</span>
+              <small>{winner.handRank ? handRankLabel(winner.handRank) : "无人跟注"}</small>
+              {winner.hand?.length ? (
+                <span className="poker-award-cards">
+                  {winner.hand.map((card, cardIndex) => (
+                    <PlayingCard code={card} compact key={`${card}-${cardIndex}`} />
+                  ))}
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {table.actionHistory.length ? (
+        <ol className="poker-action-history">
+          {table.actionHistory.map((record, index) => (
+            <li key={`${record.playerId}-${index}`}>
+              <span>{streetLabel(record.street)}</span>
+              <strong>{playerNames.get(record.playerId) ?? "玩家"}</strong>
+              <span>{pokerActionLabel(record.action, record.amount)}</span>
+              {record.allIn ? <em>全下</em> : null}
+              <small>底池 {record.potAfter}</small>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="poker-action-history__empty">等待首个玩家行动</p>
+      )}
+    </section>
+  );
+}
+
 function MiniHand({ player, inHand }: { player: PokerTablePlayerView; inHand: boolean }) {
   if (!inHand || player.status === "WAITING" || player.status === "BUSTED") return null;
   return (
@@ -394,11 +447,14 @@ function PokerControls({
   emitAdvanceBlinds: () => void;
 }) {
   if (!selfPlayer) return null;
-  const highestBet = Math.max(0, ...table.players.map((player) => player.betThisStreet));
-  const callAmount = Math.max(0, highestBet - selfPlayer.betThisStreet);
-  const isActing = table.status === "in-hand" && table.actionPlayerId === selfPlayer.playerId;
-  const aggressiveAction = highestBet === 0 ? "bet" : "raise";
-  const maxAmount = selfPlayer.stack + selfPlayer.betThisStreet;
+  const legalActions = view.self.poker?.legalActions;
+  const can = (action: PokerActionRequest["action"]) =>
+    legalActions?.actions.includes(action) ?? false;
+  const isActing = Boolean(legalActions);
+  const callAmount = legalActions?.callAmount ?? 0;
+  const aggressiveAction = legalActions?.aggressiveAction;
+  const minAmount = legalActions?.minAmount ?? 0;
+  const maxAmount = legalActions?.maxAmount ?? 0;
   const canRebuy =
     table.mode === "points" &&
     table.status === "waiting-hand" &&
@@ -435,34 +491,57 @@ function PokerControls({
         </div>
       ) : isActing ? (
         <div className="poker-action-bar">
-          <button className="secondary-button poker-fold-button" type="button" onClick={() => emitAction({ action: "fold" })}>
+          <button
+            className="secondary-button poker-fold-button"
+            type="button"
+            disabled={!can("fold")}
+            onClick={() => emitAction({ action: "fold" })}
+          >
             弃牌
           </button>
           <button
             className="secondary-button"
             type="button"
+            disabled={!can(callAmount > 0 ? "call" : "check")}
             onClick={() => emitAction({ action: callAmount > 0 ? "call" : "check" })}
           >
             {callAmount > 0 ? `跟注 ${Math.min(callAmount, selfPlayer.stack)}` : "过牌"}
           </button>
-          <div className="poker-bet-control">
-            <input
-              type="number"
-              min={1}
-              max={maxAmount}
-              value={betAmount}
-              onChange={(event) => setBetAmount(Number(event.target.value))}
-              aria-label={aggressiveAction === "bet" ? "下注金额" : "加注至"}
-            />
-            <button
-              className="primary-button"
-              type="button"
-              disabled={!Number.isInteger(betAmount) || betAmount <= 0 || betAmount > maxAmount}
-              onClick={() => emitAction({ action: aggressiveAction, amount: betAmount })}
-            >
-              {aggressiveAction === "bet" ? "下注" : "加注至"} {betAmount}
-            </button>
-          </div>
+          {aggressiveAction ? (
+            <div className="poker-bet-control">
+              <input
+                type="number"
+                min={minAmount}
+                max={maxAmount}
+                value={betAmount}
+                onChange={(event) => setBetAmount(Number(event.target.value))}
+                aria-label={aggressiveAction === "bet" ? "下注金额" : "加注至"}
+              />
+              <button
+                className="primary-button"
+                type="button"
+                disabled={
+                  !Number.isInteger(betAmount) ||
+                  betAmount < minAmount ||
+                  betAmount > maxAmount
+                }
+                onClick={() => emitAction({ action: aggressiveAction, amount: betAmount })}
+              >
+                {aggressiveAction === "bet" ? "下注" : "加注至"} {betAmount}
+              </button>
+              {maxAmount > minAmount ? (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => emitAction({ action: aggressiveAction, amount: maxAmount })}
+                >
+                  全下 {maxAmount}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <div className="poker-no-raise">当前不能加注</div>
+          )}
         </div>
       ) : (
         <div className="poker-waiting-state">
@@ -568,4 +647,33 @@ function playerStatusLabel(status: PokerTablePlayerView["status"]): string {
 
 function signed(value: number): string {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function pokerActionLabel(
+  action: PokerTableView["actionHistory"][number]["action"],
+  amount?: number
+): string {
+  if (action === "fold") return "弃牌";
+  if (action === "check") return "过牌";
+  if (action === "call") return `跟注${amount === undefined ? "" : ` ${amount}`}`;
+  if (action === "bet") return `下注${amount === undefined ? "" : ` ${amount}`}`;
+  if (action === "raise") return `加注至${amount === undefined ? "" : ` ${amount}`}`;
+  return `退回未跟注筹码${amount === undefined ? "" : ` ${amount}`}`;
+}
+
+function handRankLabel(rank: string): string {
+  const labels: Array<[string, string]> = [
+    ["Royal Flush", "皇家同花顺"],
+    ["Straight Flush", "同花顺"],
+    ["Four of a Kind", "四条"],
+    ["Full House", "葫芦"],
+    ["Flush", "同花"],
+    ["Straight", "顺子"],
+    ["Three of a Kind", "三条"],
+    ["Two Pair", "两对"],
+    ["Pair", "一对"],
+    ["High Card", "高牌"]
+  ];
+  const matched = labels.find(([prefix]) => rank.startsWith(prefix));
+  return matched ? `${matched[1]} · ${rank}` : rank;
 }

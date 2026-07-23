@@ -25,7 +25,7 @@ function playPassivelyToShowdown(engine: PokerEngine): void {
   let guard = 0;
   while (engine.state.street !== Street.SHOWDOWN) {
     guard += 1;
-    if (guard > 30) throw new Error("被动牌局没有进入摊牌");
+    if (guard > 100) throw new Error("被动牌局没有进入摊牌");
     const seat = engine.state.actionTo;
     if (seat === null) throw new Error("牌局未结束但没有行动玩家");
     const player = engine.state.players[seat];
@@ -66,6 +66,26 @@ describe("@pokertools/engine compatibility", () => {
     expect(engine.state.currentBets.get(1)).toBe(10);
     expect(engine.state.actionTo).toBe(0);
   });
+
+  it.each([2, 3, 6, 9])(
+    "completes a passive %i-player hand while conserving chips",
+    (playerCount) => {
+      const seed = `${TABLE_SEED}:players:${playerCount}`;
+      const engine = createPokerEngine(
+        { smallBlind: 5, bigBlind: 10, maxPlayers: playerCount },
+        seed
+      );
+      seatPlayers(engine, Array.from({ length: playerCount }, () => 500));
+      dealNextHand(engine, seed, 250 + playerCount);
+      playPassivelyToShowdown(engine);
+
+      expect(engine.state.winners?.length).toBeGreaterThan(0);
+      expect(engine.state.actionHistory.length).toBeGreaterThan(0);
+      expect(
+        engine.state.players.reduce((total, player) => total + (player?.stack ?? 0), 0)
+      ).toBe(playerCount * 500);
+    }
+  );
 
   it("rejects illegal checks and progresses legal calls", () => {
     const engine = createPokerEngine({ smallBlind: 5, bigBlind: 10, maxPlayers: 2 }, TABLE_SEED);

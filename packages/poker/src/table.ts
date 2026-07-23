@@ -2,6 +2,7 @@ import type { GameCommand } from "@party-games/game-core";
 import {
   ActionType,
   Street,
+  type ActionRecord,
   type BlindLevel,
   type PokerEngine,
   type PublicState
@@ -75,6 +76,8 @@ export interface PokerTableView {
   mode: PokerTableMode;
   status: PokerTableStatus;
   table: PublicState;
+  totalPot: number;
+  actionHistory: PokerHandAction[];
   winnerPlayerId?: string;
   players: Array<
     Pick<PokerTablePlayer, "playerId" | "nickname" | "seat" | "buyIns"> & {
@@ -85,7 +88,26 @@ export interface PokerTableView {
     totalBuyIn: number;
     cashedOut: number;
     netPoints: number;
+    legalActions?: PokerLegalActions;
   };
+}
+
+export interface PokerLegalActions {
+  actions: PokerPlayerAction[];
+  callAmount: number;
+  aggressiveAction?: "bet" | "raise";
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+export interface PokerHandAction {
+  playerId: string;
+  street: Street;
+  action: PokerPlayerAction | "uncalled-return";
+  amount?: number;
+  potAfter: number;
+  stackAfter: number;
+  allIn: boolean;
 }
 
 export function createPokerTable(input: CreatePokerTableInput): PokerTableState {
@@ -204,10 +226,15 @@ export function projectPokerTable(
   validatePokerTable(state);
   const engine = restorePokerEngine(state.engine);
   const self = state.players.find((player) => player.playerId === viewerPlayerId);
+  const legalActions = viewerPlayerId
+    ? projectLegalActions(engine, viewerPlayerId, state.status)
+    : undefined;
   return {
     mode: state.mode,
     status: state.status,
     table: engine.view(viewerPlayerId),
+    totalPot: currentPot(engine),
+    actionHistory: projectActionHistory(engine.state.actionHistory),
     ...(state.winnerPlayerId ? { winnerPlayerId: state.winnerPlayerId } : {}),
     players: state.players.map((player) => ({
       playerId: player.playerId,
@@ -223,7 +250,8 @@ export function projectPokerTable(
           self: {
             totalBuyIn: self.totalBuyIn,
             cashedOut: self.cashedOut,
-            netPoints: currentStack(engine, self.playerId) + self.cashedOut - self.totalBuyIn
+            netPoints: currentStack(engine, self.playerId) + self.cashedOut - self.totalBuyIn,
+            ...(legalActions ? { legalActions } : {})
           }
         }
       : {})
@@ -331,6 +359,100 @@ function tournamentWinner(mode: PokerTableMode, engine: PokerEngine): string | u
 function currentStack(engine: PokerEngine, playerId: string): number {
   const player = engine.state.players.find((candidate) => candidate?.id === playerId);
   return (player?.stack ?? 0) + (player?.pendingAddOn ?? 0);
+}
+
+function currentPot(engine: PokerEngine): number {
+  if (engine.state.winners?.length) {
+    const committed = engine.state.players.reduce(
+      (total, player) => total + (player?.totalInvestedThisHand ?? 0),
+      0
+    );
+    const returned = engine.state.actionHistory.reduce(
+      (total, record) =>
+        record.action.type === ActionType.UNCALLED_BET_RETURNED &&
+        "amount" in record.action
+          ? total + record.action.amount
+          : total,
+      0
+    );
+    return Math.max(0, committed - returned);
+  }
+  return (
+    engine.state.pots.reduce((total, pot) => total + pot.amount, 0) +
+    Array.from(engine.state.currentBets.values()).reduce((total, amount) => total + amount, 0)
+  );
+}
+
+function projectLegalActions(
+  engine: PokerEngine,
+  playerId: string,
+  status: PokerTableStatus
+): PokerLegalActions | undefined {
+  if (status !== "in-hand" || engine.state.actionTo === null) return undefined;
+  const player = engine.state.players[engine.state.actionTo];
+  if (!player || player.id !== playerId) return undefined;
+
+  const timestamp = nextPokerTimestamp(engine, engine.state.timestamp + 1);
+  const actions: PokerPlayerAction[] = [];
+  const valid = (action: Parameters<PokerEngine["validate"]>[0]): boolean =>
+    engine.validate(action).valid;
+
+  if (valid({ type: ActionType.FOLD, playerId, timestamp })) actions.push("fold");
+  if (valid({ type: ActionType.CHECK, playerId, timestamp })) actions.push("check");
+  if (valid({ type: ActionType.CALL, playerId, timestamp })) actions.push("call");
+
+  const currentBet = Math.max(0, ...engine.state.currentBets.values());
+  const playerBet = engine.state.currentBets.get(player.seat) ?? 0;
+  const maxAmount = playerBet + player.stack;
+  const callAmount = Math.min(Math.max(0, currentBet - playerBet), player.stack);
+  const aggressiveAction = currentBet === 0 ? "bet" : "raise";
+  const normalMinimum =
+    aggressiveAction === "bet"
+      ? engine.state.bigBlind
+      : Math.max(engine.state.minRaise, currentBet + engine.state.lastRaiseAmount);
+  const minAmount = Math.min(normalMinimum, maxAmount);
+  const canIncreaseBet = aggressiveAction === "bet" ? maxAmount > 0 : maxAmount > currentBet;
+  const aggressiveType = aggressiveAction === "bet" ? ActionType.BET : ActionType.RAISE;
+  if (
+    canIncreaseBet &&
+    valid({ type: aggressiveType, playerId, amount: minAmount, timestamp })
+  ) {
+    actions.push(aggressiveAction);
+    return { actions, callAmount, aggressiveAction, minAmount, maxAmount };
+  }
+  return { actions, callAmount };
+}
+
+function projectActionHistory(records: readonly ActionRecord[]): PokerHandAction[] {
+  return records.flatMap((record) => {
+    if (!("playerId" in record.action) || !record.street) return [];
+    const action = publicPokerAction(record.action.type);
+    if (!action) return [];
+    const amount = "amount" in record.action ? record.action.amount : undefined;
+    return [
+      {
+        playerId: record.action.playerId,
+        street: record.street as Street,
+        action,
+        ...(typeof amount === "number" ? { amount } : {}),
+        potAfter: record.resultingPot,
+        stackAfter: record.resultingStack,
+        allIn:
+          record.resultingStack === 0 &&
+          (action === "call" || action === "bet" || action === "raise")
+      }
+    ];
+  });
+}
+
+function publicPokerAction(type: ActionType): PokerHandAction["action"] | undefined {
+  if (type === ActionType.FOLD) return "fold";
+  if (type === ActionType.CHECK) return "check";
+  if (type === ActionType.CALL) return "call";
+  if (type === ActionType.BET) return "bet";
+  if (type === ActionType.RAISE) return "raise";
+  if (type === ActionType.UNCALLED_BET_RETURNED) return "uncalled-return";
+  return undefined;
 }
 
 function requireOwner(actorPlayerId: string, ownerPlayerId: string): void {

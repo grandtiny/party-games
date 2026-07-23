@@ -137,18 +137,26 @@ describe("poker server module", () => {
     expect(JSON.stringify(ownerView)).not.toContain("tableSeed");
     expect(JSON.stringify(ownerView)).not.toContain('"deck"');
 
-    const actionPlayerId = ownerView.room.pokerTable?.actionPlayerId;
+    closeRepository(repository);
+    ({ repository } = createRepository(context.databasePath));
+    service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const restoredOwnerView = service.getView(owner.roomCode, owner.playerId);
+    const restoredSecondView = service.getView(owner.roomCode, second.playerId);
+    expect(restoredOwnerView.room.pokerTable).toEqual(ownerView.room.pokerTable);
+    expect(restoredOwnerView.self.poker).toEqual(ownerView.self.poker);
+    expect(restoredSecondView.room.pokerTable).toEqual(secondView.room.pokerTable);
+    expect(restoredOwnerView.room.version).toBe(ownerView.room.version);
+
+    const actionPlayerId = restoredOwnerView.room.pokerTable?.actionPlayerId;
     if (!actionPlayerId) throw new Error("德扑测试牌局缺少行动玩家");
     await service.actPoker(owner.roomCode, actionPlayerId, "fold");
     const settledView = service.getView(owner.roomCode, owner.playerId);
     expect(settledView.room.pokerTable?.status).toBe("waiting-hand");
-
-    closeRepository(repository);
-    ({ repository } = createRepository(context.databasePath));
-    service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
-    const restoredView = service.getView(owner.roomCode, owner.playerId);
-    expect(restoredView.room.pokerTable).toEqual(settledView.room.pokerTable);
-    expect(restoredView.room.version).toBe(settledView.room.version);
+    expect(settledView.room.pokerTable?.totalPot).toBe(10);
+    expect(settledView.room.pokerTable?.actionHistory).toEqual([
+      expect.objectContaining({ action: "fold", playerId: actionPlayerId, potAfter: 15 }),
+      expect.objectContaining({ action: "uncalled-return", amount: 5, potAfter: 10 })
+    ]);
   });
 
   it("advances tournament blinds through the owner-only service boundary", async () => {

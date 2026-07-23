@@ -100,6 +100,13 @@ try {
   const actionPlayerId = views[0].room.pokerTable?.actionPlayerId;
   const actorIndex = sessions.findIndex((session) => session.playerId === actionPlayerId);
   if (actorIndex < 0) throw new Error("Action player was not found");
+  const actorLegalActions = views[actorIndex].self.poker?.legalActions;
+  if (!actorLegalActions?.actions.includes("call")) {
+    throw new Error("Server legal actions are missing the expected call");
+  }
+  if (views[1 - actorIndex].self.poker?.legalActions) {
+    throw new Error("Legal actions leaked to the waiting player");
+  }
   const settledView = waitForView(
     sockets[0],
     (view) => view.room.pokerTable?.status === "waiting-hand" && view.room.pokerTable.handNumber === 1
@@ -111,6 +118,15 @@ try {
     0
   );
   if (totalChips !== 1000) throw new Error("Chip conservation failed");
+  if (settled.room.pokerTable.totalPot !== 10) {
+    throw new Error("Settled pot did not account for the uncalled blind return");
+  }
+  if (
+    settled.room.pokerTable.actionHistory.map((record) => record.action).join(",") !==
+    "fold,uncalled-return"
+  ) {
+    throw new Error("Settled action history is incomplete");
+  }
 
   console.log(
     JSON.stringify(
@@ -122,7 +138,9 @@ try {
         handNumber: settled.room.pokerTable.handNumber,
         status: settled.room.pokerTable.status,
         totalChips,
-        privateCardsVerified: true
+        privateCardsVerified: true,
+        legalActionsVerified: true,
+        actionHistoryVerified: true
       },
       null,
       2

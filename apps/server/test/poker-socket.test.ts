@@ -65,6 +65,27 @@ describe("poker socket boundary", () => {
     expect(ownerView.room.pokerTable?.players[1]?.hand).toBeNull();
     expect(secondView.room.pokerTable?.players[0]?.hand).toBeNull();
     expect(secondView.room.pokerTable?.players[1]?.hand).toHaveLength(2);
+
+    secondSocket.disconnect();
+    const reconnected = await reconnectWithView(baseUrl, second);
+    cleanupTasks.push(() => reconnected.socket.disconnect());
+    expect(reconnected.view.room.pokerTable?.players[0]?.hand).toBeNull();
+    expect(reconnected.view.room.pokerTable?.players[1]?.hand).toHaveLength(2);
+    expect(reconnected.view.room.pokerTable?.actionPlayerId).toBe(
+      ownerView.room.pokerTable?.actionPlayerId
+    );
+
+    const actionPlayerId = ownerView.room.pokerTable?.actionPlayerId;
+    if (!actionPlayerId) throw new Error("Poker socket test is missing the action player");
+    const actorSocket = actionPlayerId === owner.playerId ? ownerSocket : reconnected.socket;
+    const settledViewPromise = nextWaitingHandView(ownerSocket);
+    await emit(actorSocket, "poker:act", { action: "fold" });
+    const settledView = await settledViewPromise;
+    expect(settledView.room.pokerTable?.totalPot).toBe(10);
+    expect(settledView.room.pokerTable?.actionHistory).toEqual([
+      expect.objectContaining({ playerId: actionPlayerId, action: "fold", potAfter: 15 }),
+      expect.objectContaining({ action: "uncalled-return", amount: 5, potAfter: 10 })
+    ]);
   });
 });
 
@@ -99,9 +120,45 @@ function nextInHandView(socket: Socket): Promise<RoomView> {
   });
 }
 
-function emit(socket: Socket, event: string): Promise<void> {
+function nextWaitingHandView(socket: Socket): Promise<RoomView> {
   return new Promise((resolve, reject) => {
-    socket.emit(event, (ack: { ok: boolean; error?: string }) => {
+    const timeout = setTimeout(() => reject(new Error("Poker settled view timed out")), 5_000);
+    const handleView = (view: RoomView) => {
+      if (view.room.pokerTable?.status !== "waiting-hand") return;
+      clearTimeout(timeout);
+      socket.off("room:view", handleView);
+      resolve(view);
+    };
+    socket.on("room:view", handleView);
+  });
+}
+
+function reconnectWithView(
+  baseUrl: string,
+  session: RoomSessionResponse
+): Promise<{ socket: Socket; view: RoomView }> {
+  return new Promise((resolve, reject) => {
+    const socket = io(baseUrl, {
+      autoConnect: false,
+      transports: ["websocket"],
+      auth: { roomCode: session.roomCode, sessionToken: session.sessionToken }
+    });
+    const timeout = setTimeout(() => {
+      socket.disconnect();
+      reject(new Error("Poker reconnect view timed out"));
+    }, 5_000);
+    socket.once("room:view", (view) => {
+      clearTimeout(timeout);
+      resolve({ socket, view });
+    });
+    socket.once("connect_error", reject);
+    socket.connect();
+  });
+}
+
+function emit(socket: Socket, event: string, ...args: unknown[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    socket.emit(event, ...args, (ack: { ok: boolean; error?: string }) => {
       if (ack.ok) resolve();
       else reject(new Error(ack.error ?? `${event} failed`));
     });

@@ -221,6 +221,7 @@ export class PokerGameModule implements ServerGameModule {
       ante: table.ante,
       blindLevel: table.blindLevel,
       minRaise: table.minRaise,
+      totalPot: projection.totalPot,
       pots: table.pots.map((pot) => ({
         amount: pot.amount,
         eligiblePlayerIds: pot.eligibleSeats.flatMap((seat) => {
@@ -254,6 +255,7 @@ export class PokerGameModule implements ServerGameModule {
           ? [{ playerId, amount: winner.amount, hand: winner.hand, handRank: winner.handRank }]
           : [];
       }),
+      actionHistory: projection.actionHistory,
       ...(projection.winnerPlayerId ? { winnerPlayerId: projection.winnerPlayerId } : {})
     };
   }

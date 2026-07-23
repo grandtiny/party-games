@@ -393,6 +393,24 @@ export interface PokerWinnerView {
   handRank: string | null;
 }
 
+export interface PokerHandActionView {
+  playerId: string;
+  street: PokerStreetView;
+  action: PokerPlayerActionView | "uncalled-return";
+  amount?: number;
+  potAfter: number;
+  stackAfter: number;
+  allIn: boolean;
+}
+
+export interface PokerLegalActionsView {
+  actions: PokerPlayerActionView[];
+  callAmount: number;
+  aggressiveAction?: "bet" | "raise";
+  minAmount?: number;
+  maxAmount?: number;
+}
+
 export interface PokerTableView {
   mode: PokerTableMode;
   status: "waiting-hand" | "in-hand" | "complete";
@@ -406,9 +424,11 @@ export interface PokerTableView {
   ante: number;
   blindLevel: number;
   minRaise: number;
+  totalPot: number;
   pots: PokerPotView[];
   players: PokerTablePlayerView[];
   winners: PokerWinnerView[];
+  actionHistory: PokerHandActionView[];
   winnerPlayerId?: string;
 }
 
@@ -416,6 +436,7 @@ export interface PokerSelfView {
   totalBuyIn: number;
   cashedOut: number;
   netPoints: number;
+  legalActions?: PokerLegalActionsView;
 }
 
 export type PokerPlayerActionView = "fold" | "check" | "call" | "bet" | "raise";

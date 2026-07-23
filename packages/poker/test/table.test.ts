@@ -205,6 +205,63 @@ describe("poker table domain", () => {
     expect(view.table.players[1]?.hand).toBeNull();
   });
 
+  it("projects server-authoritative legal actions only for the acting player", () => {
+    const state = deal(createPokerTable(BASE_INPUT));
+    const engine = restorePokerEngine(state.engine);
+    const actingSeat = engine.state.actionTo;
+    if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+    const actingPlayer = engine.state.players[actingSeat];
+    const waitingPlayer = engine.state.players.find(
+      (player) => player && player.id !== actingPlayer?.id
+    );
+    if (!actingPlayer || !waitingPlayer) throw new Error("测试牌局玩家不完整");
+
+    const actingView = projectPokerTable(state, actingPlayer.id);
+    const waitingView = projectPokerTable(state, waitingPlayer.id);
+    expect(actingView.self?.legalActions).toMatchObject({
+      actions: ["fold", "call", "raise"],
+      callAmount: 5,
+      aggressiveAction: "raise",
+      minAmount: 20,
+      maxAmount: 500
+    });
+    expect(waitingView.self?.legalActions).toBeUndefined();
+  });
+
+  it("keeps an explainable action log and settled pot after an uncontested hand", () => {
+    let state = deal(createPokerTable(BASE_INPUT));
+    const engine = restorePokerEngine(state.engine);
+    const actingSeat = engine.state.actionTo;
+    if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+    const actorPlayerId = engine.state.players[actingSeat]?.id;
+    if (!actorPlayerId) throw new Error("测试牌局行动座位为空");
+
+    state = handle(
+      state,
+      command({ type: "poker:act", actorPlayerId, payload: { action: "fold" } }),
+      2_100
+    );
+    const view = projectPokerTable(state, OWNER_ID);
+    expect(view.status).toBe("waiting-hand");
+    expect(view.totalPot).toBe(10);
+    expect(view.table.winners?.reduce((total, winner) => total + winner.amount, 0)).toBe(5);
+    expect(view.actionHistory).toEqual([
+      expect.objectContaining({
+        playerId: actorPlayerId,
+        street: "PREFLOP",
+        action: "fold",
+        potAfter: 15,
+        allIn: false
+      }),
+      expect.objectContaining({
+        action: "uncalled-return",
+        amount: 5,
+        potAfter: 10,
+        allIn: false
+      })
+    ]);
+  });
+
   it("calculates points as stack plus cash-outs minus total buy-ins", () => {
     const state = createPokerTable(BASE_INPUT);
     state.players[0] = {
