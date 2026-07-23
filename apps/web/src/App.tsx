@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Spade,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import type {
@@ -214,14 +214,17 @@ function ClocktowerRoomPage() {
   const [connected, setConnected] = useState(false);
   const [nightSelection, setNightSelection] = useState<string[]>([]);
   const [now, setNow] = useState(Date.now());
-
-  const socket = useMemo<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(() => {
-    if (!session) return undefined;
-    return io({ auth: { roomCode, sessionToken: session.sessionToken } });
-  }, [roomCode, session]);
+  const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(
+    undefined
+  );
+  const sessionToken = session?.sessionToken;
 
   useEffect(() => {
-    if (!socket) return;
+    if (!sessionToken) return;
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io({
+      auth: { roomCode, sessionToken }
+    });
+    socketRef.current = socket;
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
     socket.on("room:view", setView);
@@ -229,9 +232,11 @@ function ClocktowerRoomPage() {
     socket.on("connect_error", (cause) => setError(cause.message));
     setConnected(socket.connected);
     return () => {
+      socket.removeAllListeners();
       socket.disconnect();
+      socketRef.current = undefined;
     };
-  }, [socket]);
+  }, [roomCode, sessionToken]);
 
   useEffect(() => {
     const hide = () => setRoleVisible(false);
@@ -320,7 +325,7 @@ function ClocktowerRoomPage() {
               onPointerDown={() => setRoleVisible(true)}
               onPointerEnd={() => setRoleVisible(false)}
               onConfirm={() =>
-                send((callback) => socket?.emit("clocktower:confirm-role", callback))
+                send((callback) => socketRef.current?.emit("clocktower:confirm-role", callback))
               }
             />
           ) : null}
@@ -328,7 +333,7 @@ function ClocktowerRoomPage() {
           <ClocktowerTable
             view={view}
             onSetSeat={(seat) =>
-              send((callback) => socket?.emit("room:set-seat", seat, callback))
+              send((callback) => socketRef.current?.emit("room:set-seat", seat, callback))
             }
             selectedNightPlayerIds={nightSelection}
             onToggleNightPlayer={(playerId) => {
@@ -343,10 +348,14 @@ function ClocktowerRoomPage() {
               });
             }}
             onNominate={(targetPlayerId) =>
-              send((callback) => socket?.emit("clocktower:nominate", targetPlayerId, callback))
+              send((callback) =>
+                socketRef.current?.emit("clocktower:nominate", targetPlayerId, callback)
+              )
             }
             onSlayerClaim={(targetPlayerId) =>
-              send((callback) => socket?.emit("clocktower:slayer-claim", targetPlayerId, callback))
+              send((callback) =>
+                socketRef.current?.emit("clocktower:slayer-claim", targetPlayerId, callback)
+              )
             }
           />
 
@@ -358,11 +367,11 @@ function ClocktowerRoomPage() {
               selectedPlayerIds={nightSelection}
               onSubmit={() =>
                 send((callback) =>
-                  socket?.emit("clocktower:night-select", nightSelection, callback)
+                  socketRef.current?.emit("clocktower:night-select", nightSelection, callback)
                 )
               }
               onAcknowledge={() =>
-                send((callback) => socket?.emit("clocktower:night-ack", callback))
+                send((callback) => socketRef.current?.emit("clocktower:night-ack", callback))
               }
             />
           ) : null}
@@ -372,19 +381,25 @@ function ClocktowerRoomPage() {
               view={view}
               now={now}
               onRequestNominations={() =>
-                send((callback) => socket?.emit("clocktower:request-nominations", callback))
+                send((callback) =>
+                  socketRef.current?.emit("clocktower:request-nominations", callback)
+                )
               }
               onRequestClose={() =>
-                send((callback) => socket?.emit("clocktower:request-close-nominations", callback))
+                send((callback) =>
+                  socketRef.current?.emit("clocktower:request-close-nominations", callback)
+                )
               }
               onSetVote={(voting) =>
-                send((callback) => socket?.emit("clocktower:set-vote", voting, callback))
+                send((callback) =>
+                  socketRef.current?.emit("clocktower:set-vote", voting, callback)
+                )
               }
               onSendChat={(message) =>
-                send((callback) => socket?.emit("chat:send", message, callback))
+                send((callback) => socketRef.current?.emit("chat:send", message, callback))
               }
               onRematch={() =>
-                send((callback) => socket?.emit("clocktower:rematch", callback))
+                send((callback) => socketRef.current?.emit("clocktower:rematch", callback))
               }
             />
           ) : null}
@@ -404,7 +419,7 @@ function ClocktowerRoomPage() {
                 disabled={selfPlayer?.seat === null}
                 onClick={() =>
                   send((callback) =>
-                    socket?.emit("room:set-ready", !selfPlayer?.ready, callback)
+                    socketRef.current?.emit("room:set-ready", !selfPlayer?.ready, callback)
                   )
                 }
               >
@@ -416,7 +431,9 @@ function ClocktowerRoomPage() {
                   className="primary-button primary-button--dark"
                   type="button"
                   disabled={!canStart}
-                  onClick={() => send((callback) => socket?.emit("room:start", callback))}
+                  onClick={() =>
+                    send((callback) => socketRef.current?.emit("room:start", callback))
+                  }
                 >
                   <Clock3 size={18} />
                   开始配角
