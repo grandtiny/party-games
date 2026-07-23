@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Spade,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import type {
@@ -33,40 +33,55 @@ import { getActiveSession, getSession, saveSession, type StoredSession } from ".
 function HomePage() {
   const active = getActiveSession();
   return (
-    <AppShell>
-      <section className="home-intro">
-        <p className="eyebrow">PRIVATE GAME TABLE</p>
-        <h1>今晚玩什么</h1>
-      </section>
+    <AppShell variant="home">
+      <div className="home">
+        <header className="home__hero">
+          <span className="home__kicker">PARTY GAMES</span>
+          <h1 className="home__title">今晚，玩点什么</h1>
+          <p className="home__subtitle">为聚会而生的私人桌游空间</p>
+        </header>
 
-      {active ? (
-        <Link className="resume-row" to={`/clocktower/room/${active.roomCode}`}>
-          <span>
-            <strong>继续房间 {active.roomCode}</strong>
-            <small>恢复当前设备上的玩家会话</small>
-          </span>
-          <ArrowRight size={20} />
-        </Link>
-      ) : null}
+        {active ? (
+          <Link className="home__resume" to={`/clocktower/room/${active.roomCode}`}>
+            <span className="home__resume-text">
+              <strong>继续房间 {active.roomCode}</strong>
+              <small>恢复当前设备上的玩家会话</small>
+            </span>
+            <ArrowRight size={18} />
+          </Link>
+        ) : null}
 
-      <section className="game-grid" aria-label="游戏入口">
-        <Link className="game-card game-card--clocktower" to="/clocktower">
-          <Clock3 size={34} strokeWidth={1.8} />
-          <span>
-            <strong>血染钟楼</strong>
-            <small>暗流涌动 · 自动说书人</small>
-          </span>
-          <ArrowRight size={20} />
-        </Link>
-        <div className="game-card game-card--poker" aria-disabled="true">
-          <Spade size={34} strokeWidth={1.8} />
-          <span>
-            <strong>德州扑克</strong>
-            <small>入口已预留</small>
-          </span>
-          <span className="status-label">开发中</span>
-        </div>
-      </section>
+        <section className="home__grid" aria-label="游戏入口">
+          <Link className="home__card home__card--clocktower" to="/clocktower">
+            <span className="home__card-icon">
+              <Clock3 size={30} strokeWidth={1.6} />
+            </span>
+            <span className="home__card-body">
+              <strong>血染钟楼</strong>
+              <small>暗流涌动 · 自动说书人</small>
+            </span>
+            <span className="home__card-cta">
+              进入
+              <ArrowRight size={16} />
+            </span>
+          </Link>
+
+          <div className="home__card home__card--poker" aria-disabled="true">
+            <span className="home__card-icon">
+              <Spade size={30} strokeWidth={1.6} />
+            </span>
+            <span className="home__card-body">
+              <strong>德州扑克</strong>
+              <small>入口已预留</small>
+            </span>
+            <span className="home__card-tag">敬请期待</span>
+          </div>
+        </section>
+
+        <footer className="home__foot">
+          <span>本地部署 · 数据自托管</span>
+        </footer>
+      </div>
     </AppShell>
   );
 }
@@ -106,8 +121,8 @@ function ClocktowerEntryPage() {
   return (
     <AppShell title="血染钟楼" backTo="/" actions={<ClocktowerReferenceButton />}>
       <section className="entry-layout">
-        <div className="entry-heading">
-          <Clock3 size={36} />
+        <div className="entry-hero">
+          <div className="entry-hero__logo" aria-hidden="true" />
           <div>
             <p className="eyebrow">TROUBLE BREWING</p>
             <h1>暗流涌动</h1>
@@ -207,13 +222,20 @@ function ClocktowerRoomPage() {
   const [nightSelection, setNightSelection] = useState<string[]>([]);
   const [now, setNow] = useState(Date.now());
 
-  const socket = useMemo<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(() => {
-    if (!session) return undefined;
-    return io({ auth: { roomCode, sessionToken: session.sessionToken } });
-  }, [roomCode, session]);
+  // Socket is created inside the effect (not useMemo) so that every mount owns a
+  // fresh connection that is fully torn down on unmount. Under <StrictMode> React
+  // mounts→unmounts→remounts in dev: a useMemo socket would be reused across that
+  // cycle, leaving it disconnected with stale listeners. Keeping the lifecycle in
+  // an effect guarantees a clean connect/disconnect pair each time.
+  const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(undefined);
+  const sessionToken = session?.sessionToken;
 
   useEffect(() => {
-    if (!socket) return;
+    if (!sessionToken) return;
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io({
+      auth: { roomCode, sessionToken }
+    });
+    socketRef.current = socket;
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
     socket.on("room:view", setView);
@@ -221,9 +243,11 @@ function ClocktowerRoomPage() {
     socket.on("connect_error", (cause) => setError(cause.message));
     setConnected(socket.connected);
     return () => {
+      socket.removeAllListeners();
       socket.disconnect();
+      socketRef.current = undefined;
     };
-  }, [socket]);
+  }, [roomCode, sessionToken]);
 
   useEffect(() => {
     const hide = () => setRoleVisible(false);
@@ -312,7 +336,7 @@ function ClocktowerRoomPage() {
               onPointerDown={() => setRoleVisible(true)}
               onPointerEnd={() => setRoleVisible(false)}
               onConfirm={() =>
-                send((callback) => socket?.emit("clocktower:confirm-role", callback))
+                send((callback) => socketRef.current?.emit("clocktower:confirm-role", callback))
               }
             />
           ) : null}
@@ -320,7 +344,7 @@ function ClocktowerRoomPage() {
           <ClocktowerTable
             view={view}
             onSetSeat={(seat) =>
-              send((callback) => socket?.emit("room:set-seat", seat, callback))
+              send((callback) => socketRef.current?.emit("room:set-seat", seat, callback))
             }
           />
 
@@ -343,11 +367,11 @@ function ClocktowerRoomPage() {
               }}
               onSubmit={() =>
                 send((callback) =>
-                  socket?.emit("clocktower:night-select", nightSelection, callback)
+                  socketRef.current?.emit("clocktower:night-select", nightSelection, callback)
                 )
               }
               onAcknowledge={() =>
-                send((callback) => socket?.emit("clocktower:night-ack", callback))
+                send((callback) => socketRef.current?.emit("clocktower:night-ack", callback))
               }
             />
           ) : null}
@@ -357,22 +381,22 @@ function ClocktowerRoomPage() {
               view={view}
               now={now}
               onRequestNominations={() =>
-                send((callback) => socket?.emit("clocktower:request-nominations", callback))
+                send((callback) => socketRef.current?.emit("clocktower:request-nominations", callback))
               }
               onNominate={(targetPlayerId) =>
-                send((callback) => socket?.emit("clocktower:nominate", targetPlayerId, callback))
+                send((callback) => socketRef.current?.emit("clocktower:nominate", targetPlayerId, callback))
               }
               onRequestClose={() =>
-                send((callback) => socket?.emit("clocktower:request-close-nominations", callback))
+                send((callback) => socketRef.current?.emit("clocktower:request-close-nominations", callback))
               }
               onSetVote={(voting) =>
-                send((callback) => socket?.emit("clocktower:set-vote", voting, callback))
+                send((callback) => socketRef.current?.emit("clocktower:set-vote", voting, callback))
               }
               onSlayerClaim={(targetPlayerId) =>
-                send((callback) => socket?.emit("clocktower:slayer-claim", targetPlayerId, callback))
+                send((callback) => socketRef.current?.emit("clocktower:slayer-claim", targetPlayerId, callback))
               }
               onSendChat={(message) =>
-                send((callback) => socket?.emit("chat:send", message, callback))
+                send((callback) => socketRef.current?.emit("chat:send", message, callback))
               }
             />
           ) : null}
@@ -392,7 +416,7 @@ function ClocktowerRoomPage() {
                 disabled={selfPlayer?.seat === null}
                 onClick={() =>
                   send((callback) =>
-                    socket?.emit("room:set-ready", !selfPlayer?.ready, callback)
+                    socketRef.current?.emit("room:set-ready", !selfPlayer?.ready, callback)
                   )
                 }
               >
@@ -404,7 +428,7 @@ function ClocktowerRoomPage() {
                   className="primary-button primary-button--dark"
                   type="button"
                   disabled={!canStart}
-                  onClick={() => send((callback) => socket?.emit("room:start", callback))}
+                  onClick={() => send((callback) => socketRef.current?.emit("room:start", callback))}
                 >
                   <Clock3 size={18} />
                   开始配角
