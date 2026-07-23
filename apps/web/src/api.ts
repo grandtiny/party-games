@@ -2,6 +2,8 @@ import type {
   CreateRoomRequest,
   JoinRoomRequest,
   RecoverRoomRequest,
+  RulesAnswerResponse,
+  RulesQuestionRequest,
   RoomSessionResponse
 } from "@party-games/shared";
 
@@ -15,6 +17,12 @@ export async function joinRoom(input: JoinRoomRequest): Promise<RoomSessionRespo
 
 export async function recoverRoom(input: RecoverRoomRequest): Promise<RoomSessionResponse> {
   return request("/api/rooms/recover", input);
+}
+
+export async function askClocktowerRules(
+  input: RulesQuestionRequest
+): Promise<RulesAnswerResponse> {
+  return request("/api/clocktower/rules/ask", input);
 }
 
 async function request<T>(path: string, body: unknown): Promise<T> {

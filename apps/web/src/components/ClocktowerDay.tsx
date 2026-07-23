@@ -5,6 +5,7 @@ import {
   Hand,
   MessageCircle,
   Moon,
+  RotateCcw,
   Send,
   Skull,
   Sun,
@@ -33,22 +34,20 @@ interface ClocktowerDayProps {
   view: RoomView;
   now: number;
   onRequestNominations: () => void;
-  onNominate: (targetPlayerId: string) => void;
   onRequestClose: () => void;
   onSetVote: (voting: boolean) => void;
-  onSlayerClaim: (targetPlayerId: string) => void;
   onSendChat: (message: { recipientPlayerId?: string; content: string }) => void;
+  onRematch: () => void;
 }
 
 export function ClocktowerDay({
   view,
   now,
   onRequestNominations,
-  onNominate,
   onRequestClose,
   onSetVote,
-  onSlayerClaim,
-  onSendChat
+  onSendChat,
+  onRematch
 }: ClocktowerDayProps) {
   const day = view.room.clocktowerDay;
   if (!day) return null;
@@ -61,7 +60,7 @@ export function ClocktowerDay({
   return (
     <>
       {view.room.phase === "game-over" ? (
-        <GameOverPanel winner={day.winner} reason={day.endReason} />
+        <GameOverPanel view={view} playerById={playerById} onRematch={onRematch} />
       ) : view.room.phase !== "night" ? (
         <>
           <DayHeader
@@ -72,26 +71,27 @@ export function ClocktowerDay({
           <DayControlPanel
             view={view}
             now={now}
-            alivePlayers={alivePlayers}
             majority={majority}
             playerById={playerById}
             onRequestNominations={onRequestNominations}
-            onNominate={onNominate}
             onRequestClose={onRequestClose}
             onSetVote={onSetVote}
-            onSlayerClaim={onSlayerClaim}
           />
         </>
       ) : null}
 
-      <PublicEventPanel events={day.publicEvents} playerById={playerById} />
-      <ChatPanel
-        messages={view.chatMessages}
-        players={view.room.players}
-        selfPlayerId={view.self.playerId}
-        writable={chatWritable}
-        onSend={onSendChat}
-      />
+      {view.room.phase !== "game-over" ? (
+        <>
+          <PublicEventPanel events={day.publicEvents} playerById={playerById} />
+          <ChatPanel
+            messages={view.chatMessages}
+            players={view.room.players}
+            selfPlayerId={view.self.playerId}
+            writable={chatWritable}
+            onSend={onSendChat}
+          />
+        </>
+      ) : null}
     </>
   );
 }
@@ -122,30 +122,22 @@ function DayHeader({
 function DayControlPanel({
   view,
   now,
-  alivePlayers,
   majority,
   playerById,
   onRequestNominations,
-  onNominate,
   onRequestClose,
-  onSetVote,
-  onSlayerClaim
+  onSetVote
 }: {
   view: RoomView;
   now: number;
-  alivePlayers: PlayerView[];
   majority: number;
   playerById: Map<string, PlayerView>;
   onRequestNominations: () => void;
-  onNominate: (targetPlayerId: string) => void;
   onRequestClose: () => void;
   onSetVote: (voting: boolean) => void;
-  onSlayerClaim: (targetPlayerId: string) => void;
 }) {
   const day = view.room.clocktowerDay;
   const actions = view.self.dayActions;
-  const [nomineeId, setNomineeId] = useState("");
-  const [slayerTargetId, setSlayerTargetId] = useState("");
   if (!day || !actions) return null;
 
   const nominationRequested = day.nominationRequestPlayerIds.includes(view.self.playerId);
@@ -186,22 +178,10 @@ function DayControlPanel({
       {day.stage === "nominations" ? (
         <div className="day-control-block">
           <ExecutionBlock day={day} playerById={playerById} />
-          <ActionPicker
-            label="提名玩家"
-            value={nomineeId}
-            onChange={setNomineeId}
-            players={alivePlayers}
-            disabled={!actions.canNominate}
-            buttonLabel={
-              day.nominatorsUsedPlayerIds.includes(view.self.playerId) ? "今天已提名" : "确认提名"
-            }
-            icon={<Target size={18} />}
-            onSubmit={() => {
-              if (!nomineeId) return;
-              onNominate(nomineeId);
-              setNomineeId("");
-            }}
-          />
+          <div className="table-action-status">
+            <Target size={18} />
+            <span>{actions.canNominate ? "提名可用" : "提名已使用"}</span>
+          </div>
           <ControlProgress
             icon={<CircleDot size={19} />}
             title="结束提名"
@@ -238,23 +218,9 @@ function DayControlPanel({
               <small>任何玩家都可以声明，系统仅按真实隐藏状态结算</small>
             </span>
           </div>
-          <ActionPicker
-            label="选择目标"
-            value={slayerTargetId}
-            onChange={setSlayerTargetId}
-            players={alivePlayers}
-            disabled={!actions.canSlayerClaim}
-            buttonLabel={
-              day.slayerClaimUsedPlayerIds.includes(view.self.playerId) ? "今天已声明" : "公开声明"
-            }
-            icon={<Crosshair size={18} />}
-            danger
-            onSubmit={() => {
-              if (!slayerTargetId) return;
-              onSlayerClaim(slayerTargetId);
-              setSlayerTargetId("");
-            }}
-          />
+          <span className={`table-action-status ${actions.canSlayerClaim ? "is-available" : ""}`}>
+            {actions.canSlayerClaim ? "声明可用" : "声明已使用"}
+          </span>
         </div>
       ) : null}
     </section>
@@ -279,53 +245,6 @@ function ExecutionBlock({
           {day.blockVoteCount} 票 · {names.length === 1 ? names[0] : `${names.join("、")} 平票`}
         </strong>
       )}
-    </div>
-  );
-}
-
-function ActionPicker({
-  label,
-  value,
-  onChange,
-  players,
-  disabled,
-  buttonLabel,
-  icon,
-  danger = false,
-  onSubmit
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  players: PlayerView[];
-  disabled: boolean;
-  buttonLabel: string;
-  icon: React.ReactNode;
-  danger?: boolean;
-  onSubmit: () => void;
-}) {
-  return (
-    <div className="action-picker">
-      <label>
-        <span>{label}</span>
-        <select value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled}>
-          <option value="">请选择</option>
-          {players.map((player) => (
-            <option value={player.id} key={player.id}>
-              {player.seat ?? "?"}. {player.nickname}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button
-        className={danger ? "danger-button" : "primary-button"}
-        type="button"
-        disabled={disabled || !value}
-        onClick={onSubmit}
-      >
-        {icon}
-        {buttonLabel}
-      </button>
     </div>
   );
 }
@@ -448,20 +367,135 @@ function VotingPanel({
 }
 
 function GameOverPanel({
-  winner,
-  reason
+  view,
+  playerById,
+  onRematch
 }: {
-  winner: "good" | "evil" | undefined;
-  reason: string | undefined;
+  view: RoomView;
+  playerById: Map<string, PlayerView>;
+  onRematch: () => void;
 }) {
+  const review = view.room.clocktowerReview;
+  const winner = review?.winner ?? view.room.clocktowerDay?.winner;
+  const reason = review?.reason ?? view.room.clocktowerDay?.endReason;
   return (
-    <section className={`game-over-panel game-over-panel--${winner ?? "unknown"}`}>
-      <Trophy size={34} />
-      <span className="summary-label">GAME OVER</span>
-      <h2>{winner === "good" ? "善良阵营获胜" : winner === "evil" ? "邪恶阵营获胜" : "游戏结束"}</h2>
-      <p>{reason ?? "胜负已经结算"}</p>
-    </section>
+    <>
+      <section className={`game-over-panel game-over-panel--${winner ?? "unknown"}`}>
+        <Trophy size={34} />
+        <span className="summary-label">GAME OVER</span>
+        <h2>{winner === "good" ? "善良阵营获胜" : winner === "evil" ? "邪恶阵营获胜" : "游戏结束"}</h2>
+        <p>{reason ?? "胜负已经结算"}</p>
+      </section>
+
+      {review ? (
+        <>
+          <section className="panel review-panel">
+            <div className="panel-heading">
+              <div>
+                <span className="summary-label">GRIMOIRE REVEAL</span>
+                <h2>身份公开</h2>
+              </div>
+            </div>
+            <div className="review-roster">
+              {review.players.map((player) => (
+                <div className={player.alive ? "" : "is-dead"} key={player.playerId}>
+                  <span className="seat-number">{player.seat}</span>
+                  <span className="review-player-name">
+                    <strong>{player.nickname}</strong>
+                    <small>{player.alignment === "good" ? "善良阵营" : "邪恶阵营"}</small>
+                  </span>
+                  <span className="review-role">
+                    <strong>{player.initialRole.name}</strong>
+                    {player.shownRole ? <small>看到：{player.shownRole.name}</small> : null}
+                    {player.finalRole.id !== player.initialRole.id ? (
+                      <small>最终：{player.finalRole.name}</small>
+                    ) : null}
+                  </span>
+                  <span className={`review-life ${player.alive ? "is-alive" : "is-dead"}`}>
+                    {player.alive ? "存活" : "死亡"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel review-panel">
+            <div className="panel-heading">
+              <div>
+                <span className="summary-label">PUBLIC TIMELINE</span>
+                <h2>公共复盘</h2>
+              </div>
+            </div>
+            <div className="review-timeline">
+              {review.timeline.map((entry) => (
+                <div key={entry.id}>
+                  <span>第 {entry.dayNumber} 天</span>
+                  <span className="event-icon">{eventIcon(entry.event)}</span>
+                  <p>{eventText(entry.event, playerById)}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel review-panel">
+            <div className="panel-heading">
+              <div>
+                <span className="summary-label">NIGHT AUDIT</span>
+                <h2>夜间动作</h2>
+              </div>
+            </div>
+            <div className="night-history-list">
+              {review.nightHistory.map((entry) => (
+                <div key={entry.id}>
+                  <span>{entry.nightNumber === 0 ? "首夜" : `第 ${entry.nightNumber} 夜`}</span>
+                  <strong>{playerName(playerById, entry.actorPlayerId)}</strong>
+                  <p>
+                    {nightStepLabel(entry.stepId)}
+                    {entry.selectedPlayerIds.length > 0
+                      ? ` · 选择 ${entry.selectedPlayerIds.map((id) => playerName(playerById, id)).join("、")}`
+                      : ""}
+                    {entry.resultText ? ` · ${entry.resultText}` : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="review-seed">
+              <span>随机种子承诺</span>
+              <code>{review.seedCommitment}</code>
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {view.self.isOwner ? (
+        <button className="primary-button primary-button--dark rematch-button" type="button" onClick={onRematch}>
+          <RotateCcw size={18} />
+          再来一局
+        </button>
+      ) : null}
+    </>
   );
+}
+
+function nightStepLabel(stepId: string): string {
+  const labels: Record<string, string> = {
+    minioninfo: "爪牙信息",
+    demoninfo: "恶魔信息",
+    poisoner: "投毒者",
+    washerwoman: "洗衣妇",
+    librarian: "图书管理员",
+    investigator: "调查员",
+    chef: "厨师",
+    empath: "共情者",
+    fortuneteller: "占卜师",
+    butler: "管家",
+    spy: "间谍",
+    monk: "僧侣",
+    imp: "小恶魔",
+    ravenkeeper: "守鸦人",
+    undertaker: "送葬者"
+  };
+  return labels[stepId] ?? stepId;
 }
 
 function PublicEventPanel({

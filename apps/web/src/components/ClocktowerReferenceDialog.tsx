@@ -4,7 +4,9 @@ import {
   type RoleType
 } from "@party-games/clocktower";
 import { BookOpen, ExternalLink, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
+import type { RulesAnswerResponse } from "@party-games/shared";
+import { askClocktowerRules } from "../api";
 
 const ROLE_TYPES: Array<{ type: RoleType; label: string }> = [
   { type: "townsfolk", label: "镇民" },
@@ -19,13 +21,14 @@ export function ClocktowerReferenceButton() {
   return (
     <>
       <button
-        className="icon-button"
+        className="reference-button"
         type="button"
         aria-label="规则与角色资料"
         title="规则与角色资料"
         onClick={() => dialogRef.current?.showModal()}
       >
         <BookOpen size={19} />
+        <span>资料</span>
       </button>
       <ClocktowerReferenceDialog dialogRef={dialogRef} />
     </>
@@ -37,9 +40,13 @@ function ClocktowerReferenceDialog({
 }: {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
 }) {
-  const [mode, setMode] = useState<"roles" | "rules">("roles");
+  const [mode, setMode] = useState<"roles" | "rules" | "qa">("roles");
   const [roleType, setRoleType] = useState<RoleType>("townsfolk");
   const [selectedRoleId, setSelectedRoleId] = useState("washerwoman");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<RulesAnswerResponse>();
+  const [questionError, setQuestionError] = useState<string>();
+  const [asking, setAsking] = useState(false);
   const roles = useMemo(
     () => TROUBLE_BREWING_REFERENCE_ROLES.filter((role) => role.type === roleType),
     [roleType]
@@ -51,6 +58,21 @@ function ClocktowerReferenceDialog({
     setRoleType(type);
     const firstRole = TROUBLE_BREWING_REFERENCE_ROLES.find((role) => role.type === type);
     if (firstRole) setSelectedRoleId(firstRole.id);
+  };
+
+  const askQuestion = async (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = question.trim();
+    if (trimmed.length < 2 || asking) return;
+    setAsking(true);
+    setQuestionError(undefined);
+    try {
+      setAnswer(await askClocktowerRules({ question: trimmed }));
+    } catch (error) {
+      setQuestionError(error instanceof Error ? error.message : "规则问答失败");
+    } finally {
+      setAsking(false);
+    }
   };
 
   return (
@@ -95,6 +117,15 @@ function ClocktowerReferenceDialog({
             onClick={() => setMode("rules")}
           >
             规则
+          </button>
+          <button
+            className={mode === "qa" ? "is-active" : ""}
+            type="button"
+            role="tab"
+            aria-selected={mode === "qa"}
+            onClick={() => setMode("qa")}
+          >
+            问答
           </button>
         </div>
 
@@ -165,17 +196,53 @@ function ClocktowerReferenceDialog({
                 ) : null}
               </div>
             </>
-          ) : (
+          ) : mode === "rules" ? (
             <div className="rules-reference-list">
               {TROUBLE_BREWING_RULES_REFERENCE.map((section) => (
                 <section className="reference-section" key={section.id}>
                   <h2>{section.title}</h2>
                   <p>{section.summary}</p>
-                  <ul>
-                    {section.points.map((point) => <li key={point}>{point}</li>)}
-                  </ul>
+                  {section.ordered ? (
+                    <ol>
+                      {section.points.map((point) => <li key={point}>{point}</li>)}
+                    </ol>
+                  ) : (
+                    <ul>
+                      {section.points.map((point) => <li key={point}>{point}</li>)}
+                    </ul>
+                  )}
                 </section>
               ))}
+            </div>
+          ) : (
+            <div className="rules-question-panel">
+              <form onSubmit={askQuestion}>
+                <label htmlFor="rules-question">规则问题</label>
+                <div>
+                  <input
+                    id="rules-question"
+                    value={question}
+                    maxLength={300}
+                    placeholder="例如：死亡玩家还能投票吗"
+                    onChange={(event) => setQuestion(event.target.value)}
+                  />
+                  <button className="primary-button" type="submit" disabled={asking || question.trim().length < 2}>
+                    {asking ? "查询中" : "提问"}
+                  </button>
+                </div>
+              </form>
+              {questionError ? <p className="form-error">{questionError}</p> : null}
+              {answer ? (
+                <article className="rules-answer" aria-live="polite">
+                  <header>
+                    <strong>规则答复</strong>
+                    <span>{answer.source === "model" ? "大模型 · 本地资料约束" : "本地资料"}</span>
+                  </header>
+                  {answer.answer.split("\n").map((paragraph, index) =>
+                    paragraph ? <p key={`${paragraph}-${index}`}>{paragraph}</p> : <br key={`break-${index}`} />
+                  )}
+                </article>
+              ) : null}
             </div>
           )}
         </div>

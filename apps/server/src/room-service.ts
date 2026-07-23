@@ -32,6 +32,7 @@ import type {
   ClocktowerDayView,
   ClocktowerNightActionView,
   ClocktowerNightResultView,
+  ClocktowerReviewView,
   ClocktowerRoleView,
   CreateRoomRequest,
   DayActionPermissions,
@@ -48,7 +49,12 @@ import {
   hashSecret,
   verifyPassword
 } from "./auth.js";
-import type { InternalPlayer, InternalRoomState, RoomEvent } from "./domain.js";
+import {
+  ROOM_STATE_SCHEMA_VERSION,
+  type InternalPlayer,
+  type InternalRoomState,
+  type RoomEvent
+} from "./domain.js";
 import type { PresenceTracker } from "./presence.js";
 import type { SqliteRoomRepository } from "./repository.js";
 
@@ -83,6 +89,7 @@ export class RoomService {
     const recoveryCode = createRecoveryCode();
     const now = new Date().toISOString();
     const state: InternalRoomState = {
+      schemaVersion: ROOM_STATE_SCHEMA_VERSION,
       id: randomUUID(),
       code: roomCode,
       gameType: input.gameType,
@@ -153,9 +160,11 @@ export class RoomService {
       };
 
       this.repository.commit(state.version, nextState, event, {
-        playerId,
-        tokenHash: hashSecret(sessionToken),
-        recoveryHash: hashSecret(recoveryCode)
+        newSession: {
+          playerId,
+          tokenHash: hashSecret(sessionToken),
+          recoveryHash: hashSecret(recoveryCode)
+        }
       });
 
       return { roomCode: state.code, playerId, sessionToken, recoveryCode };
@@ -234,6 +243,7 @@ export class RoomService {
 
     const game = state.clocktower?.game;
     const dayActions = game ? this.#dayActionPermissions(game, playerId) : undefined;
+    const clocktowerReview = state.phase === "game-over" ? this.#reviewView(state) : undefined;
     const chatMessages = this.repository.getVisibleChatMessages(state.id, playerId);
 
     return {
@@ -248,6 +258,7 @@ export class RoomService {
           ? { dayNumber: state.clocktower.dayNumber }
           : {}),
         ...(game ? { clocktowerDay: this.#dayView(game) } : {}),
+        ...(clocktowerReview ? { clocktowerReview } : {}),
         players: [...state.players]
           .sort(comparePlayersBySeat)
           .map((player) => ({
@@ -346,7 +357,8 @@ export class RoomService {
           setup,
           seedCommitment,
           roleConfirmedPlayerIds: [],
-          dayNumber: 0
+          dayNumber: 0,
+          timeline: []
         }
       });
 
@@ -395,6 +407,30 @@ export class RoomService {
           dayNumber: firstNight.complete ? 1 : 0
         }
       };
+    });
+  }
+
+  async resetGame(roomCode: string, playerId: string): Promise<void> {
+    await this.#withLock(roomCode, async () => {
+      const state = this.#requireRoom(roomCode);
+      if (state.ownerPlayerId !== playerId) throw new Error("只有房主可以发起再来一局");
+      if (state.phase !== "game-over") throw new Error("当前对局尚未结束");
+
+      const nextState = this.#nextState(state, {
+        phase: "lobby",
+        players: state.players.map((player) => ({ ...player, ready: false })),
+        clocktower: undefined
+      });
+      this.repository.commit(
+        state.version,
+        nextState,
+        {
+          type: "GAME_RESET",
+          actorPlayerId: playerId,
+          payload: {}
+        },
+        { clearChatMessages: true }
+      );
     });
   }
 
@@ -449,11 +485,7 @@ export class RoomService {
         );
         return {
           phase: this.#phaseForGame(game),
-          clocktower: {
-            ...state.clocktower,
-            game,
-            dayNumber: game.day.number
-          }
+          clocktower: this.#clocktowerWithGame(state, game)
         };
       }
     );
@@ -500,11 +532,7 @@ export class RoomService {
         );
         return {
           phase: this.#phaseForGame(game),
-          clocktower: {
-            ...state.clocktower,
-            game,
-            dayNumber: game.day.number
-          }
+          clocktower: this.#clocktowerWithGame(state, game)
         };
       }
     );
@@ -620,11 +648,7 @@ export class RoomService {
 
         const nextState = this.#nextState(state, {
           phase: this.#phaseForGame(game),
-          clocktower: {
-            ...state.clocktower,
-            game,
-            dayNumber: game.day.number
-          }
+          clocktower: this.#clocktowerWithGame(state, game)
         });
         this.repository.commit(state.version, nextState, {
           type: "VOTE_TICK",
@@ -694,11 +718,7 @@ export class RoomService {
       }
       return {
         phase: this.#phaseForGame(game),
-        clocktower: {
-          ...state.clocktower,
-          game,
-          dayNumber: game.day.number
-        }
+        clocktower: this.#clocktowerWithGame(state, game)
       };
     });
   }
@@ -750,6 +770,108 @@ export class RoomService {
       ...(game.winner ? { winner: game.winner } : {}),
       ...(game.endReason ? { endReason: game.endReason } : {})
     };
+  }
+
+  #clocktowerWithGame(
+    state: InternalRoomState,
+    game: TroubleBrewingGameState
+  ): NonNullable<InternalRoomState["clocktower"]> {
+    const clocktower = state.clocktower;
+    if (!clocktower) throw new Error("血染钟楼状态不存在");
+    const before = clocktower.game;
+    const newEvents = !before
+      ? game.day.publicEvents
+      : game.day.number === before.day.number
+        ? game.day.publicEvents.slice(before.day.publicEvents.length)
+        : game.day.publicEvents;
+    const timeline = [
+      ...clocktower.timeline,
+      ...newEvents.map((event, index) => ({
+        id: `${state.version + 1}:${index}`,
+        dayNumber: game.day.number,
+        event: structuredClone(event)
+      }))
+    ];
+    return {
+      ...clocktower,
+      game,
+      dayNumber: game.day.number,
+      timeline
+    };
+  }
+
+  #reviewView(state: InternalRoomState): ClocktowerReviewView | undefined {
+    const clocktower = state.clocktower;
+    const game = clocktower?.game;
+    if (!clocktower || !game?.winner || !game.endReason) return undefined;
+
+    const players = [...state.players].sort(comparePlayersBySeat).map((player) => {
+      if (player.seat === null) throw new Error("结束对局中的玩家缺少座位");
+      const assignment = clocktower.setup.assignments.find(
+        (candidate) => candidate.playerId === player.id
+      );
+      const finalState = game.players[player.id];
+      if (!assignment || !finalState) throw new Error("结束对局身份状态不存在");
+      const initialRole = this.#roleView(assignment.actualRoleId);
+      const shownRole =
+        assignment.shownRoleId !== assignment.actualRoleId
+          ? this.#roleView(assignment.shownRoleId)
+          : undefined;
+      return {
+        playerId: player.id,
+        nickname: player.nickname,
+        seat: player.seat,
+        initialRole,
+        ...(shownRole ? { shownRole } : {}),
+        finalRole: this.#roleView(finalState.roleId),
+        alignment: finalState.alignment,
+        alive: finalState.alive
+      };
+    });
+
+    const firstNightEntries = (clocktower.firstNight?.history ?? []).map((entry, index) => ({
+      id: `first:${index}`,
+      nightNumber: 0,
+      stepId: entry.stepId,
+      actorPlayerId: entry.playerId,
+      action: entry.action,
+      selectedPlayerIds: [...(entry.selectedPlayerIds ?? [])],
+      ...(entry.result ? { resultText: this.#nightHistoryResultText(entry.result) } : {})
+    }));
+    const otherNightEntries = game.completedNights.flatMap((night) =>
+      night.entries.map((entry, index) => ({
+        id: `night:${night.number}:${index}`,
+        nightNumber: night.number,
+        stepId: entry.stepId,
+        actorPlayerId: entry.playerId,
+        action: entry.action,
+        selectedPlayerIds: [...(entry.selectedPlayerIds ?? [])],
+        ...(entry.result ? { resultText: this.#nightHistoryResultText(entry.result) } : {})
+      }))
+    );
+
+    return {
+      winner: game.winner,
+      reason: game.endReason,
+      seedCommitment: clocktower.seedCommitment,
+      players,
+      timeline: clocktower.timeline.map((entry) => ({
+        id: entry.id,
+        dayNumber: entry.dayNumber,
+        event: structuredClone(entry.event)
+      })),
+      nightHistory: [...firstNightEntries, ...otherNightEntries]
+    };
+  }
+
+  #nightHistoryResultText(result: FirstNightResult | OtherNightResult): string {
+    if (result.kind === "number") return `得到数字 ${result.value}`;
+    if (result.kind === "yes-no") return result.value ? "得到肯定信息" : "得到否定信息";
+    if (result.kind === "role") return `得知角色：${this.#roleView(result.roleId).name}`;
+    if (result.kind === "role-pair") return `得知角色线索：${this.#roleView(result.roleId).name}`;
+    if (result.kind === "no-outsiders") return "得知场上没有外来者";
+    if (result.kind === "evil-team") return "确认邪恶阵营成员和恶魔伪装角色";
+    return "查看魔典";
   }
 
   #dayActionPermissions(

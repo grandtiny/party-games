@@ -215,6 +215,17 @@ describe("room projections", () => {
         (event) => event.kind === "night-deaths"
       )
     ).toBe(true);
+    const secondDayState = repository.getRoom(owner.roomCode);
+    expect(secondDayState?.clocktower?.timeline.map((entry) => entry.event.kind)).toEqual(
+      expect.arrayContaining([
+        "nominations-opened",
+        "nomination",
+        "vote-completed",
+        "execution",
+        "night-deaths"
+      ])
+    );
+    expect(secondDayState?.clocktower?.game?.completedNights).toHaveLength(1);
     repository.close();
   });
 });

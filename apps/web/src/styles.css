@@ -104,6 +104,24 @@ a {
   color: #333a35;
 }
 
+.reference-button {
+  display: inline-flex;
+  min-width: 68px;
+  height: 36px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #d2d7d0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 10px;
+  color: #333a35;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .page {
   width: min(100%, 920px);
   margin: 0 auto;
@@ -663,6 +681,17 @@ h2 {
   outline-offset: 2px;
 }
 
+.clocktower-seat.is-selectable .player-avatar {
+  box-shadow:
+    0 0 0 3px #d6a83b,
+    0 2px 6px rgb(20 27 23 / 35%);
+}
+
+.clocktower-seat.is-selected .player-avatar {
+  outline: 4px solid #f0bd3c;
+  outline-offset: 3px;
+}
+
 .clocktower-seat.is-dead .clocktower-seat__name {
   color: #6c6365;
   text-decoration: line-through;
@@ -719,6 +748,45 @@ h2 {
   gap: 12px;
   border-top: 1px solid #e1e4df;
   padding: 12px 14px;
+}
+
+.table-player-actions {
+  display: grid;
+  grid-template-columns: 30px minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #dfe3dd;
+  background: #f7f8f6;
+  padding: 10px 14px;
+}
+
+.table-player-actions > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.table-player-actions > span:nth-child(2) strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-player-actions > span:nth-child(2) small {
+  color: #777f78;
+  font-size: 10px;
+}
+
+.table-player-actions > div {
+  display: flex;
+  gap: 7px;
+}
+
+.table-player-actions .primary-button,
+.table-player-actions .danger-button {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .waiting-players__label {
@@ -922,53 +990,43 @@ h2 {
   line-height: 1.55;
 }
 
-.night-options {
+.night-selection-summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 14px 0;
-}
-
-.night-options button {
-  display: grid;
-  min-height: 46px;
-  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
-  cursor: pointer;
+  gap: 10px;
   border: 1px solid #4c4857;
   border-radius: 6px;
   background: #302e39;
-  color: #f7f5f7;
-  padding: 8px 10px;
-  text-align: left;
+  padding: 10px;
+  margin: 14px 0;
 }
 
-.night-options button > span:first-child {
+.night-selection-summary > span {
   display: grid;
-  width: 26px;
-  height: 26px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border-radius: 5px;
-  background: #464250;
+  border-radius: 50%;
+  background: #d0a02f;
+  color: #201c12;
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 800;
 }
 
-.night-option-name {
-  display: grid;
+.night-selection-summary > div {
+  display: flex;
   min-width: 0;
-  gap: 1px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.night-option-name small {
-  color: #aaa6af;
-  font-size: 10px;
-}
-
-.night-options button.is-selected {
-  border-color: #d2a337;
-  background: #403722;
+.night-selection-summary strong {
+  border: 1px solid #5d5868;
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: #f5f2f5;
+  font-size: 11px;
 }
 
 .primary-button--night {
@@ -1159,22 +1217,6 @@ h2 {
   font-size: 14px;
 }
 
-.action-picker {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px;
-}
-
-.action-picker label {
-  display: grid;
-  gap: 6px;
-  color: #59615b;
-  font-size: 12px;
-  font-weight: 720;
-}
-
-.action-picker select,
 .chat-recipient select {
   width: 100%;
   min-height: 42px;
@@ -1218,6 +1260,21 @@ h2 {
   align-items: flex-start;
   gap: 10px;
   color: #8f1c25;
+}
+
+.table-action-status {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  gap: 6px;
+  color: #777f78;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.table-action-status.is-available,
+.day-control-block .table-action-status {
+  color: #26714e;
 }
 
 .slayer-control__heading > span {
@@ -1407,6 +1464,142 @@ h2 {
 .game-over-panel p {
   margin: 3px 0 0;
   color: #59615b;
+}
+
+.review-panel {
+  overflow: hidden;
+}
+
+.review-roster {
+  display: grid;
+}
+
+.review-roster > div {
+  display: grid;
+  min-height: 64px;
+  grid-template-columns: 40px minmax(110px, 1fr) minmax(130px, 1.2fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e7eae5;
+  padding: 9px 14px;
+}
+
+.review-roster > div:last-child {
+  border-bottom: 0;
+}
+
+.review-roster > div.is-dead {
+  background: #f5f3f3;
+}
+
+.review-player-name,
+.review-role {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.review-player-name strong,
+.review-role strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-player-name small,
+.review-role small {
+  color: #777f78;
+  font-size: 10px;
+}
+
+.review-life {
+  font-size: 11px;
+  font-weight: 780;
+}
+
+.review-life.is-alive {
+  color: #197049;
+}
+
+.review-life.is-dead {
+  color: #8c3840;
+}
+
+.review-timeline,
+.night-history-list {
+  display: grid;
+}
+
+.review-timeline > div {
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 62px 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e7eae5;
+  padding: 8px 14px;
+}
+
+.review-timeline > div:last-child,
+.night-history-list > div:last-child {
+  border-bottom: 0;
+}
+
+.review-timeline > div > span:first-child,
+.night-history-list > div > span {
+  color: #767f78;
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.review-timeline p,
+.night-history-list p {
+  margin: 0;
+  color: #3e4740;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.night-history-list > div {
+  display: grid;
+  min-height: 58px;
+  grid-template-columns: 62px 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e7eae5;
+  padding: 9px 14px;
+}
+
+.night-history-list strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-seed {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid #dfe3dd;
+  background: #f7f8f6;
+  padding: 11px 14px;
+}
+
+.review-seed span {
+  color: #747d76;
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.review-seed code {
+  overflow-wrap: anywhere;
+  color: #424a44;
+  font-size: 10px;
+}
+
+.rematch-button {
+  width: 100%;
 }
 
 .event-panel {
@@ -1650,7 +1843,7 @@ h2 {
 }
 
 .reference-tabs {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-bottom: 1px solid #dfe3dd;
 }
 
@@ -1823,7 +2016,8 @@ h2 {
   font-size: 14px;
 }
 
-.reference-section ul {
+.reference-section ul,
+.reference-section ol {
   display: grid;
   gap: 7px;
   margin: 0;
@@ -1866,6 +2060,65 @@ h2 {
   font-weight: 760;
 }
 
+.rules-question-panel {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-height: 430px;
+  padding: 24px 28px 32px;
+}
+
+.rules-question-panel form {
+  display: grid;
+  gap: 8px;
+}
+
+.rules-question-panel form label {
+  color: #59615b;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.rules-question-panel form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.rules-question-panel input {
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #c8cec6;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.rules-answer {
+  border-top: 1px solid #dfe3dd;
+  padding-top: 18px;
+}
+
+.rules-answer header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rules-answer header span {
+  color: #6f7871;
+  font-size: 10px;
+  font-weight: 740;
+}
+
+.rules-answer p {
+  margin: 0 0 8px;
+  color: #3f4841;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
 .notice {
   margin-bottom: 12px;
   border: 1px solid #dfb7ba;
@@ -1889,14 +2142,6 @@ h2 {
 
   .room-actions {
     grid-template-columns: 1fr;
-  }
-
-  .action-picker {
-    grid-template-columns: 1fr;
-  }
-
-  .action-picker button {
-    width: 100%;
   }
 
   .vote-order {
@@ -1968,6 +2213,44 @@ h2 {
     gap: 2px;
   }
 
+  .table-player-actions {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+
+  .table-player-actions > div {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) 36px;
+  }
+
+  .table-player-actions .primary-button,
+  .table-player-actions .danger-button {
+    width: 100%;
+  }
+
+  .review-roster > div {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .review-role {
+    grid-column: 2 / -1;
+  }
+
+  .review-timeline > div {
+    grid-template-columns: 52px 24px minmax(0, 1fr);
+    padding-inline: 10px;
+  }
+
+  .night-history-list > div {
+    grid-template-columns: 52px minmax(0, 1fr);
+    padding-inline: 10px;
+  }
+
+  .night-history-list p {
+    grid-column: 1 / -1;
+  }
+
   .role-reference-layout {
     grid-template-columns: 1fr;
     min-height: 0;
@@ -1997,6 +2280,19 @@ h2 {
 
   .rules-reference-list {
     padding: 4px 18px 26px;
+  }
+
+  .rules-question-panel {
+    min-height: 360px;
+    padding: 20px 18px 26px;
+  }
+
+  .rules-question-panel form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .rules-question-panel form button {
+    width: 100%;
   }
 
   .reference-dialog__footer {

@@ -1,9 +1,12 @@
 import type { GameType, RoomPhase } from "@party-games/shared";
 import type {
+  DayPublicEvent,
   FirstNightState,
   TroubleBrewingGameState,
   TroubleBrewingSetup
 } from "@party-games/clocktower";
+
+export const ROOM_STATE_SCHEMA_VERSION = 1;
 
 export interface InternalPlayer {
   id: string;
@@ -13,6 +16,7 @@ export interface InternalPlayer {
 }
 
 export interface InternalRoomState {
+  schemaVersion: number;
   id: string;
   code: string;
   gameType: GameType;
@@ -29,7 +33,8 @@ export interface InternalRoomState {
     firstNight?: FirstNightState;
     game?: TroubleBrewingGameState;
     dayNumber: number;
-  };
+    timeline: Array<{ id: string; dayNumber: number; event: DayPublicEvent }>;
+  } | undefined;
 }
 
 export interface NewSession {
@@ -45,6 +50,7 @@ export interface RoomEvent {
     | "PLAYER_READY_SET"
     | "PLAYER_SEAT_SET"
     | "GAME_STARTED"
+    | "GAME_RESET"
     | "ROLE_CONFIRMED"
     | "FIRST_NIGHT_SELECTION"
     | "FIRST_NIGHT_ACKNOWLEDGED"
@@ -58,4 +64,33 @@ export interface RoomEvent {
     | "SLAYER_CLAIMED";
   actorPlayerId: string;
   payload: Record<string, unknown>;
+}
+
+export function migrateInternalRoomState(value: unknown): InternalRoomState {
+  const state = value as InternalRoomState & {
+    schemaVersion?: number;
+    clocktower?: InternalRoomState["clocktower"] & {
+      timeline?: NonNullable<InternalRoomState["clocktower"]>["timeline"];
+    };
+  };
+  return {
+    ...state,
+    schemaVersion: ROOM_STATE_SCHEMA_VERSION,
+    ...(state.clocktower
+      ? {
+          clocktower: {
+            ...state.clocktower,
+            timeline: state.clocktower.timeline ?? [],
+            ...(state.clocktower.game
+              ? {
+                  game: {
+                    ...state.clocktower.game,
+                    completedNights: state.clocktower.game.completedNights ?? []
+                  }
+                }
+              : {})
+          }
+        }
+      : {})
+  };
 }

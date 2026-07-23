@@ -1,7 +1,7 @@
 import { SeededRandom } from "./random.js";
 import { ROLE_BY_ID, type Alignment, type RoleId } from "./roles.js";
 import type { FirstNightState } from "./first-night.js";
-import type { OtherNightState } from "./night.js";
+import type { OtherNightHistoryEntry, OtherNightState } from "./night.js";
 import type { TroubleBrewingSetup } from "./setup.js";
 
 export type DayStage = "discussion" | "nominations" | "voting" | "complete";
@@ -74,6 +74,7 @@ export interface TroubleBrewingGameState {
   ghostVoteUsedPlayerIds: string[];
   virginSpentPlayerIds: string[];
   slayerClaimUsedPlayerIds: string[];
+  completedNights: Array<{ number: number; entries: OtherNightHistoryEntry[] }>;
   winner?: Winner;
   endReason?: string;
   night?: OtherNightState;
@@ -104,6 +105,7 @@ export function createGameStateAfterFirstNight(
     ghostVoteUsedPlayerIds: [],
     virginSpentPlayerIds: [],
     slayerClaimUsedPlayerIds: [],
+    completedNights: [],
     day: {
       number: 1,
       stage: "discussion",
@@ -525,6 +527,13 @@ function cloneGame(game: TroubleBrewingGameState): TroubleBrewingGameState {
     ghostVoteUsedPlayerIds: [...game.ghostVoteUsedPlayerIds],
     virginSpentPlayerIds: [...game.virginSpentPlayerIds],
     slayerClaimUsedPlayerIds: [...game.slayerClaimUsedPlayerIds],
+    completedNights: game.completedNights.map((night) => ({
+      number: night.number,
+      entries: night.entries.map((entry) => ({
+        ...entry,
+        ...(entry.selectedPlayerIds ? { selectedPlayerIds: [...entry.selectedPlayerIds] } : {})
+      }))
+    })),
     day: {
       ...game.day,
       nominationRequestPlayerIds: [...game.day.nominationRequestPlayerIds],

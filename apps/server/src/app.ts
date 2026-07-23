@@ -6,6 +6,7 @@ import {
   CreateRoomRequestSchema,
   JoinRoomRequestSchema,
   RecoverRoomRequestSchema,
+  RulesQuestionRequestSchema,
   type ClientToServerEvents,
   type ServerToClientEvents,
   type SocketData
@@ -14,12 +15,17 @@ import { Server as SocketServer } from "socket.io";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
+import {
+  createLanguageModelAdapterFromEnvironment,
+  RulesAssistant
+} from "./rules-assistant.js";
 
 export interface AppOptions {
   databasePath: string;
   webDistPath?: string;
   webOrigin?: string;
   logger?: boolean;
+  rulesAssistant?: RulesAssistant;
 }
 
 export async function createApp(options: AppOptions) {
@@ -27,6 +33,9 @@ export async function createApp(options: AppOptions) {
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
   const roomService = new RoomService(repository, presence);
+  const rulesAssistant =
+    options.rulesAssistant ?? new RulesAssistant(createLanguageModelAdapterFromEnvironment());
+  const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
   const socketOptions = options.webOrigin ? { cors: { origin: options.webOrigin } } : {};
   const io = new SocketServer<
     ClientToServerEvents,
@@ -35,7 +44,34 @@ export async function createApp(options: AppOptions) {
     SocketData
   >(app.server, socketOptions);
 
-  app.get("/api/health", async () => ({ ok: true }));
+  app.get("/api/health", async () => ({
+    ok: true,
+    databaseSchemaVersion: repository.getSchemaVersion()
+  }));
+
+  app.post("/api/clocktower/rules/ask", async (request, reply) => {
+    try {
+      const now = Date.now();
+      if (rulesQuestionWindows.size > 1000) {
+        for (const [key, value] of rulesQuestionWindows) {
+          if (now - value.startedAt >= 60_000) rulesQuestionWindows.delete(key);
+        }
+      }
+      const window = rulesQuestionWindows.get(request.ip);
+      if (!window || now - window.startedAt >= 60_000) {
+        rulesQuestionWindows.set(request.ip, { startedAt: now, count: 1 });
+      } else {
+        window.count += 1;
+        if (window.count > 20) {
+          return reply.code(429).send({ error: "规则问答请求过于频繁" });
+        }
+      }
+      const input = RulesQuestionRequestSchema.parse(request.body);
+      return await rulesAssistant.answer(input.question);
+    } catch (error) {
+      return reply.code(400).send({ error: messageOf(error) });
+    }
+  });
 
   app.post("/api/rooms", async (request, reply) => {
     try {
@@ -112,6 +148,16 @@ export async function createApp(options: AppOptions) {
     socket.on("room:start", async (callback) => {
       try {
         await roomService.startRoom(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("clocktower:rematch", async (callback) => {
+      try {
+        await roomService.resetGame(roomCode, playerId);
         callback({ ok: true });
         await broadcastRoom(roomCode);
       } catch (error) {
@@ -245,6 +291,7 @@ export async function createApp(options: AppOptions) {
     clearInterval(voteTimer);
     io.close();
     repository.close();
+    rulesQuestionWindows.clear();
   });
 
   return { app, io, roomService, repository, presence };

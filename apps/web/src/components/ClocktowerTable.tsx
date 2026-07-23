@@ -1,13 +1,24 @@
-import { Armchair, Check, Clock3, Crown, Skull } from "lucide-react";
-import type { CSSProperties } from "react";
+import { Armchair, Clock3, Crosshair, Crown, Skull, Target, X } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { RoomView } from "@party-games/shared";
 
 interface ClocktowerTableProps {
   view: RoomView;
   onSetSeat: (seat: number | null) => void;
+  selectedNightPlayerIds: string[];
+  onToggleNightPlayer: (playerId: string) => void;
+  onNominate: (playerId: string) => void;
+  onSlayerClaim: (playerId: string) => void;
 }
 
-export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
+export function ClocktowerTable({
+  view,
+  onSetSeat,
+  selectedNightPlayerIds,
+  onToggleNightPlayer,
+  onNominate,
+  onSlayerClaim
+}: ClocktowerTableProps) {
   const players = view.room.players;
   const seatCount = Math.max(1, players.length);
   const currentVote = view.room.clocktowerDay?.currentVote;
@@ -17,6 +28,16 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
   const waitingPlayers = players.filter((player) => player.seat === null);
   const seatedCount = players.length - waitingPlayers.length;
   const lobby = view.room.phase === "lobby";
+  const nightAction = view.self.privateGame?.nightAction;
+  const nightOptionIds = new Set(nightAction?.options?.map((option) => option.playerId) ?? []);
+  const dayActions = view.self.dayActions;
+  const canTargetByDay = Boolean(dayActions?.canNominate || dayActions?.canSlayerClaim);
+  const [focusedPlayerId, setFocusedPlayerId] = useState<string>();
+  const focusedPlayer = players.find((player) => player.id === focusedPlayerId);
+
+  useEffect(() => {
+    setFocusedPlayerId(undefined);
+  }, [view.room.phase, nightAction?.stepId]);
 
   return (
     <section className="panel clocktower-table">
@@ -45,7 +66,16 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
             } as CSSProperties;
             const isSelf = player?.id === view.self.playerId;
             const voteState = player ? currentVoteState(currentVote, player.id) : undefined;
-            const interactive = lobby && (!player || isSelf);
+            const nightSelectable = Boolean(player && nightOptionIds.has(player.id));
+            const daySelectable = Boolean(
+              player && player.alive !== false && canTargetByDay && !nightAction
+            );
+            const selected = Boolean(
+              player &&
+                (selectedNightPlayerIds.includes(player.id) || focusedPlayerId === player.id)
+            );
+            const interactive =
+              (lobby && (!player || isSelf)) || nightSelectable || daySelectable;
 
             return (
               <button
@@ -55,6 +85,8 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
                   isSelf ? "is-self" : "",
                   player?.alive === false ? "is-dead" : "",
                   player?.id === currentVote?.nomineePlayerId ? "is-nominee" : "",
+                  nightSelectable || daySelectable ? "is-selectable" : "",
+                  selected ? "is-selected" : "",
                   voteState ? `is-vote-${voteState}` : ""
                 ]
                   .filter(Boolean)
@@ -69,7 +101,15 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
                       : `${seat}号座位，${player.nickname}`
                     : `入座${seat}号座位`
                 }
-                onClick={() => onSetSeat(player ? null : seat)}
+                onClick={() => {
+                  if (lobby) {
+                    onSetSeat(player ? null : seat);
+                  } else if (player && nightSelectable) {
+                    onToggleNightPlayer(player.id);
+                  } else if (player && daySelectable) {
+                    setFocusedPlayerId(player.id);
+                  }
+                }}
                 key={seat}
               >
                 <span className={`player-avatar avatar-tone-${player ? avatarTone(player.id) : 0}`}>
@@ -107,7 +147,11 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
                           : isSelf
                             ? "点击离座"
                             : "未准备"
-                        : voteStateLabel(voteState)}
+                        : selected
+                          ? "已选择"
+                          : nightSelectable || daySelectable
+                            ? "可操作"
+                            : voteStateLabel(voteState)}
                   </span>
                 ) : (
                   <span className="clocktower-seat__status">入座</span>
@@ -117,6 +161,52 @@ export function ClocktowerTable({ view, onSetSeat }: ClocktowerTableProps) {
           })}
         </div>
       </div>
+
+      {focusedPlayer && canTargetByDay ? (
+        <div className="table-player-actions">
+          <span className={`waiting-avatar avatar-tone-${avatarTone(focusedPlayer.id)}`}>
+            {avatarInitial(focusedPlayer.nickname)}
+          </span>
+          <span>
+            <strong>{focusedPlayer.seat}. {focusedPlayer.nickname}</strong>
+            <small>公开操作</small>
+          </span>
+          <div>
+            {dayActions?.canNominate ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  onNominate(focusedPlayer.id);
+                  setFocusedPlayerId(undefined);
+                }}
+              >
+                <Target size={17} /> 提名
+              </button>
+            ) : null}
+            {dayActions?.canSlayerClaim ? (
+              <button
+                className="danger-button"
+                type="button"
+                onClick={() => {
+                  onSlayerClaim(focusedPlayer.id);
+                  setFocusedPlayerId(undefined);
+                }}
+              >
+                <Crosshair size={17} /> 猎手声明
+              </button>
+            ) : null}
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="取消选择"
+              onClick={() => setFocusedPlayerId(undefined)}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {waitingPlayers.length > 0 ? (
         <div className="waiting-players">

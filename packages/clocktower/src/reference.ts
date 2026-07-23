@@ -1,3 +1,5 @@
+import { FIRST_NIGHT_ORDER, type FirstNightStepId } from "./first-night.js";
+import { OTHER_NIGHT_ORDER, type OtherNightStepId } from "./night.js";
 import { TROUBLE_BREWING_ROLES, type RoleId } from "./roles.js";
 
 export interface TroubleBrewingRoleGuide {
@@ -12,7 +14,32 @@ export interface TroubleBrewingRuleSection {
   title: string;
   summary: string;
   points: readonly string[];
+  ordered?: boolean;
 }
+
+const NIGHT_STEP_LABELS = {
+  minioninfo: "爪牙信息：确认恶魔与其他爪牙",
+  demoninfo: "恶魔信息：确认爪牙与三个不在场角色",
+  poisoner: "投毒者",
+  washerwoman: "洗衣妇",
+  librarian: "图书管理员",
+  investigator: "调查员",
+  chef: "厨师",
+  empath: "共情者",
+  fortuneteller: "占卜师",
+  butler: "管家",
+  spy: "间谍",
+  monk: "僧侣",
+  imp: "小恶魔",
+  ravenkeeper: "守鸦人",
+  undertaker: "送葬者"
+} as const satisfies Record<FirstNightStepId | OtherNightStepId, string>;
+
+export const TROUBLE_BREWING_FIRST_NIGHT_ORDER_REFERENCE: readonly string[] =
+  FIRST_NIGHT_ORDER.map((stepId) => NIGHT_STEP_LABELS[stepId]);
+
+export const TROUBLE_BREWING_OTHER_NIGHT_ORDER_REFERENCE: readonly string[] =
+  OTHER_NIGHT_ORDER.map((stepId) => NIGHT_STEP_LABELS[stepId]);
 
 export const TROUBLE_BREWING_ROLE_GUIDES = {
   washerwoman: {
@@ -257,6 +284,20 @@ export const TROUBLE_BREWING_RULES_REFERENCE: readonly TroubleBrewingRuleSection
       "完成选择或确认后，系统自动推进到下一名角色。",
       "夜间聊天锁定，全部夜序结束后进入黎明并公布公开死亡信息。"
     ]
+  },
+  {
+    id: "first-night-order",
+    title: "首夜行动顺序",
+    summary: "首夜按以下固定顺序处理；不在场的角色会被跳过，但系统不会向公共界面提示跳过了谁。",
+    points: TROUBLE_BREWING_FIRST_NIGHT_ORDER_REFERENCE,
+    ordered: true
+  },
+  {
+    id: "other-night-order",
+    title: "其他夜晚行动顺序",
+    summary: "第二夜起按以下固定顺序处理。猩红女郎接替恶魔后以小恶魔身份在小恶魔步骤行动；守鸦人仅在当夜死亡时行动；送葬者仅在当天发生处决时获得信息。",
+    points: TROUBLE_BREWING_OTHER_NIGHT_ORDER_REFERENCE,
+    ordered: true
   },
   {
     id: "day",

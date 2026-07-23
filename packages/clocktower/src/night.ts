@@ -330,6 +330,13 @@ function finishNight(game: TroubleBrewingGameState): TroubleBrewingGameState {
   const night = requireNight(next);
   const dayNumber = next.day.number + 1;
   const deathPlayerIds = [...night.deathPlayerIds];
+  next.completedNights.push({
+    number: night.number,
+    entries: night.history.map((entry) => ({
+      ...entry,
+      ...(entry.selectedPlayerIds ? { selectedPlayerIds: [...entry.selectedPlayerIds] } : {})
+    }))
+  });
   delete next.night;
   next.day = {
     number: dayNumber,
@@ -652,6 +659,13 @@ function cloneGame(game: TroubleBrewingGameState): TroubleBrewingGameState {
     ghostVoteUsedPlayerIds: [...game.ghostVoteUsedPlayerIds],
     virginSpentPlayerIds: [...game.virginSpentPlayerIds],
     slayerClaimUsedPlayerIds: [...game.slayerClaimUsedPlayerIds],
+    completedNights: game.completedNights.map((night) => ({
+      number: night.number,
+      entries: night.entries.map((entry) => ({
+        ...entry,
+        ...(entry.selectedPlayerIds ? { selectedPlayerIds: [...entry.selectedPlayerIds] } : {})
+      }))
+    })),
     day: {
       ...game.day,
       nominationRequestPlayerIds: [...game.day.nominationRequestPlayerIds],

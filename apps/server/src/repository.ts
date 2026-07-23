@@ -2,7 +2,12 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type { GameType } from "@party-games/shared";
-import type { InternalRoomState, NewSession, RoomEvent } from "./domain.js";
+import {
+  migrateInternalRoomState,
+  type InternalRoomState,
+  type NewSession,
+  type RoomEvent
+} from "./domain.js";
 
 interface RoomRow {
   id: string;
@@ -19,23 +24,10 @@ interface SessionRow {
   room_id: string;
 }
 
-export interface StoredChatMessage {
-  id: string;
-  senderPlayerId: string;
-  recipientPlayerId?: string;
-  content: string;
-  createdAt: string;
-}
-
-export class SqliteRoomRepository {
-  readonly #database: DatabaseSync;
-
-  constructor(databasePath: string) {
-    mkdirSync(dirname(databasePath), { recursive: true });
-    this.#database = new DatabaseSync(databasePath);
-    this.#database.exec("PRAGMA journal_mode = WAL");
-    this.#database.exec("PRAGMA foreign_keys = ON");
-    this.#database.exec(`
+const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
+  {
+    version: 1,
+    sql: `
       CREATE TABLE IF NOT EXISTS rooms (
         id TEXT PRIMARY KEY,
         code TEXT NOT NULL UNIQUE,
@@ -85,7 +77,40 @@ export class SqliteRoomRepository {
 
       CREATE INDEX IF NOT EXISTS idx_chat_messages_room_created
         ON chat_messages(room_id, created_at);
+    `
+  },
+  {
+    version: 2,
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_room_events_room_type
+        ON room_events(room_id, event_type);
+    `
+  }
+];
+
+export interface StoredChatMessage {
+  id: string;
+  senderPlayerId: string;
+  recipientPlayerId?: string;
+  content: string;
+  createdAt: string;
+}
+
+export class SqliteRoomRepository {
+  readonly #database: DatabaseSync;
+
+  constructor(databasePath: string) {
+    mkdirSync(dirname(databasePath), { recursive: true });
+    this.#database = new DatabaseSync(databasePath);
+    this.#database.exec("PRAGMA journal_mode = WAL");
+    this.#database.exec("PRAGMA foreign_keys = ON");
+    this.#database.exec(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        applied_at TEXT NOT NULL
+      );
     `);
+    this.#applyMigrations();
     this.cleanupExpiredChats();
   }
 
@@ -136,7 +161,7 @@ export class SqliteRoomRepository {
     const row = this.#database
       .prepare("SELECT state_json FROM rooms WHERE code = ?")
       .get(code) as { state_json: string } | undefined;
-    return row ? (JSON.parse(row.state_json) as InternalRoomState) : undefined;
+    return row ? migrateInternalRoomState(JSON.parse(row.state_json)) : undefined;
   }
 
   listRoomCodes(): string[] {
@@ -158,7 +183,7 @@ export class SqliteRoomRepository {
     previousVersion: number,
     nextState: InternalRoomState,
     event: RoomEvent,
-    newSession?: NewSession
+    options?: { newSession?: NewSession; clearChatMessages?: boolean }
   ): void {
     const now = new Date().toISOString();
     this.#database.exec("BEGIN IMMEDIATE");
@@ -181,8 +206,11 @@ export class SqliteRoomRepository {
         throw new Error("Room state changed concurrently");
       }
 
-      if (newSession) {
-        this.#insertSession(nextState.id, newSession, now);
+      if (options?.newSession) {
+        this.#insertSession(nextState.id, options.newSession, now);
+      }
+      if (options?.clearChatMessages) {
+        this.#database.prepare("DELETE FROM chat_messages WHERE room_id = ?").run(nextState.id);
       }
       this.#insertEvent(nextState.id, nextState.version, event, now);
       this.#database.exec("COMMIT");
@@ -293,8 +321,44 @@ export class SqliteRoomRepository {
     this.#database.prepare("DELETE FROM chat_messages WHERE created_at < ?").run(cutoff);
   }
 
+  getSchemaVersion(): number {
+    const row = this.#database
+      .prepare("SELECT MAX(version) AS version FROM schema_migrations")
+      .get() as { version: number | null };
+    return row.version ?? 0;
+  }
+
   close(): void {
     this.#database.close();
+  }
+
+  #applyMigrations(): void {
+    const appliedRows = this.#database
+      .prepare("SELECT version FROM schema_migrations ORDER BY version")
+      .all() as Array<{ version: number }>;
+    const applied = new Set(appliedRows.map((row) => row.version));
+    const latestSupportedVersion = DATABASE_MIGRATIONS.at(-1)?.version ?? 0;
+    const newerVersion = appliedRows.find((row) => row.version > latestSupportedVersion);
+    if (newerVersion) {
+      throw new Error(
+        `Database schema version ${newerVersion.version} is newer than supported ${latestSupportedVersion}`
+      );
+    }
+
+    for (const migration of DATABASE_MIGRATIONS) {
+      if (applied.has(migration.version)) continue;
+      this.#database.exec("BEGIN IMMEDIATE");
+      try {
+        this.#database.exec(migration.sql);
+        this.#database
+          .prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)")
+          .run(migration.version, new Date().toISOString());
+        this.#database.exec("COMMIT");
+      } catch (error) {
+        this.#database.exec("ROLLBACK");
+        throw error;
+      }
+    }
   }
 
   #insertSession(roomId: string, session: NewSession, now: string): void {

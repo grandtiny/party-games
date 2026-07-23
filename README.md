@@ -31,6 +31,17 @@ docker compose up --build
 浏览器打开 `http://localhost:18081`。SQLite 数据保存在 Docker 命名卷 `party-games-data`。
 本地 Compose 默认通过 `mirror.gcr.io` 拉取官方 Node 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
 
+规则问答默认使用仓库内置资料，不需要外部服务。可选配置 OpenAI 兼容接口，仅用于规则答复增强：
+
+```powershell
+$env:CLOCKTOWER_LLM_ENDPOINT = "https://example.com/v1/chat/completions"
+$env:CLOCKTOWER_LLM_API_KEY = "your-key"
+$env:CLOCKTOWER_LLM_MODEL = "model-name"
+docker compose up --build
+```
+
+接口未配置、超时或返回错误时会自动使用本地资料，不影响游戏状态机和裁定。
+
 ## 验证
 
 ```powershell

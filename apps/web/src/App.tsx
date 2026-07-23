@@ -322,6 +322,24 @@ function ClocktowerRoomPage() {
             onSetSeat={(seat) =>
               send((callback) => socket?.emit("room:set-seat", seat, callback))
             }
+            selectedNightPlayerIds={nightSelection}
+            onToggleNightPlayer={(playerId) => {
+              const action = view.self.privateGame?.nightAction;
+              if (!action || action.kind === "acknowledge") return;
+              setNightSelection((current) => {
+                if (current.includes(playerId)) {
+                  return current.filter((candidate) => candidate !== playerId);
+                }
+                if (action.kind === "select-one") return [playerId];
+                return current.length >= 2 ? [current[1] as string, playerId] : [...current, playerId];
+              });
+            }}
+            onNominate={(targetPlayerId) =>
+              send((callback) => socket?.emit("clocktower:nominate", targetPlayerId, callback))
+            }
+            onSlayerClaim={(targetPlayerId) =>
+              send((callback) => socket?.emit("clocktower:slayer-claim", targetPlayerId, callback))
+            }
           />
 
           {view.room.phase === "first-night" || view.room.phase === "night" ? (
@@ -330,17 +348,6 @@ function ClocktowerRoomPage() {
               firstNight={view.room.phase === "first-night"}
               nightNumber={view.room.dayNumber ?? 1}
               selectedPlayerIds={nightSelection}
-              onTogglePlayer={(playerId) => {
-                const action = view.self.privateGame?.nightAction;
-                if (!action || action.kind === "acknowledge") return;
-                setNightSelection((current) => {
-                  if (current.includes(playerId)) {
-                    return current.filter((candidate) => candidate !== playerId);
-                  }
-                  if (action.kind === "select-one") return [playerId];
-                  return current.length >= 2 ? [current[1] as string, playerId] : [...current, playerId];
-                });
-              }}
               onSubmit={() =>
                 send((callback) =>
                   socket?.emit("clocktower:night-select", nightSelection, callback)
@@ -359,20 +366,17 @@ function ClocktowerRoomPage() {
               onRequestNominations={() =>
                 send((callback) => socket?.emit("clocktower:request-nominations", callback))
               }
-              onNominate={(targetPlayerId) =>
-                send((callback) => socket?.emit("clocktower:nominate", targetPlayerId, callback))
-              }
               onRequestClose={() =>
                 send((callback) => socket?.emit("clocktower:request-close-nominations", callback))
               }
               onSetVote={(voting) =>
                 send((callback) => socket?.emit("clocktower:set-vote", voting, callback))
               }
-              onSlayerClaim={(targetPlayerId) =>
-                send((callback) => socket?.emit("clocktower:slayer-claim", targetPlayerId, callback))
-              }
               onSendChat={(message) =>
                 send((callback) => socket?.emit("chat:send", message, callback))
+              }
+              onRematch={() =>
+                send((callback) => socket?.emit("clocktower:rematch", callback))
               }
             />
           ) : null}
@@ -494,7 +498,6 @@ function NightPanel({
   firstNight,
   nightNumber,
   selectedPlayerIds,
-  onTogglePlayer,
   onSubmit,
   onAcknowledge
 }: {
@@ -502,7 +505,6 @@ function NightPanel({
   firstNight: boolean;
   nightNumber: number;
   selectedPlayerIds: string[];
-  onTogglePlayer: (playerId: string) => void;
   onSubmit: () => void;
   onAcknowledge: () => void;
 }) {
@@ -534,22 +536,14 @@ function NightPanel({
       {action.result ? <NightResult result={action.result} /> : null}
 
       {action.kind !== "acknowledge" ? (
-        <div className="night-options">
-          {action.options?.map((option) => (
-            <button
-              type="button"
-              className={selectedPlayerIds.includes(option.playerId) ? "is-selected" : ""}
-              onClick={() => onTogglePlayer(option.playerId)}
-              key={option.playerId}
-            >
-              <span>{option.seat}</span>
-              <span className="night-option-name">
-                {option.nickname}
-                {!option.alive ? <small>死亡</small> : null}
-              </span>
-              {selectedPlayerIds.includes(option.playerId) ? <Check size={17} /> : null}
-            </button>
-          ))}
+        <div className="night-selection-summary">
+          <span>{selectedPlayerIds.length}/{requiredCount}</span>
+          <div>
+            {selectedPlayerIds.map((playerId) => {
+              const player = action.options?.find((option) => option.playerId === playerId);
+              return player ? <strong key={playerId}>{player.seat}. {player.nickname}</strong> : null;
+            })}
+          </div>
         </div>
       ) : null}
 

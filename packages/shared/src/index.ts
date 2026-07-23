@@ -35,6 +35,18 @@ export const RecoverRoomRequestSchema = z.object({
 });
 export type RecoverRoomRequest = z.infer<typeof RecoverRoomRequestSchema>;
 
+export const RulesQuestionRequestSchema = z.object({
+  question: z.string().trim().min(2).max(300)
+});
+export type RulesQuestionRequest = z.infer<typeof RulesQuestionRequestSchema>;
+
+export interface RulesAnswerResponse {
+  answer: string;
+  source: "local" | "model";
+  matchedRoleIds: string[];
+  matchedRuleSectionIds: string[];
+}
+
 export interface RoomSessionResponse {
   roomCode: string;
   playerId: string;
@@ -131,6 +143,42 @@ export type DayPublicEventView =
   | { kind: "execution"; playerId?: string; reason: "vote" | "virgin" | "none" }
   | { kind: "game-over"; winner: "good" | "evil"; reason: string };
 
+export interface ClocktowerTimelineEntryView {
+  id: string;
+  dayNumber: number;
+  event: DayPublicEventView;
+}
+
+export interface ClocktowerReviewPlayerView {
+  playerId: string;
+  nickname: string;
+  seat: number;
+  initialRole: ClocktowerRoleView;
+  shownRole?: ClocktowerRoleView;
+  finalRole: ClocktowerRoleView;
+  alignment: "good" | "evil";
+  alive: boolean;
+}
+
+export interface ClocktowerNightHistoryEntryView {
+  id: string;
+  nightNumber: number;
+  stepId: string;
+  actorPlayerId: string;
+  action: "acknowledge" | "select";
+  selectedPlayerIds: string[];
+  resultText?: string;
+}
+
+export interface ClocktowerReviewView {
+  winner: "good" | "evil";
+  reason: string;
+  seedCommitment: string;
+  players: ClocktowerReviewPlayerView[];
+  timeline: ClocktowerTimelineEntryView[];
+  nightHistory: ClocktowerNightHistoryEntryView[];
+}
+
 export interface ClocktowerDayView {
   stage: "discussion" | "nominations" | "voting" | "complete";
   nominationRequestPlayerIds: string[];
@@ -183,6 +231,7 @@ export interface RoomView {
     seedCommitment?: string;
     dayNumber?: number;
     clocktowerDay?: ClocktowerDayView;
+    clocktowerReview?: ClocktowerReviewView;
     players: PublicPlayerView[];
   };
   self: {
@@ -203,6 +252,7 @@ export interface ClientToServerEvents {
   "room:set-ready": (ready: boolean, callback: (ack: SocketAck) => void) => void;
   "room:set-seat": (seat: number | null, callback: (ack: SocketAck) => void) => void;
   "room:start": (callback: (ack: SocketAck) => void) => void;
+  "clocktower:rematch": (callback: (ack: SocketAck) => void) => void;
   "clocktower:confirm-role": (callback: (ack: SocketAck) => void) => void;
   "clocktower:night-select": (
     playerIds: string[],
