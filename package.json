@@ -16,7 +16,8 @@
     "demo:room": "node scripts/demo-room.mjs",
     "verify:local": "node scripts/verify-local.mjs",
     "verify:poker-local": "node scripts/verify-poker-local.mjs",
-    "verify:poker-ai-local": "node scripts/verify-poker-ai-local.mjs"
+    "verify:poker-ai-local": "node scripts/verify-poker-ai-local.mjs",
+    "verify:poker-tournament-local": "node scripts/verify-poker-tournament-local.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

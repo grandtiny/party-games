@@ -6,9 +6,11 @@ import {
   Crown,
   History,
   Medal,
+  Pause,
   Play,
   RefreshCw,
   ShieldCheck,
+  Timer,
   Trophy,
   TrendingUp,
   UserRound
@@ -126,6 +128,19 @@ export function PokerRoomPage() {
 
           <PokerConfigBar view={view} />
 
+          {table ? (
+            <PokerBlindClock
+              view={view}
+              table={table}
+              onPause={() =>
+                send((callback) => socketRef.current?.emit("poker:pause-blinds", callback))
+              }
+              onResume={() =>
+                send((callback) => socketRef.current?.emit("poker:resume-blinds", callback))
+              }
+            />
+          ) : null}
+
           {view.room.phase === "lobby" ? (
             <>
               <PokerLobbyTable
@@ -239,7 +254,86 @@ function PokerConfigBar({ view }: { view: RoomView }) {
         盲注 {config.smallBlind}/{config.bigBlind}
       </span>
       {config.mode === "tournament" ? (
-        <span>{config.blindStructure?.length ?? 0} 个级别</span>
+        <>
+          <span>{config.blindStructure?.length ?? 0} 个级别</span>
+          <span>
+            {(config.blindAdvanceMode ?? "manual") === "automatic"
+              ? `自动 · ${config.blindLevelDurationMinutes} 分钟/级`
+              : "手动提升"}
+          </span>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+function PokerBlindClock({
+  view,
+  table,
+  onPause,
+  onResume
+}: {
+  view: RoomView;
+  table: PokerTableView;
+  onPause: () => void;
+  onResume: () => void;
+}) {
+  const config = view.room.pokerConfig;
+  const timer = table.blindTimer;
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (timer?.status !== "running") return;
+    setNow(Date.now());
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [timer?.status, timer?.nextLevelAt]);
+
+  if (
+    table.mode !== "tournament" ||
+    (config?.blindAdvanceMode ?? "manual") !== "automatic" ||
+    !timer
+  ) {
+    return null;
+  }
+
+  const configuredDurationMs = (config?.blindLevelDurationMinutes ?? 60) * 60_000;
+  const remainingMs = Math.min(
+    configuredDurationMs,
+    timer.status === "running"
+      ? Math.max(0, (timer.nextLevelAt ?? now) - now)
+      : timer.status === "paused"
+        ? (timer.remainingMs ?? 0)
+        : 0
+  );
+  const status =
+    timer.status === "pending"
+      ? "下一手提升"
+      : timer.status === "finished"
+        ? "最终级别"
+        : timer.status === "paused"
+          ? `已暂停 · ${formatCountdown(remainingMs)}`
+          : formatCountdown(remainingMs);
+
+  return (
+    <section className={`poker-blind-clock is-${timer.status}`} aria-label="淘汰赛盲注计时">
+      <Timer size={18} />
+      <div>
+        <span>盲注计时</span>
+        <strong>{status}</strong>
+      </div>
+      <span>
+        第 {table.blindLevel + 1}/{config?.blindStructure?.length ?? 1} 级
+      </span>
+      {view.self.isOwner && timer.status === "running" ? (
+        <button className="icon-button" type="button" onClick={onPause} title="暂停盲注计时" aria-label="暂停盲注计时">
+          <Pause size={17} />
+        </button>
+      ) : null}
+      {view.self.isOwner && timer.status === "paused" ? (
+        <button className="icon-button" type="button" onClick={onResume} title="恢复盲注计时" aria-label="恢复盲注计时">
+          <Play size={17} />
+        </button>
       ) : null}
     </section>
   );
@@ -561,6 +655,7 @@ function PokerControls({
   const canAdvance =
     view.self.isOwner &&
     table.mode === "tournament" &&
+    (view.room.pokerConfig?.blindAdvanceMode ?? "manual") === "manual" &&
     table.status === "waiting-hand" &&
     table.blindLevel < (view.room.pokerConfig?.blindStructure?.length ?? 1) - 1;
   const canDeal = table.players.filter(
@@ -798,6 +893,13 @@ function playerStatusLabel(status: PokerTablePlayerView["status"]): string {
 
 function signed(value: number): string {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function formatCountdown(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function pokerActionLabel(

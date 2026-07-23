@@ -1,16 +1,22 @@
 import {
   Bot,
+  Hand,
   KeyRound,
   LogIn,
   Plus,
   RefreshCw,
   Spade,
+  Timer,
   Trash2,
   UsersRound
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PokerBlindLevel, PokerTableMode } from "@party-games/shared";
+import type {
+  PokerBlindAdvanceMode,
+  PokerBlindLevel,
+  PokerTableMode
+} from "@party-games/shared";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 import { saveSession } from "../../session";
@@ -23,6 +29,9 @@ export function PokerEntryPage() {
   const [mode, setMode] = useState<EntryMode>("create");
   const [playMode, setPlayMode] = useState<PlayMode>("multiplayer");
   const [tableMode, setTableMode] = useState<PokerTableMode>("points");
+  const [blindAdvanceMode, setBlindAdvanceMode] =
+    useState<PokerBlindAdvanceMode>("manual");
+  const [blindLevelDurationMinutes, setBlindLevelDurationMinutes] = useState(10);
   const [aiPlayerCount, setAiPlayerCount] = useState(3);
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +77,10 @@ export function PokerEntryPage() {
                       smallBlind,
                       bigBlind,
                       blindStructure: blindLevels,
+                      blindAdvanceMode,
+                      ...(blindAdvanceMode === "automatic"
+                        ? { blindLevelDurationMinutes }
+                        : {}),
                       ...(playMode === "solo" ? { aiPlayerCount } : {})
                     }
             })
@@ -245,50 +258,94 @@ export function PokerEntryPage() {
               </div>
 
               {tableMode === "tournament" ? (
-                <div className="blind-editor">
-                  <div className="blind-editor__heading">
-                    <strong>盲注级别</strong>
-                    <button className="icon-button" type="button" onClick={addBlindLevel} title="添加级别">
-                      <Plus size={17} />
-                    </button>
-                  </div>
-                  {blindLevels.map((level, index) => (
-                    <div className="blind-level" key={index}>
-                      <span>{index + 1}</span>
-                      {(["smallBlind", "bigBlind", "ante"] as const).map((field) => (
-                        <label key={field}>
-                          {field === "smallBlind" ? "小盲" : field === "bigBlind" ? "大盲" : "前注"}
-                          <input
-                            type="number"
-                            min={field === "ante" ? 0 : 1}
-                            value={level[field]}
-                            disabled={index === 0 && field !== "ante"}
-                            onChange={(event) =>
-                              setBlindLevels((levels) =>
-                                levels.map((candidate, candidateIndex) =>
-                                  candidateIndex === index
-                                    ? { ...candidate, [field]: Number(event.target.value) }
-                                    : candidate
-                                )
-                              )
-                            }
-                          />
-                        </label>
-                      ))}
+                <>
+                  <div className="blind-schedule-editor">
+                    <strong>盲注推进</strong>
+                    <div className="segmented poker-mode-switch" role="tablist" aria-label="盲注推进">
                       <button
-                        className="icon-button"
                         type="button"
-                        disabled={index === 0}
-                        onClick={() =>
-                          setBlindLevels((levels) => levels.filter((_, levelIndex) => levelIndex !== index))
-                        }
-                        title="删除级别"
+                        className={blindAdvanceMode === "manual" ? "is-active" : ""}
+                        aria-selected={blindAdvanceMode === "manual"}
+                        onClick={() => setBlindAdvanceMode("manual")}
                       >
-                        <Trash2 size={16} />
+                        <Hand size={16} />
+                        手动提升
+                      </button>
+                      <button
+                        type="button"
+                        className={blindAdvanceMode === "automatic" ? "is-active" : ""}
+                        aria-selected={blindAdvanceMode === "automatic"}
+                        onClick={() => {
+                          setBlindAdvanceMode("automatic");
+                          if (blindLevels.length === 1) addBlindLevel();
+                        }}
+                      >
+                        <Timer size={16} />
+                        自动计时
                       </button>
                     </div>
-                  ))}
-                </div>
+                    {blindAdvanceMode === "automatic" ? (
+                      <label>
+                        每级时长（分钟）
+                        <input
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={blindLevelDurationMinutes}
+                          onChange={(event) =>
+                            setBlindLevelDurationMinutes(Number(event.target.value))
+                          }
+                          required
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+
+                  <div className="blind-editor">
+                    <div className="blind-editor__heading">
+                      <strong>盲注级别</strong>
+                      <button className="icon-button" type="button" onClick={addBlindLevel} title="添加级别">
+                        <Plus size={17} />
+                      </button>
+                    </div>
+                    {blindLevels.map((level, index) => (
+                      <div className="blind-level" key={index}>
+                        <span>{index + 1}</span>
+                        {(["smallBlind", "bigBlind", "ante"] as const).map((field) => (
+                          <label key={field}>
+                            {field === "smallBlind" ? "小盲" : field === "bigBlind" ? "大盲" : "前注"}
+                            <input
+                              type="number"
+                              min={field === "ante" ? 0 : 1}
+                              value={level[field]}
+                              disabled={index === 0 && field !== "ante"}
+                              onChange={(event) =>
+                                setBlindLevels((levels) =>
+                                  levels.map((candidate, candidateIndex) =>
+                                    candidateIndex === index
+                                      ? { ...candidate, [field]: Number(event.target.value) }
+                                      : candidate
+                                  )
+                                )
+                              }
+                            />
+                          </label>
+                        ))}
+                        <button
+                          className="icon-button"
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() =>
+                            setBlindLevels((levels) => levels.filter((_, levelIndex) => levelIndex !== index))
+                          }
+                          title="删除级别"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : null}
             </>
           ) : null}

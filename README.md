@@ -63,6 +63,7 @@ $env:BASE_URL = "http://127.0.0.1:18081"
 pnpm verify:local
 pnpm verify:poker-local
 pnpm verify:poker-ai-local
+pnpm verify:poker-tournament-local
 ```
 
 `verify:local` 默认创建五人房间，自动完成首夜、公屏与私聊、进入提名、顺时针投票、处决、普通夜晚行动，并验证黎明进入第二天。
@@ -70,6 +71,8 @@ pnpm verify:poker-ai-local
 `verify:poker-local` 创建两人积分桌，验证入座、准备、发牌、底牌隔离、服务端合法行动、弃牌结算、未跟注筹码退回、行动记录、离桌结算、重新入座和筹码守恒。
 
 `verify:poker-ai-local` 创建一名真人和三名 AI 的积分桌，验证自动入座与准备、拒绝额外真人加入、AI 按顺序逐个行动并停回真人、底牌隔离和筹码守恒。
+
+`verify:poker-tournament-local` 创建两人自动盲注淘汰赛，验证房主暂停/恢复、计时状态投影、拒绝手动跳级，以及截止时间前不会提前提升盲注。
 
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。
 

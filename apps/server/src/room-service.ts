@@ -436,6 +436,26 @@ export class RoomService {
     );
   }
 
+  async pausePokerBlinds(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_BLINDS_PAUSED",
+      "poker:pause-blinds",
+      {}
+    );
+  }
+
+  async resumePokerBlinds(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_BLINDS_RESUMED",
+      "poker:resume-blinds",
+      {}
+    );
+  }
+
   async rematchPoker(roomCode: string, playerId: string): Promise<void> {
     await this.#handleGameCommand(
       roomCode,

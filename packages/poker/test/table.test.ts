@@ -205,8 +205,10 @@ describe("poker table domain", () => {
       2_100
     );
     const engine = restorePokerEngine(advanced.engine);
+    expect(advanced.status).toBe("waiting-hand");
     expect(engine.state.blindLevel).toBe(1);
     expect(engine.state.timestamp).toBe(2_100);
+    expect(deal(advanced).status).toBe("in-hand");
   });
 
   it("allows points rebuys only after a busted player's hand has ended", () => {

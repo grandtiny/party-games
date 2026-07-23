@@ -277,13 +277,17 @@ export function handlePokerTableCommand(
   const tournament = settleTournamentPlayers(state.mode, engine, players);
   players = tournament.players;
   const winnerPlayerId = tournament.winnerPlayerId;
+  const commandCanAdvanceHand =
+    command.type === "poker:deal" || command.type === "poker:act";
   const nextState: PokerTableState = {
     ...state,
     status: winnerPlayerId
       ? "complete"
-      : engine.state.street === Street.SHOWDOWN
-        ? "waiting-hand"
-        : "in-hand",
+      : commandCanAdvanceHand
+        ? engine.state.street === Street.SHOWDOWN
+          ? "waiting-hand"
+          : "in-hand"
+        : state.status,
     engine: createPokerEngineEnvelope(engine, state.engine.tableSeed),
     players,
     ...(blindPositions ? { blindPositions } : {}),

@@ -407,6 +407,26 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("poker:pause-blinds", async (callback) => {
+      try {
+        await roomService.pausePokerBlinds(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:resume-blinds", async (callback) => {
+      try {
+        await roomService.resumePokerBlinds(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("poker:rematch", async (callback) => {
       try {
         await roomService.rematchPoker(roomCode, playerId);

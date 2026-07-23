@@ -21,6 +21,8 @@ const RoomPasswordSchema = z.string().min(4).max(64);
 
 export const PokerTableModeSchema = z.enum(["tournament", "points"]);
 export type PokerTableMode = z.infer<typeof PokerTableModeSchema>;
+export const PokerBlindAdvanceModeSchema = z.enum(["manual", "automatic"]);
+export type PokerBlindAdvanceMode = z.infer<typeof PokerBlindAdvanceModeSchema>;
 
 export const PokerBlindLevelSchema = z
   .object({
@@ -45,6 +47,8 @@ export const PokerRoomConfigSchema = z
     smallBlind: z.number().int().min(1).max(1_000_000),
     bigBlind: z.number().int().min(2).max(1_000_000),
     blindStructure: z.array(PokerBlindLevelSchema).min(1).max(100).optional(),
+    blindAdvanceMode: PokerBlindAdvanceModeSchema.optional(),
+    blindLevelDurationMinutes: z.number().int().min(1).max(60).optional(),
     aiPlayerCount: z.number().int().min(1).max(8).optional()
   })
   .superRefine((config, context) => {
@@ -60,6 +64,16 @@ export const PokerRoomConfigSchema = z
         code: "custom",
         message: "积分桌不使用盲注级别",
         path: ["blindStructure"]
+      });
+    }
+    if (
+      config.mode === "points" &&
+      (config.blindAdvanceMode !== undefined || config.blindLevelDurationMinutes !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "积分桌不使用盲注推进设置",
+        path: ["blindAdvanceMode"]
       });
     }
     if (config.mode === "tournament") {
@@ -78,6 +92,28 @@ export const PokerRoomConfigSchema = z
           code: "custom",
           message: "首个盲注级别必须与初始盲注一致",
           path: ["blindStructure", 0]
+        });
+      }
+      const blindAdvanceMode = config.blindAdvanceMode ?? "manual";
+      if (blindAdvanceMode === "automatic" && config.blindLevelDurationMinutes === undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "自动盲注必须配置每级时长",
+          path: ["blindLevelDurationMinutes"]
+        });
+      }
+      if (blindAdvanceMode === "automatic" && (config.blindStructure?.length ?? 0) < 2) {
+        context.addIssue({
+          code: "custom",
+          message: "自动盲注至少需要两个级别",
+          path: ["blindStructure"]
+        });
+      }
+      if (blindAdvanceMode === "manual" && config.blindLevelDurationMinutes !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "手动盲注不使用每级时长",
+          path: ["blindLevelDurationMinutes"]
         });
       }
     }
@@ -429,6 +465,7 @@ export interface PokerTableView {
   bigBlind: number;
   ante: number;
   blindLevel: number;
+  blindTimer?: PokerBlindTimerView;
   minRaise: number;
   totalPot: number;
   pots: PokerPotView[];
@@ -436,6 +473,12 @@ export interface PokerTableView {
   winners: PokerWinnerView[];
   actionHistory: PokerHandActionView[];
   winnerPlayerId?: string;
+}
+
+export interface PokerBlindTimerView {
+  status: "running" | "paused" | "pending" | "finished";
+  nextLevelAt?: number;
+  remainingMs?: number;
 }
 
 export interface PokerSelfView {
@@ -510,6 +553,8 @@ export interface ClientToServerEvents {
   "poker:cash-out": (callback: (ack: SocketAck) => void) => void;
   "poker:buy-in": (callback: (ack: SocketAck) => void) => void;
   "poker:advance-blinds": (callback: (ack: SocketAck) => void) => void;
+  "poker:pause-blinds": (callback: (ack: SocketAck) => void) => void;
+  "poker:resume-blinds": (callback: (ack: SocketAck) => void) => void;
   "poker:rematch": (callback: (ack: SocketAck) => void) => void;
   "chat:send": (
     message: { recipientPlayerId?: string; content: string },

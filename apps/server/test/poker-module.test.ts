@@ -59,6 +59,8 @@ async function createStartedPokerRoom(
     smallBlind: number;
     bigBlind: number;
     blindStructure?: Array<{ smallBlind: number; bigBlind: number; ante: number }>;
+    blindAdvanceMode?: "manual" | "automatic";
+    blindLevelDurationMinutes?: number;
   }
 ): Promise<{ owner: RoomSessionResponse; second: RoomSessionResponse }> {
   const owner = await service.createRoom({
@@ -100,6 +102,20 @@ describe("poker server module", () => {
         poker: { mode: "points", smallBlind: 5, bigBlind: 10 }
       }).success
     ).toBe(true);
+    expect(
+      CreateRoomRequestSchema.safeParse({
+        gameType: "poker",
+        nickname: "Owner",
+        password: "secret",
+        poker: {
+          mode: "tournament",
+          smallBlind: 5,
+          bigBlind: 10,
+          blindStructure: [{ smallBlind: 5, bigBlind: 10, ante: 0 }],
+          blindAdvanceMode: "automatic"
+        }
+      }).success
+    ).toBe(false);
 
     const { repository } = createRepository();
     const defaultService = new RoomService(repository, new PresenceTracker());
@@ -300,6 +316,107 @@ describe("poker server module", () => {
       smallBlind: 10,
       bigBlind: 20,
       ante: 2
+    });
+  });
+
+  it("persists optional automatic blinds and applies due levels only before the next hand", async () => {
+    const context = createRepository();
+    let repository = context.repository;
+    let service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const { owner, second } = await createStartedPokerRoom(service, {
+      mode: "tournament",
+      smallBlind: 5,
+      bigBlind: 10,
+      blindStructure: [
+        { smallBlind: 5, bigBlind: 10, ante: 0 },
+        { smallBlind: 10, bigBlind: 20, ante: 2 },
+        { smallBlind: 20, bigBlind: 40, ante: 4 }
+      ],
+      blindAdvanceMode: "automatic",
+      blindLevelDurationMinutes: 1
+    });
+
+    await expect(service.pausePokerBlinds(owner.roomCode, second.playerId)).rejects.toThrow(
+      "只有房主可以执行该操作"
+    );
+    await service.pausePokerBlinds(owner.roomCode, owner.playerId);
+    let view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.blindTimer).toMatchObject({ status: "paused" });
+    const pausedRemainingMs = view.room.pokerTable?.blindTimer?.remainingMs;
+    expect(pausedRemainingMs).toBeGreaterThan(0);
+
+    closeRepository(repository);
+    ({ repository } = createRepository(context.databasePath));
+    service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.blindTimer).toEqual({
+      status: "paused",
+      remainingMs: pausedRemainingMs
+    });
+    expect(await service.tickActiveGames(Date.now() + 10 * 60_000)).toEqual([]);
+
+    await service.resumePokerBlinds(owner.roomCode, owner.playerId);
+    let state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.blindTimer?.nextLevelAt) {
+      throw new Error("自动盲注恢复后缺少截止时间");
+    }
+    expect(await service.tickActiveGames(state.poker.blindTimer.nextLevelAt)).toEqual([
+      owner.roomCode
+    ]);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      blindLevel: 0,
+      smallBlind: 5,
+      bigBlind: 10,
+      blindTimer: { status: "pending" }
+    });
+    await expect(service.advancePokerBlinds(owner.roomCode, owner.playerId)).rejects.toThrow(
+      "自动盲注模式不能手动提升级别"
+    );
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      status: "in-hand",
+      blindLevel: 1,
+      smallBlind: 10,
+      bigBlind: 20,
+      ante: 2,
+      blindTimer: { status: "running" }
+    });
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.blindTimer?.nextLevelAt) {
+      throw new Error("第二级自动盲注缺少截止时间");
+    }
+    await service.tickActiveGames(state.poker.blindTimer.nextLevelAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      status: "in-hand",
+      blindLevel: 1,
+      smallBlind: 10,
+      bigBlind: 20,
+      blindTimer: { status: "pending" }
+    });
+
+    const actionPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!actionPlayerId) throw new Error("自动盲注测试缺少行动玩家");
+    await service.actPoker(owner.roomCode, actionPlayerId, "fold");
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      status: "waiting-hand",
+      blindLevel: 1,
+      blindTimer: { status: "pending" }
+    });
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    expect(service.getView(owner.roomCode, owner.playerId).room.pokerTable).toMatchObject({
+      status: "in-hand",
+      blindLevel: 2,
+      smallBlind: 20,
+      bigBlind: 40,
+      ante: 4,
+      blindTimer: { status: "finished" }
     });
   });
 

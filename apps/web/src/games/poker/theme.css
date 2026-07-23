@@ -58,6 +58,18 @@
   padding-top: 16px;
 }
 
+.blind-schedule-editor {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #e1e5df;
+  padding-top: 16px;
+}
+
+.blind-schedule-editor > strong {
+  color: #334139;
+  font-size: 13px;
+}
+
 .blind-editor__heading,
 .blind-level {
   display: flex;
@@ -113,6 +125,49 @@
 
 .poker-config-bar strong {
   color: #26312b;
+}
+
+.poker-blind-clock {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  border-block: 1px solid #d7ddd8;
+  padding: 7px 2px;
+  color: #385146;
+}
+
+.poker-blind-clock > div {
+  display: grid;
+  min-width: 108px;
+  gap: 1px;
+}
+
+.poker-blind-clock > div span,
+.poker-blind-clock > span {
+  color: #707a74;
+  font-size: 10px;
+}
+
+.poker-blind-clock > div strong {
+  font-size: 14px;
+}
+
+.poker-blind-clock > span {
+  margin-left: auto;
+}
+
+.poker-blind-clock .icon-button {
+  flex: none;
+}
+
+.poker-blind-clock.is-pending {
+  border-color: #d8bd69;
+  color: #735c18;
+}
+
+.poker-blind-clock.is-paused {
+  color: #6f4e24;
 }
 
 .poker-lobby-table,
@@ -818,6 +873,14 @@
 
   .poker-seat-position {
     width: 72px;
+  }
+
+  .poker-blind-clock {
+    gap: 8px;
+  }
+
+  .poker-blind-clock > div {
+    min-width: 96px;
   }
 
   .poker-lobby-seat strong,

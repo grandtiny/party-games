@@ -40,7 +40,14 @@ export interface InternalRoomState {
   poker?: {
     config: PokerRoomConfig;
     table?: PokerTableState;
+    blindTimer?: PokerBlindTimerState;
   } | undefined;
+}
+
+export interface PokerBlindTimerState {
+  status: "running" | "paused" | "pending" | "finished";
+  nextLevelAt?: number;
+  remainingMs?: number;
 }
 
 export interface NewSession {
@@ -75,6 +82,9 @@ export interface RoomEvent {
     | "POKER_CASHED_OUT"
     | "POKER_BOUGHT_IN"
     | "POKER_BLINDS_ADVANCED"
+    | "POKER_BLINDS_PAUSED"
+    | "POKER_BLINDS_RESUMED"
+    | "POKER_BLIND_LEVEL_DUE"
     | "POKER_REMATCHED";
   actorPlayerId: string;
   payload: Record<string, unknown>;
