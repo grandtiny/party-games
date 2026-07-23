@@ -1,6 +1,8 @@
 import {
   ArrowRight,
+  Bomb,
   Clock3,
+  Grid3X3,
   Settings as SettingsIcon,
   Spade
 } from "lucide-react";
@@ -72,6 +74,22 @@ export function HomePage() {
             <span className="status-label">开发中</span>
           </div>
         )}
+        <Link className="game-card game-card--minesweeper" to="/minesweeper">
+          <Bomb size={34} strokeWidth={1.8} />
+          <span>
+            <strong>扫雷</strong>
+            <small>经典模式 · 首击安全</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
+        <Link className="game-card game-card--sudoku" to="/sudoku">
+          <Grid3X3 size={34} strokeWidth={1.8} />
+          <span>
+            <strong>数独</strong>
+            <small>四档难度 · 候选笔记</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
       </section>
     </AppShell>
   );

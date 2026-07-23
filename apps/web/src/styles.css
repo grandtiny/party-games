@@ -228,6 +228,22 @@ h2 {
   color: #16734a;
 }
 
+.game-card--minesweeper {
+  border-top: 4px solid #b45309;
+}
+
+.game-card--minesweeper > svg:first-child {
+  color: #b45309;
+}
+
+.game-card--sudoku {
+  border-top: 4px solid #315aa6;
+}
+
+.game-card--sudoku > svg:first-child {
+  color: #315aa6;
+}
+
 .status-label,
 .phase-label {
   width: max-content;

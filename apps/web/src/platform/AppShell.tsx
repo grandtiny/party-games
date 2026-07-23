@@ -7,7 +7,7 @@ interface AppShellProps {
   title?: string;
   backTo?: string;
   actions?: ReactNode;
-  scope?: "platform" | "clocktower" | "poker";
+  scope?: "platform" | "clocktower" | "poker" | "minesweeper" | "sudoku";
 }
 
 export function AppShell({

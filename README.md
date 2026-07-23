@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼和德州扑克入口；当前已实现暗流涌动完整本地循环，以及复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和简单、普通、困难三档确定性单人 AI 对局。
+私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、扫雷和数独入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，以及无需服务端状态的单机扫雷和数独。
 
 ## 本地开发
 
@@ -89,6 +89,8 @@ apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
 apps/web/src/games/clocktower/   血染钟楼页面、组件和主题作用域
 apps/web/src/games/poker/        德扑建房、圆桌大厅、多人牌桌和单人 AI 对局
+apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
+apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。

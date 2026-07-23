@@ -1,0 +1,135 @@
+.app-shell--minesweeper {
+  --action-background: #a24b0b;
+  --action-border: #a24b0b;
+  --action-focus: rgb(162 75 11 / 16%);
+  --game-accent: #a24b0b;
+}
+
+.app-shell--minesweeper .page {
+  width: min(100%, 1120px);
+}
+
+.minesweeper-heading {
+  color: #9a470c;
+}
+
+.minesweeper-input-mode {
+  width: min(100%, 360px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.minesweeper-input-mode button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.minesweeper-input-mode button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.minesweeper-board-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 0 12px;
+  scrollbar-color: #aab1aa #eef0ec;
+}
+
+.minesweeper-board {
+  display: grid;
+  width: max-content;
+  grid-template-columns: repeat(var(--mine-columns), var(--mine-cell-size));
+  gap: 2px;
+  border: 1px solid #9ca39d;
+  background: #9ca39d;
+  padding: 3px;
+}
+
+.minesweeper-cell {
+  display: grid;
+  width: var(--mine-cell-size);
+  height: var(--mine-cell-size);
+  cursor: pointer;
+  place-items: center;
+  border: 1px solid #c8cdc7;
+  border-radius: 2px;
+  background: #eef0ec;
+  color: #232824;
+  font-size: calc(var(--mine-cell-size) * 0.53);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.minesweeper-cell:hover:not(.is-revealed) {
+  background: #e0e4dd;
+}
+
+.minesweeper-cell.is-revealed,
+.minesweeper-cell.is-detonated {
+  cursor: default;
+  border-color: #dde1dc;
+  background: #fff;
+}
+
+.minesweeper-cell.is-flagged,
+.minesweeper-cell.is-winning-flag {
+  color: #a12a32;
+}
+
+.minesweeper-cell.is-detonated {
+  border-color: #a3262f;
+  background: #f4c9cc;
+  color: #9b2029;
+}
+
+.minesweeper-cell[data-count="1"] {
+  color: #315aa6;
+}
+
+.minesweeper-cell[data-count="2"] {
+  color: #17704a;
+}
+
+.minesweeper-cell[data-count="3"] {
+  color: #b4232d;
+}
+
+.minesweeper-cell[data-count="4"] {
+  color: #633f96;
+}
+
+.minesweeper-cell[data-count="5"],
+.minesweeper-cell[data-count="6"],
+.minesweeper-cell[data-count="7"],
+.minesweeper-cell[data-count="8"] {
+  color: #744015;
+}
+
+@media (min-width: 760px) {
+  .minesweeper-board--beginner,
+  .minesweeper-board--intermediate {
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .minesweeper-input-mode {
+    width: 100%;
+  }
+
+  .minesweeper-board {
+    --mine-cell-size: 30px !important;
+  }
+
+  .minesweeper-board--beginner {
+    margin-inline: auto;
+  }
+
+  .puzzle-difficulty button {
+    padding-inline: 5px;
+    font-size: 12px;
+  }
+}
