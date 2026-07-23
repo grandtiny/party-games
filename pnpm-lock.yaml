@@ -26,6 +26,9 @@ importers:
       '@party-games/clocktower':
         specifier: workspace:*
         version: link:../../packages/clocktower
+      '@party-games/game-core':
+        specifier: workspace:*
+        version: link:../../packages/game-core
       '@party-games/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -87,6 +90,12 @@ importers:
         version: 7.3.6(@types/node@24.13.3)(tsx@4.23.1)
 
   packages/clocktower:
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)(tsx@4.23.1)
+
+  packages/game-core:
     devDependencies:
       vitest:
         specifier: ^3.2.4

@@ -7,11 +7,11 @@
     "node": ">=24"
   },
   "scripts": {
-    "build:packages": "pnpm --filter @party-games/shared build && pnpm --filter @party-games/clocktower build",
+    "build:packages": "pnpm --filter @party-games/shared build && pnpm --filter @party-games/game-core build && pnpm --filter @party-games/clocktower build",
     "build": "pnpm build:packages && pnpm --filter @party-games/server build && pnpm --filter @party-games/web build",
     "dev": "pnpm build:packages && concurrently -n server,web -c blue,green \"pnpm --filter @party-games/server dev\" \"pnpm --filter @party-games/web dev\"",
     "start": "pnpm --filter @party-games/server start",
-    "test": "pnpm build:packages && pnpm --filter @party-games/clocktower test && pnpm --filter @party-games/server test",
+    "test": "pnpm build:packages && pnpm --filter @party-games/game-core test && pnpm --filter @party-games/clocktower test && pnpm --filter @party-games/server test",
     "typecheck": "pnpm -r typecheck",
     "demo:room": "node scripts/demo-room.mjs",
     "verify:local": "node scripts/verify-local.mjs"
