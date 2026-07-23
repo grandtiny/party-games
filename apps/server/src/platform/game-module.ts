@@ -10,6 +10,7 @@ export type GameRoomCommand = GameCommand;
 
 export interface GameRoomCreateContext {
   seed: string;
+  now: number;
 }
 
 export interface GameRoomHandleContext {

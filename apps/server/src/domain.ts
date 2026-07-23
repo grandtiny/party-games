@@ -1,4 +1,5 @@
-import type { GameType, RoomPhase } from "@party-games/shared";
+import type { PokerTableState } from "@party-games/poker";
+import type { GameType, PokerRoomConfig, RoomPhase } from "@party-games/shared";
 import type {
   DayPublicEvent,
   FirstNightState,
@@ -35,6 +36,10 @@ export interface InternalRoomState {
     dayNumber: number;
     timeline: Array<{ id: string; dayNumber: number; event: DayPublicEvent }>;
   } | undefined;
+  poker?: {
+    config: PokerRoomConfig;
+    table?: PokerTableState;
+  } | undefined;
 }
 
 export interface NewSession {
@@ -61,7 +66,11 @@ export interface RoomEvent {
     | "NOMINATIONS_CLOSE_REQUESTED"
     | "VOTE_INTENT_SET"
     | "VOTE_TICK"
-    | "SLAYER_CLAIMED";
+    | "SLAYER_CLAIMED"
+    | "POKER_HAND_DEALT"
+    | "POKER_ACTION"
+    | "POKER_REBUY"
+    | "POKER_BLINDS_ADVANCED";
   actorPlayerId: string;
   payload: Record<string, unknown>;
 }

@@ -5,6 +5,7 @@ export type GameType = z.infer<typeof GameTypeSchema>;
 
 export const RoomPhaseSchema = z.enum([
   "lobby",
+  "playing",
   "role-reveal",
   "first-night",
   "day",
@@ -15,11 +16,86 @@ export const RoomPhaseSchema = z.enum([
 ]);
 export type RoomPhase = z.infer<typeof RoomPhaseSchema>;
 
-export const CreateRoomRequestSchema = z.object({
-  gameType: GameTypeSchema,
-  nickname: z.string().trim().min(1).max(20),
-  password: z.string().min(4).max(64)
-});
+const RoomNicknameSchema = z.string().trim().min(1).max(20);
+const RoomPasswordSchema = z.string().min(4).max(64);
+
+export const PokerTableModeSchema = z.enum(["tournament", "points"]);
+export type PokerTableMode = z.infer<typeof PokerTableModeSchema>;
+
+export const PokerBlindLevelSchema = z
+  .object({
+    smallBlind: z.number().int().min(1).max(1_000_000),
+    bigBlind: z.number().int().min(2).max(1_000_000),
+    ante: z.number().int().min(0).max(1_000_000)
+  })
+  .superRefine((level, context) => {
+    if (level.bigBlind <= level.smallBlind) {
+      context.addIssue({
+        code: "custom",
+        message: "大盲必须高于小盲",
+        path: ["bigBlind"]
+      });
+    }
+  });
+export type PokerBlindLevel = z.infer<typeof PokerBlindLevelSchema>;
+
+export const PokerRoomConfigSchema = z
+  .object({
+    mode: PokerTableModeSchema,
+    smallBlind: z.number().int().min(1).max(1_000_000),
+    bigBlind: z.number().int().min(2).max(1_000_000),
+    blindStructure: z.array(PokerBlindLevelSchema).min(1).max(100).optional()
+  })
+  .superRefine((config, context) => {
+    if (config.bigBlind <= config.smallBlind) {
+      context.addIssue({
+        code: "custom",
+        message: "大盲必须高于小盲",
+        path: ["bigBlind"]
+      });
+    }
+    if (config.mode === "points" && config.blindStructure) {
+      context.addIssue({
+        code: "custom",
+        message: "积分桌不使用盲注级别",
+        path: ["blindStructure"]
+      });
+    }
+    if (config.mode === "tournament") {
+      const firstLevel = config.blindStructure?.[0];
+      if (!firstLevel) {
+        context.addIssue({
+          code: "custom",
+          message: "淘汰赛必须配置盲注级别",
+          path: ["blindStructure"]
+        });
+      } else if (
+        firstLevel.smallBlind !== config.smallBlind ||
+        firstLevel.bigBlind !== config.bigBlind
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "首个盲注级别必须与初始盲注一致",
+          path: ["blindStructure", 0]
+        });
+      }
+    }
+  });
+export type PokerRoomConfig = z.infer<typeof PokerRoomConfigSchema>;
+
+export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
+  z.object({
+    gameType: z.literal("clocktower"),
+    nickname: RoomNicknameSchema,
+    password: RoomPasswordSchema
+  }),
+  z.object({
+    gameType: z.literal("poker"),
+    nickname: RoomNicknameSchema,
+    password: RoomPasswordSchema,
+    poker: PokerRoomConfigSchema
+  })
+]);
 export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
 
 export const JoinRoomRequestSchema = z.object({
@@ -276,6 +352,68 @@ export interface ChatMessageView {
   createdAt: string;
 }
 
+export type PokerStreetView = "PREFLOP" | "FLOP" | "TURN" | "RIVER" | "SHOWDOWN";
+export type PokerPlayerStatusView =
+  | "ACTIVE"
+  | "FOLDED"
+  | "ALL_IN"
+  | "SITTING_OUT"
+  | "WAITING"
+  | "BUSTED"
+  | "RESERVED";
+
+export interface PokerTablePlayerView {
+  playerId: string;
+  nickname: string;
+  seat: number;
+  stack: number;
+  pendingAddOn: number;
+  hand: ReadonlyArray<string | null> | null;
+  status: PokerPlayerStatusView;
+  betThisStreet: number;
+  totalInvestedThisHand: number;
+  buyIns: number;
+  netPoints?: number;
+}
+
+export interface PokerPotView {
+  amount: number;
+  eligiblePlayerIds: string[];
+  type: "MAIN" | "SIDE";
+}
+
+export interface PokerWinnerView {
+  playerId: string;
+  amount: number;
+  hand: readonly string[] | null;
+  handRank: string | null;
+}
+
+export interface PokerTableView {
+  mode: PokerTableMode;
+  status: "waiting-hand" | "in-hand" | "complete";
+  handNumber: number;
+  street: PokerStreetView;
+  board: readonly string[];
+  buttonPlayerId?: string;
+  actionPlayerId?: string;
+  smallBlind: number;
+  bigBlind: number;
+  ante: number;
+  blindLevel: number;
+  minRaise: number;
+  pots: PokerPotView[];
+  players: PokerTablePlayerView[];
+  winners: PokerWinnerView[];
+  winnerPlayerId?: string;
+}
+
+export interface PokerSelfView {
+  totalBuyIn: number;
+  cashedOut: number;
+  netPoints: number;
+}
+
 export interface RoomView {
   room: {
     code: string;
@@ -287,6 +425,8 @@ export interface RoomView {
     dayNumber?: number;
     clocktowerDay?: ClocktowerDayView;
     clocktowerReview?: ClocktowerReviewView;
+    pokerConfig?: PokerRoomConfig;
+    pokerTable?: PokerTableView;
     players: PublicPlayerView[];
   };
   self: {
@@ -294,6 +434,7 @@ export interface RoomView {
     isOwner: boolean;
     privateGame?: ClocktowerPrivateView;
     dayActions?: DayActionPermissions;
+    poker?: PokerSelfView;
   };
   chatMessages: ChatMessageView[];
 }

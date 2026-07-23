@@ -1,0 +1,273 @@
+import {
+  createPokerTable,
+  handlePokerTableCommand,
+  migratePokerTable,
+  projectPokerTable,
+  validatePokerTable,
+  validatePokerTableSettings,
+  type PokerPlayerAction,
+  type PokerTableCommand,
+  type PokerTableSettings
+} from "@party-games/poker";
+import type {
+  PokerPlayerStatusView,
+  PokerRoomConfig,
+  PokerTableView as PublicPokerTableView
+} from "@party-games/shared";
+import { migrateInternalRoomState, type InternalRoomState } from "../domain.js";
+import type {
+  GameRoomCommand,
+  GameRoomCreateContext,
+  GameRoomHandleContext,
+  GameRoomProjection,
+  GameRoomProjectionContext,
+  GameRoomTickContext,
+  GameRoomUpdate,
+  ServerGameModule
+} from "../platform/game-module.js";
+import { comparePlayersBySeat } from "../platform/players.js";
+
+export class PokerGameModule implements ServerGameModule {
+  readonly id = "poker" as const;
+  readonly displayName = "德州扑克";
+  readonly minPlayers = 2;
+  readonly maxPlayers = 9;
+
+  create(state: InternalRoomState, context: GameRoomCreateContext): GameRoomUpdate {
+    this.#assertPokerRoom(state);
+    const poker = this.#requirePokerState(state);
+    if (state.players.length < this.minPlayers || state.players.length > this.maxPlayers) {
+      throw new Error(`德州扑克需要 ${this.minPlayers} 到 ${this.maxPlayers} 名玩家`);
+    }
+    const players = [...state.players].sort(comparePlayersBySeat).map((player) => {
+      if (player.seat === null) throw new Error("仍有玩家未入座");
+      return {
+        playerId: player.id,
+        nickname: player.nickname,
+        seat: player.seat - 1
+      };
+    });
+    const table = createPokerTable({
+      ...pokerTableSettings(poker.config),
+      tableSeed: context.seed,
+      now: context.now,
+      players
+    });
+
+    return {
+      changes: {
+        phase: "playing",
+        poker: { ...poker, table }
+      },
+      eventPayload: {
+        mode: poker.config.mode,
+        playerCount: state.players.length,
+        smallBlind: poker.config.smallBlind,
+        bigBlind: poker.config.bigBlind
+      }
+    };
+  }
+
+  handle(
+    state: InternalRoomState,
+    command: GameRoomCommand,
+    context: GameRoomHandleContext
+  ): GameRoomUpdate {
+    this.#assertPokerRoom(state);
+    const poker = this.#requirePokerState(state);
+    if (!poker.table) throw new Error("德扑牌桌尚未初始化");
+    const table = handlePokerTableCommand(
+      poker.table,
+      this.#pokerCommand(command),
+      { now: context.now, ownerPlayerId: state.ownerPlayerId }
+    );
+    return {
+      changes: {
+        phase: table.status === "complete" ? "game-over" : "playing",
+        poker: { ...poker, table }
+      },
+      eventPayload: {
+        command: command.type,
+        handNumber: projectPokerTable(table).table.handNumber,
+        status: table.status
+      }
+    };
+  }
+
+  project(
+    state: InternalRoomState,
+    context: GameRoomProjectionContext
+  ): GameRoomProjection {
+    this.#assertPokerRoom(state);
+    const poker = this.#requirePokerState(state);
+    if (!poker.table) {
+      return {
+        room: { pokerConfig: poker.config },
+        self: {},
+        playerStates: {}
+      };
+    }
+
+    const projection = projectPokerTable(poker.table, context.playerId);
+    return {
+      room: {
+        pokerConfig: poker.config,
+        pokerTable: this.#tableView(projection)
+      },
+      self: projection.self ? { poker: projection.self } : {},
+      playerStates: {}
+    };
+  }
+
+  tick(
+    state: InternalRoomState,
+    _context: GameRoomTickContext
+  ): GameRoomUpdate | undefined {
+    this.#assertPokerRoom(state);
+    return undefined;
+  }
+
+  migrate(value: unknown): InternalRoomState {
+    const state = migrateInternalRoomState(value);
+    if (state.gameType !== this.id || !state.poker?.table) return state;
+    return {
+      ...state,
+      poker: {
+        ...state.poker,
+        table: migratePokerTable(state.poker.table)
+      }
+    };
+  }
+
+  validate(state: InternalRoomState): void {
+    this.#assertPokerRoom(state);
+    if (state.players.length > this.maxPlayers) {
+      throw new Error(`德州扑克最多支持 ${this.maxPlayers} 名玩家`);
+    }
+    if (!state.players.some((player) => player.id === state.ownerPlayerId)) {
+      throw new Error("德扑房主不在玩家列表中");
+    }
+    const poker = this.#requirePokerState(state);
+    validatePokerTableSettings(pokerTableSettings(poker.config));
+    if (!poker.table) {
+      if (state.phase !== "lobby") throw new Error("非大厅阶段缺少德扑牌桌状态");
+      return;
+    }
+
+    validatePokerTable(poker.table);
+    if (poker.table.mode !== poker.config.mode) throw new Error("德扑模式与房间配置不一致");
+    const roomPlayers = new Map(state.players.map((player) => [player.id, player]));
+    if (poker.table.players.length !== roomPlayers.size) {
+      throw new Error("德扑牌桌玩家与房间玩家数量不一致");
+    }
+    for (const tablePlayer of poker.table.players) {
+      const roomPlayer = roomPlayers.get(tablePlayer.playerId);
+      if (!roomPlayer || roomPlayer.seat === null || roomPlayer.seat - 1 !== tablePlayer.seat) {
+        throw new Error("德扑牌桌玩家与房间座位不一致");
+      }
+    }
+    const expectedPhase = poker.table.status === "complete" ? "game-over" : "playing";
+    if (state.phase !== expectedPhase) throw new Error("德扑牌桌状态与房间阶段不一致");
+  }
+
+  #assertPokerRoom(state: Pick<InternalRoomState, "gameType">): void {
+    if (state.gameType !== this.id) throw new Error("房间与德州扑克模块不匹配");
+  }
+
+  #requirePokerState(state: InternalRoomState): NonNullable<InternalRoomState["poker"]> {
+    if (!state.poker) throw new Error("德扑房间配置不存在");
+    return state.poker;
+  }
+
+  #pokerCommand(command: GameRoomCommand): PokerTableCommand {
+    if (
+      command.type === "poker:deal" ||
+      command.type === "poker:rebuy" ||
+      command.type === "poker:advance-blinds"
+    ) {
+      return { type: command.type, actorPlayerId: command.actorPlayerId, payload: {} };
+    }
+    if (command.type !== "poker:act") {
+      throw new Error(`德州扑克命令不受支持: ${command.type}`);
+    }
+
+    const action = command.payload.action;
+    if (!isPokerPlayerAction(action)) throw new Error("德扑玩家动作无效");
+    const amount = command.payload.amount;
+    if (amount !== undefined && typeof amount !== "number") throw new Error("德扑下注金额无效");
+    return {
+      type: "poker:act",
+      actorPlayerId: command.actorPlayerId,
+      payload: { action, ...(amount === undefined ? {} : { amount }) }
+    };
+  }
+
+  #tableView(projection: ReturnType<typeof projectPokerTable>): PublicPokerTableView {
+    const table = projection.table;
+    const playerIdAt = (seat: number | null): string | undefined =>
+      seat === null ? undefined : table.players[seat]?.id;
+    const buttonPlayerId = playerIdAt(table.buttonSeat);
+    const actionPlayerId = playerIdAt(table.actionTo);
+    return {
+      mode: projection.mode,
+      status: projection.status,
+      handNumber: table.handNumber,
+      street: table.street,
+      board: table.board,
+      ...(buttonPlayerId ? { buttonPlayerId } : {}),
+      ...(actionPlayerId ? { actionPlayerId } : {}),
+      smallBlind: table.smallBlind,
+      bigBlind: table.bigBlind,
+      ante: table.ante,
+      blindLevel: table.blindLevel,
+      minRaise: table.minRaise,
+      pots: table.pots.map((pot) => ({
+        amount: pot.amount,
+        eligiblePlayerIds: pot.eligibleSeats.flatMap((seat) => {
+          const playerId = playerIdAt(seat);
+          return playerId ? [playerId] : [];
+        }),
+        type: pot.type
+      })),
+      players: projection.players.map((player) => {
+        const enginePlayer = table.players[player.seat];
+        if (!enginePlayer || enginePlayer.id !== player.playerId) {
+          throw new Error("德扑公开视图玩家与牌桌座位不一致");
+        }
+        return {
+          playerId: player.playerId,
+          nickname: player.nickname,
+          seat: player.seat + 1,
+          stack: enginePlayer.stack,
+          pendingAddOn: enginePlayer.pendingAddOn,
+          hand: enginePlayer.hand,
+          status: enginePlayer.status as PokerPlayerStatusView,
+          betThisStreet: enginePlayer.betThisStreet,
+          totalInvestedThisHand: enginePlayer.totalInvestedThisHand,
+          buyIns: player.buyIns,
+          ...(player.netPoints === undefined ? {} : { netPoints: player.netPoints })
+        };
+      }),
+      winners: (table.winners ?? []).flatMap((winner) => {
+        const playerId = playerIdAt(winner.seat);
+        return playerId
+          ? [{ playerId, amount: winner.amount, hand: winner.hand, handRank: winner.handRank }]
+          : [];
+      }),
+      ...(projection.winnerPlayerId ? { winnerPlayerId: projection.winnerPlayerId } : {})
+    };
+  }
+}
+
+function isPokerPlayerAction(value: unknown): value is PokerPlayerAction {
+  return value === "fold" || value === "check" || value === "call" || value === "bet" || value === "raise";
+}
+
+function pokerTableSettings(config: PokerRoomConfig): PokerTableSettings {
+  return {
+    mode: config.mode,
+    smallBlind: config.smallBlind,
+    bigBlind: config.bigBlind,
+    ...(config.blindStructure ? { blindStructure: config.blindStructure } : {})
+  };
+}

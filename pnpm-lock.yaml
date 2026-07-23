@@ -29,6 +29,9 @@ importers:
       '@party-games/game-core':
         specifier: workspace:*
         version: link:../../packages/game-core
+      '@party-games/poker':
+        specifier: workspace:*
+        version: link:../../packages/poker
       '@party-games/shared':
         specifier: workspace:*
         version: link:../../packages/shared

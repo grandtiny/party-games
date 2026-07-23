@@ -53,6 +53,22 @@ describe("poker table domain", () => {
     );
   });
 
+  it("rejects ambiguous or invalid blind settings", () => {
+    expect(() =>
+      createPokerTable({
+        ...BASE_INPUT,
+        blindStructure: [{ smallBlind: 5, bigBlind: 10, ante: 0 }]
+      })
+    ).toThrow("积分桌不使用盲注级别");
+    expect(() =>
+      createPokerTable({
+        ...BASE_INPUT,
+        mode: "tournament",
+        blindStructure: [{ smallBlind: 10, bigBlind: 20, ante: 0 }]
+      })
+    ).toThrow("首个盲注级别必须与初始盲注一致");
+  });
+
   it.each(["tournament", "points"] as const)(
     "starts every %s player with a fixed 500 buy-in",
     (mode) => {

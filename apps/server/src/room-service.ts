@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { GameRegistry } from "@party-games/game-core";
+import type { PokerPlayerAction } from "@party-games/poker";
 import type {
   CreateRoomRequest,
   GameType,
@@ -63,7 +64,8 @@ export class RoomService {
           seat: null,
           ready: false
         }
-      ]
+      ],
+      ...(input.gameType === "poker" ? { poker: { config: input.poker } } : {})
     };
     this.#gameModule(state).validate(state);
 
@@ -242,7 +244,7 @@ export class RoomService {
       }
 
       const seed = randomBytes(32).toString("hex");
-      const update = this.#gameModule(state).create(state, { seed });
+      const update = this.#gameModule(state).create(state, { seed, now: Date.now() });
       const nextState = this.#nextState(state, update.changes);
 
       this.repository.commit(state.version, nextState, {
@@ -360,6 +362,45 @@ export class RoomService {
       "SLAYER_CLAIMED",
       "clocktower:slayer-claim",
       { targetPlayerId }
+    );
+  }
+
+  async dealPokerHand(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_HAND_DEALT",
+      "poker:deal",
+      {}
+    );
+  }
+
+  async actPoker(
+    roomCode: string,
+    playerId: string,
+    action: PokerPlayerAction,
+    amount?: number
+  ): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_ACTION",
+      "poker:act",
+      { action, ...(amount === undefined ? {} : { amount }) }
+    );
+  }
+
+  async rebuyPoker(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(roomCode, playerId, "POKER_REBUY", "poker:rebuy", {});
+  }
+
+  async advancePokerBlinds(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_BLINDS_ADVANCED",
+      "poker:advance-blinds",
+      {}
     );
   }
 

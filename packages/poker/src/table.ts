@@ -24,6 +24,14 @@ export const POKER_FIXED_BUY_IN = 500;
 export type PokerTableMode = "tournament" | "points";
 export type PokerTableStatus = "waiting-hand" | "in-hand" | "complete";
 export type PokerPlayerAction = "fold" | "check" | "call" | "bet" | "raise";
+export type PokerBlindLevel = BlindLevel;
+
+export interface PokerTableSettings {
+  mode: PokerTableMode;
+  smallBlind: number;
+  bigBlind: number;
+  blindStructure?: readonly PokerBlindLevel[];
+}
 
 export interface PokerTablePlayer {
   playerId: string;
@@ -43,14 +51,10 @@ export interface PokerTableState {
   winnerPlayerId?: string;
 }
 
-export interface CreatePokerTableInput {
-  mode: PokerTableMode;
+export interface CreatePokerTableInput extends PokerTableSettings {
   tableSeed: string;
   now: number;
-  smallBlind: number;
-  bigBlind: number;
   players: Array<{ playerId: string; nickname: string; seat: number }>;
-  blindStructure?: BlindLevel[];
 }
 
 export type PokerTableCommand =
@@ -172,6 +176,7 @@ export function handlePokerTableCommand(
   } else {
     requireOwner(command.actorPlayerId, context.ownerPlayerId);
     if (state.mode !== "tournament") throw new Error("积分桌没有盲注级别");
+    if (state.status === "complete") throw new Error("淘汰赛已经结束");
     if (state.status === "in-hand") throw new Error("本手牌结束后才能提升盲注");
     advancePokerBlindLevel(engine, context.now);
   }
@@ -263,6 +268,30 @@ export function validatePokerTable(state: PokerTableState): void {
   }
 }
 
+export function validatePokerTableSettings(settings: PokerTableSettings): void {
+  validateBlindLevel(
+    { smallBlind: settings.smallBlind, bigBlind: settings.bigBlind, ante: 0 },
+    "初始盲注"
+  );
+  if (settings.mode === "points" && settings.blindStructure) {
+    throw new Error("积分桌不使用盲注级别");
+  }
+  if (settings.mode === "tournament") {
+    const blindStructure = settings.blindStructure;
+    const firstLevel = blindStructure?.[0];
+    if (!firstLevel) throw new Error("淘汰赛必须配置盲注级别");
+    blindStructure.forEach((level, index) =>
+      validateBlindLevel(level, `第 ${index + 1} 个盲注级别`)
+    );
+    if (
+      firstLevel.smallBlind !== settings.smallBlind ||
+      firstLevel.bigBlind !== settings.bigBlind
+    ) {
+      throw new Error("首个盲注级别必须与初始盲注一致");
+    }
+  }
+}
+
 function act(
   engine: PokerEngine,
   command: Extract<PokerTableCommand, { type: "poker:act" }>,
@@ -309,16 +338,26 @@ function requireOwner(actorPlayerId: string, ownerPlayerId: string): void {
 }
 
 function validateCreateInput(input: CreatePokerTableInput): void {
+  validatePokerTableSettings(input);
   if (input.players.length < 2 || input.players.length > 9) {
     throw new Error("德州扑克需要 2 到 9 名玩家");
   }
   if (!input.tableSeed) throw new Error("德扑桌种子不能为空");
-  if (input.mode === "tournament" && !input.blindStructure?.length) {
-    throw new Error("淘汰赛必须配置盲注级别");
-  }
   const seats = input.players.map((player) => player.seat);
   if (seats.some((seat) => !Number.isInteger(seat) || seat < 0 || seat > 8)) {
     throw new Error("德扑座位必须在 0 到 8 之间");
   }
   if (new Set(seats).size !== seats.length) throw new Error("德扑座位不能重复");
+}
+
+function validateBlindLevel(level: PokerBlindLevel, label: string): void {
+  if (!Number.isInteger(level.smallBlind) || level.smallBlind <= 0) {
+    throw new Error(`${label}的小盲必须是正整数`);
+  }
+  if (!Number.isInteger(level.bigBlind) || level.bigBlind <= level.smallBlind) {
+    throw new Error(`${label}的大盲必须高于小盲`);
+  }
+  if (!Number.isInteger(level.ante) || level.ante < 0) {
+    throw new Error(`${label}的前注必须是非负整数`);
+  }
 }
