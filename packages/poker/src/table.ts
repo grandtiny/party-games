@@ -13,9 +13,11 @@ import {
   createPokerEngine,
   createPokerEngineEnvelope,
   dealNextHand,
+  inferPokerBlindPositions,
   nextPokerTimestamp,
   restorePokerEngine,
   seatPokerPlayer,
+  type PokerBlindPositions,
   type PokerEngineEnvelope
 } from "./engine.js";
 
@@ -52,6 +54,7 @@ export interface PokerTableState {
   status: PokerTableStatus;
   engine: PokerEngineEnvelope;
   players: PokerTablePlayer[];
+  blindPositions?: PokerBlindPositions;
   winnerPlayerId?: string;
 }
 
@@ -83,6 +86,7 @@ export interface PokerTableView {
   table: PublicState;
   totalPot: number;
   actionHistory: PokerHandAction[];
+  blindPositions: PokerBlindPositions;
   winnerPlayerId?: string;
   players: Array<
     Pick<PokerTablePlayer, "playerId" | "nickname" | "seat" | "buyIns"> & {
@@ -170,6 +174,7 @@ export function handlePokerTableCommand(
   validatePokerTable(state);
   const engine = restorePokerEngine(state.engine);
   let players = state.players;
+  let blindPositions = state.blindPositions;
 
   if (command.type === "poker:deal") {
     requireOwner(command.actorPlayerId, context.ownerPlayerId);
@@ -179,7 +184,7 @@ export function handlePokerTableCommand(
       ...player,
       stackAtHandStart: player.atTable ? currentStack(engine, player.playerId) : 0
     }));
-    dealNextHand(engine, state.engine.tableSeed, context.now);
+    blindPositions = dealNextHand(engine, state.engine.tableSeed, context.now);
   } else if (command.type === "poker:act") {
     if (state.status !== "in-hand") throw new Error("当前没有进行中的牌局");
     act(engine, command, context.now);
@@ -281,6 +286,7 @@ export function handlePokerTableCommand(
         : "in-hand",
     engine: createPokerEngineEnvelope(engine, state.engine.tableSeed),
     players,
+    ...(blindPositions ? { blindPositions } : {}),
     ...(winnerPlayerId ? { winnerPlayerId } : {})
   };
   validatePokerTable(nextState);
@@ -297,12 +303,14 @@ export function projectPokerTable(
   const legalActions = viewerPlayerId
     ? projectLegalActions(engine, viewerPlayerId, state.status)
     : undefined;
+  const blindPositions = state.blindPositions ?? inferPokerBlindPositions(engine);
   return {
     mode: state.mode,
     status: state.status,
     table: engine.view(viewerPlayerId),
     totalPot: currentPot(engine),
     actionHistory: projectActionHistory(engine.state.actionHistory),
+    blindPositions,
     ...(state.winnerPlayerId ? { winnerPlayerId: state.winnerPlayerId } : {}),
     players: state.players.map((player) => ({
       playerId: player.playerId,

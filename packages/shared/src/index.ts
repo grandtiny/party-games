@@ -420,6 +420,8 @@ export interface PokerTableView {
   street: PokerStreetView;
   board: readonly string[];
   buttonPlayerId?: string;
+  smallBlindPlayerId?: string;
+  bigBlindPlayerId?: string;
   actionPlayerId?: string;
   smallBlind: number;
   bigBlind: number;

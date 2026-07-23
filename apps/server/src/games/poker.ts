@@ -206,6 +206,10 @@ export class PokerGameModule implements ServerGameModule {
     const playerIdAt = (seat: number | null): string | undefined =>
       seat === null ? undefined : table.players[seat]?.id;
     const buttonPlayerId = playerIdAt(table.buttonSeat);
+    const smallBlindPlayerId = playerIdAt(
+      projection.blindPositions.smallBlindSeat ?? null
+    );
+    const bigBlindPlayerId = playerIdAt(projection.blindPositions.bigBlindSeat ?? null);
     const actionPlayerId = playerIdAt(table.actionTo);
     return {
       mode: projection.mode,
@@ -214,6 +218,8 @@ export class PokerGameModule implements ServerGameModule {
       street: table.street,
       board: table.board,
       ...(buttonPlayerId ? { buttonPlayerId } : {}),
+      ...(smallBlindPlayerId ? { smallBlindPlayerId } : {}),
+      ...(bigBlindPlayerId ? { bigBlindPlayerId } : {}),
       ...(actionPlayerId ? { actionPlayerId } : {}),
       smallBlind: table.smallBlind,
       bigBlind: table.bigBlind,

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   POKER_FIXED_BUY_IN,
+  PlayerStatus,
+  createPokerEngineEnvelope,
   createPokerTable,
   handlePokerTableCommand,
   migratePokerTable,
@@ -45,6 +47,69 @@ function deal(state: PokerTableState, actorPlayerId = OWNER_ID): PokerTableState
     command({ type: "poker:deal", actorPlayerId, payload: {} }),
     2_000
   );
+}
+
+function fourPlayerInput(): CreatePokerTableInput {
+  return {
+    ...BASE_INPUT,
+    players: [
+      { playerId: OWNER_ID, nickname: "Player 0", seat: 0 },
+      { playerId: "p1", nickname: "Player 1", seat: 1 },
+      { playerId: "p2", nickname: "Player 2", seat: 2 },
+      { playerId: "p3", nickname: "Player 3", seat: 3 }
+    ]
+  };
+}
+
+function corruptedUnequalAllInState(): PokerTableState {
+  const state = deal(createPokerTable(fourPlayerInput()));
+  const engine = restorePokerEngine(state.engine);
+  const players = engine.state.players.map((player, seat) => {
+    if (!player) return player;
+    if (seat === 0) {
+      return {
+        ...player,
+        stack: 70,
+        status: PlayerStatus.ACTIVE,
+        betThisStreet: 10,
+        totalInvestedThisHand: 10
+      };
+    }
+    if (seat === 2) {
+      return {
+        ...player,
+        stack: 0,
+        status: PlayerStatus.ALL_IN,
+        betThisStreet: 1_920,
+        totalInvestedThisHand: 1_920
+      };
+    }
+    return {
+      ...player,
+      stack: 0,
+      status: PlayerStatus.ALL_IN,
+      betThisStreet: 0,
+      totalInvestedThisHand: 480
+    };
+  });
+  Object.assign(engine.state, {
+    players,
+    currentBets: new Map([
+      [0, 10],
+      [2, 1_920]
+    ]),
+    activePlayers: [0, 2],
+    actionTo: 0,
+    lastAggressorSeat: 2,
+    lastRaiseAmount: 1_910,
+    minRaise: 3_830,
+    initialChips: 2_000,
+    timestamp: 3_000
+  });
+  return {
+    ...state,
+    engine: createPokerEngineEnvelope(engine, state.engine.tableSeed)
+  };
 }
 
 describe("poker table domain", () => {
@@ -322,6 +387,86 @@ describe("poker table domain", () => {
       maxAmount: 500
     });
     expect(waitingView.self?.legalActions).toBeUndefined();
+  });
+
+  it("repairs stale busted-player investments before a short all-in call", () => {
+    const state = corruptedUnequalAllInState();
+    const view = projectPokerTable(state, OWNER_ID);
+
+    expect(view.self?.legalActions).toMatchObject({
+      actions: expect.arrayContaining(["fold", "call"]),
+      callAmount: 70
+    });
+
+    const settled = handle(
+      state,
+      command({
+        type: "poker:act",
+        actorPlayerId: OWNER_ID,
+        payload: { action: "call" }
+      }),
+      3_100
+    );
+    const settledEngine = restorePokerEngine(settled.engine);
+    const totalStacks = settledEngine.state.players.reduce(
+      (total, player) => total + (player?.stack ?? 0),
+      0
+    );
+
+    expect(settled.status).toBe("waiting-hand");
+    expect(totalStacks).toBe(2_000);
+    expect(settledEngine.state.actionHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: expect.objectContaining({
+            type: "UNCALLED_BET_RETURNED",
+            amount: 1_840
+          })
+        })
+      ])
+    );
+  });
+
+  it("ignores busted seats when assigning heads-up blinds for the next hand", () => {
+    const state = createPokerTable(fourPlayerInput());
+    const engine = restorePokerEngine(state.engine);
+    const players = engine.state.players.map((player, seat) => {
+      if (!player) return player;
+      const stack = seat === 0 ? 80 : seat === 2 ? 1_920 : 0;
+      return {
+        ...player,
+        stack,
+        status: stack > 0 ? PlayerStatus.WAITING : PlayerStatus.BUSTED,
+        hand: null,
+        shownCards: null,
+        betThisStreet: 0,
+        totalInvestedThisHand: 0
+      };
+    });
+    Object.assign(engine.state, { players, initialChips: 2_000 });
+    state.engine = createPokerEngineEnvelope(engine, state.engine.tableSeed);
+
+    const dealt = deal(state);
+    const dealtEngine = restorePokerEngine(dealt.engine);
+
+    expect(dealt.blindPositions).toEqual({ smallBlindSeat: 0, bigBlindSeat: 2 });
+    expect(dealtEngine.state.currentBets).toEqual(
+      new Map([
+        [0, 5],
+        [2, 10]
+      ])
+    );
+    expect(dealtEngine.state.actionTo).toBe(0);
+    expect(dealtEngine.state.players[1]).toMatchObject({
+      status: PlayerStatus.BUSTED,
+      totalInvestedThisHand: 0,
+      hand: null
+    });
+    expect(dealtEngine.state.players[3]).toMatchObject({
+      status: PlayerStatus.BUSTED,
+      totalInvestedThisHand: 0,
+      hand: null
+    });
   });
 
   it("keeps an explainable action log and settled pot after an uncontested hand", () => {

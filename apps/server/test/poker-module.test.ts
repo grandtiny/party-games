@@ -134,6 +134,11 @@ describe("poker server module", () => {
     expect(ownerView.room.pokerTable?.players[1]?.hand).toBeNull();
     expect(secondView.room.pokerTable?.players[0]?.hand).toBeNull();
     expect(secondView.room.pokerTable?.players[1]?.hand).toHaveLength(2);
+    expect(ownerView.room.pokerTable).toMatchObject({
+      buttonPlayerId: owner.playerId,
+      smallBlindPlayerId: owner.playerId,
+      bigBlindPlayerId: second.playerId
+    });
     expect(JSON.stringify(ownerView)).not.toContain("tableSeed");
     expect(JSON.stringify(ownerView)).not.toContain('"deck"');
 

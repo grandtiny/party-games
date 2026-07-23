@@ -334,15 +334,35 @@ function PokerTableStage({
           const isSelf = player.playerId === selfPlayerId;
           const isAction = player.playerId === table.actionPlayerId;
           const isButton = player.playerId === table.buttonPlayerId;
+          const isSmallBlind = player.playerId === table.smallBlindPlayerId;
+          const isBigBlind = player.playerId === table.bigBlindPlayerId;
           return (
             <div className="poker-seat-position" style={position} key={player.playerId}>
               <div
                 className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${!player.atTable ? "is-away" : ""}`}
               >
+                {isButton || isSmallBlind || isBigBlind ? (
+                  <div className="poker-position-badges" aria-label="牌桌位置">
+                    {isButton ? (
+                      <span className="poker-position-badge is-dealer" title="庄家">
+                        D
+                      </span>
+                    ) : null}
+                    {isSmallBlind ? (
+                      <span className="poker-position-badge is-small-blind" title="小盲">
+                        SB
+                      </span>
+                    ) : null}
+                    {isBigBlind ? (
+                      <span className="poker-position-badge is-big-blind" title="大盲">
+                        BB
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="poker-player-seat__topline">
                   <span className={`presence-dot ${connectedById.get(player.playerId) ? "is-online" : ""}`} />
                   <strong>{player.nickname}</strong>
-                  {isButton ? <span className="dealer-button">D</span> : null}
                 </div>
                 <div className="poker-player-seat__stack">
                   <Coins size={13} /> {player.stack + player.pendingAddOn}

@@ -318,18 +318,44 @@
   flex: 1;
 }
 
-.dealer-button {
+.poker-position-badges {
+  position: absolute;
+  z-index: 3;
+  top: -11px;
+  right: 5px;
+  display: flex;
+  height: 22px;
+  align-items: center;
+  gap: 3px;
+}
+
+.poker-position-badge {
   display: grid;
-  width: 18px;
-  height: 18px;
-  flex: none;
+  min-width: 24px;
+  height: 22px;
   place-items: center;
-  border: 1px solid #b9b9b4;
-  border-radius: 50%;
-  background: #f9f9f7;
-  color: #343b36;
+  border: 1px solid rgb(20 26 22 / 32%);
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgb(13 20 16 / 22%);
   font-size: 9px;
   font-weight: 850;
+}
+
+.poker-position-badge.is-dealer {
+  min-width: 22px;
+  border-radius: 50%;
+  background: #fbfbf8;
+  color: #202621;
+}
+
+.poker-position-badge.is-small-blind {
+  background: #e8c85c;
+  color: #252214;
+}
+
+.poker-position-badge.is-big-blind {
+  background: #9b3636;
+  color: #fff;
 }
 
 .poker-player-seat__stack {
