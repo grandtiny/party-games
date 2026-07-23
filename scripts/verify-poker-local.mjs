@@ -128,6 +128,38 @@ try {
     throw new Error("Settled action history is incomplete");
   }
 
+  const cashedOutView = waitForView(
+    sockets[0],
+    (view) =>
+      view.room.pokerTable?.players.some(
+        (player) => player.playerId === actionPlayerId && !player.atTable
+      ) ?? false
+  );
+  await emit(sockets[actorIndex], "poker:cash-out");
+  const cashedOut = await cashedOutView;
+  const cashedOutPlayer = cashedOut.room.pokerTable.players.find(
+    (player) => player.playerId === actionPlayerId
+  );
+  if (cashedOutPlayer?.netPoints !== -5 || cashedOut.room.pokerTable.totalPot !== 10) {
+    throw new Error("Points cash-out accounting is inconsistent");
+  }
+
+  const boughtInView = waitForView(
+    sockets[0],
+    (view) =>
+      view.room.pokerTable?.players.some(
+        (player) => player.playerId === actionPlayerId && player.atTable && player.buyIns === 2
+      ) ?? false
+  );
+  await emit(sockets[actorIndex], "poker:buy-in");
+  const boughtIn = await boughtInView;
+  const boughtInPlayer = boughtIn.room.pokerTable.players.find(
+    (player) => player.playerId === actionPlayerId
+  );
+  if (boughtInPlayer?.stack !== 500 || boughtInPlayer.netPoints !== -5) {
+    throw new Error("Points buy-in did not preserve the previous result");
+  }
+
   console.log(
     JSON.stringify(
       {
@@ -140,7 +172,8 @@ try {
         totalChips,
         privateCardsVerified: true,
         legalActionsVerified: true,
-        actionHistoryVerified: true
+        actionHistoryVerified: true,
+        cashOutAndBuyInVerified: true
       },
       null,
       2

@@ -377,9 +377,39 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("poker:cash-out", async (callback) => {
+      try {
+        await roomService.cashOutPoker(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:buy-in", async (callback) => {
+      try {
+        await roomService.buyInPoker(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("poker:advance-blinds", async (callback) => {
       try {
         await roomService.advancePokerBlinds(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("poker:rematch", async (callback) => {
+      try {
+        await roomService.rematchPoker(roomCode, playerId);
         callback({ ok: true });
         await broadcastRoom(roomCode);
       } catch (error) {

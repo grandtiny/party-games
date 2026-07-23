@@ -86,6 +86,32 @@ describe("poker socket boundary", () => {
       expect.objectContaining({ playerId: actionPlayerId, action: "fold", potAfter: 15 }),
       expect.objectContaining({ action: "uncalled-return", amount: 5, potAfter: 10 })
     ]);
+
+    const cashedOutViewPromise = nextView(ownerSocket, (view) =>
+      view.room.pokerTable?.players.some(
+        (player) => player.playerId === actionPlayerId && !player.atTable
+      ) ?? false
+    );
+    await emit(actorSocket, "poker:cash-out");
+    const cashedOutView = await cashedOutViewPromise;
+    expect(
+      cashedOutView.room.pokerTable?.players.find(
+        (player) => player.playerId === actionPlayerId
+      )
+    ).toMatchObject({ atTable: false, stack: 0, netPoints: -5 });
+
+    const boughtInViewPromise = nextView(ownerSocket, (view) =>
+      view.room.pokerTable?.players.some(
+        (player) => player.playerId === actionPlayerId && player.atTable && player.buyIns === 2
+      ) ?? false
+    );
+    await emit(actorSocket, "poker:buy-in");
+    const boughtInView = await boughtInViewPromise;
+    expect(
+      boughtInView.room.pokerTable?.players.find(
+        (player) => player.playerId === actionPlayerId
+      )
+    ).toMatchObject({ atTable: true, stack: 500, buyIns: 2, netPoints: -5 });
   });
 });
 
@@ -121,10 +147,17 @@ function nextInHandView(socket: Socket): Promise<RoomView> {
 }
 
 function nextWaitingHandView(socket: Socket): Promise<RoomView> {
+  return nextView(socket, (view) => view.room.pokerTable?.status === "waiting-hand");
+}
+
+function nextView(
+  socket: Socket,
+  predicate: (view: RoomView) => boolean
+): Promise<RoomView> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("Poker settled view timed out")), 5_000);
+    const timeout = setTimeout(() => reject(new Error("Poker matching view timed out")), 5_000);
     const handleView = (view: RoomView) => {
-      if (view.room.pokerTable?.status !== "waiting-hand") return;
+      if (!predicate(view)) return;
       clearTimeout(timeout);
       socket.off("room:view", handleView);
       resolve(view);

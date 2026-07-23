@@ -4,6 +4,7 @@ import {
   Copy,
   Crown,
   History,
+  Medal,
   Play,
   RefreshCw,
   ShieldCheck,
@@ -177,6 +178,7 @@ export function PokerRoomPage() {
                 selfPlayerId={view.self.playerId}
               />
               <PokerHandSummary table={table} roomPlayers={view.room.players} />
+              <PokerTournamentRanking table={table} />
               <PokerControls
                 view={view}
                 table={table}
@@ -190,8 +192,17 @@ export function PokerRoomPage() {
                 emitRebuy={() =>
                   send((callback) => socketRef.current?.emit("poker:rebuy", callback))
                 }
+                emitCashOut={() =>
+                  send((callback) => socketRef.current?.emit("poker:cash-out", callback))
+                }
+                emitBuyIn={() =>
+                  send((callback) => socketRef.current?.emit("poker:buy-in", callback))
+                }
                 emitAdvanceBlinds={() =>
                   send((callback) => socketRef.current?.emit("poker:advance-blinds", callback))
+                }
+                emitRematch={() =>
+                  send((callback) => socketRef.current?.emit("poker:rematch", callback))
                 }
               />
             </>
@@ -326,7 +337,7 @@ function PokerTableStage({
           return (
             <div className="poker-seat-position" style={position} key={player.playerId}>
               <div
-                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""}`}
+                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${!player.atTable ? "is-away" : ""}`}
               >
                 <div className="poker-player-seat__topline">
                   <span className={`presence-dot ${connectedById.get(player.playerId) ? "is-online" : ""}`} />
@@ -339,7 +350,9 @@ function PokerTableStage({
                 {player.betThisStreet > 0 ? (
                   <span className="poker-player-seat__bet">下注 {player.betThisStreet}</span>
                 ) : (
-                  <span className="poker-player-seat__status">{playerStatusLabel(player.status)}</span>
+                  <span className="poker-player-seat__status">
+                    {player.finishPlace ? `第 ${player.finishPlace} 名` : playerStatusLabel(player.status)}
+                  </span>
                 )}
                 <MiniHand player={player} inHand={table.status === "in-hand"} />
               </div>
@@ -347,6 +360,31 @@ function PokerTableStage({
           );
         })}
       </div>
+    </section>
+  );
+}
+
+function PokerTournamentRanking({ table }: { table: PokerTableView }) {
+  if (table.mode !== "tournament") return null;
+  const ranked = table.players
+    .filter((player) => player.finishPlace !== undefined)
+    .sort((left, right) => (left.finishPlace ?? 0) - (right.finishPlace ?? 0));
+  if (!ranked.length) return null;
+  return (
+    <section className="poker-ranking" aria-label="淘汰赛排名">
+      <div className="poker-ranking__heading">
+        <Medal size={17} />
+        <strong>{table.status === "complete" ? "最终排名" : "已淘汰玩家"}</strong>
+      </div>
+      <ol>
+        {ranked.map((player) => (
+          <li key={player.playerId}>
+            <span>{player.finishPlace}</span>
+            <strong>{player.nickname}</strong>
+            <small>{player.finishPlace === 1 ? "冠军" : `第 ${player.finishPlace} 名`}</small>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -381,7 +419,7 @@ function PokerHandSummary({
               {winner.hand?.length ? (
                 <span className="poker-award-cards">
                   {winner.hand.map((card, cardIndex) => (
-                    <PlayingCard code={card} compact key={`${card}-${cardIndex}`} />
+                    <AwardCard code={card} key={`${card}-${cardIndex}`} />
                   ))}
                 </span>
               ) : null}
@@ -434,7 +472,10 @@ function PokerControls({
   emitAction,
   emitDeal,
   emitRebuy,
-  emitAdvanceBlinds
+  emitCashOut,
+  emitBuyIn,
+  emitAdvanceBlinds,
+  emitRematch
 }: {
   view: RoomView;
   table: PokerTableView;
@@ -444,7 +485,10 @@ function PokerControls({
   emitAction: (action: PokerActionRequest) => void;
   emitDeal: () => void;
   emitRebuy: () => void;
+  emitCashOut: () => void;
+  emitBuyIn: () => void;
   emitAdvanceBlinds: () => void;
+  emitRematch: () => void;
 }) {
   if (!selfPlayer) return null;
   const legalActions = view.self.poker?.legalActions;
@@ -458,12 +502,23 @@ function PokerControls({
   const canRebuy =
     table.mode === "points" &&
     table.status === "waiting-hand" &&
+    selfPlayer.atTable &&
     selfPlayer.stack + selfPlayer.pendingAddOn === 0;
+  const canCashOut =
+    table.mode === "points" &&
+    table.status === "waiting-hand" &&
+    selfPlayer.atTable &&
+    selfPlayer.stack + selfPlayer.pendingAddOn > 0;
+  const canBuyIn =
+    table.mode === "points" && table.status === "waiting-hand" && !selfPlayer.atTable;
   const canAdvance =
     view.self.isOwner &&
     table.mode === "tournament" &&
     table.status === "waiting-hand" &&
     table.blindLevel < (view.room.pokerConfig?.blindStructure?.length ?? 1) - 1;
+  const canDeal = table.players.filter(
+    (player) => player.atTable && player.stack + player.pendingAddOn > 0
+  ).length >= 2;
 
   return (
     <section className="poker-controls">
@@ -473,9 +528,17 @@ function PokerControls({
           <strong>{selfPlayer.nickname}</strong>
         </div>
         <div className="poker-own-hand__cards">
-          {(selfPlayer.hand ?? [undefined, undefined]).map((card, index) => (
-            <PlayingCard code={card ?? undefined} hidden={!card && table.status === "in-hand"} key={index} />
-          ))}
+          {selfPlayer.atTable ? (
+            (selfPlayer.hand ?? [undefined, undefined]).map((card, index) => (
+              <PlayingCard
+                code={card ?? undefined}
+                hidden={!card && table.status === "in-hand"}
+                key={index}
+              />
+            ))
+          ) : (
+            <span className="poker-no-hand">已离桌</span>
+          )}
         </div>
         <div className="poker-own-hand__score">
           <span>筹码 {selfPlayer.stack + selfPlayer.pendingAddOn}</span>
@@ -546,16 +609,25 @@ function PokerControls({
       ) : (
         <div className="poker-waiting-state">
           {table.status === "waiting-hand"
-            ? view.self.isOwner
-              ? "可以发下一手"
-              : "等待房主发牌"
+            ? !selfPlayer.atTable
+              ? "你已离桌，可以重新入座"
+              : view.self.isOwner
+                ? canDeal
+                  ? "可以发下一手"
+                  : "至少需要两名有筹码的在桌玩家"
+                : "等待房主发牌"
             : `等待 ${table.players.find((player) => player.playerId === table.actionPlayerId)?.nickname ?? "玩家"} 行动`}
         </div>
       )}
 
       <div className="poker-table-commands">
         {view.self.isOwner && table.status === "waiting-hand" ? (
-          <button className="primary-button primary-button--dark" type="button" onClick={emitDeal}>
+          <button
+            className="primary-button primary-button--dark"
+            type="button"
+            disabled={!canDeal}
+            onClick={emitDeal}
+          >
             <Play size={18} />
             发下一手
           </button>
@@ -570,6 +642,24 @@ function PokerControls({
           <button className="secondary-button" type="button" onClick={emitRebuy}>
             <Coins size={18} />
             重新买入 500
+          </button>
+        ) : null}
+        {canCashOut ? (
+          <button className="secondary-button" type="button" onClick={emitCashOut}>
+            <Coins size={18} />
+            离桌结算
+          </button>
+        ) : null}
+        {canBuyIn ? (
+          <button className="primary-button" type="button" onClick={emitBuyIn}>
+            <Coins size={18} />
+            重新入座 500
+          </button>
+        ) : null}
+        {view.self.isOwner && table.status === "complete" ? (
+          <button className="primary-button primary-button--dark" type="button" onClick={emitRematch}>
+            <RefreshCw size={18} />
+            重新开赛
           </button>
         ) : null}
       </div>
@@ -600,6 +690,20 @@ function PlayingCard({
     <span className={`playing-card ${red ? "is-red" : ""} ${compact ? "is-compact" : ""}`}>
       <strong>{rank}</strong>
       <span>{suit}</span>
+    </span>
+  );
+}
+
+function AwardCard({ code }: { code: string }) {
+  const suitCode = code.slice(-1).toLowerCase();
+  const rank = code.slice(0, -1).replace("T", "10");
+  const suit =
+    suitCode === "h" ? "♥" : suitCode === "d" ? "♦" : suitCode === "c" ? "♣" : "♠";
+  const red = suitCode === "h" || suitCode === "d";
+  return (
+    <span className={`poker-award-card ${red ? "is-red" : ""}`}>
+      {rank}
+      {suit}
     </span>
   );
 }

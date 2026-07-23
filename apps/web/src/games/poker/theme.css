@@ -173,6 +173,13 @@
   box-shadow: 0 0 0 4px rgb(240 202 84 / 42%), 0 8px 20px rgb(18 30 23 / 20%);
 }
 
+.poker-player-seat.is-away {
+  border-style: dashed;
+  background: #f3f5f2;
+  color: #747c77;
+  box-shadow: 0 5px 12px rgb(18 30 23 / 12%);
+}
+
 .poker-avatar {
   display: grid;
   width: 34px;
@@ -421,6 +428,24 @@
   gap: 3px;
 }
 
+.poker-award-card {
+  display: grid;
+  min-width: 27px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #d7dad5;
+  border-radius: 4px;
+  background: #fff;
+  color: #202521;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 10%);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.poker-award-card.is-red {
+  color: #b42631;
+}
+
 .poker-action-history {
   display: grid;
   max-height: 220px;
@@ -471,6 +496,65 @@
   font-size: 12px;
 }
 
+.poker-ranking {
+  display: grid;
+  gap: 10px;
+  border-bottom: 1px solid #d8ddd7;
+  padding: 2px 2px 14px;
+}
+
+.poker-ranking__heading,
+.poker-ranking ol,
+.poker-ranking li {
+  display: flex;
+  align-items: center;
+}
+
+.poker-ranking__heading {
+  gap: 7px;
+  color: #4f421d;
+}
+
+.poker-ranking ol {
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.poker-ranking li {
+  min-width: 150px;
+  gap: 8px;
+}
+
+.poker-ranking li > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  border: 1px solid #c8b36c;
+  border-radius: 50%;
+  color: #6c5616;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.poker-ranking li strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #2e3832;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poker-ranking li small {
+  color: #777f79;
+  font-size: 10px;
+}
+
 .poker-own-hand {
   display: grid;
   grid-template-columns: minmax(110px, 1fr) auto minmax(110px, 1fr);
@@ -496,6 +580,16 @@
 
 .poker-own-hand__cards .playing-card {
   width: 62px;
+}
+
+.poker-no-hand {
+  display: grid;
+  min-width: 126px;
+  min-height: 62px;
+  place-items: center;
+  border: 1px dashed #c5ccc6;
+  color: #737c76;
+  font-size: 12px;
 }
 
 .poker-action-bar {
@@ -626,6 +720,13 @@
     width: 100%;
     flex-basis: 100%;
     white-space: normal;
+  }
+
+  .poker-award-cards {
+    order: 4;
+    width: 100%;
+    flex-basis: 100%;
+    flex-wrap: wrap;
   }
 
   .blind-level {

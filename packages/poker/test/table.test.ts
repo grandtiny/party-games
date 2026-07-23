@@ -3,6 +3,7 @@ import {
   POKER_FIXED_BUY_IN,
   createPokerTable,
   handlePokerTableCommand,
+  migratePokerTable,
   projectPokerTable,
   restorePokerEngine,
   type CreatePokerTableInput,
@@ -47,6 +48,23 @@ function deal(state: PokerTableState, actorPlayerId = OWNER_ID): PokerTableState
 }
 
 describe("poker table domain", () => {
+  it("migrates existing table players into the lifecycle state", () => {
+    const state = createPokerTable(BASE_INPUT);
+    const legacy = {
+      ...state,
+      schemaVersion: 1,
+      players: state.players.map(
+        ({ atTable: _atTable, stackAtHandStart: _stackAtHandStart, ...player }) => player
+      )
+    };
+    const migrated = migratePokerTable(legacy);
+    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.players).toEqual([
+      expect.objectContaining({ atTable: true, stackAtHandStart: 500 }),
+      expect.objectContaining({ atTable: true, stackAtHandStart: 500 })
+    ]);
+  });
+
   it("requires a blind structure for tournament tables", () => {
     expect(() => createPokerTable({ ...BASE_INPUT, mode: "tournament" })).toThrow(
       "淘汰赛必须配置盲注级别"
@@ -193,6 +211,84 @@ describe("poker table domain", () => {
         2_000
       )
     ).toThrow("淘汰赛不允许重新买入");
+    expect(() =>
+      handle(
+        state,
+        command({ type: "poker:cash-out", actorPlayerId: OWNER_ID, payload: {} }),
+        2_100
+      )
+    ).toThrow("淘汰赛不能离桌结算");
+  });
+
+  it("cash-outs and buys a points player back into the original seat", () => {
+    let state = deal(createPokerTable(BASE_INPUT));
+    const dealtEngine = restorePokerEngine(state.engine);
+    const actingSeat = dealtEngine.state.actionTo;
+    if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+    const actorPlayerId = dealtEngine.state.players[actingSeat]?.id;
+    if (!actorPlayerId) throw new Error("测试牌局行动座位为空");
+    state = handle(
+      state,
+      command({ type: "poker:act", actorPlayerId, payload: { action: "fold" } }),
+      2_100
+    );
+
+    state = handle(
+      state,
+      command({ type: "poker:cash-out", actorPlayerId, payload: {} }),
+      2_200
+    );
+    const cashedOut = projectPokerTable(state, actorPlayerId);
+    const cashedOutPlayer = cashedOut.players.find(
+      (player) => player.playerId === actorPlayerId
+    );
+    expect(cashedOutPlayer).toMatchObject({ atTable: false, buyIns: 1, netPoints: -5 });
+    expect(cashedOut.self).toMatchObject({ totalBuyIn: 500, cashedOut: 495, netPoints: -5 });
+    expect(cashedOut.totalPot).toBe(10);
+    expect(restorePokerEngine(state.engine).state.players[actingSeat]).toBeNull();
+
+    state = handle(
+      state,
+      command({ type: "poker:buy-in", actorPlayerId, payload: {} }),
+      2_300
+    );
+    const boughtIn = projectPokerTable(state, actorPlayerId);
+    const boughtInPlayer = boughtIn.players.find(
+      (player) => player.playerId === actorPlayerId
+    );
+    expect(boughtInPlayer).toMatchObject({ atTable: true, buyIns: 2, netPoints: -5 });
+    expect(boughtIn.self).toMatchObject({ totalBuyIn: 1_000, cashedOut: 495, netPoints: -5 });
+    expect(restorePokerEngine(state.engine).state.players[actingSeat]).toMatchObject({
+      id: actorPlayerId,
+      stack: 500
+    });
+  });
+
+  it("assigns unique final tournament places when the last opponent busts", () => {
+    let state = createPokerTable({
+      ...BASE_INPUT,
+      mode: "tournament",
+      smallBlind: 250,
+      bigBlind: 500,
+      blindStructure: [{ smallBlind: 250, bigBlind: 500, ante: 0 }]
+    });
+    state = deal(state);
+    const engine = restorePokerEngine(state.engine);
+    const actingSeat = engine.state.actionTo;
+    if (actingSeat === null) throw new Error("测试淘汰赛缺少行动玩家");
+    const actorPlayerId = engine.state.players[actingSeat]?.id;
+    if (!actorPlayerId) throw new Error("测试淘汰赛行动座位为空");
+    state = handle(
+      state,
+      command({ type: "poker:act", actorPlayerId, payload: { action: "call" } }),
+      2_100
+    );
+
+    expect(state.status).toBe("complete");
+    expect(state.players.map((player) => player.finishPlace).sort()).toEqual([1, 2]);
+    expect(
+      state.players.find((player) => player.playerId === state.winnerPlayerId)?.finishPlace
+    ).toBe(1);
   });
 
   it("masks opponents' cards in player projections", () => {

@@ -19,7 +19,7 @@ import {
   type PokerEngineEnvelope
 } from "./engine.js";
 
-export const POKER_TABLE_STATE_VERSION = 1;
+export const POKER_TABLE_STATE_VERSION = 2;
 export const POKER_FIXED_BUY_IN = 500;
 
 export type PokerTableMode = "tournament" | "points";
@@ -38,9 +38,12 @@ export interface PokerTablePlayer {
   playerId: string;
   nickname: string;
   seat: number;
+  atTable: boolean;
   buyIns: number;
   totalBuyIn: number;
   cashedOut: number;
+  stackAtHandStart: number;
+  finishPlace?: number;
 }
 
 export interface PokerTableState {
@@ -65,6 +68,8 @@ export type PokerTableCommand =
       { action: PokerPlayerAction; amount?: number }
     >
   | GameCommand<"poker:rebuy">
+  | GameCommand<"poker:cash-out">
+  | GameCommand<"poker:buy-in">
   | GameCommand<"poker:advance-blinds">;
 
 export interface PokerCommandContext {
@@ -81,7 +86,9 @@ export interface PokerTableView {
   winnerPlayerId?: string;
   players: Array<
     Pick<PokerTablePlayer, "playerId" | "nickname" | "seat" | "buyIns"> & {
+      atTable: boolean;
       netPoints?: number;
+      finishPlace?: number;
     }
   >;
   self?: {
@@ -136,9 +143,11 @@ export function createPokerTable(input: CreatePokerTableInput): PokerTableState 
       );
       return {
         ...player,
+        atTable: true,
         buyIns: 1,
         totalBuyIn: POKER_FIXED_BUY_IN,
-        cashedOut: 0
+        cashedOut: 0,
+        stackAtHandStart: POKER_FIXED_BUY_IN
       };
     });
 
@@ -166,6 +175,10 @@ export function handlePokerTableCommand(
     requireOwner(command.actorPlayerId, context.ownerPlayerId);
     if (state.status === "in-hand") throw new Error("当前牌局尚未结束");
     if (state.status === "complete") throw new Error("淘汰赛已经结束");
+    players = players.map((player) => ({
+      ...player,
+      stackAtHandStart: player.atTable ? currentStack(engine, player.playerId) : 0
+    }));
     dealNextHand(engine, state.engine.tableSeed, context.now);
   } else if (command.type === "poker:act") {
     if (state.status !== "in-hand") throw new Error("当前没有进行中的牌局");
@@ -195,6 +208,59 @@ export function handlePokerTableCommand(
           }
         : candidate
     );
+  } else if (command.type === "poker:cash-out") {
+    if (state.mode !== "points") throw new Error("淘汰赛不能离桌结算");
+    if (state.status === "in-hand") throw new Error("本手牌结束后才能离桌结算");
+    const player = players.find((candidate) => candidate.playerId === command.actorPlayerId);
+    if (!player?.atTable) throw new Error("玩家当前不在牌桌中");
+    const enginePlayer = engine.state.players[player.seat];
+    if (!enginePlayer || enginePlayer.id !== command.actorPlayerId) {
+      throw new Error("玩家牌桌座位不存在");
+    }
+    const cashOutAmount = enginePlayer.stack + enginePlayer.pendingAddOn;
+    if (cashOutAmount <= 0) throw new Error("当前没有可结算筹码");
+    engine.act({
+      type: ActionType.STAND,
+      playerId: command.actorPlayerId,
+      timestamp: nextPokerTimestamp(engine, context.now)
+    });
+    players = players.map((candidate) =>
+      candidate.playerId === command.actorPlayerId
+        ? {
+            ...candidate,
+            atTable: false,
+            cashedOut: candidate.cashedOut + cashOutAmount,
+            stackAtHandStart: 0
+          }
+        : candidate
+    );
+  } else if (command.type === "poker:buy-in") {
+    if (state.mode !== "points") throw new Error("淘汰赛不能重新买入");
+    if (state.status === "in-hand") throw new Error("本手牌结束后才能重新入座");
+    const player = players.find((candidate) => candidate.playerId === command.actorPlayerId);
+    if (!player) throw new Error("玩家不在德扑桌中");
+    if (player.atTable) throw new Error("玩家已经在牌桌中");
+    seatPokerPlayer(
+      engine,
+      {
+        seat: player.seat,
+        playerId: player.playerId,
+        nickname: player.nickname,
+        stack: POKER_FIXED_BUY_IN
+      },
+      context.now
+    );
+    players = players.map((candidate) =>
+      candidate.playerId === command.actorPlayerId
+        ? {
+            ...candidate,
+            atTable: true,
+            buyIns: candidate.buyIns + 1,
+            totalBuyIn: candidate.totalBuyIn + POKER_FIXED_BUY_IN,
+            stackAtHandStart: POKER_FIXED_BUY_IN
+          }
+        : candidate
+    );
   } else {
     requireOwner(command.actorPlayerId, context.ownerPlayerId);
     if (state.mode !== "tournament") throw new Error("积分桌没有盲注级别");
@@ -203,7 +269,9 @@ export function handlePokerTableCommand(
     advancePokerBlindLevel(engine, context.now);
   }
 
-  const winnerPlayerId = tournamentWinner(state.mode, engine);
+  const tournament = settleTournamentPlayers(state.mode, engine, players);
+  players = tournament.players;
+  const winnerPlayerId = tournament.winnerPlayerId;
   const nextState: PokerTableState = {
     ...state,
     status: winnerPlayerId
@@ -240,7 +308,9 @@ export function projectPokerTable(
       playerId: player.playerId,
       nickname: player.nickname,
       seat: player.seat,
+      atTable: player.atTable,
       buyIns: player.buyIns,
+      ...(player.finishPlace ? { finishPlace: player.finishPlace } : {}),
       ...(state.mode === "points"
         ? { netPoints: currentStack(engine, player.playerId) + player.cashedOut - player.totalBuyIn }
         : {})
@@ -260,14 +330,24 @@ export function projectPokerTable(
 
 export function migratePokerTable(value: unknown): PokerTableState {
   const state = value as PokerTableState;
+  const engine = restorePokerEngine(state.engine);
+  const migratedPlayers = state.players.map((player) => ({
+    ...player,
+    atTable:
+      player.atTable ?? engine.state.players[player.seat]?.id === player.playerId,
+    buyIns: player.buyIns ?? Math.max(1, player.totalBuyIn / POKER_FIXED_BUY_IN),
+    cashedOut: player.cashedOut ?? 0,
+    stackAtHandStart:
+      player.stackAtHandStart ??
+      ((engine.state.players[player.seat]?.stack ?? 0) +
+        (engine.state.players[player.seat]?.pendingAddOn ?? 0))
+  }));
+  const tournament = settleTournamentPlayers(state.mode, engine, migratedPlayers);
   return {
     ...state,
     schemaVersion: POKER_TABLE_STATE_VERSION,
-    players: state.players.map((player) => ({
-      ...player,
-      buyIns: player.buyIns ?? Math.max(1, player.totalBuyIn / POKER_FIXED_BUY_IN),
-      cashedOut: player.cashedOut ?? 0
-    }))
+    players: tournament.players,
+    ...(tournament.winnerPlayerId ? { winnerPlayerId: tournament.winnerPlayerId } : {})
   };
 }
 
@@ -286,13 +366,43 @@ export function validatePokerTable(state: PokerTableState): void {
   const engine = restorePokerEngine(state.engine);
   for (const player of state.players) {
     const enginePlayer = engine.state.players[player.seat];
-    if (enginePlayer?.id !== player.playerId) throw new Error("德扑桌玩家与引擎座位不一致");
+    if (player.atTable && enginePlayer?.id !== player.playerId) {
+      throw new Error("德扑桌玩家与引擎座位不一致");
+    }
+    if (!player.atTable && enginePlayer !== null) {
+      throw new Error("已离桌玩家仍占用引擎座位");
+    }
     if (player.totalBuyIn !== player.buyIns * POKER_FIXED_BUY_IN) {
       throw new Error("德扑玩家买入账目不一致");
     }
     if (state.mode === "tournament" && player.buyIns !== 1) {
       throw new Error("淘汰赛玩家只能买入一次");
     }
+    if (state.mode === "tournament" && !player.atTable) {
+      throw new Error("淘汰赛玩家不能离开牌桌");
+    }
+    if (state.mode === "points" && player.finishPlace !== undefined) {
+      throw new Error("积分桌玩家不能记录淘汰名次");
+    }
+  }
+  const finishPlaces = state.players.flatMap((player) =>
+    player.finishPlace === undefined ? [] : [player.finishPlace]
+  );
+  if (new Set(finishPlaces).size !== finishPlaces.length) {
+    throw new Error("淘汰赛名次不能重复");
+  }
+  if (
+    finishPlaces.some(
+      (place) => !Number.isInteger(place) || place < 1 || place > state.players.length
+    )
+  ) {
+    throw new Error("淘汰赛名次超出范围");
+  }
+  if (
+    state.winnerPlayerId &&
+    state.players.find((player) => player.playerId === state.winnerPlayerId)?.finishPlace !== 1
+  ) {
+    throw new Error("淘汰赛冠军名次不一致");
   }
 }
 
@@ -348,12 +458,45 @@ function act(
   }
 }
 
-function tournamentWinner(mode: PokerTableMode, engine: PokerEngine): string | undefined {
-  if (mode !== "tournament" || engine.state.street !== Street.SHOWDOWN) return undefined;
-  const remaining = engine.state.players.filter(
-    (player) => player && player.stack + player.pendingAddOn > 0
+function settleTournamentPlayers(
+  mode: PokerTableMode,
+  engine: PokerEngine,
+  players: PokerTablePlayer[]
+): { players: PokerTablePlayer[]; winnerPlayerId?: string } {
+  if (mode !== "tournament" || engine.state.street !== Street.SHOWDOWN) {
+    return { players };
+  }
+
+  let nextPlayers = [...players];
+  const alreadyFinished = nextPlayers.filter(
+    (player) => player.finishPlace !== undefined
+  ).length;
+  const newlyEliminated = nextPlayers
+    .filter(
+      (player) =>
+        player.finishPlace === undefined && currentStack(engine, player.playerId) === 0
+    )
+    .sort(
+      (left, right) =>
+        left.stackAtHandStart - right.stackAtHandStart || right.seat - left.seat
+    );
+  newlyEliminated.forEach((player, index) => {
+    const finishPlace = nextPlayers.length - alreadyFinished - index;
+    nextPlayers = nextPlayers.map((candidate) =>
+      candidate.playerId === player.playerId ? { ...candidate, finishPlace } : candidate
+    );
+  });
+
+  const remaining = nextPlayers.filter(
+    (player) =>
+      player.finishPlace === undefined && currentStack(engine, player.playerId) > 0
   );
-  return remaining.length === 1 ? remaining[0]?.id : undefined;
+  if (remaining.length !== 1) return { players: nextPlayers };
+  const winnerPlayerId = remaining[0]?.playerId;
+  nextPlayers = nextPlayers.map((player) =>
+    player.playerId === winnerPlayerId ? { ...player, finishPlace: 1 } : player
+  );
+  return { players: nextPlayers, ...(winnerPlayerId ? { winnerPlayerId } : {}) };
 }
 
 function currentStack(engine: PokerEngine, playerId: string): number {
@@ -363,6 +506,10 @@ function currentStack(engine: PokerEngine, playerId: string): number {
 
 function currentPot(engine: PokerEngine): number {
   if (engine.state.winners?.length) {
+    const peakCommitted = engine.state.actionHistory.reduce(
+      (peak, record) => Math.max(peak, record.resultingPot),
+      0
+    );
     const committed = engine.state.players.reduce(
       (total, player) => total + (player?.totalInvestedThisHand ?? 0),
       0
@@ -375,7 +522,7 @@ function currentPot(engine: PokerEngine): number {
           : total,
       0
     );
-    return Math.max(0, committed - returned);
+    return Math.max(0, Math.max(peakCommitted, committed) - returned);
   }
   return (
     engine.state.pots.reduce((total, pot) => total + pot.amount, 0) +

@@ -70,7 +70,10 @@ export interface RoomEvent {
     | "POKER_HAND_DEALT"
     | "POKER_ACTION"
     | "POKER_REBUY"
-    | "POKER_BLINDS_ADVANCED";
+    | "POKER_CASHED_OUT"
+    | "POKER_BOUGHT_IN"
+    | "POKER_BLINDS_ADVANCED"
+    | "POKER_REMATCHED";
   actorPlayerId: string;
   payload: Record<string, unknown>;
 }

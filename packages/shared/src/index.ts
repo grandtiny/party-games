@@ -370,6 +370,7 @@ export interface PokerTablePlayerView {
   playerId: string;
   nickname: string;
   seat: number;
+  atTable: boolean;
   stack: number;
   pendingAddOn: number;
   hand: ReadonlyArray<string | null> | null;
@@ -378,6 +379,7 @@ export interface PokerTablePlayerView {
   totalInvestedThisHand: number;
   buyIns: number;
   netPoints?: number;
+  finishPlace?: number;
 }
 
 export interface PokerPotView {
@@ -501,7 +503,10 @@ export interface ClientToServerEvents {
   "poker:deal": (callback: (ack: SocketAck) => void) => void;
   "poker:act": (action: PokerActionRequest, callback: (ack: SocketAck) => void) => void;
   "poker:rebuy": (callback: (ack: SocketAck) => void) => void;
+  "poker:cash-out": (callback: (ack: SocketAck) => void) => void;
+  "poker:buy-in": (callback: (ack: SocketAck) => void) => void;
   "poker:advance-blinds": (callback: (ack: SocketAck) => void) => void;
+  "poker:rematch": (callback: (ack: SocketAck) => void) => void;
   "chat:send": (
     message: { recipientPlayerId?: string; content: string },
     callback: (ack: SocketAck) => void

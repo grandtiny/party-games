@@ -183,4 +183,46 @@ describe("poker server module", () => {
       ante: 2
     });
   });
+
+  it("records tournament places and lets only the owner start a fresh match", async () => {
+    const { repository } = createRepository();
+    const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const { owner, second } = await createStartedPokerRoom(service, {
+      mode: "tournament",
+      smallBlind: 250,
+      bigBlind: 500,
+      blindStructure: [{ smallBlind: 250, bigBlind: 500, ante: 0 }]
+    });
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    const actionPlayerId = service.getView(owner.roomCode, owner.playerId).room.pokerTable
+      ?.actionPlayerId;
+    if (!actionPlayerId) throw new Error("淘汰赛测试缺少行动玩家");
+    await service.actPoker(owner.roomCode, actionPlayerId, "call");
+    const completeView = service.getView(owner.roomCode, owner.playerId);
+    expect(completeView.room.phase).toBe("game-over");
+    expect(
+      completeView.room.pokerTable?.players.map((player) => player.finishPlace).sort()
+    ).toEqual([1, 2]);
+
+    await expect(service.rematchPoker(owner.roomCode, second.playerId)).rejects.toThrow(
+      "只有房主可以执行该操作"
+    );
+    await service.rematchPoker(owner.roomCode, owner.playerId);
+    const rematchView = service.getView(owner.roomCode, owner.playerId);
+    expect(rematchView.room.phase).toBe("playing");
+    expect(rematchView.room.pokerTable).toMatchObject({
+      status: "waiting-hand",
+      handNumber: 0
+    });
+    expect(rematchView.room.pokerTable?.players).toEqual([
+      expect.objectContaining({ stack: 500, buyIns: 1 }),
+      expect.objectContaining({ stack: 500, buyIns: 1 })
+    ]);
+    expect(
+      rematchView.room.pokerTable?.players.every(
+        (player) => player.finishPlace === undefined
+      )
+    ).toBe(true);
+  });
 });

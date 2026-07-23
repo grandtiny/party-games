@@ -15,6 +15,7 @@ export interface GameRoomCreateContext {
 
 export interface GameRoomHandleContext {
   now: number;
+  seed: string;
   voteIntervalMs: number;
 }
 

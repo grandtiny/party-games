@@ -394,12 +394,42 @@ export class RoomService {
     await this.#handleGameCommand(roomCode, playerId, "POKER_REBUY", "poker:rebuy", {});
   }
 
+  async cashOutPoker(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_CASHED_OUT",
+      "poker:cash-out",
+      {}
+    );
+  }
+
+  async buyInPoker(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_BOUGHT_IN",
+      "poker:buy-in",
+      {}
+    );
+  }
+
   async advancePokerBlinds(roomCode: string, playerId: string): Promise<void> {
     await this.#handleGameCommand(
       roomCode,
       playerId,
       "POKER_BLINDS_ADVANCED",
       "poker:advance-blinds",
+      {}
+    );
+  }
+
+  async rematchPoker(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "POKER_REMATCHED",
+      "poker:rematch",
       {}
     );
   }
@@ -522,7 +552,7 @@ export class RoomService {
       const update = this.#gameModule(state).handle(
         state,
         { type: commandType, actorPlayerId: playerId, payload },
-        { now: Date.now(), voteIntervalMs: 2500 }
+        { now: Date.now(), seed: randomBytes(32).toString("hex"), voteIntervalMs: 2500 }
       );
       const nextState = this.#nextState(state, update.changes);
       this.repository.commit(
