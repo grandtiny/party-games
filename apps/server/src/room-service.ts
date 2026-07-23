@@ -491,8 +491,20 @@ export class RoomService {
   }
 
   async tickActiveVotes(now = Date.now()): Promise<string[]> {
+    return this.#tickRooms(this.repository.listRoomCodes("voting"), now);
+  }
+
+  async tickActiveGames(now = Date.now()): Promise<string[]> {
+    const roomCodes = new Set([
+      ...this.repository.listRoomCodes("voting"),
+      ...this.repository.listRoomCodes("playing")
+    ]);
+    return this.#tickRooms([...roomCodes], now);
+  }
+
+  async #tickRooms(roomCodes: readonly string[], now: number): Promise<string[]> {
     const changedRoomCodes: string[] = [];
-    for (const roomCode of this.repository.listRoomCodes("voting")) {
+    for (const roomCode of roomCodes) {
       await this.#withLock(roomCode, async () => {
         const state = this.#requireRoom(roomCode);
         const update = this.#gameModule(state).tick(state, { now });

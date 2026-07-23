@@ -433,20 +433,20 @@ export async function createApp(options: AppOptions) {
     });
   });
 
-  let voteTickRunning = false;
-  const voteTimer = setInterval(async () => {
-    if (voteTickRunning) return;
-    voteTickRunning = true;
+  let gameTickRunning = false;
+  const gameTickTimer = setInterval(async () => {
+    if (gameTickRunning) return;
+    gameTickRunning = true;
     try {
-      const changedRoomCodes = await roomService.tickActiveVotes();
+      const changedRoomCodes = await roomService.tickActiveGames();
       for (const roomCode of changedRoomCodes) await broadcastRoom(roomCode);
     } catch (error) {
       app.log.error(error);
     } finally {
-      voteTickRunning = false;
+      gameTickRunning = false;
     }
   }, 250);
-  voteTimer.unref();
+  gameTickTimer.unref();
 
   const webDistPath = options.webDistPath ? resolve(options.webDistPath) : undefined;
   if (webDistPath && existsSync(webDistPath)) {
@@ -460,7 +460,7 @@ export async function createApp(options: AppOptions) {
   }
 
   app.addHook("onClose", async () => {
-    clearInterval(voteTimer);
+    clearInterval(gameTickTimer);
     io.close();
     repository.close();
     adminService.close();

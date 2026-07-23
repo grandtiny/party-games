@@ -70,6 +70,7 @@ export interface RoomEvent {
     | "SLAYER_CLAIMED"
     | "POKER_HAND_DEALT"
     | "POKER_ACTION"
+    | "POKER_BOT_ACTION"
     | "POKER_REBUY"
     | "POKER_CASHED_OUT"
     | "POKER_BOUGHT_IN"

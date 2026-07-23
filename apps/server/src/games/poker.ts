@@ -29,6 +29,8 @@ import type {
 } from "../platform/game-module.js";
 import { comparePlayersBySeat } from "../platform/players.js";
 
+export const POKER_BOT_ACTION_DELAY_MS = 900;
+
 export class PokerGameModule implements ServerGameModule {
   readonly id = "poker" as const;
   readonly displayName = "德州扑克";
@@ -80,8 +82,11 @@ export class PokerGameModule implements ServerGameModule {
       this.#pokerCommand(command),
       { now: context.now, ownerPlayerId: state.ownerPlayerId }
     );
-    if (command.type === "poker:deal" || command.type === "poker:act") {
-      table = this.#advanceBots(state, table, context);
+    if (
+      (command.type === "poker:deal" || command.type === "poker:act") &&
+      table.status !== "in-hand"
+    ) {
+      table = this.#rebuyBustedBots(state, table, context.now + 1);
     }
     return {
       changes: {
@@ -123,10 +128,51 @@ export class PokerGameModule implements ServerGameModule {
 
   tick(
     state: InternalRoomState,
-    _context: GameRoomTickContext
+    context: GameRoomTickContext
   ): GameRoomUpdate | undefined {
     this.#assertPokerRoom(state);
-    return undefined;
+    const poker = this.#requirePokerState(state);
+    if (!poker.table || poker.table.status !== "in-hand") return undefined;
+    const actorPlayerId = this.#botActorPlayerId(state, poker.table);
+    if (!actorPlayerId) return undefined;
+
+    const lastUpdatedAt = Date.parse(state.updatedAt);
+    if (
+      Number.isFinite(lastUpdatedAt) &&
+      context.now < lastUpdatedAt + POKER_BOT_ACTION_DELAY_MS
+    ) {
+      return undefined;
+    }
+
+    const decision = decidePokerBotAction(poker.table, actorPlayerId);
+    let table = handlePokerTableCommand(
+      poker.table,
+      {
+        type: "poker:act",
+        actorPlayerId,
+        payload: decision
+      },
+      { now: context.now, ownerPlayerId: state.ownerPlayerId }
+    );
+    if (table.status !== "in-hand") {
+      table = this.#rebuyBustedBots(state, table, context.now + 1);
+    }
+    return {
+      changes: {
+        phase: table.status === "complete" ? "game-over" : "playing",
+        poker: { ...poker, table }
+      },
+      event: {
+        type: "POKER_BOT_ACTION",
+        actorPlayerId,
+        payload: {
+          action: decision.action,
+          ...(decision.amount === undefined ? {} : { amount: decision.amount }),
+          handNumber: projectPokerTable(table).table.handNumber,
+          status: table.status
+        }
+      }
+    };
   }
 
   migrate(value: unknown): InternalRoomState {
@@ -315,37 +361,19 @@ export class PokerGameModule implements ServerGameModule {
     });
   }
 
-  #advanceBots(
+  #botActorPlayerId(
     state: InternalRoomState,
-    table: ReturnType<typeof createPokerTable>,
-    context: GameRoomHandleContext
-  ): ReturnType<typeof createPokerTable> {
-    let nextTable = table;
-    for (let step = 0; step < 100; step += 1) {
-      if (nextTable.status !== "in-hand") {
-        return this.#rebuyBustedBots(state, nextTable, context.now + step + 1);
-      }
-      const publicTable = projectPokerTable(nextTable).table;
-      const actorPlayerId =
-        publicTable.actionTo === null
-          ? undefined
-          : publicTable.players[publicTable.actionTo]?.id;
-      if (!actorPlayerId) throw new Error("德扑 AI 行动座位不存在");
-      const actor = state.players.find((player) => player.id === actorPlayerId);
-      if (!actor?.isBot) return nextTable;
-
-      const decision = decidePokerBotAction(nextTable, actorPlayerId);
-      nextTable = handlePokerTableCommand(
-        nextTable,
-        {
-          type: "poker:act",
-          actorPlayerId,
-          payload: decision
-        },
-        { now: context.now + step + 1, ownerPlayerId: state.ownerPlayerId }
-      );
-    }
-    throw new Error("德扑 AI 行动次数超过安全上限");
+    table: ReturnType<typeof createPokerTable>
+  ): string | undefined {
+    const publicTable = projectPokerTable(table).table;
+    const actorPlayerId =
+      publicTable.actionTo === null
+        ? undefined
+        : publicTable.players[publicTable.actionTo]?.id;
+    if (!actorPlayerId) throw new Error("德扑 AI 行动座位不存在");
+    const actor = state.players.find((player) => player.id === actorPlayerId);
+    if (!actor) throw new Error("德扑行动玩家不在房间中");
+    return actor.isBot ? actorPlayerId : undefined;
   }
 
   #rebuyBustedBots(

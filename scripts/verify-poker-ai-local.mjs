@@ -2,6 +2,7 @@ import { io } from "socket.io-client";
 
 const baseUrl = process.env.BASE_URL ?? "http://127.0.0.1:3000";
 const password = "poker-ai-local-verify";
+const minimumVisibleBotDelayMs = 400;
 
 async function post(path, body) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -95,14 +96,29 @@ try {
     throw new Error("Human player was not seated and readied correctly");
   }
 
-  const inHandView = waitForView(
+  const firstBotTurnView = waitForView(
     socket,
     (view) =>
       view.room.pokerTable?.status === "in-hand" &&
-      view.room.pokerTable.actionPlayerId === owner.playerId
+      bots.some((bot) => bot.id === view.room.pokerTable.actionPlayerId) &&
+      view.room.pokerTable.actionHistory.length === 0
   );
   await emit(socket, "poker:deal");
-  const inHand = await inHandView;
+  const firstBotTurn = await firstBotTurnView;
+  const firstBotSeenAt = Date.now();
+  const firstBotPlayerId = firstBotTurn.room.pokerTable.actionPlayerId;
+  const humanTurnView = waitForView(
+    socket,
+    (view) =>
+      view.room.pokerTable?.status === "in-hand" &&
+      view.room.pokerTable.actionPlayerId === owner.playerId &&
+      view.room.pokerTable.actionHistory.some((record) => record.playerId === firstBotPlayerId)
+  );
+  const inHand = await humanTurnView;
+  const firstBotDelayMs = Date.now() - firstBotSeenAt;
+  if (firstBotDelayMs < minimumVisibleBotDelayMs) {
+    throw new Error(`The first AI action was not visibly delayed: ${firstBotDelayMs}ms`);
+  }
   const table = inHand.room.pokerTable;
   const ownerTablePlayer = table.players.find((player) => player.playerId === owner.playerId);
   if (ownerTablePlayer?.hand?.length !== 2) throw new Error("Human hole cards are missing");
@@ -126,26 +142,51 @@ try {
   }
 
   const legalActions = inHand.self.poker?.legalActions;
-  const action = legalActions?.actions.includes("check")
-    ? "check"
-    : legalActions?.actions.includes("call")
-      ? "call"
-      : "fold";
+  if (!legalActions?.actions.includes("call")) {
+    throw new Error("Expected the human player to have a legal call");
+  }
   const actionHistoryLength = table.actionHistory.length;
-  const continuedView = waitForView(
+  const queuedBotTurnView = waitForView(
+    socket,
+    (view) =>
+      view.room.pokerTable?.status === "in-hand" &&
+      bots.some((bot) => bot.id === view.room.pokerTable.actionPlayerId) &&
+      view.room.pokerTable.actionHistory.length === actionHistoryLength + 1
+  );
+  await emit(socket, "poker:act", { action: "call" });
+  const queuedBotTurn = await queuedBotTurnView;
+  const queuedBotSeenAt = Date.now();
+  const queuedBotPlayerId = queuedBotTurn.room.pokerTable.actionPlayerId;
+  const oneBotActionView = waitForView(
     socket,
     (view) => {
       const nextTable = view.room.pokerTable;
-      if (!nextTable || view.room.version <= inHand.room.version) return false;
-      return (
-        nextTable.status !== "in-hand" ||
-        (nextTable.actionPlayerId === owner.playerId &&
-          nextTable.actionHistory.length > actionHistoryLength)
+      return Boolean(
+        nextTable &&
+          nextTable.actionHistory.length === actionHistoryLength + 2 &&
+          nextTable.actionHistory.at(-1)?.playerId === queuedBotPlayerId
       );
     }
   );
-  await emit(socket, "poker:act", { action });
-  const continued = await continuedView;
+  const afterOneBotAction = await oneBotActionView;
+  const secondBotDelayMs = Date.now() - queuedBotSeenAt;
+  if (secondBotDelayMs < minimumVisibleBotDelayMs) {
+    throw new Error(`Consecutive AI actions were not visibly separated: ${secondBotDelayMs}ms`);
+  }
+
+  let continued = afterOneBotAction;
+  if (
+    continued.room.pokerTable.status === "in-hand" &&
+    continued.room.pokerTable.actionPlayerId !== owner.playerId
+  ) {
+    continued = await waitForView(
+      socket,
+      (view) =>
+        view.room.pokerTable?.status !== "in-hand" ||
+        view.room.pokerTable.actionPlayerId === owner.playerId,
+      10_000
+    );
+  }
   const continuedTable = continued.room.pokerTable;
   const stackTotal = continuedTable.players.reduce(
     (total, player) => total + player.stack + player.pendingAddOn,
@@ -169,7 +210,9 @@ try {
         actionPlayerId: continuedTable.actionPlayerId,
         totalChips,
         privateCardsVerified: true,
-        botAutoActionVerified: true,
+        botSequentialActionVerified: true,
+        firstBotDelayMs,
+        secondBotDelayMs,
         extraHumanRejected: true
       },
       null,

@@ -390,7 +390,11 @@ function PokerTableStage({
                 <div className="poker-player-seat__stack">
                   <Coins size={13} /> {player.stack + player.pendingAddOn}
                 </div>
-                {player.betThisStreet > 0 ? (
+                {isAction && roomPlayer?.isBot ? (
+                  <span className="poker-player-seat__status">
+                    AI 思考中{player.betThisStreet > 0 ? ` · 已下注 ${player.betThisStreet}` : ""}
+                  </span>
+                ) : player.betThisStreet > 0 ? (
                   <span className="poker-player-seat__bet">下注 {player.betThisStreet}</span>
                 ) : (
                   <span className="poker-player-seat__status">

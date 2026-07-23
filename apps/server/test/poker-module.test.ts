@@ -8,7 +8,10 @@ import {
   type RoomSessionResponse
 } from "@party-games/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import { PokerGameModule } from "../src/games/poker.js";
+import {
+  POKER_BOT_ACTION_DELAY_MS,
+  PokerGameModule
+} from "../src/games/poker.js";
 import { createGameRegistry } from "../src/games/index.js";
 import type { ServerGameModule } from "../src/platform/game-module.js";
 import { PresenceTracker } from "../src/presence.js";
@@ -205,6 +208,21 @@ describe("poker server module", () => {
     await service.dealPokerHand(owner.roomCode, owner.playerId);
     let view = service.getView(owner.roomCode, owner.playerId);
     expect(view.room.pokerTable?.status).toBe("in-hand");
+    const firstBotPlayerId = view.room.pokerTable?.actionPlayerId;
+    expect(
+      view.room.players.find((player) => player.id === firstBotPlayerId)?.isBot
+    ).toBe(true);
+    expect(view.self.poker?.legalActions).toBeUndefined();
+    expect(view.room.pokerTable?.actionHistory).toHaveLength(0);
+
+    const dealtState = repository.getRoom(owner.roomCode);
+    if (!dealtState) throw new Error("单人 AI 测试房间不存在");
+    const firstBotDueAt =
+      Date.parse(dealtState.updatedAt) + POKER_BOT_ACTION_DELAY_MS;
+    expect(await service.tickActiveGames(firstBotDueAt - 1)).toEqual([]);
+    expect(await service.tickActiveGames(firstBotDueAt)).toEqual([owner.roomCode]);
+
+    view = service.getView(owner.roomCode, owner.playerId);
     expect(view.room.pokerTable?.actionPlayerId).toBe(owner.playerId);
     expect(view.self.poker?.legalActions).toBeDefined();
     expect(
@@ -216,18 +234,47 @@ describe("poker server module", () => {
     ).toBe(true);
 
     const legalActions = view.self.poker?.legalActions;
-    const action = legalActions?.actions.includes("check")
-      ? "check"
-      : legalActions?.actions.includes("call")
-        ? "call"
-        : "fold";
-    await service.actPoker(owner.roomCode, owner.playerId, action);
+    expect(legalActions?.actions).toContain("call");
+    const historyBeforeHumanAction = view.room.pokerTable?.actionHistory.length ?? 0;
+    await service.actPoker(owner.roomCode, owner.playerId, "call");
     view = service.getView(owner.roomCode, owner.playerId);
+    const queuedBotPlayerId = view.room.pokerTable?.actionPlayerId;
+    expect(
+      view.room.players.find((player) => player.id === queuedBotPlayerId)?.isBot
+    ).toBe(true);
+    expect(view.room.pokerTable?.actionHistory).toHaveLength(historyBeforeHumanAction + 1);
+
+    const queuedBotState = repository.getRoom(owner.roomCode);
+    if (!queuedBotState) throw new Error("单人 AI 测试房间不存在");
+    const historyBeforeBotAction = view.room.pokerTable?.actionHistory.length ?? 0;
+    await service.tickActiveGames(
+      Date.parse(queuedBotState.updatedAt) + POKER_BOT_ACTION_DELAY_MS
+    );
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.actionHistory).toHaveLength(historyBeforeBotAction + 1);
+    expect(view.room.pokerTable?.actionHistory.at(-1)?.playerId).toBe(queuedBotPlayerId);
+
+    for (let step = 0; step < 12; step += 1) {
+      if (
+        view.room.pokerTable?.status !== "in-hand" ||
+        view.room.pokerTable.actionPlayerId === owner.playerId
+      ) {
+        break;
+      }
+      const actorPlayerId = view.room.pokerTable.actionPlayerId;
+      expect(view.room.players.find((player) => player.id === actorPlayerId)?.isBot).toBe(true);
+      const state = repository.getRoom(owner.roomCode);
+      if (!state) throw new Error("单人 AI 测试房间不存在");
+      await service.tickActiveGames(
+        Date.parse(state.updatedAt) + POKER_BOT_ACTION_DELAY_MS
+      );
+      view = service.getView(owner.roomCode, owner.playerId);
+    }
+
+    expect(["in-hand", "waiting-hand"]).toContain(view.room.pokerTable?.status);
     if (view.room.pokerTable?.status === "in-hand") {
       expect(view.room.pokerTable.actionPlayerId).toBe(owner.playerId);
       expect(view.self.poker?.legalActions).toBeDefined();
-    } else {
-      expect(view.room.pokerTable?.status).toBe("waiting-hand");
     }
   });
 
