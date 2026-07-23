@@ -537,9 +537,17 @@ function PokerHandSummary({
   table: PokerTableView;
   roomPlayers: PublicPlayerView[];
 }) {
+  const historyRef = useRef<HTMLOListElement>(null);
+  const winners = aggregatePokerWinners(table.winners);
+
+  useEffect(() => {
+    const history = historyRef.current;
+    if (history) history.scrollTop = history.scrollHeight;
+  }, [table.handNumber, table.actionHistory.length]);
+
   if (table.handNumber === 0) return null;
   const playerNames = new Map(roomPlayers.map((player) => [player.id, player.nickname]));
-  const settled = table.winners.length > 0;
+  const settled = winners.length > 0;
   return (
     <section className="poker-hand-summary" aria-label="本手记录">
       <div className="poker-hand-summary__heading">
@@ -552,25 +560,62 @@ function PokerHandSummary({
 
       {settled ? (
         <div className="poker-awards">
-          {table.winners.map((winner, index) => (
-            <div className="poker-award-row" key={`${winner.playerId}-${index}`}>
-              <strong>{playerNames.get(winner.playerId) ?? "玩家"}</strong>
-              <span>{winner.handRank ? "赢得" : "净赢"} {winner.amount}</span>
-              <small>{winner.handRank ? handRankLabel(winner.handRank) : "无人跟注"}</small>
-              {winner.hand?.length ? (
-                <span className="poker-award-cards">
-                  {winner.hand.map((card, cardIndex) => (
-                    <AwardCard code={card} key={`${card}-${cardIndex}`} />
-                  ))}
-                </span>
-              ) : null}
-            </div>
-          ))}
+          {winners.map((winner) => {
+            const holeCards = winnerHoleCards(table, winner.playerId, winner.hand);
+            const reachedShowdown = Boolean(winner.hand?.length);
+            return (
+              <div className="poker-award-row" key={winner.playerId}>
+                <div className="poker-award-result">
+                  <div className="poker-award-result__topline">
+                    <strong>{playerNames.get(winner.playerId) ?? "玩家"}</strong>
+                    <span>
+                      {winner.awardCount > 1 ? "合计赢得" : "赢得"} {winner.amount}
+                    </span>
+                  </div>
+                  <small>
+                    {winner.awardCount > 1 ? `${winner.awardCount} 个底池 · ` : ""}
+                    {reachedShowdown && winner.handRank
+                      ? handRankLabel(winner.handRank)
+                      : "无人跟注"}
+                  </small>
+                </div>
+
+                {holeCards.length || winner.hand?.length ? (
+                  <div className="poker-award-hands">
+                    {holeCards.length ? (
+                      <div className="poker-award-hand is-primary">
+                        <span className="poker-award-hand__label">底牌</span>
+                        <span className="poker-award-cards">
+                          {holeCards.map((card, cardIndex) => (
+                            <AwardCard
+                              code={card}
+                              emphasized
+                              key={`${card}-${cardIndex}`}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                    ) : null}
+                    {winner.hand?.length ? (
+                      <div className="poker-award-hand">
+                        <span className="poker-award-hand__label">最佳五张</span>
+                        <span className="poker-award-cards">
+                          {winner.hand.map((card, cardIndex) => (
+                            <AwardCard code={card} key={`${card}-${cardIndex}`} />
+                          ))}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       ) : null}
 
       {table.actionHistory.length ? (
-        <ol className="poker-action-history">
+        <ol className="poker-action-history" ref={historyRef}>
           {table.actionHistory.map((record, index) => (
             <li key={`${record.playerId}-${index}`}>
               <span>{streetLabel(record.street)}</span>
@@ -836,18 +881,55 @@ function PlayingCard({
   );
 }
 
-function AwardCard({ code }: { code: string }) {
+function AwardCard({ code, emphasized = false }: { code: string; emphasized?: boolean }) {
   const suitCode = code.slice(-1).toLowerCase();
   const rank = code.slice(0, -1).replace("T", "10");
   const suit =
     suitCode === "h" ? "♥" : suitCode === "d" ? "♦" : suitCode === "c" ? "♣" : "♠";
   const red = suitCode === "h" || suitCode === "d";
   return (
-    <span className={`poker-award-card ${red ? "is-red" : ""}`}>
+    <span
+      className={`poker-award-card ${emphasized ? "is-emphasized" : ""} ${red ? "is-red" : ""}`}
+    >
       {rank}
       {suit}
     </span>
   );
+}
+
+function aggregatePokerWinners(winners: PokerTableView["winners"]) {
+  const aggregated = new Map<
+    string,
+    PokerTableView["winners"][number] & { awardCount: number }
+  >();
+  for (const winner of winners) {
+    const existing = aggregated.get(winner.playerId);
+    if (!existing) {
+      aggregated.set(winner.playerId, { ...winner, awardCount: 1 });
+      continue;
+    }
+    const useWinnerHand = !existing.hand?.length && Boolean(winner.hand?.length);
+    aggregated.set(winner.playerId, {
+      ...existing,
+      amount: existing.amount + winner.amount,
+      hand: useWinnerHand ? winner.hand : existing.hand,
+      handRank: useWinnerHand ? winner.handRank : (existing.handRank ?? winner.handRank),
+      awardCount: existing.awardCount + 1
+    });
+  }
+  return [...aggregated.values()];
+}
+
+function winnerHoleCards(
+  table: PokerTableView,
+  playerId: string,
+  bestHand: readonly string[] | null
+): string[] {
+  if (!bestHand?.length) return [];
+  const hand = table.players.find((player) => player.playerId === playerId)?.hand;
+  if (!hand || hand.length !== 2) return [];
+  const visibleCards = hand.filter((card): card is string => card !== null);
+  return visibleCards.length === 2 ? visibleCards : [];
 }
 
 function seatPosition(index: number, count: number): CSSProperties {

@@ -518,33 +518,70 @@
 }
 
 .poker-award-row {
-  min-height: 38px;
-  gap: 10px;
+  display: grid;
+  min-height: 72px;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
   border-left: 3px solid #c9a84f;
   background: #f7f6f0;
-  padding: 6px 10px;
+  padding: 10px 12px;
 }
 
-.poker-award-row strong {
-  min-width: 88px;
-  color: #243329;
-  font-size: 13px;
-}
-
-.poker-award-row > span:not(.poker-award-cards) {
-  color: #166443;
-  font-size: 12px;
-  font-weight: 750;
-}
-
-.poker-award-row small {
+.poker-award-result {
+  display: grid;
   min-width: 0;
-  flex: 1;
+  gap: 4px;
+}
+
+.poker-award-result__topline {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.poker-award-result__topline strong {
+  color: #243329;
+  font-size: 14px;
+}
+
+.poker-award-result__topline span {
+  color: #166443;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.poker-award-result small {
+  min-width: 0;
   overflow: hidden;
   color: #666f69;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.poker-award-hands {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 8px 14px;
+}
+
+.poker-award-hand {
+  display: grid;
+  gap: 4px;
+}
+
+.poker-award-hand__label {
+  color: #737b76;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.poker-award-hand.is-primary .poker-award-hand__label {
+  color: #244334;
 }
 
 .poker-award-cards {
@@ -569,6 +606,14 @@
 
 .poker-award-card.is-red {
   color: #b42631;
+}
+
+.poker-award-card.is-emphasized {
+  min-width: 38px;
+  height: 42px;
+  border-color: #c9a84f;
+  box-shadow: 0 3px 7px rgb(0 0 0 / 14%);
+  font-size: 13px;
 }
 
 .poker-action-history {
@@ -837,21 +882,16 @@
   }
 
   .poker-award-row {
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
-  .poker-award-row small {
-    order: 3;
-    width: 100%;
-    flex-basis: 100%;
+  .poker-award-result small {
     white-space: normal;
   }
 
-  .poker-award-cards {
-    order: 4;
-    width: 100%;
-    flex-basis: 100%;
-    flex-wrap: wrap;
+  .poker-award-hands {
+    justify-content: flex-start;
   }
 
   .blind-level {
