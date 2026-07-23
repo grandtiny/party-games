@@ -211,8 +211,6 @@ export function PokerRoomPage() {
                   selfPlayerId={view.self.playerId}
                 />
               </div>
-              <PokerHandSummary table={table} roomPlayers={view.room.players} />
-              <PokerTournamentRanking table={table} />
               <PokerControls
                 view={view}
                 table={table}
@@ -239,6 +237,8 @@ export function PokerRoomPage() {
                   send((callback) => socketRef.current?.emit("poker:rematch", callback))
                 }
               />
+              <PokerHandSummary table={table} roomPlayers={view.room.players} />
+              <PokerTournamentRanking table={table} />
             </>
           ) : null}
         </div>
