@@ -40,6 +40,7 @@ export function PokerRoomPage() {
   const [actionError, setActionError] = useState<string>();
   const [connected, setConnected] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
+  const tableStageRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(
     undefined
   );
@@ -72,6 +73,21 @@ export function PokerRoomPage() {
   useEffect(() => {
     setBetAmount(suggestedBet);
   }, [table?.actionPlayerId, table?.handNumber, table?.street, suggestedBet]);
+
+  const isSelfActing = Boolean(legalActions);
+
+  useEffect(() => {
+    if (!isSelfActing || !window.matchMedia("(max-width: 760px)").matches) return;
+    const frame = window.requestAnimationFrame(() => {
+      tableStageRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start"
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isSelfActing, table?.handNumber, table?.street]);
 
   if (!session) return <Navigate to="/poker" replace />;
 
@@ -108,7 +124,7 @@ export function PokerRoomPage() {
           正在同步牌桌
         </div>
       ) : (
-        <div className="poker-room">
+        <div className={`poker-room ${isSelfActing ? "has-fixed-controls" : ""}`}>
           <section className="room-summary poker-room-summary">
             <div>
               <span className="summary-label">房间码</span>
@@ -188,11 +204,13 @@ export function PokerRoomPage() {
             </>
           ) : table ? (
             <>
-              <PokerTableStage
-                table={table}
-                roomPlayers={view.room.players}
-                selfPlayerId={view.self.playerId}
-              />
+              <div className="poker-stage-anchor" ref={tableStageRef}>
+                <PokerTableStage
+                  table={table}
+                  roomPlayers={view.room.players}
+                  selfPlayerId={view.self.playerId}
+                />
+              </div>
               <PokerHandSummary table={table} roomPlayers={view.room.players} />
               <PokerTournamentRanking table={table} />
               <PokerControls
@@ -745,7 +763,7 @@ function PokerControls({
   ).length >= 2;
 
   return (
-    <section className="poker-controls">
+    <section className={`poker-controls ${isActing ? "is-turn-fixed" : ""}`}>
       <div className="poker-own-hand">
         <div>
           <span className="summary-label">你的手牌</span>

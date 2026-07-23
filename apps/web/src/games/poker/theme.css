@@ -107,6 +107,10 @@
   gap: 14px;
 }
 
+.poker-room.has-fixed-controls {
+  padding-bottom: 116px;
+}
+
 .poker-room-summary {
   border-color: #cbd4ce;
 }
@@ -173,6 +177,10 @@
 .poker-lobby-table,
 .poker-stage {
   padding: 18px 0;
+}
+
+.poker-stage-anchor {
+  scroll-margin-top: 68px;
 }
 
 .poker-felt {
@@ -622,6 +630,42 @@
   padding-top: 16px;
 }
 
+.poker-controls.is-turn-fixed {
+  position: fixed;
+  z-index: 30;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
+  width: min(calc(100% - 36px), 1084px);
+  grid-template-columns: minmax(320px, 0.85fr) minmax(520px, 1.5fr);
+  align-items: center;
+  gap: 12px;
+  transform: translateX(-50%);
+  border: 1px solid #bfc8c1;
+  border-radius: 8px;
+  background: rgb(250 251 248 / 97%);
+  padding: 10px 12px;
+  box-shadow: 0 14px 36px rgb(18 30 23 / 24%);
+  backdrop-filter: blur(14px);
+}
+
+.poker-controls.is-turn-fixed .poker-own-hand {
+  grid-template-columns: minmax(90px, 1fr) auto minmax(82px, 0.8fr);
+  gap: 8px;
+}
+
+.poker-controls.is-turn-fixed .poker-own-hand__cards .playing-card {
+  width: 42px;
+}
+
+.poker-controls.is-turn-fixed .poker-action-bar {
+  grid-template-columns: minmax(78px, 0.48fr) minmax(104px, 0.68fr) minmax(300px, 1.8fr);
+  gap: 8px;
+}
+
+.poker-controls.is-turn-fixed .poker-table-commands {
+  display: none;
+}
+
 .poker-hand-summary {
   display: grid;
   gap: 12px;
@@ -957,7 +1001,60 @@
   gap: 8px;
 }
 
+@media (max-width: 960px) {
+  .poker-room.has-fixed-controls {
+    padding-bottom: 186px;
+  }
+
+  .poker-controls.is-turn-fixed {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: calc(100% - 16px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-own-hand {
+    grid-template-columns: minmax(86px, 1fr) auto minmax(70px, 0.8fr);
+    gap: 7px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-own-hand__cards {
+    grid-row: auto;
+  }
+
+  .poker-controls.is-turn-fixed .poker-own-hand__cards .playing-card {
+    width: 34px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-own-hand__score {
+    justify-items: end;
+    font-size: 10px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-action-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-action-bar button,
+  .poker-controls.is-turn-fixed .poker-bet-control input {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-bet-control {
+    grid-template-columns: minmax(58px, 0.5fr) minmax(94px, 1fr) minmax(78px, 0.78fr);
+    gap: 7px;
+  }
+
+  .poker-controls.is-turn-fixed .poker-bet-control .secondary-button {
+    grid-column: auto;
+  }
+}
+
 @media (max-width: 760px) {
+
   .poker-felt {
     border-width: 6px;
   }
