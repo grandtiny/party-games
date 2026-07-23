@@ -85,6 +85,24 @@ const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_room_events_room_type
         ON room_events(room_id, event_type);
     `
+  },
+  {
+    version: 3,
+    sql: `
+      CREATE TABLE IF NOT EXISTS admin_credentials (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        password_salt TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `
   }
 ];
 
@@ -319,6 +337,67 @@ export class SqliteRoomRepository {
   cleanupExpiredChats(): void {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     this.#database.prepare("DELETE FROM chat_messages WHERE created_at < ?").run(cutoff);
+  }
+
+  hasAdminPassword(): boolean {
+    const row = this.#database
+      .prepare("SELECT 1 AS found FROM admin_credentials WHERE id = 1")
+      .get() as { found: number } | undefined;
+    return row?.found === 1;
+  }
+
+  initializeAdminPassword(password: { salt: string; hash: string }): boolean {
+    const now = new Date().toISOString();
+    const result = this.#database
+      .prepare(`
+        INSERT INTO admin_credentials (
+          id, password_salt, password_hash, created_at, updated_at
+        ) VALUES (1, ?, ?, ?, ?)
+        ON CONFLICT(id) DO NOTHING
+      `)
+      .run(password.salt, password.hash, now, now);
+    return Number(result.changes) === 1;
+  }
+
+  getAdminPassword(): { salt: string; hash: string } | undefined {
+    const row = this.#database
+      .prepare(`
+        SELECT password_salt, password_hash
+        FROM admin_credentials
+        WHERE id = 1
+      `)
+      .get() as { password_salt: string; password_hash: string } | undefined;
+    return row ? { salt: row.password_salt, hash: row.password_hash } : undefined;
+  }
+
+  updateAdminPassword(password: { salt: string; hash: string }): void {
+    const result = this.#database
+      .prepare(`
+        UPDATE admin_credentials
+        SET password_salt = ?, password_hash = ?, updated_at = ?
+        WHERE id = 1
+      `)
+      .run(password.salt, password.hash, new Date().toISOString());
+    if (Number(result.changes) !== 1) throw new Error("管理员密码尚未初始化");
+  }
+
+  getSetting(key: string): string | undefined {
+    const row = this.#database
+      .prepare("SELECT value FROM app_settings WHERE key = ?")
+      .get(key) as { value: string } | undefined;
+    return row?.value;
+  }
+
+  setSetting(key: string, value: string): void {
+    this.#database
+      .prepare(`
+        INSERT INTO app_settings (key, value, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET
+          value = excluded.value,
+          updated_at = excluded.updated_at
+      `)
+      .run(key, value, new Date().toISOString());
   }
 
   getSchemaVersion(): number {

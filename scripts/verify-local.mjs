@@ -120,7 +120,7 @@ function waitForAnyView(sockets, predicate, timeoutMs = 5000) {
 
 const health = await fetch(`${baseUrl}/api/health`).then((response) => response.json());
 if (health.ok !== true) throw new Error("Health check failed");
-if (health.databaseSchemaVersion !== 2) throw new Error("Database migrations are incomplete");
+if (health.databaseSchemaVersion !== 3) throw new Error("Database migrations are incomplete");
 const rulesAnswer = await post("/api/clocktower/rules/ask", {
   question: "死亡玩家还能投票吗？"
 });

@@ -3,6 +3,10 @@ import { resolve } from "node:path";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import {
+  AdminLlmConfigUpdateRequestSchema,
+  AdminLoginRequestSchema,
+  AdminPasswordChangeRequestSchema,
+  AdminSetupRequestSchema,
   CreateRoomRequestSchema,
   JoinRoomRequestSchema,
   RecoverRoomRequestSchema,
@@ -12,13 +16,11 @@ import {
   type SocketData
 } from "@party-games/shared";
 import { Server as SocketServer } from "socket.io";
+import { AdminService } from "./admin-service.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
-import {
-  createLanguageModelAdapterFromEnvironment,
-  RulesAssistant
-} from "./rules-assistant.js";
+import { RulesAssistant } from "./rules-assistant.js";
 
 export interface AppOptions {
   databasePath: string;
@@ -26,6 +28,7 @@ export interface AppOptions {
   webOrigin?: string;
   logger?: boolean;
   rulesAssistant?: RulesAssistant;
+  environment?: NodeJS.ProcessEnv;
 }
 
 export async function createApp(options: AppOptions) {
@@ -33,9 +36,11 @@ export async function createApp(options: AppOptions) {
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
   const roomService = new RoomService(repository, presence);
+  const adminService = new AdminService(repository, options.environment ?? process.env);
   const rulesAssistant =
-    options.rulesAssistant ?? new RulesAssistant(createLanguageModelAdapterFromEnvironment());
+    options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
+  const adminLoginWindows = new Map<string, { startedAt: number; count: number }>();
   const socketOptions = options.webOrigin ? { cors: { origin: options.webOrigin } } : {};
   const io = new SocketServer<
     ClientToServerEvents,
@@ -48,6 +53,96 @@ export async function createApp(options: AppOptions) {
     ok: true,
     databaseSchemaVersion: repository.getSchemaVersion()
   }));
+
+  app.get("/api/admin/status", async (request) => ({
+    initialized: adminService.isInitialized(),
+    authenticated: adminService.isAuthenticated(adminSessionToken(request.headers.cookie))
+  }));
+
+  app.post("/api/admin/setup", async (request, reply) => {
+    try {
+      const input = AdminSetupRequestSchema.parse(request.body);
+      const token = adminService.setup(input.password);
+      setAdminSessionCookie(reply, token, request.protocol === "https");
+      return { initialized: true, authenticated: true };
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("已经设置") ? 409 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/admin/login", async (request, reply) => {
+    try {
+      if (!consumeLoginAttempt(adminLoginWindows, request.ip)) {
+        return reply.code(429).send({ error: "登录尝试过于频繁，请稍后再试" });
+      }
+      const input = AdminLoginRequestSchema.parse(request.body);
+      const token = adminService.login(input.password);
+      adminLoginWindows.delete(request.ip);
+      setAdminSessionCookie(reply, token, request.protocol === "https");
+      return { initialized: true, authenticated: true };
+    } catch (error) {
+      return reply.code(401).send({ error: messageOf(error) });
+    }
+  });
+
+  app.post("/api/admin/logout", async (request, reply) => {
+    adminService.logout(adminSessionToken(request.headers.cookie));
+    clearAdminSessionCookie(reply, request.protocol === "https");
+    return { ok: true };
+  });
+
+  app.get("/api/admin/config", async (request, reply) => {
+    try {
+      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      return adminService.getConfig();
+    } catch (error) {
+      return reply.code(401).send({ error: messageOf(error) });
+    }
+  });
+
+  app.put("/api/admin/config/llm", async (request, reply) => {
+    try {
+      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
+      const config = adminService.updateLanguageModelConfig(input);
+      rulesAssistant.clearCache();
+      return config;
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.post("/api/admin/config/llm/test", async (request, reply) => {
+    try {
+      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
+      return await adminService.testLanguageModelConfig(input);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.put("/api/admin/password", async (request, reply) => {
+    try {
+      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      const input = AdminPasswordChangeRequestSchema.parse(request.body);
+      const token = adminService.changePassword(input.currentPassword, input.newPassword);
+      setAdminSessionCookie(reply, token, request.protocol === "https");
+      return { ok: true };
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
 
   app.post("/api/clocktower/rules/ask", async (request, reply) => {
     try {
@@ -291,12 +386,82 @@ export async function createApp(options: AppOptions) {
     clearInterval(voteTimer);
     io.close();
     repository.close();
+    adminService.close();
     rulesQuestionWindows.clear();
+    adminLoginWindows.clear();
   });
 
-  return { app, io, roomService, repository, presence };
+  return { app, io, roomService, repository, presence, adminService };
 }
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "未知错误";
+}
+
+const ADMIN_SESSION_COOKIE = "party_games_admin_session";
+
+function adminSessionToken(cookieHeader: string | undefined): string | undefined {
+  if (!cookieHeader) return undefined;
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    const key = part.slice(0, separator).trim();
+    if (key !== ADMIN_SESSION_COOKIE) continue;
+    try {
+      return decodeURIComponent(part.slice(separator + 1).trim());
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+function setAdminSessionCookie(
+  reply: { header(name: string, value: string): unknown },
+  token: string,
+  secure: boolean
+): void {
+  const attributes = [
+    `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Strict",
+    `Max-Age=${8 * 60 * 60}`
+  ];
+  if (secure) attributes.push("Secure");
+  reply.header("set-cookie", attributes.join("; "));
+}
+
+function clearAdminSessionCookie(
+  reply: { header(name: string, value: string): unknown },
+  secure: boolean
+): void {
+  const attributes = [
+    `${ADMIN_SESSION_COOKIE}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Strict",
+    "Max-Age=0"
+  ];
+  if (secure) attributes.push("Secure");
+  reply.header("set-cookie", attributes.join("; "));
+}
+
+function consumeLoginAttempt(
+  windows: Map<string, { startedAt: number; count: number }>,
+  key: string
+): boolean {
+  const now = Date.now();
+  if (windows.size > 1000) {
+    for (const [candidate, value] of windows) {
+      if (now - value.startedAt >= 15 * 60_000) windows.delete(candidate);
+    }
+  }
+  const window = windows.get(key);
+  if (!window || now - window.startedAt >= 15 * 60_000) {
+    windows.set(key, { startedAt: now, count: 1 });
+    return true;
+  }
+  window.count += 1;
+  return window.count <= 10;
 }

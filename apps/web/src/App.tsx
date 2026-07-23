@@ -9,6 +9,7 @@ import {
   LogIn,
   Moon,
   RefreshCw,
+  Settings as SettingsIcon,
   ShieldCheck,
   Spade,
 } from "lucide-react";
@@ -28,12 +29,19 @@ import { AppShell } from "./components/AppShell";
 import { ClocktowerDay } from "./components/ClocktowerDay";
 import { ClocktowerReferenceButton } from "./components/ClocktowerReferenceDialog";
 import { ClocktowerTable } from "./components/ClocktowerTable";
+import { SettingsPage } from "./components/SettingsPage";
 import { getActiveSession, getSession, saveSession, type StoredSession } from "./session";
 
 function HomePage() {
   const active = getActiveSession();
   return (
-    <AppShell>
+    <AppShell
+      actions={
+        <Link className="icon-button" to="/settings" aria-label="系统设置" title="系统设置">
+          <SettingsIcon size={19} />
+        </Link>
+      }
+    >
       <section className="home-intro">
         <p className="eyebrow">PRIVATE GAME TABLE</p>
         <h1>今晚玩什么</h1>
@@ -679,6 +687,7 @@ export default function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/clocktower" element={<ClocktowerEntryPage />} />
       <Route path="/clocktower/room/:roomCode" element={<ClocktowerRoomPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

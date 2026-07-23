@@ -1,0 +1,254 @@
+import { performance } from "node:perf_hooks";
+import type {
+  AdminConfigResponse,
+  AdminLlmConfigUpdateRequest,
+  AdminLlmTestResponse
+} from "@party-games/shared";
+import { createSessionToken, hashPassword, hashSecret, verifyPassword } from "./auth.js";
+import { SqliteRoomRepository } from "./repository.js";
+import {
+  OpenAICompatibleLanguageModelAdapter,
+  type LanguageModelAdapter,
+  type LanguageModelConfig
+} from "./rules-assistant.js";
+
+const LLM_SETTING_KEY = "clocktower.llm";
+const ADMIN_SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
+
+interface StoredLanguageModelConfig {
+  enabled: boolean;
+  endpoint: string;
+  model: string;
+  timeoutMs: number;
+  apiKey?: string;
+}
+
+export class AdminService {
+  readonly #sessions = new Map<string, number>();
+
+  constructor(
+    private readonly repository: SqliteRoomRepository,
+    private readonly environment: NodeJS.ProcessEnv = process.env
+  ) {}
+
+  isInitialized(): boolean {
+    return this.repository.hasAdminPassword();
+  }
+
+  isAuthenticated(token: string | undefined): boolean {
+    if (!token) return false;
+    this.#cleanupSessions();
+    const expiresAt = this.#sessions.get(hashSecret(token));
+    return typeof expiresAt === "number" && expiresAt > Date.now();
+  }
+
+  setup(password: string): string {
+    if (!this.repository.initializeAdminPassword(hashPassword(password))) {
+      throw new Error("管理员密码已经设置，请直接登录");
+    }
+    return this.#createSession();
+  }
+
+  login(password: string): string {
+    const record = this.repository.getAdminPassword();
+    if (!record || !verifyPassword(password, record)) throw new Error("管理员密码错误");
+    return this.#createSession();
+  }
+
+  logout(token: string | undefined): void {
+    if (token) this.#sessions.delete(hashSecret(token));
+  }
+
+  requireAuthentication(token: string | undefined): void {
+    if (!this.isAuthenticated(token)) throw new Error("管理员会话无效，请重新登录");
+  }
+
+  changePassword(currentPassword: string, newPassword: string): string {
+    const record = this.repository.getAdminPassword();
+    if (!record || !verifyPassword(currentPassword, record)) {
+      throw new Error("当前管理员密码错误");
+    }
+    this.repository.updateAdminPassword(hashPassword(newPassword));
+    this.#sessions.clear();
+    return this.#createSession();
+  }
+
+  getConfig(): AdminConfigResponse {
+    const llm = this.#effectiveLanguageModelConfig();
+    return {
+      databaseSchemaVersion: this.repository.getSchemaVersion(),
+      rulesRateLimitPerMinute: 20,
+      llm: {
+        enabled: llm.enabled,
+        endpoint: llm.endpoint,
+        model: llm.model,
+        timeoutMs: llm.timeoutMs,
+        hasApiKey: Boolean(llm.apiKey),
+        ready: this.#isLanguageModelReady(llm),
+        source: llm.source
+      }
+    };
+  }
+
+  updateLanguageModelConfig(input: AdminLlmConfigUpdateRequest): AdminConfigResponse {
+    const existing = this.#storedLanguageModelConfig();
+    const apiKey = input.clearApiKey
+      ? ""
+      : input.apiKey
+        ? input.apiKey
+        : existing && Object.prototype.hasOwnProperty.call(existing, "apiKey")
+          ? existing.apiKey
+          : undefined;
+    const next: StoredLanguageModelConfig = {
+      enabled: input.enabled,
+      endpoint: input.endpoint,
+      model: input.model,
+      timeoutMs: input.timeoutMs,
+      ...(apiKey !== undefined ? { apiKey } : {})
+    };
+    const effective = this.#resolveLanguageModelConfig(next, "saved");
+    if (effective.enabled && !this.#isLanguageModelReady(effective)) {
+      throw new Error("启用大模型前需要填写接口地址、模型名称和 API Key");
+    }
+    this.repository.setSetting(LLM_SETTING_KEY, JSON.stringify(next));
+    return this.getConfig();
+  }
+
+  async testLanguageModelConfig(
+    input: AdminLlmConfigUpdateRequest
+  ): Promise<AdminLlmTestResponse> {
+    const existing = this.#storedLanguageModelConfig();
+    const candidate: StoredLanguageModelConfig = {
+      enabled: true,
+      endpoint: input.endpoint,
+      model: input.model,
+      timeoutMs: input.timeoutMs,
+      ...(input.clearApiKey
+        ? { apiKey: "" }
+        : input.apiKey
+          ? { apiKey: input.apiKey }
+          : existing && Object.prototype.hasOwnProperty.call(existing, "apiKey")
+            ? { apiKey: existing.apiKey }
+            : {})
+    };
+    const config = this.#resolveLanguageModelConfig(candidate, "saved");
+    if (!this.#isLanguageModelReady(config)) {
+      throw new Error("测试连接需要接口地址、模型名称和 API Key");
+    }
+    const startedAt = performance.now();
+    const answer = await new OpenAICompatibleLanguageModelAdapter(
+      config.endpoint,
+      config.apiKey,
+      config.model,
+      config.timeoutMs
+    ).answerRules({
+      question: "死亡玩家是否还能投票？",
+      references: "死亡玩家保留一张死亡票，使用后不能再次投票。"
+    });
+    return {
+      ok: Boolean(answer),
+      message: answer ? "连接成功，模型已返回内容" : "模型没有返回可用内容",
+      latencyMs: Math.round(performance.now() - startedAt)
+    };
+  }
+
+  createLanguageModelAdapter(): LanguageModelAdapter {
+    return {
+      answerRules: async (input) => {
+        const config = this.#effectiveLanguageModelConfig();
+        if (!this.#isLanguageModelReady(config)) return undefined;
+        return new OpenAICompatibleLanguageModelAdapter(
+          config.endpoint,
+          config.apiKey,
+          config.model,
+          config.timeoutMs
+        ).answerRules(input);
+      }
+    };
+  }
+
+  close(): void {
+    this.#sessions.clear();
+  }
+
+  #createSession(): string {
+    const token = createSessionToken();
+    this.#sessions.set(hashSecret(token), Date.now() + ADMIN_SESSION_LIFETIME_MS);
+    return token;
+  }
+
+  #cleanupSessions(): void {
+    const now = Date.now();
+    for (const [tokenHash, expiresAt] of this.#sessions) {
+      if (expiresAt <= now) this.#sessions.delete(tokenHash);
+    }
+  }
+
+  #storedLanguageModelConfig(): StoredLanguageModelConfig | undefined {
+    const stored = this.repository.getSetting(LLM_SETTING_KEY);
+    if (!stored) return undefined;
+    try {
+      return JSON.parse(stored) as StoredLanguageModelConfig;
+    } catch {
+      return undefined;
+    }
+  }
+
+  #effectiveLanguageModelConfig(): LanguageModelConfig & {
+    source: "saved" | "environment" | "none";
+  } {
+    const stored = this.#storedLanguageModelConfig();
+    if (stored) return this.#resolveLanguageModelConfig(stored, "saved");
+    return this.#resolveLanguageModelConfig(
+      undefined,
+      this.#hasEnvironmentConfig() ? "environment" : "none"
+    );
+  }
+
+  #resolveLanguageModelConfig(
+    stored: StoredLanguageModelConfig | undefined,
+    source: "saved" | "environment" | "none"
+  ): LanguageModelConfig & { source: "saved" | "environment" | "none" } {
+    const environmentEnabled = parseBoolean(this.environment.CLOCKTOWER_LLM_ENABLED);
+    const environmentHasRequiredValues = Boolean(
+      this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() &&
+      this.environment.CLOCKTOWER_LLM_API_KEY?.trim() &&
+      this.environment.CLOCKTOWER_LLM_MODEL?.trim()
+    );
+    const storedHasApiKey = stored && Object.prototype.hasOwnProperty.call(stored, "apiKey");
+    const timeout = Number(
+      stored?.timeoutMs ?? this.environment.CLOCKTOWER_LLM_TIMEOUT_MS ?? 8000
+    );
+    return {
+      enabled: stored?.enabled ?? environmentEnabled ?? environmentHasRequiredValues,
+      endpoint: stored?.endpoint ?? this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() ?? "",
+      apiKey: storedHasApiKey
+        ? stored?.apiKey ?? ""
+        : this.environment.CLOCKTOWER_LLM_API_KEY?.trim() ?? "",
+      model: stored?.model ?? this.environment.CLOCKTOWER_LLM_MODEL?.trim() ?? "",
+      timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 8000,
+      source
+    };
+  }
+
+  #isLanguageModelReady(config: LanguageModelConfig): boolean {
+    return Boolean(
+      config.enabled && config.endpoint.trim() && config.apiKey.trim() && config.model.trim()
+    );
+  }
+
+  #hasEnvironmentConfig(): boolean {
+    return Boolean(
+      this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() ||
+      this.environment.CLOCKTOWER_LLM_API_KEY?.trim() ||
+      this.environment.CLOCKTOWER_LLM_MODEL?.trim()
+    );
+  }
+}
+
+function parseBoolean(value: string | undefined): boolean | undefined {
+  if (!value) return undefined;
+  if (["1", "true", "yes", "on"].includes(value.toLowerCase())) return true;
+  if (["0", "false", "no", "off"].includes(value.toLowerCase())) return false;
+  return undefined;
+}

@@ -8,6 +8,14 @@ export interface LanguageModelAdapter {
   answerRules(input: { question: string; references: string }): Promise<string | undefined>;
 }
 
+export interface LanguageModelConfig {
+  enabled: boolean;
+  endpoint: string;
+  apiKey: string;
+  model: string;
+  timeoutMs: number;
+}
+
 export class OpenAICompatibleLanguageModelAdapter implements LanguageModelAdapter {
   constructor(
     private readonly endpoint: string,
@@ -72,6 +80,10 @@ export class RulesAssistant {
       // The deterministic local answer remains available when the optional model fails.
     }
     return this.#remember(cacheKey, local);
+  }
+
+  clearCache(): void {
+    this.#cache.clear();
   }
 
   #remember(key: string, response: RulesAnswerResponse): RulesAnswerResponse {

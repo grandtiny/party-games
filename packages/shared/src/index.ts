@@ -40,6 +40,61 @@ export const RulesQuestionRequestSchema = z.object({
 });
 export type RulesQuestionRequest = z.infer<typeof RulesQuestionRequestSchema>;
 
+const AdminPasswordSchema = z.string().min(8).max(128);
+
+export const AdminSetupRequestSchema = z.object({
+  password: AdminPasswordSchema
+});
+export type AdminSetupRequest = z.infer<typeof AdminSetupRequestSchema>;
+
+export const AdminLoginRequestSchema = z.object({
+  password: AdminPasswordSchema
+});
+export type AdminLoginRequest = z.infer<typeof AdminLoginRequestSchema>;
+
+export const AdminPasswordChangeRequestSchema = z.object({
+  currentPassword: AdminPasswordSchema,
+  newPassword: AdminPasswordSchema
+});
+export type AdminPasswordChangeRequest = z.infer<typeof AdminPasswordChangeRequestSchema>;
+
+export const AdminLlmConfigUpdateRequestSchema = z.object({
+  enabled: z.boolean(),
+  endpoint: z.union([z.string().trim().url().max(2048), z.literal("")]),
+  model: z.string().trim().max(200),
+  apiKey: z.string().trim().max(4096).optional(),
+  clearApiKey: z.boolean().optional(),
+  timeoutMs: z.number().int().min(1000).max(60_000)
+});
+export type AdminLlmConfigUpdateRequest = z.infer<typeof AdminLlmConfigUpdateRequestSchema>;
+
+export interface AdminAuthStatusResponse {
+  initialized: boolean;
+  authenticated: boolean;
+}
+
+export interface AdminLlmConfigView {
+  enabled: boolean;
+  endpoint: string;
+  model: string;
+  timeoutMs: number;
+  hasApiKey: boolean;
+  ready: boolean;
+  source: "saved" | "environment" | "none";
+}
+
+export interface AdminConfigResponse {
+  databaseSchemaVersion: number;
+  rulesRateLimitPerMinute: number;
+  llm: AdminLlmConfigView;
+}
+
+export interface AdminLlmTestResponse {
+  ok: boolean;
+  message: string;
+  latencyMs: number;
+}
+
 export interface RulesAnswerResponse {
   answer: string;
   source: "local" | "model";

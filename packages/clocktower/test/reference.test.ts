@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  FIRST_NIGHT_ORDER,
+  OTHER_NIGHT_ORDER,
+  TROUBLE_BREWING_FIRST_NIGHT_ORDER_REFERENCE,
+  TROUBLE_BREWING_OTHER_NIGHT_ORDER_REFERENCE,
   TROUBLE_BREWING_REFERENCE_ROLES,
   TROUBLE_BREWING_ROLES,
   TROUBLE_BREWING_ROLE_GUIDES,
@@ -23,11 +27,19 @@ describe("trouble brewing reference", () => {
     expect(TROUBLE_BREWING_RULES_REFERENCE.map((section) => section.id)).toEqual([
       "objective",
       "night",
+      "first-night-order",
+      "other-night-order",
       "day",
       "nomination",
       "death",
       "malfunction",
       "registration"
     ]);
+    expect(TROUBLE_BREWING_FIRST_NIGHT_ORDER_REFERENCE).toHaveLength(
+      FIRST_NIGHT_ORDER.length
+    );
+    expect(TROUBLE_BREWING_OTHER_NIGHT_ORDER_REFERENCE).toHaveLength(
+      OTHER_NIGHT_ORDER.length
+    );
   });
 });
