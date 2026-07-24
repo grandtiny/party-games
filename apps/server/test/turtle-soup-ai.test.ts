@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TURTLE_SOUP_PROMPT_VERSION } from "@party-games/shared";
 import type { TurtleSoupPuzzleState } from "../src/domain.js";
 import {
   ModelTurtleSoupAiAdapter,
@@ -38,6 +39,43 @@ const puzzle: TurtleSoupPuzzleState = {
 };
 
 describe("turtle soup AI adapter", () => {
+  it("includes the shared prompt version in every model prompt", async () => {
+    const client = new FakeLanguageModelClient([
+      JSON.stringify({
+        title: "雨夜来电",
+        surface: "她接到自己的来电后立刻关灯。为什么？",
+        answer:
+          "电话来自她提前设置的定时语音提醒，她用自己的声音提醒自己有人可能在窗外观察，所以先关灯隐藏位置。",
+        key_points: [
+          "电话是提前设置的定时提醒",
+          "来电声音来自她自己",
+          "她担心窗外有人观察",
+          "关灯是为了隐藏自己的位置"
+        ],
+        hints: ["声音不一定来自实时通话。", "她关灯是在保护自己的位置。"]
+      }),
+      JSON.stringify({ res: "是", reason: "方向有关" }),
+      JSON.stringify({
+        matched_segments: ["录音设备"],
+        wrong_segments: [],
+        achieved_point_ids: ["recording"],
+        comment: "方向正确"
+      }),
+      "声音有没有可能早就被留下？"
+    ]);
+    const adapter = new ModelTurtleSoupAiAdapter(client);
+
+    await adapter.createPuzzle({ difficulty: "normal", tags: ["电话"], seed: "seed-version" });
+    await adapter.judgeQuestion({ puzzle, question: "声音和设备有关吗？" });
+    await adapter.judgeGuess({ puzzle, guess: "声音可能来自录音设备。" });
+    await adapter.createHint({ puzzle, foundKeyPointIds: [], log: [] });
+
+    expect(client.requests).toHaveLength(4);
+    for (const request of client.requests) {
+      expect(request.messages[0]?.content).toContain(TURTLE_SOUP_PROMPT_VERSION);
+    }
+  });
+
   it("retries puzzle generation when the model returns a low quality payload", async () => {
     const client = new FakeLanguageModelClient([
       JSON.stringify({
@@ -75,6 +113,7 @@ describe("turtle soup AI adapter", () => {
       ]
     });
     expect(client.requests).toHaveLength(2);
+    expect(client.requests[0]?.messages[0]?.content).toContain(TURTLE_SOUP_PROMPT_VERSION);
     expect(client.requests[1]?.messages[0]?.content).toContain("上一次输出未通过服务端校验");
   });
 

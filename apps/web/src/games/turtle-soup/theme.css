@@ -260,6 +260,12 @@
   line-height: 1.55;
 }
 
+.turtle-lab-prompt-version {
+  color: #59615b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
 .turtle-lab label {
   display: grid;
   gap: 7px;

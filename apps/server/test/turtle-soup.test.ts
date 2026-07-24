@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CreateRoomRequestSchema } from "@party-games/shared";
+import { CreateRoomRequestSchema, TURTLE_SOUP_PROMPT_VERSION } from "@party-games/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import { createGameRegistry } from "../src/games/index.js";
 import type { TurtleSoupAiFailureEvent } from "../src/games/turtle-soup.js";
@@ -271,6 +271,7 @@ describe("turtle soup server module", () => {
         roomCode: owner.roomCode,
         puzzleId: "model-soup",
         puzzleSource: "model",
+        promptVersion: TURTLE_SOUP_PROMPT_VERSION,
         error: "HTTP 502 from model"
       }
     ]);

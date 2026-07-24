@@ -1,4 +1,8 @@
-import type { TurtleSoupAnswerView, TurtleSoupDifficulty } from "@party-games/shared";
+import {
+  TURTLE_SOUP_PROMPT_VERSION,
+  type TurtleSoupAnswerView,
+  type TurtleSoupDifficulty
+} from "@party-games/shared";
 import type { LanguageModelClient } from "../language-model.js";
 import type { TurtleSoupLogEntry, TurtleSoupPuzzleState } from "../domain.js";
 
@@ -151,7 +155,8 @@ function storyPrompt(input: TurtleSoupCreateInput): string {
         ? "核心诡计隐蔽，可以有复杂因果链，但不能依赖冷门专业知识。"
         : "标准海龟汤难度，需要侧向思维，可以有适度误导。";
   const keyPointCount = input.difficulty === "easy" ? "3-4" : input.difficulty === "hard" ? "6-8" : "4-6";
-  return `你是一位侧向思维谜题大师。根据标签创作一个逻辑严密的海龟汤。
+  return `${promptVersionLine()}
+你是一位侧向思维谜题大师。根据标签创作一个逻辑严密的海龟汤。
 
 标签：${tags}
 难度：${input.difficulty}，${difficultyText}
@@ -176,7 +181,8 @@ function storyRetryPrompt(input: TurtleSoupCreateInput, validationError: string)
 }
 
 function questionPrompt(input: TurtleSoupQuestionInput): string {
-  return `你是一个海龟汤裁判。
+  return `${promptVersionLine()}
+你是一个海龟汤裁判。
 【汤面】：${input.puzzle.surface}
 【汤底】：${input.puzzle.answer}
 
@@ -196,7 +202,8 @@ function guessPrompt(input: TurtleSoupGuessInput): string {
     id: point.id,
     text: point.text
   }));
-  return `你是一个海龟汤裁判。
+  return `${promptVersionLine()}
+你是一个海龟汤裁判。
 【汤面】：${input.puzzle.surface}
 【汤底】：${input.puzzle.answer}
 【真相要点表】：${JSON.stringify(keyPoints)}
@@ -231,7 +238,8 @@ function hintPrompt(input: TurtleSoupHintInput): string {
     .filter((entry) => entry.kind === "hint")
     .slice(-5)
     .map((entry) => entry.content);
-  return `你是一个海龟汤引导者。
+  return `${promptVersionLine()}
+你是一个海龟汤引导者。
 【汤面】：${input.puzzle.surface}
 【汤底】：${input.puzzle.answer}
 【已猜中】：${found.length > 0 ? found.join("；") : "暂无"}
@@ -241,6 +249,10 @@ function hintPrompt(input: TurtleSoupHintInput): string {
 
 给一句反问式提示，引导玩家思考尚未猜中的要点。
 要求：不剧透、不重复已有提示、不直接说答案，30 字以内。只输出提示正文。`;
+}
+
+function promptVersionLine(): string {
+  return `Prompt 版本：${TURTLE_SOUP_PROMPT_VERSION}`;
 }
 
 function normalizePuzzle(data: Record<string, unknown>, input: TurtleSoupCreateInput): TurtleSoupPuzzleState {

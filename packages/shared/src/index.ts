@@ -27,6 +27,7 @@ export const PokerAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
 export type PokerAiDifficulty = z.infer<typeof PokerAiDifficultySchema>;
 export const TurtleSoupDifficultySchema = z.enum(["easy", "normal", "hard"]);
 export type TurtleSoupDifficulty = z.infer<typeof TurtleSoupDifficultySchema>;
+export const TURTLE_SOUP_PROMPT_VERSION = "turtle-soup-prompt-v1";
 
 export const PokerBlindLevelSchema = z
   .object({

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { TURTLE_SOUP_PROMPT_VERSION } from "@party-games/shared";
 import type {
   RoomPhase,
   TurtleSoupAnswerView,
@@ -36,6 +37,7 @@ export interface TurtleSoupAiFailureEvent {
   action: TurtleSoupAiAction;
   roomCode: string;
   error: string;
+  promptVersion: string;
   puzzleId?: string;
   puzzleSource?: "model" | "local";
 }
@@ -389,6 +391,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
       this.#reportAiFailure({
         action: "create-puzzle",
         roomCode: state.code,
+        promptVersion: TURTLE_SOUP_PROMPT_VERSION,
         error: errorMessage(cause)
       });
     }
@@ -409,6 +412,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
         roomCode,
         puzzleId: puzzle.id,
         puzzleSource: puzzle.source,
+        promptVersion: TURTLE_SOUP_PROMPT_VERSION,
         error: errorMessage(cause)
       });
     }
@@ -429,6 +433,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
         roomCode,
         puzzleId: puzzle.id,
         puzzleSource: puzzle.source,
+        promptVersion: TURTLE_SOUP_PROMPT_VERSION,
         error: errorMessage(cause)
       });
     }
@@ -453,6 +458,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
         roomCode,
         puzzleId: puzzle.id,
         puzzleSource: puzzle.source,
+        promptVersion: TURTLE_SOUP_PROMPT_VERSION,
         error: errorMessage(cause)
       });
     }
