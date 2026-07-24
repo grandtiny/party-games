@@ -204,7 +204,7 @@ export function SudokuPage() {
           )}
         </div>
 
-        <div className="puzzle-status-row">
+        <div className="puzzle-status-row" aria-live="polite">
           <span className="puzzle-stat">
             <Timer size={17} />
             <strong>{formatTime(state.elapsedSeconds)}</strong>
@@ -229,52 +229,61 @@ export function SudokuPage() {
         </div>
       </section>
 
-      <div className="sudoku-layout">
-        <div className="sudoku-board" role="grid" aria-label="数独棋盘">
-          {state.values.map((value, index) => {
-            const row = Math.floor(index / 9);
-            const column = index % 9;
-            const given = state.puzzle[index] !== "-";
-            const selected = state.selectedIndex === index;
-            const peer = state.selectedIndex !== null && isPeer(index, state.selectedIndex);
-            const sameValue = Boolean(value && selectedValue && value === selectedValue);
-            const error = Boolean(value && value !== state.solution[index]);
-            const hinted = state.hintedIndexes.includes(index);
-            const notes = state.notes[index] ?? [];
-            return (
-              <button
-                className={[
-                  "sudoku-cell",
-                  given ? "is-given" : "is-editable",
-                  selected ? "is-selected" : "",
-                  peer ? "is-peer" : "",
-                  sameValue ? "is-same-value" : "",
-                  error ? "is-error" : "",
-                  hinted ? "is-hinted" : "",
-                  column === 2 || column === 5 ? "is-box-right" : "",
-                  row === 2 || row === 5 ? "is-box-bottom" : ""
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                type="button"
-                role="gridcell"
-                aria-label={sudokuCellLabel(index, value, given, notes)}
-                aria-selected={selected}
-                onClick={() => dispatch({ type: "select", index })}
-                key={index}
-              >
-                {value ? (
-                  <span className="sudoku-value">{value}</span>
-                ) : notes.length > 0 ? (
-                  <span className="sudoku-notes" aria-hidden="true">
-                    {Array.from({ length: 9 }, (_, noteIndex) => noteIndex + 1).map((note) => (
-                      <span key={note}>{notes.includes(note) ? note : ""}</span>
-                    ))}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
+      <div
+        className={`sudoku-layout ${state.noteMode ? "is-note-mode" : ""} is-${state.status}`}
+      >
+        <div className="sudoku-board-frame">
+          <div
+            className="sudoku-board"
+            role="grid"
+            aria-label="数独棋盘"
+            data-status={state.status}
+          >
+            {state.values.map((value, index) => {
+              const row = Math.floor(index / 9);
+              const column = index % 9;
+              const given = state.puzzle[index] !== "-";
+              const selected = state.selectedIndex === index;
+              const peer = state.selectedIndex !== null && isPeer(index, state.selectedIndex);
+              const sameValue = Boolean(value && selectedValue && value === selectedValue);
+              const error = Boolean(value && value !== state.solution[index]);
+              const hinted = state.hintedIndexes.includes(index);
+              const notes = state.notes[index] ?? [];
+              return (
+                <button
+                  className={[
+                    "sudoku-cell",
+                    given ? "is-given" : "is-editable",
+                    selected ? "is-selected" : "",
+                    peer ? "is-peer" : "",
+                    sameValue ? "is-same-value" : "",
+                    error ? "is-error" : "",
+                    hinted ? "is-hinted" : "",
+                    column === 2 || column === 5 ? "is-box-right" : "",
+                    row === 2 || row === 5 ? "is-box-bottom" : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  type="button"
+                  role="gridcell"
+                  aria-label={sudokuCellLabel(index, value, given, notes)}
+                  aria-selected={selected}
+                  onClick={() => dispatch({ type: "select", index })}
+                  key={index}
+                >
+                  {value ? (
+                    <span className="sudoku-value">{value}</span>
+                  ) : notes.length > 0 ? (
+                    <span className="sudoku-notes" aria-hidden="true">
+                      {Array.from({ length: 9 }, (_, noteIndex) => noteIndex + 1).map((note) => (
+                        <span key={note}>{notes.includes(note) ? note : ""}</span>
+                      ))}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <aside className="sudoku-input" aria-label="数独输入">
@@ -282,6 +291,8 @@ export function SudokuPage() {
             {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => (
               <button
                 type="button"
+                className={selectedValue === String(value) ? "is-current" : ""}
+                aria-pressed={selectedValue === String(value)}
                 onClick={() => dispatch({ type: "input", value })}
                 disabled={state.status === "complete"}
                 key={value}

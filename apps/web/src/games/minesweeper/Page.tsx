@@ -189,7 +189,7 @@ export function MinesweeperPage() {
           ))}
         </div>
 
-        <div className="puzzle-status-row">
+        <div className="puzzle-status-row" aria-live="polite">
           <span className="puzzle-stat">
             <Bomb size={17} />
             剩余 <strong>{Math.max(0, remainingMines)}</strong>
@@ -230,52 +230,59 @@ export function MinesweeperPage() {
         </div>
       </section>
 
-      <div className="minesweeper-board-scroll">
-        <div
-          className={`minesweeper-board minesweeper-board--${level}`}
-          style={boardStyle}
-          role="grid"
-          aria-label={`${levelConfig.label}扫雷棋盘`}
-        >
-          {game.grid.flatMap((row, y) =>
-            row.map((cell, x) => {
-              const isMine = cell.mineCount === -1;
-              const showWinningFlag = game.status === "win" && isMine;
-              const content = showWinningFlag ? (
-                <Flag size={16} />
-              ) : cell.status === "flagged" ? (
-                <Flag size={16} />
-              ) : (cell.status === "revealed" || cell.status === "detonated") && isMine ? (
-                <Bomb size={16} />
-              ) : cell.status === "revealed" && cell.mineCount > 0 ? (
-                cell.mineCount
-              ) : null;
-              return (
-                <button
-                  className={[
-                    "minesweeper-cell",
-                    `is-${cell.status}`,
-                    isMine ? "is-mine" : "",
-                    showWinningFlag ? "is-winning-flag" : ""
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  type="button"
-                  role="gridcell"
-                  data-count={cell.status === "revealed" ? cell.mineCount : undefined}
-                  aria-label={cellLabel(cell.status, cell.mineCount, x, y)}
-                  onClick={() => activateCell(x, y)}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    flagAt(x, y);
-                  }}
-                  key={`${x}-${y}`}
-                >
-                  {content}
-                </button>
-              );
-            })
-          )}
+      <div
+        className={`minesweeper-stage minesweeper-stage--${level} is-${game.status}`}
+        data-input-mode={inputMode}
+      >
+        <div className="minesweeper-board-scroll">
+          <div
+            className={`minesweeper-board minesweeper-board--${level}`}
+            style={boardStyle}
+            role="grid"
+            aria-label={`${levelConfig.label}扫雷棋盘`}
+            data-status={game.status}
+          >
+            {game.grid.flatMap((row, y) =>
+              row.map((cell, x) => {
+                const isMine = cell.mineCount === -1;
+                const showWinningFlag = game.status === "win" && isMine;
+                const content = showWinningFlag ? (
+                  <Flag size={16} />
+                ) : cell.status === "flagged" ? (
+                  <Flag size={16} />
+                ) : (cell.status === "revealed" || cell.status === "detonated") && isMine ? (
+                  <Bomb size={16} />
+                ) : cell.status === "revealed" && cell.mineCount > 0 ? (
+                  cell.mineCount
+                ) : null;
+                return (
+                  <button
+                    className={[
+                      "minesweeper-cell",
+                      `is-${cell.status}`,
+                      cell.status === "revealed" && cell.mineCount === 0 ? "is-empty" : "",
+                      isMine ? "is-mine" : "",
+                      showWinningFlag ? "is-winning-flag" : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    type="button"
+                    role="gridcell"
+                    data-count={cell.status === "revealed" ? cell.mineCount : undefined}
+                    aria-label={cellLabel(cell.status, cell.mineCount, x, y)}
+                    onClick={() => activateCell(x, y)}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      flagAt(x, y);
+                    }}
+                    key={`${x}-${y}`}
+                  >
+                    {content}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </AppShell>

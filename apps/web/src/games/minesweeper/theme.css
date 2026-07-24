@@ -1,20 +1,35 @@
 .app-shell--minesweeper {
-  --action-background: #a24b0b;
-  --action-border: #a24b0b;
-  --action-focus: rgb(162 75 11 / 16%);
-  --game-accent: #a24b0b;
+  --action-background: #a94818;
+  --action-border: #a94818;
+  --action-focus: rgb(169 72 24 / 18%);
+  --game-accent: #a94818;
+  background:
+    linear-gradient(90deg, rgb(54 65 59 / 4%) 1px, transparent 1px),
+    linear-gradient(rgb(54 65 59 / 4%) 1px, transparent 1px),
+    #f1f3ef;
+  background-size: 40px 40px;
 }
 
 .app-shell--minesweeper .page {
-  width: min(100%, 1120px);
+  width: min(100%, 1180px);
 }
 
 .minesweeper-heading {
-  color: #9a470c;
+  color: #9f4217;
+}
+
+.app-shell--minesweeper .puzzle-controls {
+  grid-template-columns: minmax(390px, 1fr) minmax(280px, 360px);
+  align-items: center;
+}
+
+.app-shell--minesweeper .puzzle-status-row {
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 
 .minesweeper-input-mode {
-  width: min(100%, 360px);
+  width: 100%;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -30,11 +45,50 @@
   opacity: 0.5;
 }
 
+.minesweeper-stage {
+  overflow: hidden;
+  border: 1px solid #39413d;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 2%) 0 1px, transparent 1px 8px),
+    #262e2a;
+  padding: 22px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 8%),
+    0 18px 42px rgb(30 37 33 / 14%);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.minesweeper-stage--beginner {
+  width: min(100%, 560px);
+  margin-inline: auto;
+}
+
+.minesweeper-stage--intermediate {
+  width: min(100%, 680px);
+  margin-inline: auto;
+}
+
+.minesweeper-stage.is-win {
+  border-color: #3c7f5f;
+  box-shadow:
+    inset 0 0 0 1px rgb(92 170 126 / 30%),
+    0 18px 42px rgb(30 37 33 / 14%);
+}
+
+.minesweeper-stage.is-loss {
+  border-color: #9c3438;
+  box-shadow:
+    inset 0 0 0 1px rgb(204 70 76 / 30%),
+    0 18px 42px rgb(30 37 33 / 14%);
+}
+
 .minesweeper-board-scroll {
   max-width: 100%;
   overflow-x: auto;
-  padding: 2px 0 12px;
-  scrollbar-color: #aab1aa #eef0ec;
+  padding: 4px 2px 10px;
+  scrollbar-color: #818b85 #1f2622;
+  scrollbar-width: thin;
 }
 
 .minesweeper-board {
@@ -42,9 +96,25 @@
   width: max-content;
   grid-template-columns: repeat(var(--mine-columns), var(--mine-cell-size));
   gap: 2px;
-  border: 1px solid #9ca39d;
-  background: #9ca39d;
-  padding: 3px;
+  border: 5px solid #141a17;
+  border-radius: 5px;
+  background: #202723;
+  padding: 4px;
+  box-shadow:
+    0 0 0 1px #59635d,
+    0 14px 28px rgb(0 0 0 / 25%);
+}
+
+.minesweeper-board--beginner {
+  --mine-cell-size: 44px !important;
+}
+
+.minesweeper-board--intermediate {
+  --mine-cell-size: 34px !important;
+}
+
+.minesweeper-board--expert {
+  --mine-cell-size: 29px !important;
 }
 
 .minesweeper-cell {
@@ -53,83 +123,181 @@
   height: var(--mine-cell-size);
   cursor: pointer;
   place-items: center;
-  border: 1px solid #c8cdc7;
+  border: 2px solid;
+  border-color: #aab2ad #39413d #39413d #aab2ad;
   border-radius: 2px;
-  background: #eef0ec;
-  color: #232824;
-  font-size: calc(var(--mine-cell-size) * 0.53);
-  font-weight: 800;
+  background: #68736d;
+  color: #111713;
+  font-size: calc(var(--mine-cell-size) * 0.5);
+  font-weight: 850;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  text-shadow: 0 1px rgb(255 255 255 / 28%);
+  transition:
+    background-color 100ms ease,
+    border-color 100ms ease,
+    transform 80ms ease;
 }
 
-.minesweeper-cell:hover:not(.is-revealed) {
-  background: #e0e4dd;
+.minesweeper-cell svg {
+  width: 52%;
+  height: 52%;
+  stroke-width: 2.6;
+}
+
+.minesweeper-cell:hover:not(.is-revealed, .is-detonated) {
+  border-color: #d6bc75 #654c25 #654c25 #d6bc75;
+  background: #7b8175;
+}
+
+.minesweeper-cell:focus-visible {
+  z-index: 2;
+  outline: 3px solid #ffd166;
+  outline-offset: -2px;
+}
+
+.minesweeper-cell:active:not(.is-revealed, .is-detonated) {
+  border-color: #39413d #8e9892 #8e9892 #39413d;
+  transform: translateY(1px);
 }
 
 .minesweeper-cell.is-revealed,
 .minesweeper-cell.is-detonated {
   cursor: default;
-  border-color: #dde1dc;
-  background: #fff;
+  border: 1px solid #bfc6c1;
+  background: #e7ebe7;
+  animation: minesweeper-reveal 140ms ease-out;
+}
+
+.minesweeper-cell.is-empty {
+  background: #f0f2ef;
 }
 
 .minesweeper-cell.is-flagged,
 .minesweeper-cell.is-winning-flag {
-  color: #a12a32;
+  border-color: #d8be73 #353c38 #353c38 #d8be73;
+  background: #4b554f;
+  color: #ffd05a;
+  filter: drop-shadow(0 0 5px rgb(255 196 58 / 24%));
+  animation: minesweeper-flag 170ms ease-out;
+}
+
+.minesweeper-cell.is-winning-flag {
+  border-color: #89c9a8 #28543d #28543d #89c9a8;
+  background: #356249;
+  color: #fff2a8;
 }
 
 .minesweeper-cell.is-detonated {
-  border-color: #a3262f;
-  background: #f4c9cc;
-  color: #9b2029;
+  border-color: #761f24;
+  background: #cf3942;
+  color: #fff;
+  text-shadow: none;
+  animation: minesweeper-detonate 260ms ease-out;
+}
+
+.minesweeper-cell.is-revealed.is-mine:not(.is-detonated) {
+  background: #cbd0cc;
+  color: #6c2529;
 }
 
 .minesweeper-cell[data-count="1"] {
-  color: #315aa6;
+  color: #2456ae;
 }
 
 .minesweeper-cell[data-count="2"] {
-  color: #17704a;
+  color: #14704a;
 }
 
 .minesweeper-cell[data-count="3"] {
-  color: #b4232d;
+  color: #b12831;
 }
 
 .minesweeper-cell[data-count="4"] {
-  color: #633f96;
+  color: #603d9a;
 }
 
-.minesweeper-cell[data-count="5"],
-.minesweeper-cell[data-count="6"],
+.minesweeper-cell[data-count="5"] {
+  color: #8b3f15;
+}
+
+.minesweeper-cell[data-count="6"] {
+  color: #08717a;
+}
+
 .minesweeper-cell[data-count="7"],
 .minesweeper-cell[data-count="8"] {
-  color: #744015;
+  color: #252a26;
+}
+
+@keyframes minesweeper-reveal {
+  from {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes minesweeper-flag {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes minesweeper-detonate {
+  40% {
+    transform: scale(1.12);
+  }
 }
 
 @media (min-width: 760px) {
   .minesweeper-board--beginner,
-  .minesweeper-board--intermediate {
+  .minesweeper-board--intermediate,
+  .minesweeper-board--expert {
     margin-inline: auto;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .app-shell--minesweeper .puzzle-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--minesweeper .puzzle-status-row {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
   .minesweeper-input-mode {
     width: 100%;
   }
 
-  .minesweeper-board {
-    --mine-cell-size: 30px !important;
+  .minesweeper-stage {
+    padding: 12px 8px 8px;
   }
 
   .minesweeper-board--beginner {
+    --mine-cell-size: min(35px, calc((100vw - 80px) / 9)) !important;
     margin-inline: auto;
+  }
+
+  .minesweeper-board--intermediate {
+    --mine-cell-size: 30px !important;
+  }
+
+  .minesweeper-board--expert {
+    --mine-cell-size: 28px !important;
   }
 
   .puzzle-difficulty button {
     padding-inline: 5px;
     font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minesweeper-cell,
+  .minesweeper-stage {
+    animation: none;
+    transition: none;
   }
 }
