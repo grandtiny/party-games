@@ -5,10 +5,20 @@
 ## 分支职责
 
 - `main` 只保存已完成集成验证、可部署的版本，不直接承载功能开发。
+- `Cos-redesign` 是协作者长期使用的前端集成分支，也是唯一允许长期保留的开发分支。每批开发前先合入最新 `main`，每批前端成果合入 `main` 后再同步主线。
 - 新功能使用 `feature/<scope>`，缺陷修复使用 `fix/<scope>`，纯样式调整使用 `style/<scope>`，工程维护使用 `chore/<scope>`。
-- 一个任务只使用一个功能分支和一个 worktree；不要让两个任务同时写同一个分支或 worktree。
+- 除 `Cos-redesign` 外，一个任务只使用一个短期功能分支和一个 worktree；不要让两个任务同时写同一个分支或 worktree。
+- 功能分支按业务目标划分，不按“前端分支/后端分支”机械拆分。同一项需求由同一开发方完成前后端时，应放在同一个功能分支里完成端到端验证。
 - 新分支从最新 `origin/main` 创建。功能分支必须跟踪同名远端分支，不能把 upstream 设置为 `origin/main`。
 - 当前分支状态以 `git branch -vv`、`git worktree list` 和远端为准，不在文档里维护容易过期的分支清单。
+
+## Cos 前端协作范围
+
+- `Cos-redesign` 默认只修改 `apps/web/**`、前端资源、前端文档，以及前端依赖直接引起的 `apps/web/package.json` 和 `pnpm-lock.yaml`。
+- 不在该分支直接修改 `apps/server/**`、数据库、服务端游戏适配器、规则内核或平台共享契约。
+- 如果前端需要新的接口或共享类型，由我们从最新 `main` 创建对应功能分支实现；后端合入 `main` 后，再把主线同步进 `Cos-redesign`。
+- 协作者前端与我们的后端属于同一需求时，两条分支分别保持职责范围，最终都以最新 `main` 为集成目标。
+- `Cos-redesign` 已共享且长期存在，只能使用 merge 同步，不得 rebase 或 force push。
 
 ## 开始开发前
 
