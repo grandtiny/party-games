@@ -46,20 +46,31 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
   constructor(private readonly client: LanguageModelClient) {}
 
   async createPuzzle(input: TurtleSoupCreateInput): Promise<TurtleSoupPuzzleState | undefined> {
-    const text = await this.client.complete({
-      purpose: "story",
-      temperature: 0.85,
-      json: true,
-      enableThinking: true,
-      messages: [
-        {
-          role: "user",
-          content: storyPrompt(input)
-        }
-      ]
-    });
-    if (!text) return undefined;
-    return normalizePuzzle(parseJson(text), input);
+    let validationError = "";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const text = await this.client.complete({
+        purpose: "story",
+        temperature: 0.85,
+        json: true,
+        enableThinking: true,
+        messages: [
+          {
+            role: "user",
+            content:
+              attempt === 0
+                ? storyPrompt(input)
+                : storyRetryPrompt(input, validationError)
+          }
+        ]
+      });
+      if (!text) return undefined;
+      try {
+        return normalizePuzzle(parseJson(text), input);
+      } catch (cause) {
+        validationError = errorMessage(cause);
+      }
+    }
+    throw new Error(`海龟汤生成结果连续不合格: ${validationError || "unknown validation error"}`);
   }
 
   async judgeQuestion(
@@ -157,6 +168,13 @@ function storyPrompt(input: TurtleSoupCreateInput): string {
 {"title":"","surface":"","answer":"","key_points":[],"hints":[]}`;
 }
 
+function storyRetryPrompt(input: TurtleSoupCreateInput, validationError: string): string {
+  return `${storyPrompt(input)}
+
+上一次输出未通过服务端校验：${validationError}
+请重新生成一题，不要解释错误原因，只返回符合契约的 JSON。`;
+}
+
 function questionPrompt(input: TurtleSoupQuestionInput): string {
   return `你是一个海龟汤裁判。
 【汤面】：${input.puzzle.surface}
@@ -229,14 +247,30 @@ function normalizePuzzle(data: Record<string, unknown>, input: TurtleSoupCreateI
   const title = stringField(data.title, 40);
   const surface = stringField(data.surface ?? data.puzzle, 300);
   const answer = stringField(data.answer, 1200);
-  const keyPoints = arrayField(data.key_points ?? data.keyPoints)
+  const keyPoints = uniqueStrings(arrayField(data.key_points ?? data.keyPoints), 80)
     .map((text, index) => ({
       id: `kp-${index + 1}`,
       text
     }))
     .filter((point) => point.text.length > 0);
-  if (!title || !surface || !answer || keyPoints.length < 2) {
+  const hints = uniqueStrings(arrayField(data.hints), 60).slice(0, 5);
+  const keyPointRange = keyPointRangeFor(input.difficulty);
+  if (!title || !surface || !answer) {
     throw new Error("海龟汤生成结果缺少必要字段");
+  }
+  if (!isQuestionLikeSurface(surface)) {
+    throw new Error("汤面必须以明确的问题收束");
+  }
+  if (answer.length < 30) {
+    throw new Error("汤底过短，无法支撑推理");
+  }
+  if (keyPoints.length < keyPointRange.min || keyPoints.length > keyPointRange.max) {
+    throw new Error(
+      `真相要点数量必须在 ${keyPointRange.min} 到 ${keyPointRange.max} 个之间`
+    );
+  }
+  if (hints.length < 2) {
+    throw new Error("至少需要 2 条渐进提示");
   }
   return {
     id: `model-${shortHash(`${input.seed}:${title}:${surface}`)}`,
@@ -246,7 +280,7 @@ function normalizePuzzle(data: Record<string, unknown>, input: TurtleSoupCreateI
     source: "model",
     maxHints: input.difficulty === "easy" ? 8 : input.difficulty === "hard" ? 2 : 5,
     keyPoints,
-    hints: arrayField(data.hints).slice(0, 5)
+    hints
   };
 }
 
@@ -320,6 +354,36 @@ function stringField(value: unknown, maxLength: number): string {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+function uniqueStrings(values: readonly string[], maxLength: number): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const text = value.trim().slice(0, maxLength);
+    if (!text) continue;
+    const key = normalize(text);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(text);
+  }
+  return result;
+}
+
+function keyPointRangeFor(difficulty: TurtleSoupDifficulty): { min: number; max: number } {
+  if (difficulty === "easy") return { min: 3, max: 4 };
+  if (difficulty === "hard") return { min: 6, max: 8 };
+  return { min: 4, max: 6 };
+}
+
+function isQuestionLikeSurface(surface: string): boolean {
+  const trimmed = surface.trim();
+  return (
+    trimmed.endsWith("?") ||
+    trimmed.endsWith("？") ||
+    trimmed.includes("为什么") ||
+    trimmed.includes("发生了什么")
+  );
+}
+
 function shortHash(value: string): string {
   let hash = 0;
   for (const char of value) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
@@ -328,4 +392,8 @@ function shortHash(value: string): string {
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+}
+
+function errorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : "unknown validation error";
 }

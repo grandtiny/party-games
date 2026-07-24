@@ -11,12 +11,15 @@ import type {
 
 class FakeLanguageModelClient implements LanguageModelClient {
   readonly requests: LanguageModelCompletionInput[] = [];
+  readonly #outputs: string[];
 
-  constructor(private readonly output: string) {}
+  constructor(output: string | string[]) {
+    this.#outputs = Array.isArray(output) ? output : [output];
+  }
 
   async complete(input: LanguageModelCompletionInput): Promise<string | undefined> {
     this.requests.push(input);
-    return this.output;
+    return this.#outputs[Math.min(this.requests.length - 1, this.#outputs.length - 1)];
   }
 }
 
@@ -35,6 +38,64 @@ const puzzle: TurtleSoupPuzzleState = {
 };
 
 describe("turtle soup AI adapter", () => {
+  it("retries puzzle generation when the model returns a low quality payload", async () => {
+    const client = new FakeLanguageModelClient([
+      JSON.stringify({
+        title: "坏题",
+        surface: "一个人进门后笑了。",
+        answer: "答案太短。",
+        key_points: ["只有一个要点"],
+        hints: ["提示"]
+      }),
+      JSON.stringify({
+        title: "雨夜来电",
+        surface: "她接到自己的来电后立刻关灯。为什么？",
+        answer:
+          "电话来自她提前设置的定时语音提醒，她用自己的声音提醒自己有人可能在窗外观察，所以先关灯隐藏位置。",
+        key_points: [
+          "电话是提前设置的定时提醒",
+          "来电声音来自她自己",
+          "她担心窗外有人观察"
+        ],
+        hints: ["声音不一定来自实时通话。", "她关灯是在保护自己的位置。"]
+      })
+    ]);
+    const adapter = new ModelTurtleSoupAiAdapter(client);
+
+    await expect(
+      adapter.createPuzzle({ difficulty: "easy", tags: ["电话"], seed: "seed-1" })
+    ).resolves.toMatchObject({
+      source: "model",
+      title: "雨夜来电",
+      maxHints: 8,
+      keyPoints: [
+        { id: "kp-1", text: "电话是提前设置的定时提醒" },
+        { id: "kp-2", text: "来电声音来自她自己" },
+        { id: "kp-3", text: "她担心窗外有人观察" }
+      ]
+    });
+    expect(client.requests).toHaveLength(2);
+    expect(client.requests[1]?.messages[0]?.content).toContain("上一次输出未通过服务端校验");
+  });
+
+  it("rejects puzzle generation after repeated invalid model payloads", async () => {
+    const adapter = new ModelTurtleSoupAiAdapter(
+      new FakeLanguageModelClient(
+        JSON.stringify({
+          title: "坏题",
+          surface: "他沉默地坐着。",
+          answer: "太短。",
+          key_points: ["单点"],
+          hints: ["提示"]
+        })
+      )
+    );
+
+    await expect(
+      adapter.createPuzzle({ difficulty: "normal", tags: [], seed: "seed-2" })
+    ).rejects.toThrow("海龟汤生成结果连续不合格");
+  });
+
   it("maps model guess judgments by key point id", async () => {
     const adapter = new ModelTurtleSoupAiAdapter(
       new FakeLanguageModelClient(
