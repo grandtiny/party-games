@@ -824,6 +824,38 @@
   color: var(--ct-good-deep);
 }
 
+/* —— 圆桌缩小版（mini 模式）：移除标题栏后自适应居中 —— */
+/* —— 圆桌缩小版（mini）：仅两端共用的结构，尺寸规则在下方 media 分开 —— */
+.app-shell--clocktower .ct-table-mini {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.app-shell--clocktower .ct-table-mini .clocktower-table__stage {
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell--clocktower .ct-table-mini .clocktower-table__ring {
+  /* 正圆：以高度为基准，aspect-ratio 推导宽度，不超出容器宽 */
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.app-shell--clocktower .ct-table-mini .table-player-actions {
+  flex: none;
+  margin-top: 8px;
+}
+
 /* ============================================================
    身份揭示卡
    ============================================================ */
@@ -1427,5 +1459,307 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell--clocktower .clocktower-table__magic-circle {
     animation: none;
+  }
+}
+
+/* ============================================================
+   阶段横幅（统一单行）—— Task 4
+   ============================================================ */
+.app-shell--clocktower .ct-stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ct-gold-deep);
+  background: linear-gradient(180deg, var(--ct-panel-dark) 0%, var(--ct-panel-dark-deep) 100%);
+  color: var(--ct-parchment-aged);
+  font-family: "EB Garamond", "Noto Serif SC", serif;
+  flex: none;
+}
+
+.app-shell--clocktower .ct-stage-bar__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--ct-gold-bright);
+  filter: drop-shadow(0 0 6px rgb(201 168 76 / 50%));
+}
+
+.app-shell--clocktower .ct-stage-bar__title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, var(--ct-gold-bright) 0%, var(--ct-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-shell--clocktower .ct-stage-bar__sub {
+  color: var(--ct-parchment-deep);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.app-shell--clocktower .ct-stage-bar__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--ct-gold-deep);
+  border-radius: 4px;
+  background: rgb(201 168 76 / 10%);
+  color: var(--ct-gold-bright);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-shell--clocktower .ct-stage-bar__jump:hover {
+  background: rgb(201 168 76 / 20%);
+  box-shadow: 0 0 10px rgb(201 168 76 / 35%);
+}
+
+/* ============================================================
+   底部 Tab 栏（固定，阶段感知）—— Task 5
+   ============================================================ */
+.app-shell--clocktower .ct-tabbar {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ct-gold-deep);
+  background: linear-gradient(180deg, var(--ct-panel-dark-deep) 0%, #0b0710 100%);
+  box-shadow: 0 -2px 14px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(201 168 76 / 18%);
+}
+
+.app-shell--clocktower .ct-tabbar__btn {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ct-parchment-deep);
+  font-family: "EB Garamond", "Noto Serif SC", serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-shell--clocktower .ct-tabbar__btn.is-active {
+  background: linear-gradient(180deg, rgb(201 168 76 / 18%) 0%, rgb(201 168 76 / 6%) 100%);
+  color: var(--ct-gold-bright);
+  box-shadow: inset 0 1px 0 rgb(201 168 76 / 25%), inset 0 -2px var(--ct-gold);
+}
+
+.app-shell--clocktower .ct-tabbar__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.app-shell--clocktower .ct-tabbar__label {
+  letter-spacing: 0.04em;
+}
+
+.app-shell--clocktower .ct-tabbar__dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ct-blood);
+  box-shadow: 0 0 6px var(--ct-blood-glow);
+}
+
+/* ============================================================
+   顶栏身份入口按钮 + 浮层 —— Task 6
+   ============================================================ */
+.app-shell--clocktower .ct-identity-btn-wrap {
+  position: relative;
+}
+
+.app-shell--clocktower .ct-identity-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 4px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--ct-gold);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(201 168 76 / 12%) 0%, transparent 60%),
+    linear-gradient(180deg, var(--ct-panel-dark) 0%, var(--ct-panel-dark-deep) 100%);
+  color: var(--ct-parchment-aged);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 70%), 0 0 0 1px rgb(201 168 76 / 20%);
+  text-align: center;
+}
+
+.app-shell--clocktower .ct-identity-popover small {
+  color: var(--ct-gold);
+  font-family: "EB Garamond", serif;
+  letter-spacing: 0.1em;
+}
+
+.app-shell--clocktower .ct-identity-popover strong {
+  font-size: 22px;
+  font-family: "EB Garamond", "Noto Serif SC", serif;
+  color: var(--ct-gold-bright);
+  text-shadow: 0 0 12px rgb(201 168 76 / 45%);
+}
+
+.app-shell--clocktower .ct-identity-popover em {
+  color: var(--ct-gold);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.app-shell--clocktower .ct-identity-popover p {
+  margin: 4px 0 0;
+  color: var(--ct-parchment-deep);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   房间页三区域骨架（整页不滚动）—— Task 7
+   ============================================================ */
+
+/* 房间页：根容器撑满视口，flex 链向下传递高度 */
+.app-shell--clocktower:has(.ct-room-main) {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--clocktower:has(.ct-room-main) .page {
+  padding: 0;
+  width: auto;          /* 覆盖平台层 width: min(100%, 920px)，让房间页撑满屏宽 */
+  max-width: none;
+  margin: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 入口页 page 恢复正常滚动（入口页不用三区域骨架） */
+.app-shell--clocktower:has(.entry-layout) .page {
+  height: auto;
+  max-width: 920px;
+  display: block;
+  overflow: visible;
+  padding: 28px 18px 56px;
+}
+
+/* 顶栏在房间页作为 flex 项（取消 sticky） */
+.app-shell--clocktower .topbar {
+  position: static;
+  flex: none;
+}
+
+/* 房间主体：纵向 flex，占满顶栏下方剩余高度（精确约束防撑大） */
+.app-shell--clocktower .ct-room-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 0; /* 配合 flex:1 让 flex 引擎正确收缩，不被内容撑大 */
+  overflow: hidden;
+}
+
+/* —— 布局基础（两端共用结构，不含尺寸） —— */
+.app-shell--clocktower .ct-room-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--clocktower .ct-table-mini-wrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--clocktower .ct-tab-panel {
+  overflow-y: auto;
+  padding: 12px 12px 16px;
+}
+
+.app-shell--clocktower .ct-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* —— 手机端（<900px）：单栏纵向，圆桌按比例限高 —— */
+@media (max-width: 899px) {
+  .app-shell--clocktower .ct-room-main {
+    flex-direction: column;
+  }
+  .app-shell--clocktower .ct-room-left {
+    flex: none;            /* 按内容高度，不与 tabPanel 等分 */
+  }
+  .app-shell--clocktower .ct-table-mini-wrap {
+    flex: none;
+    height: 38dvh;         /* 圆桌区约占 38% 屏高，余下给 Tab 区 */
+    min-height: 120px;
+    padding: 4px;
+  }
+  .app-shell--clocktower .ct-table-mini .clocktower-table__stage {
+    flex: 1;
+    width: 100%;
+    /* 上下留出座位探出圆环的空间（座位高约82，探出约41） */
+    padding-block: 44px;
+    min-height: 0;
+  }
+  .app-shell--clocktower .ct-tab-panel {
+    flex: 1 1 0;
+    min-height: 140px;
+  }
+}
+
+/* —— 桌面双栏（≥900px）：左栏(圆桌) | 右栏(Tab)，tabbar 仍底部全宽 —— */
+@media (min-width: 900px) {
+  .app-shell--clocktower .ct-room-main {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .app-shell--clocktower .ct-room-left {
+    flex: 1 1 0;           /* 占满左栏 */
+  }
+  .app-shell--clocktower .ct-table-mini-wrap {
+    flex: 1 1 0;
+    padding: 12px;
+  }
+  .app-shell--clocktower .ct-table-mini .clocktower-table__stage {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+  }
+  /* Tab 区按屏幕宽度自适应（约 32%，限 360-520px） */
+  .app-shell--clocktower .ct-tab-panel {
+    flex: 0 0 clamp(360px, 32vw, 520px);
+    min-height: 0;
+    height: 100%;
+    border-left: 1px solid var(--ct-gold-deep);
+    box-shadow: inset 6px 0 12px rgb(0 0 0 / 25%);
   }
 }

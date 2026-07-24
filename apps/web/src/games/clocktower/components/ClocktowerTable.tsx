@@ -9,6 +9,7 @@ interface ClocktowerTableProps {
   onToggleNightPlayer: (playerId: string) => void;
   onNominate: (playerId: string) => void;
   onSlayerClaim: (playerId: string) => void;
+  mini?: boolean;
 }
 
 export function ClocktowerTable({
@@ -17,7 +18,8 @@ export function ClocktowerTable({
   selectedNightPlayerIds,
   onToggleNightPlayer,
   onNominate,
-  onSlayerClaim
+  onSlayerClaim,
+  mini = false
 }: ClocktowerTableProps) {
   const players = view.room.players;
   const seatCount = Math.max(1, players.length);
@@ -40,16 +42,18 @@ export function ClocktowerTable({
   }, [view.room.phase, nightAction?.stepId]);
 
   return (
-    <section className="panel clocktower-table">
-      <div className="panel-heading">
-        <div>
-          <span className="summary-label">TOWN SQUARE</span>
-          <h2>圆桌座位</h2>
+    <section className={`panel clocktower-table${mini ? " ct-table-mini" : ""}`}>
+      {!mini ? (
+        <div className="panel-heading">
+          <div>
+            <span className="summary-label">TOWN SQUARE</span>
+            <h2>圆桌座位</h2>
+          </div>
+          <span className="table-count">{seatedCount}/{players.length} 入座</span>
         </div>
-        <span className="table-count">{seatedCount}/{players.length} 入座</span>
-      </div>
+      ) : null}
 
-      <div className={`clocktower-table__stage ${seatCount > 10 ? "is-dense" : ""}`}>
+      <div className={`clocktower-table__stage ${mini || seatCount > 10 ? "is-dense" : ""}`}>
         <div className="clocktower-table__ring">
           <div className="clocktower-table__magic-circle" aria-hidden="true" />
           <div className="clocktower-table__center">
@@ -209,7 +213,7 @@ export function ClocktowerTable({
         </div>
       ) : null}
 
-      {waitingPlayers.length > 0 ? (
+      {!mini && waitingPlayers.length > 0 ? (
         <div className="waiting-players">
           <span className="waiting-players__label">候场</span>
           <div>

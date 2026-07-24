@@ -143,6 +143,23 @@ async function processOneBotAction() {
     return;
   }
 
+  // 大厅阶段：bot 自动重新入座 + 准备（支持 rematch 后回到 lobby）
+  if (publicView.room.phase === "lobby") {
+    for (const entry of entries) {
+      const me = entry.view.room.players.find((p) => p.id === entry.session.playerId);
+      if (!me) continue;
+      // bot 在 sessions 里的序号 +1 = 座位号（sessions[1]→2号位...）
+      const seatNum = sessions.indexOf(entry.session) + 1;
+      try {
+        if (me.seat === null) await emit(entry.socket, "room:set-seat", seatNum);
+      } catch { /* 座位可能已被占，忽略 */ }
+      try {
+        if (!me.ready) await emit(entry.socket, "room:set-ready", true);
+      } catch { /* 忽略 */ }
+    }
+    return;
+  }
+
   // 夜间行动
   const nightActor = entries.find(({ view }) => view.self.privateGame?.nightAction);
   if (nightActor) {
