@@ -10,7 +10,7 @@ import {
   Trash2,
   UsersRound
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type {
   PokerAiDifficulty,
@@ -20,6 +20,7 @@ import type {
 } from "@party-games/shared";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { useAccount } from "../../platform/AccountContext";
 import { saveSession } from "../../session";
 
 type EntryMode = "create" | "join" | "recover";
@@ -27,6 +28,7 @@ type PlayMode = "multiplayer" | "solo";
 
 export function PokerEntryPage() {
   const navigate = useNavigate();
+  const { status } = useAccount();
   const [mode, setMode] = useState<EntryMode>("create");
   const [playMode, setPlayMode] = useState<PlayMode>("multiplayer");
   const [tableMode, setTableMode] = useState<PokerTableMode>("points");
@@ -46,6 +48,10 @@ export function PokerEntryPage() {
   ]);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (status?.user && !nickname) setNickname(status.user.displayName);
+  }, [status?.user?.id]);
 
   const updateInitialBlind = (kind: "smallBlind" | "bigBlind", value: number) => {
     if (kind === "smallBlind") setSmallBlind(value);

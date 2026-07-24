@@ -103,6 +103,69 @@ const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
         updated_at TEXT NOT NULL
       );
     `
+  },
+  {
+    version: 4,
+    sql: `
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+        display_name TEXT NOT NULL,
+        password_salt TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS account_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_account_sessions_user
+        ON account_sessions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_account_sessions_expires
+        ON account_sessions(expires_at);
+
+      CREATE TABLE IF NOT EXISTS account_invites (
+        id TEXT PRIMARY KEY,
+        code_hash TEXT NOT NULL UNIQUE,
+        created_by_user_id TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used_by_user_id TEXT,
+        used_at TEXT,
+        revoked_at TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (used_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_account_invites_creator
+        ON account_invites(created_by_user_id, created_at);
+
+      CREATE TABLE IF NOT EXISTS puzzle_results (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        game TEXT NOT NULL CHECK (game IN ('minesweeper', 'sudoku')),
+        difficulty TEXT NOT NULL,
+        outcome TEXT NOT NULL CHECK (outcome IN ('win', 'loss')),
+        elapsed_seconds INTEGER NOT NULL,
+        mistakes INTEGER NOT NULL DEFAULT 0,
+        hints INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_puzzle_results_user_created
+        ON puzzle_results(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_puzzle_results_ranking
+        ON puzzle_results(game, difficulty, outcome, elapsed_seconds);
+    `
   }
 ];
 
@@ -111,6 +174,37 @@ export interface StoredChatMessage {
   senderPlayerId: string;
   recipientPlayerId?: string;
   content: string;
+  createdAt: string;
+}
+
+export interface StoredAccountUser {
+  id: string;
+  username: string;
+  displayName: string;
+  password: { salt: string; hash: string };
+  role: "owner" | "member";
+  createdAt: string;
+}
+
+export interface StoredAccountInvite {
+  id: string;
+  expiresAt: string;
+  createdAt: string;
+  usedByDisplayName?: string;
+  usedAt?: string;
+  revokedAt?: string;
+}
+
+export interface StoredPuzzleResult {
+  id: string;
+  userId: string;
+  displayName: string;
+  game: "minesweeper" | "sudoku";
+  difficulty: string;
+  outcome: "win" | "loss";
+  elapsedSeconds: number;
+  mistakes: number;
+  hints: number;
   createdAt: string;
 }
 
@@ -342,6 +436,396 @@ export class SqliteRoomRepository {
     this.#database.prepare("DELETE FROM chat_messages WHERE created_at < ?").run(cutoff);
   }
 
+  hasAccountUsers(): boolean {
+    const row = this.#database
+      .prepare("SELECT 1 AS found FROM users LIMIT 1")
+      .get() as { found: number } | undefined;
+    return row?.found === 1;
+  }
+
+  accountUsernameExists(username: string): boolean {
+    const row = this.#database
+      .prepare("SELECT 1 AS found FROM users WHERE username = ? COLLATE NOCASE")
+      .get(username) as { found: number } | undefined;
+    return row?.found === 1;
+  }
+
+  createInitialAccountUser(
+    user: {
+      id: string;
+      username: string;
+      displayName: string;
+      password: { salt: string; hash: string };
+    },
+    session: { id: string; tokenHash: string; expiresAt: string }
+  ): boolean {
+    const now = new Date().toISOString();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const existing = this.#database
+        .prepare("SELECT 1 AS found FROM users LIMIT 1")
+        .get() as { found: number } | undefined;
+      if (existing) {
+        this.#database.exec("ROLLBACK");
+        return false;
+      }
+      this.#insertAccountUser({ ...user, role: "owner" }, now);
+      this.#insertAccountSession(user.id, session, now);
+      this.#database.exec("COMMIT");
+      return true;
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  createInvitedAccountUser(
+    user: {
+      id: string;
+      username: string;
+      displayName: string;
+      password: { salt: string; hash: string };
+    },
+    session: { id: string; tokenHash: string; expiresAt: string },
+    inviteCodeHash: string
+  ): void {
+    const now = new Date().toISOString();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const invite = this.#database
+        .prepare(`
+          SELECT id, expires_at, used_at, revoked_at
+          FROM account_invites
+          WHERE code_hash = ?
+        `)
+        .get(inviteCodeHash) as
+        | {
+            id: string;
+            expires_at: string;
+            used_at: string | null;
+            revoked_at: string | null;
+          }
+        | undefined;
+      if (!invite) throw new Error("邀请码无效");
+      if (invite.revoked_at) throw new Error("邀请码已撤销");
+      if (invite.used_at) throw new Error("邀请码已使用");
+      if (invite.expires_at <= now) throw new Error("邀请码已过期");
+
+      this.#insertAccountUser({ ...user, role: "member" }, now);
+      this.#insertAccountSession(user.id, session, now);
+      this.#database
+        .prepare(`
+          UPDATE account_invites
+          SET used_by_user_id = ?, used_at = ?
+          WHERE id = ? AND used_at IS NULL AND revoked_at IS NULL
+        `)
+        .run(user.id, now, invite.id);
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  findAccountUserByUsername(username: string): StoredAccountUser | undefined {
+    const row = this.#database
+      .prepare(`
+        SELECT
+          id, username, display_name, password_salt, password_hash, role, created_at
+        FROM users
+        WHERE username = ? COLLATE NOCASE
+      `)
+      .get(username) as
+      | {
+          id: string;
+          username: string;
+          display_name: string;
+          password_salt: string;
+          password_hash: string;
+          role: "owner" | "member";
+          created_at: string;
+        }
+      | undefined;
+    return row ? this.#mapAccountUser(row) : undefined;
+  }
+
+  findAccountUserBySession(tokenHash: string): StoredAccountUser | undefined {
+    const now = new Date().toISOString();
+    this.#database.prepare("DELETE FROM account_sessions WHERE expires_at <= ?").run(now);
+    const row = this.#database
+      .prepare(`
+        SELECT
+          users.id,
+          users.username,
+          users.display_name,
+          users.password_salt,
+          users.password_hash,
+          users.role,
+          users.created_at
+        FROM account_sessions
+        JOIN users ON users.id = account_sessions.user_id
+        WHERE account_sessions.token_hash = ? AND account_sessions.expires_at > ?
+      `)
+      .get(tokenHash, now) as
+      | {
+          id: string;
+          username: string;
+          display_name: string;
+          password_salt: string;
+          password_hash: string;
+          role: "owner" | "member";
+          created_at: string;
+        }
+      | undefined;
+    return row ? this.#mapAccountUser(row) : undefined;
+  }
+
+  createAccountSession(
+    userId: string,
+    session: { id: string; tokenHash: string; expiresAt: string }
+  ): void {
+    this.#insertAccountSession(userId, session, new Date().toISOString());
+  }
+
+  deleteAccountSession(tokenHash: string): void {
+    this.#database.prepare("DELETE FROM account_sessions WHERE token_hash = ?").run(tokenHash);
+  }
+
+  updateAccountDisplayName(userId: string, displayName: string): void {
+    const result = this.#database
+      .prepare("UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?")
+      .run(displayName, new Date().toISOString(), userId);
+    if (Number(result.changes) !== 1) throw new Error("账号不存在");
+  }
+
+  replaceAccountPassword(
+    userId: string,
+    password: { salt: string; hash: string },
+    session: { id: string; tokenHash: string; expiresAt: string }
+  ): void {
+    const now = new Date().toISOString();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = this.#database
+        .prepare(`
+          UPDATE users
+          SET password_salt = ?, password_hash = ?, updated_at = ?
+          WHERE id = ?
+        `)
+        .run(password.salt, password.hash, now, userId);
+      if (Number(result.changes) !== 1) throw new Error("账号不存在");
+      this.#database.prepare("DELETE FROM account_sessions WHERE user_id = ?").run(userId);
+      this.#insertAccountSession(userId, session, now);
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  createAccountInvite(invite: {
+    id: string;
+    codeHash: string;
+    createdByUserId: string;
+    expiresAt: string;
+  }): StoredAccountInvite {
+    const createdAt = new Date().toISOString();
+    this.#database
+      .prepare(`
+        INSERT INTO account_invites (
+          id, code_hash, created_by_user_id, expires_at, created_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `)
+      .run(
+        invite.id,
+        invite.codeHash,
+        invite.createdByUserId,
+        invite.expiresAt,
+        createdAt
+      );
+    return { id: invite.id, expiresAt: invite.expiresAt, createdAt };
+  }
+
+  listAccountInvites(createdByUserId: string): StoredAccountInvite[] {
+    const rows = this.#database
+      .prepare(`
+        SELECT
+          invites.id,
+          invites.expires_at,
+          invites.created_at,
+          invites.used_at,
+          invites.revoked_at,
+          users.display_name AS used_by_display_name
+        FROM account_invites invites
+        LEFT JOIN users ON users.id = invites.used_by_user_id
+        WHERE invites.created_by_user_id = ?
+        ORDER BY invites.created_at DESC
+        LIMIT 50
+      `)
+      .all(createdByUserId) as Array<{
+      id: string;
+      expires_at: string;
+      created_at: string;
+      used_at: string | null;
+      revoked_at: string | null;
+      used_by_display_name: string | null;
+    }>;
+    return rows.map((row) => ({
+      id: row.id,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+      ...(row.used_by_display_name ? { usedByDisplayName: row.used_by_display_name } : {}),
+      ...(row.used_at ? { usedAt: row.used_at } : {}),
+      ...(row.revoked_at ? { revokedAt: row.revoked_at } : {})
+    }));
+  }
+
+  revokeAccountInvite(inviteId: string, createdByUserId: string): boolean {
+    const result = this.#database
+      .prepare(`
+        UPDATE account_invites
+        SET revoked_at = ?
+        WHERE id = ? AND created_by_user_id = ? AND used_at IS NULL AND revoked_at IS NULL
+      `)
+      .run(new Date().toISOString(), inviteId, createdByUserId);
+    return Number(result.changes) === 1;
+  }
+
+  addPuzzleResult(result: Omit<StoredPuzzleResult, "displayName">): void {
+    this.#database
+      .prepare(`
+        INSERT INTO puzzle_results (
+          id, user_id, game, difficulty, outcome,
+          elapsed_seconds, mistakes, hints, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .run(
+        result.id,
+        result.userId,
+        result.game,
+        result.difficulty,
+        result.outcome,
+        result.elapsedSeconds,
+        result.mistakes,
+        result.hints,
+        result.createdAt
+      );
+  }
+
+  getPuzzleTotals(userId: string): {
+    all: number;
+    minesweeper: number;
+    sudoku: number;
+    wins: number;
+  } {
+    const row = this.#database
+      .prepare(`
+        SELECT
+          COUNT(*) AS total,
+          SUM(CASE WHEN game = 'minesweeper' THEN 1 ELSE 0 END) AS minesweeper,
+          SUM(CASE WHEN game = 'sudoku' THEN 1 ELSE 0 END) AS sudoku,
+          SUM(CASE WHEN outcome = 'win' THEN 1 ELSE 0 END) AS wins
+        FROM puzzle_results
+        WHERE user_id = ?
+      `)
+      .get(userId) as {
+      total: number;
+      minesweeper: number | null;
+      sudoku: number | null;
+      wins: number | null;
+    };
+    return {
+      all: row.total,
+      minesweeper: row.minesweeper ?? 0,
+      sudoku: row.sudoku ?? 0,
+      wins: row.wins ?? 0
+    };
+  }
+
+  listRecentPuzzleResults(userId: string, limit = 30): StoredPuzzleResult[] {
+    const rows = this.#database
+      .prepare(`
+        SELECT
+          results.id,
+          results.user_id,
+          users.display_name,
+          results.game,
+          results.difficulty,
+          results.outcome,
+          results.elapsed_seconds,
+          results.mistakes,
+          results.hints,
+          results.created_at
+        FROM puzzle_results results
+        JOIN users ON users.id = results.user_id
+        WHERE results.user_id = ?
+        ORDER BY results.created_at DESC
+        LIMIT ?
+      `)
+      .all(userId, limit);
+    return this.#mapPuzzleResults(rows);
+  }
+
+  listPersonalPuzzleBests(userId: string): StoredPuzzleResult[] {
+    const rows = this.#database
+      .prepare(`
+        SELECT * FROM (
+          SELECT
+            results.id,
+            results.user_id,
+            users.display_name,
+            results.game,
+            results.difficulty,
+            results.outcome,
+            results.elapsed_seconds,
+            results.mistakes,
+            results.hints,
+            results.created_at,
+            ROW_NUMBER() OVER (
+              PARTITION BY results.game, results.difficulty
+              ORDER BY results.elapsed_seconds ASC, results.created_at ASC
+            ) AS result_rank
+          FROM puzzle_results results
+          JOIN users ON users.id = results.user_id
+          WHERE results.user_id = ? AND results.outcome = 'win'
+        )
+        WHERE result_rank = 1
+        ORDER BY game, difficulty
+      `)
+      .all(userId);
+    return this.#mapPuzzleResults(rows);
+  }
+
+  listPuzzleLeaderboardBests(): StoredPuzzleResult[] {
+    const rows = this.#database
+      .prepare(`
+        SELECT * FROM (
+          SELECT
+            results.id,
+            results.user_id,
+            users.display_name,
+            results.game,
+            results.difficulty,
+            results.outcome,
+            results.elapsed_seconds,
+            results.mistakes,
+            results.hints,
+            results.created_at,
+            ROW_NUMBER() OVER (
+              PARTITION BY results.user_id, results.game, results.difficulty
+              ORDER BY results.elapsed_seconds ASC, results.created_at ASC
+            ) AS personal_rank
+          FROM puzzle_results results
+          JOIN users ON users.id = results.user_id
+          WHERE results.outcome = 'win'
+        )
+        WHERE personal_rank = 1
+        ORDER BY game, difficulty, elapsed_seconds, created_at
+      `)
+      .all();
+    return this.#mapPuzzleResults(rows);
+  }
+
   hasAdminPassword(): boolean {
     const row = this.#database
       .prepare("SELECT 1 AS found FROM admin_credentials WHERE id = 1")
@@ -441,6 +925,95 @@ export class SqliteRoomRepository {
         throw error;
       }
     }
+  }
+
+  #insertAccountUser(
+    user: {
+      id: string;
+      username: string;
+      displayName: string;
+      password: { salt: string; hash: string };
+      role: "owner" | "member";
+    },
+    now: string
+  ): void {
+    this.#database
+      .prepare(`
+        INSERT INTO users (
+          id, username, display_name, password_salt, password_hash, role, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .run(
+        user.id,
+        user.username,
+        user.displayName,
+        user.password.salt,
+        user.password.hash,
+        user.role,
+        now,
+        now
+      );
+  }
+
+  #insertAccountSession(
+    userId: string,
+    session: { id: string; tokenHash: string; expiresAt: string },
+    now: string
+  ): void {
+    this.#database
+      .prepare(`
+        INSERT INTO account_sessions (
+          id, user_id, token_hash, expires_at, created_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `)
+      .run(session.id, userId, session.tokenHash, session.expiresAt, now);
+  }
+
+  #mapAccountUser(row: {
+    id: string;
+    username: string;
+    display_name: string;
+    password_salt: string;
+    password_hash: string;
+    role: "owner" | "member";
+    created_at: string;
+  }): StoredAccountUser {
+    return {
+      id: row.id,
+      username: row.username,
+      displayName: row.display_name,
+      password: { salt: row.password_salt, hash: row.password_hash },
+      role: row.role,
+      createdAt: row.created_at
+    };
+  }
+
+  #mapPuzzleResults(rows: unknown[]): StoredPuzzleResult[] {
+    return (
+      rows as Array<{
+        id: string;
+        user_id: string;
+        display_name: string;
+        game: "minesweeper" | "sudoku";
+        difficulty: string;
+        outcome: "win" | "loss";
+        elapsed_seconds: number;
+        mistakes: number;
+        hints: number;
+        created_at: string;
+      }>
+    ).map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      displayName: row.display_name,
+      game: row.game,
+      difficulty: row.difficulty,
+      outcome: row.outcome,
+      elapsedSeconds: row.elapsed_seconds,
+      mistakes: row.mistakes,
+      hints: row.hints,
+      createdAt: row.created_at
+    }));
   }
 
   #insertSession(roomId: string, session: NewSession, now: string): void {

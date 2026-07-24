@@ -1,4 +1,13 @@
 import type {
+  AccountBootstrapRequest,
+  AccountInviteCreateRequest,
+  AccountInviteView,
+  AccountLoginRequest,
+  AccountOverviewResponse,
+  AccountPasswordChangeRequest,
+  AccountProfileUpdateRequest,
+  AccountRegisterRequest,
+  AccountStatusResponse,
   AdminAuthStatusResponse,
   AdminConfigResponse,
   AdminLlmConfigUpdateRequest,
@@ -9,6 +18,8 @@ import type {
   CreateRoomRequest,
   JoinRoomRequest,
   PlatformStatusResponse,
+  PuzzleResultSubmitRequest,
+  PuzzleResultView,
   RecoverRoomRequest,
   RulesAnswerResponse,
   RulesQuestionRequest,
@@ -21,6 +32,70 @@ export async function createRoom(input: CreateRoomRequest): Promise<RoomSessionR
 
 export async function getPlatformStatus(): Promise<PlatformStatusResponse> {
   return request("/api/platform");
+}
+
+export async function getAccountStatus(): Promise<AccountStatusResponse> {
+  return request("/api/account/status");
+}
+
+export async function bootstrapAccount(
+  input: AccountBootstrapRequest
+): Promise<AccountStatusResponse> {
+  return request("/api/account/bootstrap", { method: "POST", body: input });
+}
+
+export async function loginAccount(
+  input: AccountLoginRequest
+): Promise<AccountStatusResponse> {
+  return request("/api/account/login", { method: "POST", body: input });
+}
+
+export async function registerAccount(
+  input: AccountRegisterRequest
+): Promise<AccountStatusResponse> {
+  return request("/api/account/register", { method: "POST", body: input });
+}
+
+export async function logoutAccount(): Promise<{ ok: true }> {
+  return request("/api/account/logout", { method: "POST" });
+}
+
+export async function updateAccountProfile(
+  input: AccountProfileUpdateRequest
+): Promise<AccountStatusResponse> {
+  return request("/api/account/profile", { method: "PUT", body: input });
+}
+
+export async function changeAccountPassword(
+  input: AccountPasswordChangeRequest
+): Promise<AccountStatusResponse> {
+  return request("/api/account/password", { method: "PUT", body: input });
+}
+
+export async function getAccountOverview(): Promise<AccountOverviewResponse> {
+  return request("/api/account/overview");
+}
+
+export async function submitPuzzleResult(
+  input: PuzzleResultSubmitRequest
+): Promise<PuzzleResultView> {
+  return request("/api/account/puzzle-results", { method: "POST", body: input });
+}
+
+export async function getAccountInvites(): Promise<AccountInviteView[]> {
+  return request("/api/account/invites");
+}
+
+export async function createAccountInvite(
+  input: AccountInviteCreateRequest
+): Promise<AccountInviteView> {
+  return request("/api/account/invites", { method: "POST", body: input });
+}
+
+export async function revokeAccountInvite(inviteId: string): Promise<{ ok: true }> {
+  return request(`/api/account/invites/${encodeURIComponent(inviteId)}`, {
+    method: "DELETE"
+  });
 }
 
 export async function joinRoom(input: JoinRoomRequest): Promise<RoomSessionResponse> {
@@ -77,7 +152,7 @@ export async function changeAdminPassword(
 
 async function request<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PUT"; body?: unknown } = {}
+  options: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {}
 ): Promise<T> {
   const response = await fetch(path, {
     method: options.method ?? "GET",

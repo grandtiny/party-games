@@ -3,12 +3,19 @@ import { resolve } from "node:path";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import {
+  AccountBootstrapRequestSchema,
+  AccountInviteCreateRequestSchema,
+  AccountLoginRequestSchema,
+  AccountPasswordChangeRequestSchema,
+  AccountProfileUpdateRequestSchema,
+  AccountRegisterRequestSchema,
   AdminLlmConfigUpdateRequestSchema,
   AdminLoginRequestSchema,
   AdminPasswordChangeRequestSchema,
   AdminSetupRequestSchema,
   CreateRoomRequestSchema,
   JoinRoomRequestSchema,
+  PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
   type ClientToServerEvents,
@@ -16,6 +23,7 @@ import {
   type SocketData
 } from "@party-games/shared";
 import { Server as SocketServer } from "socket.io";
+import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
 import { PresenceTracker } from "./presence.js";
@@ -39,11 +47,13 @@ export async function createApp(options: AppOptions) {
   const presence = new PresenceTracker();
   const games = createGameRegistry({ pokerEnabled: enabledFlag(environment.POKER_ENABLED) });
   const roomService = new RoomService(repository, presence, games);
+  const accountService = new AccountService(repository);
   const adminService = new AdminService(repository, environment);
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
   const adminLoginWindows = new Map<string, { startedAt: number; count: number }>();
+  const accountLoginWindows = new Map<string, { startedAt: number; count: number }>();
   const socketOptions = options.webOrigin ? { cors: { origin: options.webOrigin } } : {};
   const io = new SocketServer<
     ClientToServerEvents,
@@ -61,13 +71,166 @@ export async function createApp(options: AppOptions) {
     enabledGames: games.list().map((game) => game.id)
   }));
 
-  app.get("/api/admin/status", async (request) => ({
-    initialized: adminService.isInitialized(),
-    authenticated: adminService.isAuthenticated(adminSessionToken(request.headers.cookie))
-  }));
+  app.get("/api/account/status", async (request) =>
+    accountService.status(accountSessionToken(request.headers.cookie))
+  );
+
+  app.post("/api/account/bootstrap", async (request, reply) => {
+    try {
+      const input = AccountBootstrapRequestSchema.parse(request.body);
+      const authenticated = accountService.bootstrap(input);
+      adminService.clearSessions();
+      setAccountSessionCookie(reply, authenticated.token, request.protocol === "https");
+      return accountService.status(authenticated.token);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("已经创建") ? 409 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/account/register", async (request, reply) => {
+    try {
+      const input = AccountRegisterRequestSchema.parse(request.body);
+      const authenticated = accountService.register(input);
+      setAccountSessionCookie(reply, authenticated.token, request.protocol === "https");
+      return accountService.status(authenticated.token);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("用户名已存在") ? 409 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.post("/api/account/login", async (request, reply) => {
+    try {
+      if (!consumeLoginAttempt(accountLoginWindows, request.ip)) {
+        return reply.code(429).send({ error: "登录尝试过于频繁，请稍后再试" });
+      }
+      const input = AccountLoginRequestSchema.parse(request.body);
+      const authenticated = accountService.login(input);
+      accountLoginWindows.delete(request.ip);
+      setAccountSessionCookie(reply, authenticated.token, request.protocol === "https");
+      return accountService.status(authenticated.token);
+    } catch (error) {
+      return reply.code(401).send({ error: messageOf(error) });
+    }
+  });
+
+  app.post("/api/account/logout", async (request, reply) => {
+    accountService.logout(accountSessionToken(request.headers.cookie));
+    clearAccountSessionCookie(reply, request.protocol === "https");
+    return { ok: true };
+  });
+
+  app.put("/api/account/profile", async (request, reply) => {
+    try {
+      const input = AccountProfileUpdateRequestSchema.parse(request.body);
+      const user = accountService.updateProfile(
+        accountSessionToken(request.headers.cookie),
+        input.displayName
+      );
+      return { ...accountService.status(accountSessionToken(request.headers.cookie)), user };
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.put("/api/account/password", async (request, reply) => {
+    try {
+      const input = AccountPasswordChangeRequestSchema.parse(request.body);
+      const authenticated = accountService.changePassword(
+        accountSessionToken(request.headers.cookie),
+        input.currentPassword,
+        input.newPassword
+      );
+      setAccountSessionCookie(reply, authenticated.token, request.protocol === "https");
+      return accountService.status(authenticated.token);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/overview", async (request, reply) => {
+    try {
+      return accountService.overview(accountSessionToken(request.headers.cookie));
+    } catch (error) {
+      return reply.code(401).send({ error: messageOf(error) });
+    }
+  });
+
+  app.post("/api/account/puzzle-results", async (request, reply) => {
+    try {
+      const input = PuzzleResultSubmitRequestSchema.parse(request.body);
+      return accountService.submitPuzzleResult(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/invites", async (request, reply) => {
+    try {
+      return accountService.listInvites(accountSessionToken(request.headers.cookie));
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 403).send({ error: message });
+    }
+  });
+
+  app.post("/api/account/invites", async (request, reply) => {
+    try {
+      const input = AccountInviteCreateRequestSchema.parse(request.body);
+      return accountService.createInvite(
+        accountSessionToken(request.headers.cookie),
+        input.expiresInDays
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : message.includes("管理员") ? 403 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.delete("/api/account/invites/:inviteId", async (request, reply) => {
+    try {
+      const inviteId = String((request.params as { inviteId?: string }).inviteId ?? "");
+      accountService.revokeInvite(accountSessionToken(request.headers.cookie), inviteId);
+      return { ok: true };
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : message.includes("管理员") ? 403 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.get("/api/admin/status", async (request) => {
+    const authenticationMode = accountService.isInitialized()
+      ? "account"
+      : adminService.isInitialized()
+        ? "legacy"
+        : "uninitialized";
+    return {
+      initialized: authenticationMode !== "uninitialized",
+      authenticated: isAdminAuthenticated(
+        request.headers.cookie,
+        accountService,
+        adminService
+      ),
+      authenticationMode
+    };
+  });
 
   app.post("/api/admin/setup", async (request, reply) => {
     try {
+      if (accountService.isInitialized()) throw new Error("请使用管理员账号进入设置");
       const input = AdminSetupRequestSchema.parse(request.body);
       const token = adminService.setup(input.password);
       setAdminSessionCookie(reply, token, request.protocol === "https");
@@ -80,6 +243,7 @@ export async function createApp(options: AppOptions) {
 
   app.post("/api/admin/login", async (request, reply) => {
     try {
+      if (accountService.isInitialized()) throw new Error("请使用管理员账号登录");
       if (!consumeLoginAttempt(adminLoginWindows, request.ip)) {
         return reply.code(429).send({ error: "登录尝试过于频繁，请稍后再试" });
       }
@@ -101,7 +265,7 @@ export async function createApp(options: AppOptions) {
 
   app.get("/api/admin/config", async (request, reply) => {
     try {
-      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
       return adminService.getConfig();
     } catch (error) {
       return reply.code(401).send({ error: messageOf(error) });
@@ -110,7 +274,7 @@ export async function createApp(options: AppOptions) {
 
   app.put("/api/admin/config/llm", async (request, reply) => {
     try {
-      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
       const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
       const config = adminService.updateLanguageModelConfig(input);
       rulesAssistant.clearCache();
@@ -125,7 +289,7 @@ export async function createApp(options: AppOptions) {
 
   app.post("/api/admin/config/llm/test", async (request, reply) => {
     try {
-      adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
       const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
       return await adminService.testLanguageModelConfig(input);
     } catch (error) {
@@ -138,6 +302,9 @@ export async function createApp(options: AppOptions) {
 
   app.put("/api/admin/password", async (request, reply) => {
     try {
+      if (accountService.isInitialized()) {
+        throw new Error("账号密码请在账号页面修改");
+      }
       adminService.requireAuthentication(adminSessionToken(request.headers.cookie));
       const input = AdminPasswordChangeRequestSchema.parse(request.body);
       const token = adminService.changePassword(input.currentPassword, input.newPassword);
@@ -178,7 +345,10 @@ export async function createApp(options: AppOptions) {
   app.post("/api/rooms", async (request, reply) => {
     try {
       const input = CreateRoomRequestSchema.parse(request.body);
-      return await roomService.createRoom(input);
+      return await roomService.createRoom(
+        input,
+        accountService.userForToken(accountSessionToken(request.headers.cookie))
+      );
     } catch (error) {
       return reply.code(400).send({ error: messageOf(error) });
     }
@@ -187,7 +357,10 @@ export async function createApp(options: AppOptions) {
   app.post("/api/rooms/join", async (request, reply) => {
     try {
       const input = JoinRoomRequestSchema.parse(request.body);
-      return await roomService.joinRoom(input);
+      return await roomService.joinRoom(
+        input,
+        accountService.userForToken(accountSessionToken(request.headers.cookie))
+      );
     } catch (error) {
       return reply.code(400).send({ error: messageOf(error) });
     }
@@ -486,9 +659,10 @@ export async function createApp(options: AppOptions) {
     adminService.close();
     rulesQuestionWindows.clear();
     adminLoginWindows.clear();
+    accountLoginWindows.clear();
   });
 
-  return { app, io, roomService, repository, presence, adminService };
+  return { app, io, roomService, repository, presence, adminService, accountService };
 }
 
 function messageOf(error: unknown): string {
@@ -500,14 +674,26 @@ function enabledFlag(value: string | undefined): boolean {
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";
+const ACCOUNT_SESSION_COOKIE = "party_games_account_session";
 
 function adminSessionToken(cookieHeader: string | undefined): string | undefined {
+  return sessionCookieToken(cookieHeader, ADMIN_SESSION_COOKIE);
+}
+
+function accountSessionToken(cookieHeader: string | undefined): string | undefined {
+  return sessionCookieToken(cookieHeader, ACCOUNT_SESSION_COOKIE);
+}
+
+function sessionCookieToken(
+  cookieHeader: string | undefined,
+  cookieName: string
+): string | undefined {
   if (!cookieHeader) return undefined;
   for (const part of cookieHeader.split(";")) {
     const separator = part.indexOf("=");
     if (separator < 0) continue;
     const key = part.slice(0, separator).trim();
-    if (key !== ADMIN_SESSION_COOKIE) continue;
+    if (key !== cookieName) continue;
     try {
       return decodeURIComponent(part.slice(separator + 1).trim());
     } catch {
@@ -515,6 +701,29 @@ function adminSessionToken(cookieHeader: string | undefined): string | undefined
     }
   }
   return undefined;
+}
+
+function isAdminAuthenticated(
+  cookieHeader: string | undefined,
+  accountService: AccountService,
+  adminService: AdminService
+): boolean {
+  const account = accountService.userForToken(accountSessionToken(cookieHeader));
+  if (account?.role === "owner") return true;
+  return (
+    !accountService.isInitialized() &&
+    adminService.isAuthenticated(adminSessionToken(cookieHeader))
+  );
+}
+
+function requireAdminAuthentication(
+  cookieHeader: string | undefined,
+  accountService: AccountService,
+  adminService: AdminService
+): void {
+  if (!isAdminAuthenticated(cookieHeader, accountService, adminService)) {
+    throw new Error("管理员会话无效，请重新登录");
+  }
 }
 
 function setAdminSessionCookie(
@@ -539,6 +748,37 @@ function clearAdminSessionCookie(
 ): void {
   const attributes = [
     `${ADMIN_SESSION_COOKIE}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Strict",
+    "Max-Age=0"
+  ];
+  if (secure) attributes.push("Secure");
+  reply.header("set-cookie", attributes.join("; "));
+}
+
+function setAccountSessionCookie(
+  reply: { header(name: string, value: string): unknown },
+  token: string,
+  secure: boolean
+): void {
+  const attributes = [
+    `${ACCOUNT_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Strict",
+    `Max-Age=${30 * 24 * 60 * 60}`
+  ];
+  if (secure) attributes.push("Secure");
+  reply.header("set-cookie", attributes.join("; "));
+}
+
+function clearAccountSessionCookie(
+  reply: { header(name: string, value: string): unknown },
+  secure: boolean
+): void {
+  const attributes = [
+    `${ACCOUNT_SESSION_COOKIE}=`,
     "Path=/",
     "HttpOnly",
     "SameSite=Strict",

@@ -1,15 +1,17 @@
 import { Clock3, KeyRound, LogIn, RefreshCw } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
 import { saveSession } from "../../session";
 import { AppShell } from "../../platform/AppShell";
+import { useAccount } from "../../platform/AccountContext";
 import { ClocktowerReferenceButton } from "./components/ClocktowerReferenceDialog";
 
 type EntryMode = "create" | "join" | "recover";
 
 export function ClocktowerEntryPage() {
   const navigate = useNavigate();
+  const { status } = useAccount();
   const [mode, setMode] = useState<EntryMode>("create");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +19,10 @@ export function ClocktowerEntryPage() {
   const [recoveryCode, setRecoveryCode] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (status?.user && !nickname) setNickname(status.user.displayName);
+  }, [status?.user?.id]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

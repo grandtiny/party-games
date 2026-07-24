@@ -11,9 +11,11 @@ import {
   PlugZap,
   Save,
   ServerCog,
-  ShieldCheck
+  ShieldCheck,
+  UserRound
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   changeAdminPassword,
   getAdminConfig,
@@ -60,7 +62,11 @@ export function SettingsPage() {
   const logout = async () => {
     await logoutAdmin();
     setConfig(undefined);
-    setStatus({ initialized: true, authenticated: false });
+    setStatus({
+      initialized: true,
+      authenticated: false,
+      authenticationMode: "legacy"
+    });
   };
 
   return (
@@ -68,7 +74,7 @@ export function SettingsPage() {
       title="系统设置"
       backTo="/"
       actions={
-        status?.authenticated ? (
+        status?.authenticated && status.authenticationMode === "legacy" ? (
           <button
             className="icon-button"
             type="button"
@@ -84,12 +90,36 @@ export function SettingsPage() {
       {loading ? <div className="notice">正在读取配置…</div> : null}
       {error ? <div className="notice notice--error">{error}</div> : null}
       {!loading && status && !status.authenticated ? (
-        <AdminAccessForm initialized={status.initialized} onAuthenticated={load} />
+        status.authenticationMode === "legacy" ? (
+          <AdminAccessForm initialized onAuthenticated={load} />
+        ) : (
+          <AccountSettingsAccess initialized={status.authenticationMode === "account"} />
+        )
       ) : null}
       {!loading && status?.authenticated && config ? (
-        <SettingsWorkspace config={config} onConfigChange={setConfig} />
+        <SettingsWorkspace
+          config={config}
+          authenticationMode={status.authenticationMode}
+          onConfigChange={setConfig}
+        />
       ) : null}
     </AppShell>
+  );
+}
+
+function AccountSettingsAccess({ initialized }: { initialized: boolean }) {
+  return (
+    <section className="settings-auth">
+      <UserRound size={32} />
+      <div>
+        <p className="eyebrow">OWNER ACCOUNT</p>
+        <h1>{initialized ? "切换到管理员账号" : "创建管理员账号"}</h1>
+      </div>
+      <Link className="primary-button" to="/account">
+        <UserRound size={18} />
+        {initialized ? "前往账号页面" : "创建管理员账号"}
+      </Link>
+    </section>
   );
 }
 
@@ -170,9 +200,11 @@ function AdminAccessForm({
 
 function SettingsWorkspace({
   config,
+  authenticationMode,
   onConfigChange
 }: {
   config: AdminConfigResponse;
+  authenticationMode: AdminAuthStatusResponse["authenticationMode"];
   onConfigChange: (config: AdminConfigResponse) => void;
 }) {
   const [llm, setLlm] = useState<AdminLlmConfigUpdateRequest>(() => draftFrom(config));
@@ -322,8 +354,24 @@ function SettingsWorkspace({
       </section>
 
       <SystemStatus config={config} />
-      <PasswordSection />
+      {authenticationMode === "legacy" ? <PasswordSection /> : <AccountManagementSection />}
     </div>
+  );
+}
+
+function AccountManagementSection() {
+  return (
+    <section className="settings-section">
+      <div className="settings-section__heading">
+        <UserRound size={23} />
+        <h2>账号与权限</h2>
+      </div>
+      <div className="settings-actions settings-actions--leading">
+        <Link className="secondary-button" to="/account">
+          <UserRound size={18} /> 管理账号
+        </Link>
+      </div>
+    </section>
   );
 }
 

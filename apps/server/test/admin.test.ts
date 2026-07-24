@@ -17,7 +17,11 @@ describe("admin settings", () => {
     const { app } = await createTestApp();
 
     const initialStatus = await app.inject({ method: "GET", url: "/api/admin/status" });
-    expect(initialStatus.json()).toEqual({ initialized: false, authenticated: false });
+    expect(initialStatus.json()).toEqual({
+      initialized: false,
+      authenticated: false,
+      authenticationMode: "uninitialized"
+    });
     expect(
       (await app.inject({ method: "GET", url: "/api/admin/config" })).statusCode
     ).toBe(401);
@@ -51,7 +55,7 @@ describe("admin settings", () => {
     });
     expect(configResponse.statusCode).toBe(200);
     expect(configResponse.json()).toMatchObject({
-      databaseSchemaVersion: 3,
+      databaseSchemaVersion: 4,
       llm: { enabled: false, hasApiKey: false, ready: false, source: "none" }
     });
 

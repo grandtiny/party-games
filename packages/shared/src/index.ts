@@ -163,6 +163,94 @@ export const RulesQuestionRequestSchema = z.object({
 });
 export type RulesQuestionRequest = z.infer<typeof RulesQuestionRequestSchema>;
 
+export const AccountRoleSchema = z.enum(["owner", "member"]);
+export type AccountRole = z.infer<typeof AccountRoleSchema>;
+
+const AccountUsernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3)
+  .max(24)
+  .regex(/^[a-z0-9][a-z0-9_.-]*$/, "用户名只能包含小写字母、数字、点、下划线和短横线");
+const AccountDisplayNameSchema = z.string().trim().min(1).max(20);
+const AccountPasswordSchema = z.string().min(8).max(128);
+const AccountInviteCodeSchema = z.string().trim().toUpperCase().length(12);
+
+export const AccountBootstrapRequestSchema = z.object({
+  username: AccountUsernameSchema,
+  displayName: AccountDisplayNameSchema,
+  password: AccountPasswordSchema,
+  legacyAdminPassword: AccountPasswordSchema.optional()
+});
+export type AccountBootstrapRequest = z.infer<typeof AccountBootstrapRequestSchema>;
+
+export const AccountLoginRequestSchema = z.object({
+  username: AccountUsernameSchema,
+  password: AccountPasswordSchema
+});
+export type AccountLoginRequest = z.infer<typeof AccountLoginRequestSchema>;
+
+export const AccountRegisterRequestSchema = z.object({
+  username: AccountUsernameSchema,
+  displayName: AccountDisplayNameSchema,
+  password: AccountPasswordSchema,
+  inviteCode: AccountInviteCodeSchema
+});
+export type AccountRegisterRequest = z.infer<typeof AccountRegisterRequestSchema>;
+
+export const AccountProfileUpdateRequestSchema = z.object({
+  displayName: AccountDisplayNameSchema
+});
+export type AccountProfileUpdateRequest = z.infer<typeof AccountProfileUpdateRequestSchema>;
+
+export const AccountPasswordChangeRequestSchema = z.object({
+  currentPassword: AccountPasswordSchema,
+  newPassword: AccountPasswordSchema
+});
+export type AccountPasswordChangeRequest = z.infer<typeof AccountPasswordChangeRequestSchema>;
+
+export const AccountInviteCreateRequestSchema = z.object({
+  expiresInDays: z.number().int().min(1).max(90)
+});
+export type AccountInviteCreateRequest = z.infer<typeof AccountInviteCreateRequestSchema>;
+
+export const PuzzleGameSchema = z.enum(["minesweeper", "sudoku"]);
+export type PuzzleGame = z.infer<typeof PuzzleGameSchema>;
+export const PuzzleResultOutcomeSchema = z.enum(["win", "loss"]);
+export type PuzzleResultOutcome = z.infer<typeof PuzzleResultOutcomeSchema>;
+
+export const PuzzleResultSubmitRequestSchema = z
+  .object({
+    game: PuzzleGameSchema,
+    difficulty: z.string().min(1).max(20),
+    outcome: PuzzleResultOutcomeSchema,
+    elapsedSeconds: z.number().int().min(0).max(86_400),
+    mistakes: z.number().int().min(0).max(10_000).default(0),
+    hints: z.number().int().min(0).max(10_000).default(0)
+  })
+  .superRefine((result, context) => {
+    const validDifficulties =
+      result.game === "minesweeper"
+        ? ["beginner", "intermediate", "expert"]
+        : ["easy", "medium", "hard", "expert"];
+    if (!validDifficulties.includes(result.difficulty)) {
+      context.addIssue({
+        code: "custom",
+        message: "难度与游戏类型不匹配",
+        path: ["difficulty"]
+      });
+    }
+    if (result.game === "sudoku" && result.outcome !== "win") {
+      context.addIssue({
+        code: "custom",
+        message: "数独只记录完成的对局",
+        path: ["outcome"]
+      });
+    }
+  });
+export type PuzzleResultSubmitRequest = z.infer<typeof PuzzleResultSubmitRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -194,6 +282,77 @@ export type AdminLlmConfigUpdateRequest = z.infer<typeof AdminLlmConfigUpdateReq
 export interface AdminAuthStatusResponse {
   initialized: boolean;
   authenticated: boolean;
+  authenticationMode: "account" | "legacy" | "uninitialized";
+}
+
+export interface AccountUserView {
+  id: string;
+  username: string;
+  displayName: string;
+  role: AccountRole;
+  createdAt: string;
+}
+
+export interface AccountStatusResponse {
+  initialized: boolean;
+  authenticated: boolean;
+  legacyAdminRequired: boolean;
+  user?: AccountUserView;
+}
+
+export interface AccountInviteView {
+  id: string;
+  code?: string;
+  expiresAt: string;
+  createdAt: string;
+  usedByDisplayName?: string;
+  usedAt?: string;
+  revokedAt?: string;
+}
+
+export interface PuzzleResultView {
+  id: string;
+  game: PuzzleGame;
+  difficulty: string;
+  outcome: PuzzleResultOutcome;
+  elapsedSeconds: number;
+  mistakes: number;
+  hints: number;
+  createdAt: string;
+}
+
+export interface PuzzleBestView {
+  game: PuzzleGame;
+  difficulty: string;
+  elapsedSeconds: number;
+  achievedAt: string;
+}
+
+export interface PuzzleLeaderboardEntryView {
+  rank: number;
+  userId: string;
+  displayName: string;
+  elapsedSeconds: number;
+  achievedAt: string;
+  isSelf: boolean;
+}
+
+export interface PuzzleLeaderboardView {
+  game: PuzzleGame;
+  difficulty: string;
+  entries: PuzzleLeaderboardEntryView[];
+}
+
+export interface AccountOverviewResponse {
+  totals: {
+    all: number;
+    minesweeper: number;
+    sudoku: number;
+    wins: number;
+  };
+  personalBests: PuzzleBestView[];
+  recentResults: PuzzleResultView[];
+  leaderboards: PuzzleLeaderboardView[];
 }
 
 export interface AdminLlmConfigView {
@@ -238,6 +397,7 @@ export interface PlatformStatusResponse {
 
 export interface PublicPlayerView {
   id: string;
+  accountUserId?: string;
   nickname: string;
   seat: number | null;
   ready: boolean;

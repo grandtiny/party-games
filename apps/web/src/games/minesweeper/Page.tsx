@@ -15,7 +15,9 @@ import {
   type Difficulty,
   type Minesweeper
 } from "minesweeper-redux";
-import { useEffect, useReducer, useState, type CSSProperties } from "react";
+import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import { getAccountOverview, submitPuzzleResult } from "../../api";
+import { useAccount } from "../../platform/AccountContext";
 import { AppShell } from "../../platform/AppShell";
 
 type MinesweeperLevel = "beginner" | "intermediate" | "expert";
@@ -43,6 +45,7 @@ const levels: Record<
 };
 
 export function MinesweeperPage() {
+  const { status: accountStatus } = useAccount();
   const [level, setLevel] = useState<MinesweeperLevel>("beginner");
   const [game, dispatch] = useReducer(gameReducer, undefined, () => createGame("beginner"));
   const [inputMode, setInputMode] = useState<InputMode>("reveal");
@@ -50,6 +53,7 @@ export function MinesweeperPage() {
   const [bestTimes, setBestTimes] = useState<Partial<Record<MinesweeperLevel, number>>>(() =>
     loadBestTimes()
   );
+  const submittedGameRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (game.status !== "running") return;
@@ -70,6 +74,43 @@ export function MinesweeperPage() {
       return next;
     });
   }, [elapsedSeconds, game.status, level]);
+
+  useEffect(() => {
+    if (!accountStatus?.authenticated) return;
+    void getAccountOverview()
+      .then((overview) => {
+        setBestTimes((current) => {
+          const next = { ...current };
+          for (const best of overview.personalBests) {
+            if (best.game !== "minesweeper") continue;
+            const difficulty = best.difficulty as MinesweeperLevel;
+            const previous = next[difficulty];
+            if (previous === undefined || best.elapsedSeconds < previous) {
+              next[difficulty] = best.elapsedSeconds;
+            }
+          }
+          return next;
+        });
+      })
+      .catch(() => undefined);
+  }, [accountStatus?.user?.id]);
+
+  useEffect(() => {
+    if (!accountStatus?.authenticated || (game.status !== "win" && game.status !== "loss")) {
+      return;
+    }
+    const resultKey = `${game.randSeed}:${game.status}`;
+    if (submittedGameRef.current === resultKey) return;
+    submittedGameRef.current = resultKey;
+    void submitPuzzleResult({
+      game: "minesweeper",
+      difficulty: level,
+      outcome: game.status,
+      elapsedSeconds,
+      mistakes: 0,
+      hints: 0
+    }).catch(() => undefined);
+  }, [accountStatus?.authenticated, elapsedSeconds, game.randSeed, game.status, level]);
 
   const startNewGame = (nextLevel = level) => {
     setLevel(nextLevel);

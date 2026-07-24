@@ -11,6 +11,7 @@ export const ROOM_STATE_SCHEMA_VERSION = 1;
 
 export interface InternalPlayer {
   id: string;
+  accountUserId?: string;
   nickname: string;
   seat: number | null;
   ready: boolean;

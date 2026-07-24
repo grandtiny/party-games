@@ -171,6 +171,10 @@ export class AdminService {
     this.#sessions.clear();
   }
 
+  clearSessions(): void {
+    this.#sessions.clear();
+  }
+
   #createSession(): string {
     const token = createSessionToken();
     this.#sessions.set(hashSecret(token), Date.now() + ADMIN_SESSION_LIFETIME_MS);

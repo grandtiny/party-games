@@ -9,7 +9,9 @@ import {
   Undo2
 } from "lucide-react";
 import { getSudoku } from "sudoku-gen";
-import { useEffect, useReducer, useState, type CSSProperties } from "react";
+import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import { getAccountOverview, submitPuzzleResult } from "../../api";
+import { useAccount } from "../../platform/AccountContext";
 import { AppShell } from "../../platform/AppShell";
 
 type SudokuDifficulty = "easy" | "medium" | "hard" | "expert";
@@ -57,6 +59,7 @@ const difficulties: Record<SudokuDifficulty, string> = {
 };
 
 export function SudokuPage() {
+  const { status: accountStatus } = useAccount();
   const [state, dispatch] = useReducer(
     sudokuReducer,
     undefined,
@@ -65,6 +68,7 @@ export function SudokuPage() {
   const [bestTimes, setBestTimes] = useState<Partial<Record<SudokuDifficulty, number>>>(() =>
     loadBestTimes()
   );
+  const submittedPuzzleRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (state.status !== "playing") return;
@@ -82,6 +86,48 @@ export function SudokuPage() {
       return next;
     });
   }, [state.difficulty, state.elapsedSeconds, state.status]);
+
+  useEffect(() => {
+    if (!accountStatus?.authenticated) return;
+    void getAccountOverview()
+      .then((overview) => {
+        setBestTimes((current) => {
+          const next = { ...current };
+          for (const best of overview.personalBests) {
+            if (best.game !== "sudoku") continue;
+            const difficulty = best.difficulty as SudokuDifficulty;
+            const previous = next[difficulty];
+            if (previous === undefined || best.elapsedSeconds < previous) {
+              next[difficulty] = best.elapsedSeconds;
+            }
+          }
+          return next;
+        });
+      })
+      .catch(() => undefined);
+  }, [accountStatus?.user?.id]);
+
+  useEffect(() => {
+    if (!accountStatus?.authenticated || state.status !== "complete") return;
+    if (submittedPuzzleRef.current === state.puzzle) return;
+    submittedPuzzleRef.current = state.puzzle;
+    void submitPuzzleResult({
+      game: "sudoku",
+      difficulty: state.difficulty,
+      outcome: "win",
+      elapsedSeconds: state.elapsedSeconds,
+      mistakes: state.mistakes,
+      hints: state.hintedIndexes.length
+    }).catch(() => undefined);
+  }, [
+    accountStatus?.authenticated,
+    state.difficulty,
+    state.elapsedSeconds,
+    state.hintedIndexes.length,
+    state.mistakes,
+    state.puzzle,
+    state.status
+  ]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

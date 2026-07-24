@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { GameRegistry } from "@party-games/game-core";
 import type { PokerPlayerAction } from "@party-games/poker";
 import type {
+  AccountUserView,
   CreateRoomRequest,
   GameType,
   JoinRoomRequest,
@@ -39,7 +40,10 @@ export class RoomService {
     private readonly games: GameRegistry<GameType, ServerGameModule> = createGameRegistry()
   ) {}
 
-  async createRoom(input: CreateRoomRequest): Promise<RoomSessionResponse> {
+  async createRoom(
+    input: CreateRoomRequest,
+    accountUser?: AccountUserView
+  ): Promise<RoomSessionResponse> {
     if (!this.games.has(input.gameType)) throw new Error("德州扑克模块尚未开放");
 
     const roomCode = this.#createRoomCode();
@@ -67,6 +71,7 @@ export class RoomService {
       players: [
         {
           id: playerId,
+          ...(accountUser ? { accountUserId: accountUser.id } : {}),
           nickname: input.nickname,
           seat: aiPlayerCount > 0 ? 1 : null,
           ready: aiPlayerCount > 0
@@ -101,7 +106,10 @@ export class RoomService {
     return { roomCode, playerId, sessionToken, recoveryCode };
   }
 
-  async joinRoom(input: JoinRoomRequest): Promise<RoomSessionResponse> {
+  async joinRoom(
+    input: JoinRoomRequest,
+    accountUser?: AccountUserView
+  ): Promise<RoomSessionResponse> {
     return this.#withLock(input.roomCode, async () => {
       const state = this.#requireRoom(input.roomCode);
       if (state.phase !== "lobby") throw new Error("游戏已经开始");
@@ -109,6 +117,12 @@ export class RoomService {
         throw new Error("单人 AI 房间不接受其他玩家加入");
       }
       if (state.players.length >= 15) throw new Error("房间人数已满");
+      if (
+        accountUser &&
+        state.players.some((player) => player.accountUserId === accountUser.id)
+      ) {
+        throw new Error("当前账号已在房间中，请使用恢复码恢复身份");
+      }
       if (
         state.players.some(
           (player) => player.nickname.localeCompare(input.nickname, undefined, { sensitivity: "accent" }) === 0
@@ -128,7 +142,13 @@ export class RoomService {
       const nextState = this.#nextState(state, {
         players: [
           ...state.players,
-          { id: playerId, nickname: input.nickname, seat: null, ready: false }
+          {
+            id: playerId,
+            ...(accountUser ? { accountUserId: accountUser.id } : {}),
+            nickname: input.nickname,
+            seat: null,
+            ready: false
+          }
         ]
       });
       const event: RoomEvent = {
@@ -196,6 +216,7 @@ export class RoomService {
           .sort(comparePlayersBySeat)
           .map((player) => ({
             id: player.id,
+            ...(player.accountUserId ? { accountUserId: player.accountUserId } : {}),
             nickname: player.nickname,
             seat: player.seat,
             ready: player.ready,
