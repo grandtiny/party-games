@@ -7,18 +7,25 @@ import type {
 import { createSessionToken, hashPassword, hashSecret, verifyPassword } from "./auth.js";
 import { SqliteRoomRepository } from "./repository.js";
 import {
-  OpenAICompatibleLanguageModelAdapter,
-  type LanguageModelAdapter,
+  OpenAICompatibleLanguageModelClient,
+  type LanguageModelClient,
   type LanguageModelConfig
+} from "./language-model.js";
+import {
+  RulesLanguageModelAdapter,
+  type LanguageModelAdapter
 } from "./rules-assistant.js";
 
-const LLM_SETTING_KEY = "clocktower.llm";
+const LLM_SETTING_KEY = "platform.llm";
+const LEGACY_LLM_SETTING_KEY = "clocktower.llm";
 const ADMIN_SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
 
 interface StoredLanguageModelConfig {
   enabled: boolean;
   endpoint: string;
   model: string;
+  storyModel?: string;
+  judgeModel?: string;
   timeoutMs: number;
   apiKey?: string;
 }
@@ -82,6 +89,8 @@ export class AdminService {
         enabled: llm.enabled,
         endpoint: llm.endpoint,
         model: llm.model,
+        storyModel: llm.storyModel,
+        judgeModel: llm.judgeModel,
         timeoutMs: llm.timeoutMs,
         hasApiKey: Boolean(llm.apiKey),
         ready: this.#isLanguageModelReady(llm),
@@ -103,6 +112,8 @@ export class AdminService {
       enabled: input.enabled,
       endpoint: input.endpoint,
       model: input.model,
+      ...(input.storyModel !== undefined ? { storyModel: input.storyModel } : {}),
+      ...(input.judgeModel !== undefined ? { judgeModel: input.judgeModel } : {}),
       timeoutMs: input.timeoutMs,
       ...(apiKey !== undefined ? { apiKey } : {})
     };
@@ -122,6 +133,8 @@ export class AdminService {
       enabled: true,
       endpoint: input.endpoint,
       model: input.model,
+      ...(input.storyModel !== undefined ? { storyModel: input.storyModel } : {}),
+      ...(input.judgeModel !== undefined ? { judgeModel: input.judgeModel } : {}),
       timeoutMs: input.timeoutMs,
       ...(input.clearApiKey
         ? { apiKey: "" }
@@ -136,14 +149,10 @@ export class AdminService {
       throw new Error("测试连接需要接口地址、模型名称和 API Key");
     }
     const startedAt = performance.now();
-    const answer = await new OpenAICompatibleLanguageModelAdapter(
-      config.endpoint,
-      config.apiKey,
-      config.model,
-      config.timeoutMs
-    ).answerRules({
-      question: "死亡玩家是否还能投票？",
-      references: "死亡玩家保留一张死亡票，使用后不能再次投票。"
+    const answer = await new OpenAICompatibleLanguageModelClient(config).complete({
+      purpose: "default",
+      maxTokens: 16,
+      messages: [{ role: "user", content: "请回复：连接成功" }]
     });
     return {
       ok: Boolean(answer),
@@ -153,16 +162,15 @@ export class AdminService {
   }
 
   createLanguageModelAdapter(): LanguageModelAdapter {
+    return new RulesLanguageModelAdapter(this.createLanguageModelClient());
+  }
+
+  createLanguageModelClient(): LanguageModelClient {
     return {
-      answerRules: async (input) => {
+      complete: async (input) => {
         const config = this.#effectiveLanguageModelConfig();
         if (!this.#isLanguageModelReady(config)) return undefined;
-        return new OpenAICompatibleLanguageModelAdapter(
-          config.endpoint,
-          config.apiKey,
-          config.model,
-          config.timeoutMs
-        ).answerRules(input);
+        return new OpenAICompatibleLanguageModelClient(config).complete(input);
       }
     };
   }
@@ -189,7 +197,9 @@ export class AdminService {
   }
 
   #storedLanguageModelConfig(): StoredLanguageModelConfig | undefined {
-    const stored = this.repository.getSetting(LLM_SETTING_KEY);
+    const stored =
+      this.repository.getSetting(LLM_SETTING_KEY) ??
+      this.repository.getSetting(LEGACY_LLM_SETTING_KEY);
     if (!stored) return undefined;
     try {
       return JSON.parse(stored) as StoredLanguageModelConfig;
@@ -213,23 +223,45 @@ export class AdminService {
     stored: StoredLanguageModelConfig | undefined,
     source: "saved" | "environment" | "none"
   ): LanguageModelConfig & { source: "saved" | "environment" | "none" } {
-    const environmentEnabled = parseBoolean(this.environment.CLOCKTOWER_LLM_ENABLED);
+    const environmentEnabled = parseBoolean(
+      this.environment.PARTY_GAMES_LLM_ENABLED ?? this.environment.CLOCKTOWER_LLM_ENABLED
+    );
+    const environmentEndpoint =
+      this.environment.PARTY_GAMES_LLM_ENDPOINT?.trim() ??
+      this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() ??
+      "";
+    const environmentApiKey =
+      this.environment.PARTY_GAMES_LLM_API_KEY?.trim() ??
+      this.environment.CLOCKTOWER_LLM_API_KEY?.trim() ??
+      "";
+    const environmentModel =
+      this.environment.PARTY_GAMES_LLM_MODEL?.trim() ??
+      this.environment.CLOCKTOWER_LLM_MODEL?.trim() ??
+      "";
+    const environmentStoryModel =
+      this.environment.PARTY_GAMES_LLM_STORY_MODEL?.trim() ?? "";
+    const environmentJudgeModel =
+      this.environment.PARTY_GAMES_LLM_JUDGE_MODEL?.trim() ?? "";
     const environmentHasRequiredValues = Boolean(
-      this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() &&
-      this.environment.CLOCKTOWER_LLM_API_KEY?.trim() &&
-      this.environment.CLOCKTOWER_LLM_MODEL?.trim()
+      environmentEndpoint && environmentApiKey && environmentModel
     );
     const storedHasApiKey = stored && Object.prototype.hasOwnProperty.call(stored, "apiKey");
     const timeout = Number(
-      stored?.timeoutMs ?? this.environment.CLOCKTOWER_LLM_TIMEOUT_MS ?? 8000
+      stored?.timeoutMs ??
+        this.environment.PARTY_GAMES_LLM_TIMEOUT_MS ??
+        this.environment.CLOCKTOWER_LLM_TIMEOUT_MS ??
+        8000
     );
+    const model = stored?.model ?? environmentModel;
     return {
       enabled: stored?.enabled ?? environmentEnabled ?? environmentHasRequiredValues,
-      endpoint: stored?.endpoint ?? this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() ?? "",
+      endpoint: stored?.endpoint ?? environmentEndpoint,
       apiKey: storedHasApiKey
         ? stored?.apiKey ?? ""
-        : this.environment.CLOCKTOWER_LLM_API_KEY?.trim() ?? "",
-      model: stored?.model ?? this.environment.CLOCKTOWER_LLM_MODEL?.trim() ?? "",
+        : environmentApiKey,
+      model,
+      storyModel: (stored?.storyModel ?? environmentStoryModel) || model,
+      judgeModel: (stored?.judgeModel ?? environmentJudgeModel) || model,
       timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 8000,
       source
     };
@@ -243,6 +275,11 @@ export class AdminService {
 
   #hasEnvironmentConfig(): boolean {
     return Boolean(
+      this.environment.PARTY_GAMES_LLM_ENDPOINT?.trim() ||
+      this.environment.PARTY_GAMES_LLM_API_KEY?.trim() ||
+      this.environment.PARTY_GAMES_LLM_MODEL?.trim() ||
+      this.environment.PARTY_GAMES_LLM_STORY_MODEL?.trim() ||
+      this.environment.PARTY_GAMES_LLM_JUDGE_MODEL?.trim() ||
       this.environment.CLOCKTOWER_LLM_ENDPOINT?.trim() ||
       this.environment.CLOCKTOWER_LLM_API_KEY?.trim() ||
       this.environment.CLOCKTOWER_LLM_MODEL?.trim()

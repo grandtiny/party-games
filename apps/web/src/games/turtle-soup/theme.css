@@ -25,11 +25,11 @@
   gap: 7px;
 }
 
-.turtle-seat-list {
+.turtle-player-list {
   display: grid;
 }
 
-.turtle-seat-list > div {
+.turtle-player-list > div {
   display: grid;
   min-height: 62px;
   grid-template-columns: 38px minmax(0, 1fr) auto;
@@ -39,24 +39,70 @@
   padding: 10px 14px;
 }
 
-.turtle-seat-list > div.is-self {
+.turtle-player-list > div.is-self {
   background: #f0f7f5;
 }
 
-.turtle-seat-list strong,
-.turtle-seat-list small {
+.turtle-player-list strong,
+.turtle-player-list small {
   display: block;
 }
 
-.turtle-seat-list small {
+.turtle-player-list small {
   color: #6f7771;
   font-size: 11px;
 }
 
-.turtle-seat-list .secondary-button {
-  min-height: 34px;
-  padding: 5px 10px;
+.turtle-player-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dfe9e6;
+  color: #24332f;
   font-size: 12px;
+  font-weight: 820;
+}
+
+.turtle-player-avatar--0 {
+  background: #dff1e8;
+  color: #17613b;
+}
+
+.turtle-player-avatar--1 {
+  background: #e3ebff;
+  color: #284d92;
+}
+
+.turtle-player-avatar--2 {
+  background: #fff1cc;
+  color: #75590e;
+}
+
+.turtle-player-avatar--3 {
+  background: #f8e3e5;
+  color: #96232d;
+}
+
+.turtle-player-avatar--4 {
+  background: #e6e0f7;
+  color: #543a88;
+}
+
+.turtle-player-avatar--5 {
+  background: #d7edf1;
+  color: #235961;
+}
+
+.turtle-player-avatar--6 {
+  background: #f0e5d6;
+  color: #684a1f;
+}
+
+.turtle-player-avatar--7 {
+  background: #e4edd8;
+  color: #426323;
 }
 
 .turtle-surface,
@@ -174,6 +220,16 @@
   padding: 12px 14px;
 }
 
+.turtle-log-entry--with-player {
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.turtle-log-entry--with-player.is-self {
+  box-shadow: inset 3px 0 0 #355f63;
+}
+
 .turtle-log-entry small {
   color: #6d7772;
   font-size: 11px;
@@ -260,6 +316,12 @@
   line-height: 1.55;
 }
 
+.turtle-lab-prompt-version {
+  color: #59615b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
 .turtle-lab label {
   display: grid;
   gap: 7px;
@@ -304,11 +366,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .turtle-seat-list > div {
-    grid-template-columns: 34px minmax(0, 1fr);
-  }
-
-  .turtle-seat-list .secondary-button {
-    grid-column: 1 / -1;
+  .turtle-player-list > div {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
   }
 }
