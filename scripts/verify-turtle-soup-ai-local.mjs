@@ -83,7 +83,6 @@ const owner = await post("/api/rooms", {
 const socket = await connect(owner);
 
 try {
-  await emit(socket, "room:set-seat", 1);
   await emit(socket, "room:set-ready", true);
 
   const startedView = waitForView(

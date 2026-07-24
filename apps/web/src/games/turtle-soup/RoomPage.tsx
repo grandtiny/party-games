@@ -24,7 +24,7 @@ import { AppShell } from "../../platform/AppShell";
 import { getSession } from "../../session";
 
 type InputMode = "ask" | "guess";
-type PendingAction = "seat" | "ready" | "start" | "ask" | "guess" | "hint" | "rematch";
+type PendingAction = "ready" | "start" | "ask" | "guess" | "hint" | "rematch";
 
 export function TurtleSoupRoomPage() {
   const params = useParams();
@@ -93,7 +93,7 @@ export function TurtleSoupRoomPage() {
     view?.self.isOwner &&
     view.room.phase === "lobby" &&
     view.room.players.length >= 1 &&
-    view.room.players.every((player) => player.seat !== null && player.ready);
+    view.room.players.every((player) => player.ready);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -158,11 +158,6 @@ export function TurtleSoupRoomPage() {
             <>
               <LobbyPanel
                 view={view}
-                onSetSeat={(seat) =>
-                  send("seat", (callback) =>
-                    socketRef.current?.emit("room:set-seat", seat, callback)
-                  )
-                }
                 pending={pendingAction}
               />
               <section className="session-strip">
@@ -175,7 +170,7 @@ export function TurtleSoupRoomPage() {
                 <button
                   className={selfPlayer?.ready ? "secondary-button" : "primary-button"}
                   type="button"
-                  disabled={selfPlayer?.seat === null || Boolean(pendingAction)}
+                  disabled={Boolean(pendingAction)}
                   onClick={() =>
                     send("ready", (callback) =>
                       socketRef.current?.emit(
@@ -315,11 +310,9 @@ function ConnectionStatus({ connected }: { connected: boolean }) {
 
 function LobbyPanel({
   view,
-  onSetSeat,
   pending
 }: {
   view: RoomView;
-  onSetSeat: (seat: number | null) => void;
   pending: PendingAction | undefined;
 }) {
   const selfId = view.self.playerId;
@@ -332,26 +325,20 @@ function LobbyPanel({
         </span>
         <span className="player-count">{view.room.players.length}/15</span>
       </div>
-      <div className="turtle-seat-list">
-        {view.room.players.map((player, index) => (
+      <div className="turtle-player-list">
+        {view.room.players.map((player) => (
           <div className={player.id === selfId ? "is-self" : ""} key={player.id}>
-            <span className="seat-number">{player.seat ?? "-"}</span>
+            <PlayerAvatar playerId={player.id} nickname={player.nickname} />
             <span>
               <strong>{player.nickname}</strong>
-              <small>{player.ready ? "已准备" : "未准备"}</small>
+              <small>
+                {player.id === selfId ? "我 · " : ""}
+                {player.connected ? "在线" : "离线"} · {player.ready ? "已准备" : "未准备"}
+              </small>
             </span>
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={player.id !== selfId || Boolean(pending)}
-              onClick={() => onSetSeat(player.seat === null ? index + 1 : null)}
-            >
-              {pending === "seat" && player.id === selfId
-                ? "处理中…"
-                : player.seat === null
-                  ? "入座"
-                  : "离座"}
-            </button>
+            {pending === "ready" && player.id === selfId ? (
+              <RefreshCw className="spin" size={16} />
+            ) : null}
           </div>
         ))}
       </div>
@@ -423,10 +410,17 @@ function SoupPanel({ view }: { view: RoomView }) {
 }
 
 function LogEntry({ entry, view }: { entry: TurtleSoupLogEntryView; view: RoomView }) {
-  const playerName =
+  const actor =
     "actorPlayerId" in entry
-      ? (view.room.players.find((player) => player.id === entry.actorPlayerId)?.nickname ?? "玩家")
-      : "系统";
+      ? view.room.players.find((player) => player.id === entry.actorPlayerId)
+      : undefined;
+  const playerName = actor?.nickname ?? "玩家";
+  const selfSuffix = actor?.id === view.self.playerId ? "（我）" : "";
+  const actorAvatar =
+    "actorPlayerId" in entry ? (
+      <PlayerAvatar playerId={entry.actorPlayerId} nickname={playerName} />
+    ) : null;
+  const selfClass = actor?.id === view.self.playerId ? " is-self" : "";
   if (entry.kind === "system") {
     return (
       <div className="turtle-log-entry turtle-log-entry--system">
@@ -437,34 +431,60 @@ function LogEntry({ entry, view }: { entry: TurtleSoupLogEntryView; view: RoomVi
   }
   if (entry.kind === "question") {
     return (
-      <div className="turtle-log-entry">
-        <small>{playerName} 提问</small>
-        <p>{entry.content}</p>
-        <strong className={`turtle-answer-chip turtle-answer-chip--${entry.answer}`}>
-          {answerLabel(entry.answer)}
-        </strong>
-        {entry.note ? <em>{entry.note}</em> : null}
+      <div className={`turtle-log-entry turtle-log-entry--with-player${selfClass}`}>
+        {actorAvatar}
+        <div>
+          <small>
+            {playerName}
+            {selfSuffix} 提问
+          </small>
+          <p>{entry.content}</p>
+          <strong className={`turtle-answer-chip turtle-answer-chip--${entry.answer}`}>
+            {answerLabel(entry.answer)}
+          </strong>
+          {entry.note ? <em>{entry.note}</em> : null}
+        </div>
       </div>
     );
   }
   if (entry.kind === "guess") {
     return (
-      <div className="turtle-log-entry turtle-log-entry--guess">
-        <small>{playerName} 猜汤底</small>
-        <p>{entry.content}</p>
-        <em>
-          命中 {entry.matchedKeyPointIds.length} 个要点
-          {entry.wrong ? "，存在错误方向" : ""}
-          {entry.comment ? ` · ${entry.comment}` : ""}
-        </em>
+      <div className={`turtle-log-entry turtle-log-entry--guess turtle-log-entry--with-player${selfClass}`}>
+        {actorAvatar}
+        <div>
+          <small>
+            {playerName}
+            {selfSuffix} 猜汤底
+          </small>
+          <p>{entry.content}</p>
+          <em>
+            命中 {entry.matchedKeyPointIds.length} 个要点
+            {entry.wrong ? "，存在错误方向" : ""}
+            {entry.comment ? ` · ${entry.comment}` : ""}
+          </em>
+        </div>
       </div>
     );
   }
   return (
-    <div className="turtle-log-entry turtle-log-entry--hint">
-      <small>{playerName} 请求提示</small>
-      <p>{entry.content}</p>
+    <div className={`turtle-log-entry turtle-log-entry--hint turtle-log-entry--with-player${selfClass}`}>
+      {actorAvatar}
+      <div>
+        <small>
+          {playerName}
+          {selfSuffix} 请求提示
+        </small>
+        <p>{entry.content}</p>
+      </div>
     </div>
+  );
+}
+
+function PlayerAvatar({ playerId, nickname }: { playerId: string; nickname: string }) {
+  return (
+    <span className={`turtle-player-avatar turtle-player-avatar--${colorIndex(playerId)}`}>
+      {initials(nickname)}
+    </span>
   );
 }
 
@@ -473,4 +493,16 @@ function answerLabel(answer: TurtleSoupAnswerView): string {
   if (answer === "no") return "不是";
   if (answer === "partial") return "是也不是";
   return "无关";
+}
+
+function initials(nickname: string): string {
+  const text = nickname.trim();
+  if (!text) return "?";
+  return Array.from(text).slice(0, 2).join("").toUpperCase();
+}
+
+function colorIndex(value: string): number {
+  let hash = 0;
+  for (const char of value) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash % 8;
 }

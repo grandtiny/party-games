@@ -59,8 +59,9 @@ describe("turtle soup server module", () => {
       password: "secret"
     });
 
-    await service.setSeat(owner.roomCode, owner.playerId, 1);
-    await service.setSeat(owner.roomCode, second.playerId, 2);
+    await expect(service.setSeat(owner.roomCode, owner.playerId, 1)).rejects.toThrow(
+      "当前游戏不需要座位"
+    );
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.setReady(owner.roomCode, second.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
@@ -112,7 +113,6 @@ describe("turtle soup server module", () => {
       nickname: "Owner",
       password: "secret"
     });
-    await service.setSeat(owner.roomCode, owner.playerId, 1);
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
     await service.guessTurtleSoup(
@@ -158,7 +158,6 @@ describe("turtle soup server module", () => {
       turtleSoup: { difficulty: "hard", tags: ["录音", "密室"] }
     });
 
-    await service.setSeat(owner.roomCode, owner.playerId, 1);
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
 
@@ -208,7 +207,6 @@ describe("turtle soup server module", () => {
       password: "secret"
     });
 
-    await service.setSeat(owner.roomCode, owner.playerId, 1);
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
 
@@ -256,7 +254,6 @@ describe("turtle soup server module", () => {
       password: "secret"
     });
 
-    await service.setSeat(owner.roomCode, owner.playerId, 1);
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
     await service.askTurtleSoup(

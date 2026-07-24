@@ -47,8 +47,6 @@ describe("turtle soup socket boundary", () => {
       secondConnection.socket.disconnect();
     });
 
-    await emit(ownerConnection.socket, "room:set-seat", 1);
-    await emit(secondConnection.socket, "room:set-seat", 2);
     await emit(ownerConnection.socket, "room:set-ready", true);
     await emit(secondConnection.socket, "room:set-ready", true);
 

@@ -248,7 +248,9 @@ export class RoomService {
     await this.#mutate(roomCode, playerId, "PLAYER_READY_SET", { ready }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能修改准备状态");
       const player = state.players.find((candidate) => candidate.id === playerId);
-      if (ready && player?.seat === null) throw new Error("请先选择座位");
+      if (ready && requiresSeats(state.gameType) && player?.seat === null) {
+        throw new Error("请先选择座位");
+      }
       return {
         players: state.players.map((player) =>
           player.id === playerId ? { ...player, ready } : player
@@ -260,6 +262,7 @@ export class RoomService {
   async setSeat(roomCode: string, playerId: string, seat: number | null): Promise<void> {
     await this.#mutate(roomCode, playerId, "PLAYER_SEAT_SET", { seat }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能调整座位");
+      if (!requiresSeats(state.gameType)) throw new Error("当前游戏不需要座位");
       if (
         seat !== null &&
         (!Number.isInteger(seat) || seat < 1 || seat > state.players.length)
@@ -285,7 +288,7 @@ export class RoomService {
       const state = this.#requireRoom(roomCode);
       if (state.ownerPlayerId !== playerId) throw new Error("只有房主可以开始游戏");
       if (state.phase !== "lobby") throw new Error("游戏已经开始");
-      if (state.players.some((player) => player.seat === null)) {
+      if (requiresSeats(state.gameType) && state.players.some((player) => player.seat === null)) {
         throw new Error("仍有玩家未入座");
       }
       if (state.players.some((player) => !player.ready)) {
@@ -728,4 +731,8 @@ export class RoomService {
       if (this.#locks.get(roomCode) === tail) this.#locks.delete(roomCode);
     }
   }
+}
+
+function requiresSeats(gameType: InternalRoomState["gameType"]): boolean {
+  return gameType !== "turtle-soup";
 }
