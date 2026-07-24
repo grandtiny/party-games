@@ -266,6 +266,113 @@ export const PuzzleResultSubmitRequestSchema = z
   });
 export type PuzzleResultSubmitRequest = z.infer<typeof PuzzleResultSubmitRequestSchema>;
 
+export const GomokuStoneSchema = z.enum(["black", "white"]);
+export type GomokuStoneValue = z.infer<typeof GomokuStoneSchema>;
+export const GomokuRuleSetSchema = z.enum(["freestyle", "renju"]);
+export type GomokuRuleSetValue = z.infer<typeof GomokuRuleSetSchema>;
+export const GomokuMatchModeSchema = z.enum(["ai", "local"]);
+export type GomokuMatchModeValue = z.infer<typeof GomokuMatchModeSchema>;
+export const GomokuAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
+export type GomokuAiDifficultyValue = z.infer<typeof GomokuAiDifficultySchema>;
+
+export const GomokuPointSchema = z.object({
+  x: z.number().int().min(0).max(14),
+  y: z.number().int().min(0).max(14)
+});
+export type GomokuPointValue = z.infer<typeof GomokuPointSchema>;
+
+export const GomokuMoveSchema = GomokuPointSchema.extend({
+  player: GomokuStoneSchema,
+  moveNumber: z.number().int().min(1).max(225)
+});
+export type GomokuMoveValue = z.infer<typeof GomokuMoveSchema>;
+
+export const GomokuResultSchema = z.object({
+  outcome: z.enum(["black", "white", "draw"]),
+  reason: z.enum(["five", "board-full", "resign"]),
+  winningLine: z.array(GomokuPointSchema).max(15)
+});
+export type GomokuResultValue = z.infer<typeof GomokuResultSchema>;
+
+export const GomokuGameStatePayloadSchema = z
+  .object({
+    version: z.literal(1),
+    id: z.string().min(1).max(100),
+    ruleSet: GomokuRuleSetSchema,
+    mode: GomokuMatchModeSchema,
+    currentPlayer: GomokuStoneSchema,
+    moves: z.array(GomokuMoveSchema).max(225),
+    result: GomokuResultSchema.nullable(),
+    startedAt: z.number().int().min(0),
+    elapsedSeconds: z.number().int().min(0).max(604_800),
+    seed: z.number().int(),
+    usedUndo: z.boolean(),
+    usedHint: z.boolean(),
+    setupMoveCount: z.number().int().min(0).max(225).optional(),
+    setupCurrentPlayer: GomokuStoneSchema.optional(),
+    aiDifficulty: GomokuAiDifficultySchema.optional(),
+    humanColor: GomokuStoneSchema.optional()
+  })
+  .superRefine((state, context) => {
+    if (state.mode === "ai" && (!state.aiDifficulty || !state.humanColor)) {
+      context.addIssue({
+        code: "custom",
+        message: "人机对局缺少难度或玩家颜色"
+      });
+    }
+    if ((state.setupMoveCount ?? 0) > state.moves.length) {
+      context.addIssue({
+        code: "custom",
+        message: "初始摆盘数量超过棋谱长度",
+        path: ["setupMoveCount"]
+      });
+    }
+    const occupied = new Set<string>();
+    state.moves.forEach((move, index) => {
+      if (move.moveNumber !== index + 1) {
+        context.addIssue({
+          code: "custom",
+          message: "落子序号不连续",
+          path: ["moves", index, "moveNumber"]
+        });
+      }
+      const key = `${move.x}:${move.y}`;
+      if (occupied.has(key)) {
+        context.addIssue({
+          code: "custom",
+          message: "棋谱包含重复落点",
+          path: ["moves", index]
+        });
+      }
+      occupied.add(key);
+    });
+  });
+export type GomokuGameStatePayload = z.infer<typeof GomokuGameStatePayloadSchema>;
+
+export const GomokuMatchSubmitRequestSchema = z.object({
+  state: GomokuGameStatePayloadSchema
+});
+export type GomokuMatchSubmitRequest = z.infer<typeof GomokuMatchSubmitRequestSchema>;
+
+export const GomokuSaveUpdateRequestSchema = z.object({
+  state: GomokuGameStatePayloadSchema
+});
+export type GomokuSaveUpdateRequest = z.infer<typeof GomokuSaveUpdateRequestSchema>;
+
+export const GomokuProgressItemSchema = z.object({
+  contentType: z.enum(["puzzle", "lesson"]),
+  contentId: z.string().min(1).max(100),
+  stars: z.number().int().min(0).max(3).default(0),
+  bestMoves: z.number().int().min(0).max(225).default(0),
+  hintsUsed: z.number().int().min(0).max(3).default(0)
+});
+export type GomokuProgressItem = z.infer<typeof GomokuProgressItemSchema>;
+
+export const GomokuProgressSyncRequestSchema = z.object({
+  items: z.array(GomokuProgressItemSchema).max(200)
+});
+export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -370,6 +477,56 @@ export interface AccountOverviewResponse {
   personalBests: PuzzleBestView[];
   recentResults: PuzzleResultView[];
   leaderboards: PuzzleLeaderboardView[];
+}
+
+export interface GomokuMatchView {
+  id: string;
+  gameId: string;
+  ruleSet: GomokuRuleSetValue;
+  mode: GomokuMatchModeValue;
+  aiDifficulty?: GomokuAiDifficultyValue;
+  humanColor?: GomokuStoneValue;
+  winner: "black" | "white" | "draw";
+  outcome: "win" | "loss" | "draw" | "local";
+  resultReason: "five" | "board-full" | "resign";
+  elapsedSeconds: number;
+  moveCount: number;
+  assisted: boolean;
+  createdAt: string;
+}
+
+export interface GomokuMatchDetailView extends GomokuMatchView {
+  state: GomokuGameStatePayload;
+}
+
+export interface GomokuProgressView extends GomokuProgressItem {
+  completedAt: string;
+  updatedAt: string;
+}
+
+export interface GomokuSaveView {
+  state: GomokuGameStatePayload;
+  updatedAt: string;
+}
+
+export interface GomokuOverviewResponse {
+  stats: {
+    total: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    assisted: number;
+    byDifficulty: Array<{
+      difficulty: GomokuAiDifficultyValue;
+      total: number;
+      wins: number;
+      losses: number;
+      draws: number;
+    }>;
+  };
+  recentMatches: GomokuMatchView[];
+  progress: GomokuProgressView[];
+  save?: GomokuSaveView;
 }
 
 export interface AdminLlmConfigView {

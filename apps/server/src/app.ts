@@ -14,6 +14,9 @@ import {
   AdminPasswordChangeRequestSchema,
   AdminSetupRequestSchema,
   CreateRoomRequestSchema,
+  GomokuMatchSubmitRequestSchema,
+  GomokuProgressSyncRequestSchema,
+  GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
@@ -172,6 +175,66 @@ export async function createApp(options: AppOptions) {
     try {
       const input = PuzzleResultSubmitRequestSchema.parse(request.body);
       return accountService.submitPuzzleResult(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/account/gomoku/matches", async (request, reply) => {
+    try {
+      const input = GomokuMatchSubmitRequestSchema.parse(request.body);
+      return accountService.submitGomokuMatch(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/gomoku/overview", async (request, reply) => {
+    try {
+      return accountService.gomokuOverview(accountSessionToken(request.headers.cookie));
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/gomoku/matches/:matchId", async (request, reply) => {
+    try {
+      const matchId = String((request.params as { matchId?: string }).matchId ?? "");
+      return accountService.gomokuMatch(accountSessionToken(request.headers.cookie), matchId);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : message.includes("不存在") ? 404 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.put("/api/account/gomoku/save", async (request, reply) => {
+    try {
+      const input = GomokuSaveUpdateRequestSchema.parse(request.body);
+      return accountService.updateGomokuSave(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.put("/api/account/gomoku/progress", async (request, reply) => {
+    try {
+      const input = GomokuProgressSyncRequestSchema.parse(request.body);
+      return accountService.syncGomokuProgress(
         accountSessionToken(request.headers.cookie),
         input
       );

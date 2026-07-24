@@ -1,0 +1,260 @@
+diff --git a/dist/board/board.d.ts b/dist/board/board.d.ts
+index da39e983040e90ed9d4b8bf7a6baae3eb29813c1..0ead178903a78dc958cf26f61285da3c43c1b300 100644
+--- a/dist/board/board.d.ts
++++ b/dist/board/board.d.ts
+@@ -1,8 +1,8 @@
+-import { ForbiddenKind } from "./forbidden";
+-import { Player, RowKind } from "./fundamentals";
+-import { Point, Points } from "./point";
+-import { Row } from "./row";
+-import { Square } from "./square";
++import { ForbiddenKind } from "./forbidden.js";
++import { Player, RowKind } from "./fundamentals.js";
++import { Point, Points } from "./point.js";
++import { Row } from "./row.js";
++import { Square } from "./square.js";
+ export type Board = {
+     square: Square;
+ };
+diff --git a/dist/board/board.js b/dist/board/board.js
+index eabc22a77a560b3f7ece5b6937a34e95c275e6b1..0151c0cedef25a1391cd4e415dea0dd489a59a99 100644
+--- a/dist/board/board.js
++++ b/dist/board/board.js
+@@ -1,5 +1,5 @@
+-import { forbidden as forbiddenFunc, forbiddens as forbiddensFunc, } from "./forbidden";
+-import { createSquare, makeSquare, parseSquare, wrapSquare } from "./square";
++import { forbidden as forbiddenFunc, forbiddens as forbiddensFunc, } from "./forbidden.js";
++import { createSquare, makeSquare, parseSquare, wrapSquare } from "./square.js";
+ export const createBoard = () => ({
+     square: createSquare(),
+ });
+diff --git a/dist/board/forbidden.d.ts b/dist/board/forbidden.d.ts
+index f8ffee54fa5359968f00d2a2b53c9c4d16e1c59a..d24c5c04f47c346f434231d62722678d4f2c6e1f 100644
+--- a/dist/board/forbidden.d.ts
++++ b/dist/board/forbidden.d.ts
+@@ -1,5 +1,5 @@
+-import { Point } from "./point";
+-import { Square } from "./square";
++import { Point } from "./point.js";
++import { Square } from "./square.js";
+ declare const forbiddenKinds: readonly ["doubleThree", "doubleFour", "overline"];
+ export type ForbiddenKind = typeof forbiddenKinds[number];
+ export declare const ForbiddenKind: Record<ForbiddenKind, ForbiddenKind>;
+diff --git a/dist/board/forbidden.js b/dist/board/forbidden.js
+index feff1d48130359cae404cc08d22c4b35c880b983..9be2ffa3db3131955e62e6d68bb2db723f6cbff5 100644
+--- a/dist/board/forbidden.js
++++ b/dist/board/forbidden.js
+@@ -1,6 +1,6 @@
+-import { BOARD_SIZE, Player, RowKind } from "./fundamentals";
+-import { wrapRow } from "./row";
+-import { wrapSquare } from "./square";
++import { BOARD_SIZE, Player, RowKind } from "./fundamentals.js";
++import { wrapRow } from "./row.js";
++import { wrapSquare } from "./square.js";
+ const forbiddenKinds = ["doubleThree", "doubleFour", "overline"];
+ export const ForbiddenKind = {
+     doubleThree: "doubleThree",
+diff --git a/dist/board/index.d.ts b/dist/board/index.d.ts
+index 0cd5160a270f9dcfe0affdd7e96d12e3d87dee57..765d2ed280b1b3700c625844027d53c006820893 100644
+--- a/dist/board/index.d.ts
++++ b/dist/board/index.d.ts
+@@ -1,5 +1,5 @@
+-export * from "./board";
+-export * from "./forbidden";
+-export * from "./fundamentals";
+-export * from "./point";
+-export * from "./row";
++export * from "./board.js";
++export * from "./forbidden.js";
++export * from "./fundamentals.js";
++export * from "./point.js";
++export * from "./row.js";
+diff --git a/dist/board/index.js b/dist/board/index.js
+index 313f710b436c0fa0cf98f48a0bf0ad93820f7b6e..519018eba8f885c39371079533e28865ffdad40d 100644
+--- a/dist/board/index.js
++++ b/dist/board/index.js
+@@ -1,6 +1,6 @@
+-export * from "./board";
+-export * from "./forbidden";
+-export * from "./fundamentals";
+-export * from "./point";
+-export * from "./row";
++export * from "./board.js";
++export * from "./forbidden.js";
++export * from "./fundamentals.js";
++export * from "./point.js";
++export * from "./row.js";
+ //# sourceMappingURL=index.js.map
+diff --git a/dist/board/line.d.ts b/dist/board/line.d.ts
+index dd6d9daadb9d29062011299f2eadb37d6070bedb..26dba9a0a304b35f2c6ef5353255344d95d39731 100644
+--- a/dist/board/line.d.ts
++++ b/dist/board/line.d.ts
+@@ -1,5 +1,5 @@
+-import { Bits, Player, RowKind } from "./fundamentals";
+-import { Sequence } from "./sequence";
++import { Bits, Player, RowKind } from "./fundamentals.js";
++import { Sequence } from "./sequence.js";
+ export type Line = {
+     size: number;
+     blacks: Bits;
+diff --git a/dist/board/line.js b/dist/board/line.js
+index dbf92523d045b8bd23d9de061fe6e6f4c233f7e8..d0e03fc8fea98117b6496d4f17791341012a49c5 100644
+--- a/dist/board/line.js
++++ b/dist/board/line.js
+@@ -1,5 +1,5 @@
+-import { BOARD_SIZE, isBlack, Player, RowKind } from "./fundamentals";
+-import { scanSequences } from "./sequence";
++import { BOARD_SIZE, isBlack, Player, RowKind } from "./fundamentals.js";
++import { scanSequences } from "./sequence.js";
+ export const createLine = (size) => ({
+     size: Math.min(size, BOARD_SIZE),
+     blacks: 0b0,
+diff --git a/dist/board/point.js b/dist/board/point.js
+index 304dcae750cfb72aac31082d5fbbeaa1b4a98979..f7d63865e2a88d29c52de563025f37079461b7b1 100644
+--- a/dist/board/point.js
++++ b/dist/board/point.js
+@@ -1,4 +1,4 @@
+-import { BOARD_SIZE } from "./fundamentals";
++import { BOARD_SIZE } from "./fundamentals.js";
+ const directions = ["vertical", "horizontal", "ascending", "descending"];
+ export const Direction = {
+     vertical: "vertical",
+diff --git a/dist/board/row.d.ts b/dist/board/row.d.ts
+index 204c78963e098758b78cc38b4f7a002e3bce0ec6..565adb941b1a2bcf2f79b745bd4ea24b93386e75 100644
+--- a/dist/board/row.d.ts
++++ b/dist/board/row.d.ts
+@@ -1,5 +1,5 @@
+-import { Direction, Point } from "./point";
+-import { Sequence } from "./sequence";
++import { Direction, Point } from "./point.js";
++import { Sequence } from "./sequence.js";
+ export type Row = {
+     direction: Direction;
+     start: Point;
+diff --git a/dist/board/row.js b/dist/board/row.js
+index f2ab9e68334b581e7952da4b1b3f366a777dc8b8..35c18895a33c9b2ecb9b98fe572f6268dc6c994b 100644
+--- a/dist/board/row.js
++++ b/dist/board/row.js
+@@ -1,4 +1,4 @@
+-import { Direction, wrapIndex } from "./point";
++import { Direction, wrapIndex } from "./point.js";
+ export const makeRow = (r, d, i) => ({
+     direction: d,
+     start: wrapIndex([i, r.start]).toPoint(d),
+diff --git a/dist/board/sequence.d.ts b/dist/board/sequence.d.ts
+index a99569b1e1b832589fb90f8f1351781b4ee26d10..b7407377c24d366335db24e9a117effb513f0df1 100644
+--- a/dist/board/sequence.d.ts
++++ b/dist/board/sequence.d.ts
+@@ -1,4 +1,4 @@
+-import { Bits, Player, RowKind } from "./fundamentals";
++import { Bits, Player, RowKind } from "./fundamentals.js";
+ export type Sequence = {
+     start: number;
+     end: number;
+diff --git a/dist/board/sequence.js b/dist/board/sequence.js
+index 96292c0a855fd487ec974e6f9e1706bebab0f2a2..33f830266fdd8f215ac3f8bfc6e8893c53fb00f7 100644
+--- a/dist/board/sequence.js
++++ b/dist/board/sequence.js
+@@ -1,4 +1,4 @@
+-import { isBlack, RowKind } from "./fundamentals";
++import { isBlack, RowKind } from "./fundamentals.js";
+ export const scanSequences = (player, kind, stones, blanks, limit, offset) => {
+     if (isBlack(player)) {
+         switch (kind) {
+diff --git a/dist/board/square.d.ts b/dist/board/square.d.ts
+index a68df84792b3d5e88fef032c2ab26e04ae1d6fad..9de434ae6e253f6aa464dafc7df75da85962de73 100644
+--- a/dist/board/square.d.ts
++++ b/dist/board/square.d.ts
+@@ -1,7 +1,7 @@
+-import { Player, RowKind } from "./fundamentals";
+-import { Line } from "./line";
+-import { Point, Points } from "./point";
+-import { Row } from "./row";
++import { Player, RowKind } from "./fundamentals.js";
++import { Line } from "./line.js";
++import { Point, Points } from "./point.js";
++import { Row } from "./row.js";
+ export type Square = {
+     vlines: OrthogonalLines;
+     hlines: OrthogonalLines;
+diff --git a/dist/board/square.js b/dist/board/square.js
+index 09a7db7ad38dd246e2ba1794cefae3ffad6113b6..cf72bdbeaf95daf05c69346cfa7f68a10298f28e 100644
+--- a/dist/board/square.js
++++ b/dist/board/square.js
+@@ -1,7 +1,7 @@
+-import { BOARD_SIZE, Player } from "./fundamentals";
+-import { createLine, parseLine, wrapLine } from "./line";
+-import { Direction, parsePoints, wrapPoint } from "./point";
+-import { makeRow, wrapRow } from "./row";
++import { BOARD_SIZE, Player } from "./fundamentals.js";
++import { createLine, parseLine, wrapLine } from "./line.js";
++import { Direction, parsePoints, wrapPoint } from "./point.js";
++import { makeRow, wrapRow } from "./row.js";
+ export const createSquare = () => ({
+     vlines: orthogonalLines(),
+     hlines: orthogonalLines(),
+diff --git a/dist/game/game.d.ts b/dist/game/game.d.ts
+index 1d4e37755e66eb881170af4202e3e4d81d249405..e75d71d182ad798e5db197a844db1a50197c7f1d 100644
+--- a/dist/game/game.d.ts
++++ b/dist/game/game.d.ts
+@@ -1,4 +1,4 @@
+-import { Point, Points } from "../board";
++import { Point, Points } from "../board/index.js";
+ export type Game = {
+     moves: Points;
+     inverted: boolean;
+diff --git a/dist/game/game.js b/dist/game/game.js
+index be8f3e5b67f6f0dba5be961e234289b6302defb8..8358b2f9d24cefd6821d7f5dbcdaed274d4ce22f 100644
+--- a/dist/game/game.js
++++ b/dist/game/game.js
+@@ -1,4 +1,4 @@
+-import { parsePoints, pointEqual, wrapPoints } from "../board";
++import { parsePoints, pointEqual, wrapPoints } from "../board/index.js";
+ export const createGame = () => ({ moves: [], inverted: false });
+ export const makeGame = (moves, inverted) => ({ moves, inverted });
+ export const parseGame = (code) => {
+diff --git a/dist/game/index.d.ts b/dist/game/index.d.ts
+index c0d95280fd6f6d08471625b99a1047d3c6edeb51..2940cd0834577a81307e6d505e3134dac5c8e75f 100644
+--- a/dist/game/index.d.ts
++++ b/dist/game/index.d.ts
+@@ -1 +1 @@
+-export * from "./game";
++export * from "./game.js";
+diff --git a/dist/game/index.js b/dist/game/index.js
+index 5736610611d8c116f800cbeacb2d160d74def474..d31dc1eed543ae195ea59b259c2a1d0c4f70ae61 100644
+--- a/dist/game/index.js
++++ b/dist/game/index.js
+@@ -1,2 +1,2 @@
+-export * from "./game";
++export * from "./game.js";
+ //# sourceMappingURL=index.js.map
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index f3f054f58276bf7aede22f4299348a74a00cbb5c..fa019dd2d3a8ba3860995ae0cc42795f5a91129d 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -1,2 +1,2 @@
+-export * from "./board";
+-export * from "./game";
++export * from "./board/index.js";
++export * from "./game/index.js";
+diff --git a/dist/index.js b/dist/index.js
+index bfc74c9f85b85fe896086aa7e1f85f79f206df84..96c7807a40a1aefa384fd6f81b6d31af1a2a0324 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,3 +1,3 @@
+-export * from "./board";
+-export * from "./game";
++export * from "./board/index.js";
++export * from "./game/index.js";
+ //# sourceMappingURL=index.js.map
+diff --git a/package.json b/package.json
+index 35c5f1d95fa781bff5bdc01cffb8e5720251cd48..13c36dde4436ec8dc2bbb2994b27fb922fa7b84c 100644
+--- a/package.json
++++ b/package.json
+@@ -36,5 +36,6 @@
+     "test": "jest"
+   },
+   "types": "dist/index.d.ts",
++  "type": "module",
+   "version": "0.8.0"
+ }

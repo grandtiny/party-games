@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷和数独入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及无需服务端状态的单机扫雷和数独。
+私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷、数独和五子棋入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及扫雷、数独和支持标准禁手、离线 AI、残局、教学、存档与复盘的五子棋。
 
 ## 本地开发
 
@@ -110,6 +110,7 @@ pnpm verify:poker-tournament-local
 packages/game-core/              游戏模块契约与注册表
 packages/clocktower/             暗流涌动规则状态机与本地资料
 packages/poker/                  德扑规则内核、确定性快照与桌型领域层
+packages/gomoku/                 五子棋规则、禁手、三档 AI、残局和教学内容
 apps/server/src/platform/        房间平台接口
 apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
@@ -118,6 +119,7 @@ apps/web/src/games/poker/        德扑建房、圆桌大厅、多人牌桌和�
 apps/web/src/games/turtle-soup/  海龟汤入口、多人房间和提示词测试页
 apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
 apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
+apps/web/src/games/gomoku/       五子棋对局、残局、教学、账号同步和逐手复盘
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。
