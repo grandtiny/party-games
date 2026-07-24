@@ -2,6 +2,9 @@ param(
   [int]$Port = 3000,
   [string]$HostName = "127.0.0.1",
   [string]$DatabasePath = "",
+  [string]$CpaConfigPath = "",
+  [string]$CpaModel = "codex-auto-review",
+  [int]$LlmTimeoutMs = 60000,
   [switch]$Build
 )
 
@@ -36,6 +39,90 @@ function Set-EnvironmentIfMissing {
   $current = [Environment]::GetEnvironmentVariable($Name, "Process")
   if ([string]::IsNullOrWhiteSpace($current) -and -not [string]::IsNullOrWhiteSpace($Value)) {
     [Environment]::SetEnvironmentVariable($Name, $Value, "Process")
+  }
+}
+
+function Get-LocalCpaConfig {
+  param(
+    [string]$ConfiguredPath,
+    [string]$PreferredModel
+  )
+
+  $candidatePath = $ConfiguredPath
+  if ([string]::IsNullOrWhiteSpace($candidatePath)) {
+    $candidatePath = "C:\Code\30_Tools\cli\CLIProxyAPI_6.10.9_windows_amd64\config.yaml"
+  }
+  if (-not (Test-Path -LiteralPath $candidatePath)) {
+    return [PSCustomObject]@{
+      Ready = $false
+      Endpoint = ""
+      ApiKey = ""
+      Model = ""
+      Source = ""
+    }
+  }
+
+  $lines = Get-Content -LiteralPath $candidatePath
+  $port = "8317"
+  $cpaHost = "127.0.0.1"
+  $apiKey = ""
+  $models = New-Object System.Collections.Generic.List[string]
+  $inApiKeys = $false
+  $inCodexProvider = $false
+
+  foreach ($line in $lines) {
+    if ($line -match '^host:\s*"?([^"]*)"?\s*$') {
+      $configuredHost = $Matches[1].Trim()
+      if (
+        -not [string]::IsNullOrWhiteSpace($configuredHost) -and
+        $configuredHost -notin @("0.0.0.0", "::")
+      ) {
+        $cpaHost = $configuredHost
+      }
+      continue
+    }
+    if ($line -match '^port:\s*(\d+)\s*$') {
+      $port = $Matches[1]
+      continue
+    }
+    if ($line -match '^api-keys:\s*$') {
+      $inApiKeys = $true
+      continue
+    }
+    if ($inApiKeys -and $line -match '^[A-Za-z0-9_-].*:') {
+      $inApiKeys = $false
+    }
+    if ($inApiKeys -and [string]::IsNullOrWhiteSpace($apiKey) -and $line -match '^\s*-\s*(.+?)\s*$') {
+      $apiKey = $Matches[1].Trim().Trim('"').Trim("'")
+      continue
+    }
+    if ($line -match '^codex-api-key:\s*$') {
+      $inCodexProvider = $true
+      continue
+    }
+    if ($inCodexProvider -and $line -match '^[A-Za-z0-9_-].*:' -and $line -notmatch '^codex-api-key:') {
+      $inCodexProvider = $false
+    }
+    if ($inCodexProvider -and $line -match '^\s*-\s*name:\s*"?([^"#]+)"?') {
+      $models.Add($Matches[1].Trim())
+    }
+  }
+
+  $model = ""
+  if (-not [string]::IsNullOrWhiteSpace($PreferredModel) -and $models.Contains($PreferredModel)) {
+    $model = $PreferredModel
+  } elseif ($models.Count -gt 0) {
+    $model = $models[0]
+  } elseif (-not [string]::IsNullOrWhiteSpace($PreferredModel)) {
+    $model = $PreferredModel
+  }
+
+  return [PSCustomObject]@{
+    Ready = -not [string]::IsNullOrWhiteSpace($apiKey) -and -not [string]::IsNullOrWhiteSpace($model)
+    Endpoint = "http://${cpaHost}:${port}/api/provider/codex/v1"
+    ApiKey = $apiKey
+    Model = $model
+    Source = $candidatePath
   }
 }
 
@@ -78,17 +165,52 @@ if ([string]::IsNullOrWhiteSpace($endpoint.Value) -and $apiKey.Name -eq "OPENAI_
   }
 }
 
+$localCpa = Get-LocalCpaConfig $CpaConfigPath $CpaModel
+if (
+  $localCpa.Ready -and
+  [string]::IsNullOrWhiteSpace($endpoint.Value) -and
+  [string]::IsNullOrWhiteSpace($apiKey.Value) -and
+  [string]::IsNullOrWhiteSpace($model.Value)
+) {
+  $endpoint = [PSCustomObject]@{
+    Name = "local-cpa"
+    Value = $localCpa.Endpoint
+  }
+  $apiKey = [PSCustomObject]@{
+    Name = "local-cpa-api-keys"
+    Value = $localCpa.ApiKey
+  }
+  $model = [PSCustomObject]@{
+    Name = "local-cpa-model"
+    Value = $localCpa.Model
+  }
+  if ([string]::IsNullOrWhiteSpace($storyModel.Value)) {
+    $storyModel = [PSCustomObject]@{
+      Name = "local-cpa-model"
+      Value = $localCpa.Model
+    }
+  }
+  if ([string]::IsNullOrWhiteSpace($judgeModel.Value)) {
+    $judgeModel = [PSCustomObject]@{
+      Name = "local-cpa-model"
+      Value = $localCpa.Model
+    }
+  }
+}
+
 Set-EnvironmentIfMissing "PARTY_GAMES_LLM_ENDPOINT" $endpoint.Value
 Set-EnvironmentIfMissing "PARTY_GAMES_LLM_API_KEY" $apiKey.Value
 Set-EnvironmentIfMissing "PARTY_GAMES_LLM_MODEL" $model.Value
 Set-EnvironmentIfMissing "PARTY_GAMES_LLM_STORY_MODEL" $storyModel.Value
 Set-EnvironmentIfMissing "PARTY_GAMES_LLM_JUDGE_MODEL" $judgeModel.Value
+Set-EnvironmentIfMissing "PARTY_GAMES_LLM_TIMEOUT_MS" ([string]$LlmTimeoutMs)
 
 $effectiveEndpoint = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_ENDPOINT", "Process")
 $effectiveApiKey = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_API_KEY", "Process")
 $effectiveModel = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_MODEL", "Process")
 $effectiveStoryModel = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_STORY_MODEL", "Process")
 $effectiveJudgeModel = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_JUDGE_MODEL", "Process")
+$effectiveTimeoutMs = [Environment]::GetEnvironmentVariable("PARTY_GAMES_LLM_TIMEOUT_MS", "Process")
 $llmReady = -not [string]::IsNullOrWhiteSpace($effectiveEndpoint) -and
   -not [string]::IsNullOrWhiteSpace($effectiveApiKey) -and
   -not [string]::IsNullOrWhiteSpace($effectiveModel)
@@ -128,6 +250,7 @@ if (-not (Test-Path -LiteralPath $serverDist) -or -not (Test-Path -LiteralPath $
   ModelSource = if ($model.Name) { $model.Name } else { "<missing>" }
   StoryModel = if ($effectiveStoryModel) { $effectiveStoryModel } else { "<model fallback>" }
   JudgeModel = if ($effectiveJudgeModel) { $effectiveJudgeModel } else { "<model fallback>" }
+  TimeoutMs = if ($effectiveTimeoutMs) { $effectiveTimeoutMs } else { "<missing>" }
   ApiKey = if ($effectiveApiKey) { "<set>" } else { "<missing>" }
   ApiKeySource = if ($apiKey.Name) { $apiKey.Name } else { "<missing>" }
 } | Format-List
