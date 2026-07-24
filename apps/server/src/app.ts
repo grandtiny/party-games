@@ -29,6 +29,7 @@ import { Server as SocketServer } from "socket.io";
 import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
+import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
@@ -48,12 +49,16 @@ export async function createApp(options: AppOptions) {
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
+  const adminService = new AdminService(repository, environment);
   const games = createGameRegistry({
-    pokerEnabled: enabledFlag(environment.POKER_ENABLED, true)
+    pokerEnabled: enabledFlag(environment.POKER_ENABLED, true),
+    turtleSoupAi: new ModelTurtleSoupAiAdapter(adminService.createLanguageModelClient()),
+    turtleSoupAiFailureHandler: (event) => {
+      app.log.warn({ turtleSoupAi: event }, "Turtle soup AI fallback");
+    }
   });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
-  const adminService = new AdminService(repository, environment);
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();

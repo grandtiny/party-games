@@ -147,8 +147,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 24px;
-  margin: -2px 8%;
+  height: 14px;
+  margin: 0 8%;
   pointer-events: none;
 }
 
@@ -162,34 +162,10 @@
   opacity: 0.7;
 }
 
-/* 中央菱形印章（宝石）——金边深底，带发光 */
+/* 中央菱形印章已移除（只保留左右金线） */
 .app-shell--clocktower .ct-divider > span {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  transform: rotate(45deg);
-  border: 1px solid var(--ct-gold);
-  background: linear-gradient(135deg, var(--ct-gold-bright) 0%, var(--ct-gold-deep) 100%);
-  box-shadow:
-    0 0 8px rgb(201 168 76 / 55%),
-    inset 0 1px 0 rgb(255 255 255 / 40%);
+  display: none;
 }
-
-/* 印章两侧的小三叶饰（符文感） */
-.app-shell--clocktower .ct-divider > span::before,
-.app-shell--clocktower .ct-divider > span::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 4px;
-  height: 4px;
-  border: 1px solid var(--ct-gold-deep);
-  border-radius: 50%;
-  background: var(--ct-bg);
-  transform: translateY(-50%);
-}
-.app-shell--clocktower .ct-divider > span::before { left: -14px; }
-.app-shell--clocktower .ct-divider > span::after { right: -14px; }
 
 /* ============================================================
    顶栏（保留深色，哥特金描边）
@@ -256,6 +232,7 @@
 .app-shell--clocktower .chat-panel,
 .app-shell--clocktower .role-reveal.is-visible,
 .app-shell--clocktower .entry-form {
+  margin-top: 8px;            /* 覆盖平台层 18px，收紧与上方 divider 间距 */
   border: 1px solid var(--ct-gold-deep);
   background:
     linear-gradient(180deg, var(--ct-parchment) 0%, var(--ct-parchment-deep) 100%);
@@ -321,9 +298,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 32px;
-  padding: 32px 16px 24px;
+  gap: 14px;
+  margin-bottom: 10px;
+  padding: 20px 16px 8px;
   text-align: center;
 }
 
@@ -332,7 +309,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: clamp(180px, 50vw, 280px);
+  width: clamp(130px, 33vw, 200px);
   aspect-ratio: 1;
   margin-bottom: 6px;
 }
@@ -365,21 +342,22 @@
 .app-shell--clocktower .entry-hero__logo {
   position: relative;
   z-index: 1;
-  width: clamp(140px, 40vw, 220px);
+  width: clamp(95px, 26vw, 140px);
   aspect-ratio: 540 / 764;
   background-image: url("./assets/clocktower-logo.webp");
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 0 24px rgb(201 168 76 / 60%)) drop-shadow(0 8px 30px rgb(0 0 0 / 70%));
+  filter: drop-shadow(0 0 18px rgb(201 168 76 / 55%)) drop-shadow(0 6px 22px rgb(0 0 0 / 70%));
 }
 
 .app-shell--clocktower .entry-hero h1 {
+  font-size: clamp(22px, 5vw, 34px);
   background: linear-gradient(180deg, var(--ct-gold-bright) 0%, var(--ct-gold) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 20px rgb(201 168 76 / 60%)) drop-shadow(0 2px 4px rgb(0 0 0 / 80%));
+  filter: drop-shadow(0 0 16px rgb(201 168 76 / 55%)) drop-shadow(0 2px 4px rgb(0 0 0 / 80%));
 }
 
 .app-shell--clocktower .segmented {
@@ -1446,7 +1424,7 @@
    ============================================================ */
 @media (max-width: 640px) {
   .app-shell--clocktower .entry-hero__logo {
-    width: clamp(120px, 44vw, 180px);
+    width: clamp(85px, 30vw, 120px);
   }
 
   /* 小屏降低魔法阵透明度避免干扰 */

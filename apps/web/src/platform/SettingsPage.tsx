@@ -32,6 +32,8 @@ const EMPTY_LLM_DRAFT: AdminLlmConfigUpdateRequest = {
   enabled: false,
   endpoint: "",
   model: "",
+  storyModel: "",
+  judgeModel: "",
   timeoutMs: 8000
 };
 
@@ -259,7 +261,7 @@ function SettingsWorkspace({
         <div className="settings-section__heading">
           <ServerCog size={23} />
           <div>
-            <h1>规则问答模型</h1>
+            <h1>平台大模型</h1>
             <span className={`config-state ${config.llm.ready ? "is-ready" : ""}`}>
               {config.llm.ready ? "可用" : "未启用"}
             </span>
@@ -304,6 +306,24 @@ function SettingsWorkspace({
                 value={llm.timeoutMs}
                 onChange={(event) => setLlm({ ...llm, timeoutMs: Number(event.target.value) })}
                 required
+              />
+            </label>
+          </div>
+          <div className="settings-field-grid">
+            <label>
+              海龟汤故事模型
+              <input
+                value={llm.storyModel ?? ""}
+                onChange={(event) => setLlm({ ...llm, storyModel: event.target.value })}
+                placeholder="默认使用模型名称"
+              />
+            </label>
+            <label>
+              海龟汤裁判模型
+              <input
+                value={llm.judgeModel ?? ""}
+                onChange={(event) => setLlm({ ...llm, judgeModel: event.target.value })}
+                placeholder="默认使用模型名称"
               />
             </label>
           </div>
@@ -394,6 +414,16 @@ function SystemStatus({ config }: { config: AdminConfigResponse }) {
         <div>
           <dt>模型配置来源</dt>
           <dd>{sourceLabel(config.llm.source)}</dd>
+        </div>
+        <div>
+          <dt>默认模型</dt>
+          <dd>{config.llm.model || "-"}</dd>
+        </div>
+        <div>
+          <dt>海龟汤模型</dt>
+          <dd>
+            {config.llm.storyModel || "-"} / {config.llm.judgeModel || "-"}
+          </dd>
         </div>
         <div>
           <dt>API Key</dt>
@@ -502,6 +532,8 @@ function draftFrom(config: AdminConfigResponse): AdminLlmConfigUpdateRequest {
     enabled: config.llm.enabled,
     endpoint: config.llm.endpoint,
     model: config.llm.model,
+    storyModel: config.llm.storyModel,
+    judgeModel: config.llm.judgeModel,
     timeoutMs: config.llm.timeoutMs
   };
 }
