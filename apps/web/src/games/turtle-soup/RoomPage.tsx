@@ -24,6 +24,7 @@ import { AppShell } from "../../platform/AppShell";
 import { getSession } from "../../session";
 
 type InputMode = "ask" | "guess";
+type PendingAction = "seat" | "ready" | "start" | "ask" | "guess" | "hint" | "rematch";
 
 export function TurtleSoupRoomPage() {
   const params = useParams();
@@ -33,6 +34,7 @@ export function TurtleSoupRoomPage() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string>();
   const [actionError, setActionError] = useState<string>();
+  const [pendingAction, setPendingAction] = useState<PendingAction>();
   const [mode, setMode] = useState<InputMode>("ask");
   const [draft, setDraft] = useState("");
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(
@@ -47,7 +49,10 @@ export function TurtleSoupRoomPage() {
     });
     socketRef.current = socket;
     socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
+    socket.on("disconnect", () => {
+      setConnected(false);
+      setPendingAction(undefined);
+    });
     socket.on("room:view", setView);
     socket.on("room:error", setError);
     socket.on("connect_error", (cause) => setError(cause.message));
@@ -61,9 +66,24 @@ export function TurtleSoupRoomPage() {
 
   if (!session) return <Navigate to="/turtle-soup" replace />;
 
-  const send = (action: (callback: (ack: SocketAck) => void) => void) => {
+  const send = (
+    pending: PendingAction,
+    action: (callback: (ack: SocketAck) => void) => void,
+    onSuccess?: () => void
+  ) => {
+    if (pendingAction) return;
     setActionError(undefined);
+    if (!socketRef.current?.connected) {
+      setActionError("连接尚未就绪，请稍后再试");
+      return;
+    }
+    setPendingAction(pending);
     action((ack) => {
+      setPendingAction(undefined);
+      if (ack.ok) {
+        onSuccess?.();
+        return;
+      }
       if (!ack.ok) setActionError(ack.error ?? "操作失败");
     });
   };
@@ -79,11 +99,18 @@ export function TurtleSoupRoomPage() {
     event.preventDefault();
     const content = draft.trim();
     if (!content) return;
-    setDraft("");
     if (mode === "ask") {
-      send((callback) => socketRef.current?.emit("turtle-soup:ask", content, callback));
+      send(
+        "ask",
+        (callback) => socketRef.current?.emit("turtle-soup:ask", content, callback),
+        () => setDraft("")
+      );
     } else {
-      send((callback) => socketRef.current?.emit("turtle-soup:guess", content, callback));
+      send(
+        "guess",
+        (callback) => socketRef.current?.emit("turtle-soup:guess", content, callback),
+        () => setDraft("")
+      );
     }
   };
 
@@ -132,8 +159,11 @@ export function TurtleSoupRoomPage() {
               <LobbyPanel
                 view={view}
                 onSetSeat={(seat) =>
-                  send((callback) => socketRef.current?.emit("room:set-seat", seat, callback))
+                  send("seat", (callback) =>
+                    socketRef.current?.emit("room:set-seat", seat, callback)
+                  )
                 }
+                pending={pendingAction}
               />
               <section className="session-strip">
                 <KeyRound size={18} />
@@ -145,27 +175,39 @@ export function TurtleSoupRoomPage() {
                 <button
                   className={selfPlayer?.ready ? "secondary-button" : "primary-button"}
                   type="button"
-                  disabled={selfPlayer?.seat === null}
+                  disabled={selfPlayer?.seat === null || Boolean(pendingAction)}
                   onClick={() =>
-                    send((callback) =>
-                      socketRef.current?.emit("room:set-ready", !selfPlayer?.ready, callback)
+                    send("ready", (callback) =>
+                      socketRef.current?.emit(
+                        "room:set-ready",
+                        !selfPlayer?.ready,
+                        callback
+                      )
                     )
                   }
                 >
-                  <Check size={18} />
-                  {selfPlayer?.ready ? "取消准备" : "准备"}
+                  {pendingAction === "ready" ? (
+                    <RefreshCw className="spin" size={18} />
+                  ) : (
+                    <Check size={18} />
+                  )}
+                  {pendingAction === "ready" ? "处理中…" : selfPlayer?.ready ? "取消准备" : "准备"}
                 </button>
                 {view.self.isOwner ? (
                   <button
                     className="primary-button primary-button--dark"
                     type="button"
-                    disabled={!canStart}
+                    disabled={!canStart || Boolean(pendingAction)}
                     onClick={() =>
-                      send((callback) => socketRef.current?.emit("room:start", callback))
+                      send("start", (callback) => socketRef.current?.emit("room:start", callback))
                     }
                   >
-                    <FlaskConical size={18} />
-                    开始汤局
+                    {pendingAction === "start" ? (
+                      <RefreshCw className="spin" size={18} />
+                    ) : (
+                      <FlaskConical size={18} />
+                    )}
+                    {pendingAction === "start" ? "生成中…" : "开始汤局"}
                   </button>
                 ) : null}
               </div>
@@ -181,6 +223,7 @@ export function TurtleSoupRoomPage() {
                     <button
                       type="button"
                       className={mode === "ask" ? "is-active" : ""}
+                      disabled={Boolean(pendingAction)}
                       onClick={() => setMode("ask")}
                     >
                       提问
@@ -188,6 +231,7 @@ export function TurtleSoupRoomPage() {
                     <button
                       type="button"
                       className={mode === "guess" ? "is-active" : ""}
+                      disabled={Boolean(pendingAction)}
                       onClick={() => setMode("guess")}
                     >
                       猜汤底
@@ -198,23 +242,42 @@ export function TurtleSoupRoomPage() {
                     onChange={(event) => setDraft(event.target.value)}
                     maxLength={mode === "ask" ? 180 : 500}
                     placeholder={mode === "ask" ? "只能问可用是/不是回答的问题" : "提交完整推理"}
+                    disabled={Boolean(pendingAction)}
                     required
                   />
                   <div className="turtle-actions">
                     <button
                       className="secondary-button"
                       type="button"
-                      disabled={!view.self.turtleSoup?.canRequestHint}
+                      disabled={!view.self.turtleSoup?.canRequestHint || Boolean(pendingAction)}
                       onClick={() =>
-                        send((callback) => socketRef.current?.emit("turtle-soup:hint", callback))
+                        send("hint", (callback) =>
+                          socketRef.current?.emit("turtle-soup:hint", callback)
+                        )
                       }
                     >
-                      <Lightbulb size={18} />
-                      要提示
+                      {pendingAction === "hint" ? (
+                        <RefreshCw className="spin" size={18} />
+                      ) : (
+                        <Lightbulb size={18} />
+                      )}
+                      {pendingAction === "hint" ? "生成中…" : "要提示"}
                     </button>
-                    <button className="primary-button" type="submit">
-                      <Send size={18} />
-                      {mode === "ask" ? "发送提问" : "提交推理"}
+                    <button
+                      className="primary-button"
+                      type="submit"
+                      disabled={Boolean(pendingAction) || !draft.trim()}
+                    >
+                      {pendingAction === "ask" || pendingAction === "guess" ? (
+                        <RefreshCw className="spin" size={18} />
+                      ) : (
+                        <Send size={18} />
+                      )}
+                      {pendingAction === "ask" || pendingAction === "guess"
+                        ? "处理中…"
+                        : mode === "ask"
+                          ? "发送提问"
+                          : "提交推理"}
                     </button>
                   </div>
                 </form>
@@ -222,12 +285,15 @@ export function TurtleSoupRoomPage() {
                 <button
                   className="primary-button rematch-button"
                   type="button"
+                  disabled={Boolean(pendingAction)}
                   onClick={() =>
-                    send((callback) => socketRef.current?.emit("turtle-soup:rematch", callback))
+                    send("rematch", (callback) =>
+                      socketRef.current?.emit("turtle-soup:rematch", callback)
+                    )
                   }
                 >
-                  <RefreshCw size={18} />
-                  再来一局
+                  <RefreshCw className={pendingAction === "rematch" ? "spin" : ""} size={18} />
+                  {pendingAction === "rematch" ? "处理中…" : "再来一局"}
                 </button>
               ) : null}
             </>
@@ -249,10 +315,12 @@ function ConnectionStatus({ connected }: { connected: boolean }) {
 
 function LobbyPanel({
   view,
-  onSetSeat
+  onSetSeat,
+  pending
 }: {
   view: RoomView;
   onSetSeat: (seat: number | null) => void;
+  pending: PendingAction | undefined;
 }) {
   const selfId = view.self.playerId;
   return (
@@ -275,10 +343,14 @@ function LobbyPanel({
             <button
               className="secondary-button"
               type="button"
-              disabled={player.id !== selfId}
+              disabled={player.id !== selfId || Boolean(pending)}
               onClick={() => onSetSeat(player.seat === null ? index + 1 : null)}
             >
-              {player.seat === null ? "入座" : "离座"}
+              {pending === "seat" && player.id === selfId
+                ? "处理中…"
+                : player.seat === null
+                  ? "入座"
+                  : "离座"}
             </button>
           </div>
         ))}
