@@ -96,7 +96,7 @@ export function ClocktowerDay({
   );
 }
 
-function DayHeader({
+export function DayHeader({
   dayNumber,
   phase,
   aliveCount
@@ -119,7 +119,7 @@ function DayHeader({
   );
 }
 
-function DayControlPanel({
+export function DayControlPanel({
   view,
   now,
   majority,
@@ -274,7 +274,7 @@ function ControlProgress({
   );
 }
 
-function VotingPanel({
+export function VotingPanel({
   view,
   now,
   playerById,
@@ -366,7 +366,7 @@ function VotingPanel({
   );
 }
 
-function GameOverPanel({
+export function GameOverPanel({
   view,
   playerById,
   onRematch
@@ -498,7 +498,7 @@ function nightStepLabel(stepId: string): string {
   return labels[stepId] ?? stepId;
 }
 
-function PublicEventPanel({
+export function PublicEventPanel({
   events,
   playerById
 }: {
@@ -526,7 +526,7 @@ function PublicEventPanel({
   );
 }
 
-function ChatPanel({
+export function ChatPanel({
   messages,
   players,
   selfPlayerId,

@@ -1,4 +1,4 @@
-import { Clock3, KeyRound, LogIn, RefreshCw } from "lucide-react";
+import { KeyRound, LogIn, RefreshCw } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
@@ -8,6 +8,15 @@ import { useAccount } from "../../platform/AccountContext";
 import { ClocktowerReferenceButton } from "./components/ClocktowerReferenceDialog";
 
 type EntryMode = "create" | "join" | "recover";
+
+/** 哥特分割印章 */
+function CtDivider() {
+  return (
+    <div className="ct-divider" aria-hidden="true">
+      <span />
+    </div>
+  );
+}
 
 export function ClocktowerEntryPage() {
   const navigate = useNavigate();
@@ -52,13 +61,17 @@ export function ClocktowerEntryPage() {
       actions={<ClocktowerReferenceButton />}
     >
       <section className="entry-layout">
-        <div className="entry-heading">
-          <Clock3 size={36} />
+        <div className="entry-hero">
+          <div className="entry-hero__shrine">
+            <div className="entry-hero__logo" aria-hidden="true" />
+          </div>
           <div>
             <p className="eyebrow">TROUBLE BREWING</p>
             <h1>暗流涌动</h1>
           </div>
         </div>
+
+        <CtDivider />
 
         <div className="segmented" role="tablist" aria-label="进入方式">
           {([
@@ -76,6 +89,8 @@ export function ClocktowerEntryPage() {
             </button>
           ))}
         </div>
+
+        <CtDivider />
 
         <form className="entry-form" onSubmit={submit}>
           {mode !== "create" ? (
