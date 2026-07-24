@@ -18,6 +18,7 @@
     "verify:local": "node scripts/verify-local.mjs",
     "verify:poker-local": "node scripts/verify-poker-local.mjs",
     "verify:poker-ai-local": "node scripts/verify-poker-ai-local.mjs",
+    "verify:turtle-soup-ai-local": "node scripts/verify-turtle-soup-ai-local.mjs",
     "verify:poker-tournament-local": "node scripts/verify-poker-tournament-local.mjs"
   },
   "devDependencies": {
