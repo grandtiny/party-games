@@ -44,7 +44,9 @@ export class RoomService {
     input: CreateRoomRequest,
     accountUser?: AccountUserView
   ): Promise<RoomSessionResponse> {
-    if (!this.games.has(input.gameType)) throw new Error("德州扑克模块尚未开放");
+    if (!this.games.has(input.gameType)) {
+      throw new Error(input.gameType === "poker" ? "德州扑克模块尚未开放" : "游戏模块尚未开放");
+    }
 
     const roomCode = this.#createRoomCode();
     const playerId = randomUUID();
@@ -489,6 +491,54 @@ export class RoomService {
       playerId,
       "POKER_REMATCHED",
       "poker:rematch",
+      {}
+    );
+  }
+
+  async askTurtleSoup(
+    roomCode: string,
+    playerId: string,
+    question: string
+  ): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_QUESTION_ASKED",
+      "turtle-soup:ask",
+      { question }
+    );
+  }
+
+  async guessTurtleSoup(
+    roomCode: string,
+    playerId: string,
+    guess: string
+  ): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_GUESS_SUBMITTED",
+      "turtle-soup:guess",
+      { guess }
+    );
+  }
+
+  async requestTurtleSoupHint(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_HINT_REQUESTED",
+      "turtle-soup:hint",
+      {}
+    );
+  }
+
+  async rematchTurtleSoup(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_REMATCHED",
+      "turtle-soup:rematch",
       {}
     );
   }

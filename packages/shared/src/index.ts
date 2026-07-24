@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const GameTypeSchema = z.enum(["clocktower", "poker"]);
+export const GameTypeSchema = z.enum(["clocktower", "poker", "turtle-soup"]);
 export type GameType = z.infer<typeof GameTypeSchema>;
 
 export const RoomPhaseSchema = z.enum([
@@ -141,6 +141,11 @@ export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
     nickname: RoomNicknameSchema,
     password: RoomPasswordSchema,
     poker: PokerRoomConfigSchema
+  }),
+  z.object({
+    gameType: z.literal("turtle-soup"),
+    nickname: RoomNicknameSchema,
+    password: RoomPasswordSchema
   })
 ]);
 export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
@@ -564,6 +569,69 @@ export interface ChatMessageView {
   createdAt: string;
 }
 
+export type TurtleSoupAnswerView = "yes" | "no" | "irrelevant" | "partial";
+
+export interface TurtleSoupKeyPointView {
+  id: string;
+  found: boolean;
+  text?: string;
+  foundByPlayerId?: string;
+}
+
+export type TurtleSoupLogEntryView =
+  | {
+      id: string;
+      kind: "question";
+      actorPlayerId: string;
+      content: string;
+      answer: TurtleSoupAnswerView;
+      note?: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "guess";
+      actorPlayerId: string;
+      content: string;
+      matchedKeyPointIds: string[];
+      wrong: boolean;
+      comment: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "hint";
+      actorPlayerId: string;
+      content: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "system";
+      content: string;
+      createdAt: string;
+    };
+
+export interface TurtleSoupView {
+  puzzleId: string;
+  title: string;
+  surface: string;
+  status: "playing" | "solved";
+  questionCount: number;
+  hintsUsed: number;
+  maxHints: number;
+  keyPoints: TurtleSoupKeyPointView[];
+  log: TurtleSoupLogEntryView[];
+  solvedByPlayerId?: string;
+  answer?: string;
+}
+
+export interface TurtleSoupSelfView {
+  canAsk: boolean;
+  canGuess: boolean;
+  canRequestHint: boolean;
+}
+
 export type PokerStreetView = "PREFLOP" | "FLOP" | "TURN" | "RIVER" | "SHOWDOWN";
 export type PokerPlayerStatusView =
   | "ACTIVE"
@@ -678,6 +746,7 @@ export interface RoomView {
     clocktowerReview?: ClocktowerReviewView;
     pokerConfig?: PokerRoomConfig;
     pokerTable?: PokerTableView;
+    turtleSoup?: TurtleSoupView;
     players: PublicPlayerView[];
   };
   self: {
@@ -686,6 +755,7 @@ export interface RoomView {
     privateGame?: ClocktowerPrivateView;
     dayActions?: DayActionPermissions;
     poker?: PokerSelfView;
+    turtleSoup?: TurtleSoupSelfView;
   };
   chatMessages: ChatMessageView[];
 }
@@ -726,6 +796,16 @@ export interface ClientToServerEvents {
   "poker:pause-blinds": (callback: (ack: SocketAck) => void) => void;
   "poker:resume-blinds": (callback: (ack: SocketAck) => void) => void;
   "poker:rematch": (callback: (ack: SocketAck) => void) => void;
+  "turtle-soup:ask": (
+    question: string,
+    callback: (ack: SocketAck) => void
+  ) => void;
+  "turtle-soup:guess": (
+    guess: string,
+    callback: (ack: SocketAck) => void
+  ) => void;
+  "turtle-soup:hint": (callback: (ack: SocketAck) => void) => void;
+  "turtle-soup:rematch": (callback: (ack: SocketAck) => void) => void;
   "chat:send": (
     message: { recipientPlayerId?: string; content: string },
     callback: (ack: SocketAck) => void

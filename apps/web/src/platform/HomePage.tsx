@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Bomb,
   Clock3,
+  FlaskConical,
   Grid3X3,
   Settings as SettingsIcon,
   Spade
@@ -22,7 +23,12 @@ export function HomePage() {
       .catch(() => setPokerEnabled(false));
   }, []);
 
-  const activePath = active?.gameType === "poker" ? "poker" : "clocktower";
+  const activePath =
+    active?.gameType === "poker"
+      ? "poker"
+      : active?.gameType === "turtle-soup"
+        ? "turtle-soup"
+        : "clocktower";
   return (
     <AppShell
       actions={
@@ -79,6 +85,14 @@ export function HomePage() {
           <span>
             <strong>扫雷</strong>
             <small>经典模式 · 首击安全</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
+        <Link className="game-card game-card--turtle-soup" to="/turtle-soup">
+          <FlaskConical size={34} strokeWidth={1.8} />
+          <span>
+            <strong>海龟汤</strong>
+            <small>多人提问 · 提示词测试</small>
           </span>
           <ArrowRight size={20} />
         </Link>

@@ -45,7 +45,9 @@ export async function createApp(options: AppOptions) {
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
-  const games = createGameRegistry({ pokerEnabled: enabledFlag(environment.POKER_ENABLED) });
+  const games = createGameRegistry({
+    pokerEnabled: enabledFlag(environment.POKER_ENABLED, true)
+  });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
   const adminService = new AdminService(repository, environment);
@@ -610,6 +612,46 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("turtle-soup:ask", async (question, callback) => {
+      try {
+        await roomService.askTurtleSoup(roomCode, playerId, question);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:guess", async (guess, callback) => {
+      try {
+        await roomService.guessTurtleSoup(roomCode, playerId, guess);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:hint", async (callback) => {
+      try {
+        await roomService.requestTurtleSoupHint(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:rematch", async (callback) => {
+      try {
+        await roomService.rematchTurtleSoup(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("chat:send", async (message, callback) => {
       try {
         roomService.sendChat(roomCode, playerId, message);
@@ -669,8 +711,9 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "未知错误";
 }
 
-function enabledFlag(value: string | undefined): boolean {
-  return value === "1" || value?.toLowerCase() === "true" || value?.toLowerCase() === "yes";
+function enabledFlag(value: string | undefined, defaultValue = false): boolean {
+  if (value === undefined || value.trim() === "") return defaultValue;
+  return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";
