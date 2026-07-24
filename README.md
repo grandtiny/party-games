@@ -104,6 +104,10 @@ pnpm verify:poker-tournament-local
 
 当前实现边界见 [docs/mvp-scope.md](docs/mvp-scope.md)。
 
+## 开发协作
+
+分支职责、worktree 隔离、验证门槛和合入规则见 [AGENTS.md](AGENTS.md)。功能开发不要直接写入 `main`；每个功能分支应跟踪同名远端，并在合入前同步最新主线完成组合验证。
+
 ## 模块结构
 
 ```text
