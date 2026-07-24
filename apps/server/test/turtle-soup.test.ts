@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { CreateRoomRequestSchema } from "@party-games/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import { createGameRegistry } from "../src/games/index.js";
+import type { TurtleSoupAiFailureEvent } from "../src/games/turtle-soup.js";
 import type { TurtleSoupAiAdapter } from "../src/games/turtle-soup-ai.js";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
@@ -15,7 +16,10 @@ afterEach(() => {
   for (const cleanup of cleanupTasks.splice(0).reverse()) cleanup();
 });
 
-function createService(ai?: TurtleSoupAiAdapter) {
+function createService(
+  ai?: TurtleSoupAiAdapter,
+  onAiFailure?: (event: TurtleSoupAiFailureEvent) => void
+) {
   const directory = mkdtempSync(join(tmpdir(), "party-games-turtle-soup-test-"));
   const repository = new SqliteRoomRepository(join(directory, "test.sqlite"));
   cleanupTasks.push(() => {
@@ -25,7 +29,11 @@ function createService(ai?: TurtleSoupAiAdapter) {
   return new RoomService(
     repository,
     new PresenceTracker(),
-    createGameRegistry({ pokerEnabled: true, ...(ai ? { turtleSoupAi: ai } : {}) })
+    createGameRegistry({
+      pokerEnabled: true,
+      ...(ai ? { turtleSoupAi: ai } : {}),
+      ...(onAiFailure ? { turtleSoupAiFailureHandler: onAiFailure } : {})
+    })
   );
 }
 
@@ -217,5 +225,57 @@ describe("turtle soup server module", () => {
       judgeSource: "local",
       questionCount: 1
     });
+  });
+
+  it("reports AI adapter failures without leaking puzzle or player content", async () => {
+    const failures: TurtleSoupAiFailureEvent[] = [];
+    const ai: TurtleSoupAiAdapter = {
+      createPuzzle: async () => ({
+        id: "model-soup",
+        title: "模型汤",
+        surface: "他在空房间里听见自己的名字，于是立刻离开。为什么？",
+        answer: "房间里有一台延迟播放的录音设备，录音内容来自他之前的声音。",
+        source: "model",
+        maxHints: 2,
+        keyPoints: [
+          { id: "recording", text: "声音来自录音设备" },
+          { id: "delay", text: "录音是延迟播放的" }
+        ],
+        hints: ["声音未必来自现场的人。"]
+      }),
+      judgeQuestion: async () => {
+        throw new Error("HTTP 502 from model");
+      },
+      judgeGuess: async () => undefined,
+      createHint: async () => undefined
+    };
+    const service = createService(ai, (event) => failures.push(event));
+    const owner = await service.createRoom({
+      gameType: "turtle-soup",
+      nickname: "Owner",
+      password: "secret"
+    });
+
+    await service.setSeat(owner.roomCode, owner.playerId, 1);
+    await service.setReady(owner.roomCode, owner.playerId, true);
+    await service.startRoom(owner.roomCode, owner.playerId);
+    await service.askTurtleSoup(
+      owner.roomCode,
+      owner.playerId,
+      "声音是不是来自延迟播放的录音设备？"
+    );
+
+    expect(failures).toEqual([
+      {
+        action: "judge-question",
+        roomCode: owner.roomCode,
+        puzzleId: "model-soup",
+        puzzleSource: "model",
+        error: "HTTP 502 from model"
+      }
+    ]);
+    const serialized = JSON.stringify(failures);
+    expect(serialized).not.toContain("延迟播放的录音设备");
+    expect(serialized).not.toContain("空房间里听见自己的名字");
   });
 });

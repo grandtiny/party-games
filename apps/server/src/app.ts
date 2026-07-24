@@ -49,7 +49,10 @@ export async function createApp(options: AppOptions) {
   const adminService = new AdminService(repository, environment);
   const games = createGameRegistry({
     pokerEnabled: enabledFlag(environment.POKER_ENABLED, true),
-    turtleSoupAi: new ModelTurtleSoupAiAdapter(adminService.createLanguageModelClient())
+    turtleSoupAi: new ModelTurtleSoupAiAdapter(adminService.createLanguageModelClient()),
+    turtleSoupAiFailureHandler: (event) => {
+      app.log.warn({ turtleSoupAi: event }, "Turtle soup AI fallback");
+    }
   });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);

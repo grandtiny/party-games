@@ -26,6 +26,22 @@ import type {
   TurtleSoupQuestionJudgment
 } from "./turtle-soup-ai.js";
 
+export type TurtleSoupAiAction =
+  | "create-puzzle"
+  | "judge-question"
+  | "judge-guess"
+  | "create-hint";
+
+export interface TurtleSoupAiFailureEvent {
+  action: TurtleSoupAiAction;
+  roomCode: string;
+  error: string;
+  puzzleId?: string;
+  puzzleSource?: "model" | "local";
+}
+
+export type TurtleSoupAiFailureHandler = (event: TurtleSoupAiFailureEvent) => void;
+
 const LOCAL_TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzleState[] = [
   {
     id: "umbrella-elevator",
@@ -99,7 +115,10 @@ export class TurtleSoupGameModule implements ServerGameModule {
   readonly minPlayers = 1;
   readonly maxPlayers = 15;
 
-  constructor(private readonly ai?: TurtleSoupAiAdapter) {}
+  constructor(
+    private readonly ai?: TurtleSoupAiAdapter,
+    private readonly onAiFailure: TurtleSoupAiFailureHandler = () => {}
+  ) {}
 
   async create(state: InternalRoomState, context: GameRoomCreateContext): Promise<GameRoomUpdate> {
     this.#assertTurtleSoupRoom(state);
@@ -164,7 +183,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
 
     if (command.type === "turtle-soup:ask") {
       const question = trimPayload(command.payload, "question", 2, 180);
-      const judged = await this.#judgeQuestion(puzzle, question);
+      const judged = await this.#judgeQuestion(state.code, puzzle, question);
       return {
         changes: {
           turtleSoup: {
@@ -190,7 +209,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
 
     if (command.type === "turtle-soup:guess") {
       const guess = trimPayload(command.payload, "guess", 2, 500);
-      const judged = await this.#judgeGuess(puzzle, guess);
+      const judged = await this.#judgeGuess(state.code, puzzle, guess);
       const foundKeyPoints = { ...turtleSoup.foundKeyPoints };
       for (const keyPointId of judged.matchedKeyPointIds) {
         foundKeyPoints[keyPointId] ??= {
@@ -248,7 +267,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
 
     if (command.type === "turtle-soup:hint") {
       if (turtleSoup.hintsUsed >= puzzle.maxHints) throw new Error("提示次数已用完");
-      const hinted = await this.#createHint(puzzle, turtleSoup);
+      const hinted = await this.#createHint(state.code, puzzle, turtleSoup);
       return {
         changes: {
           turtleSoup: {
@@ -366,39 +385,58 @@ export class TurtleSoupGameModule implements ServerGameModule {
         seed: context.seed
       });
       if (puzzle) return puzzle;
-    } catch {
-      // Local fallback keeps dev/test rooms usable when the platform model is unavailable.
+    } catch (cause) {
+      this.#reportAiFailure({
+        action: "create-puzzle",
+        roomCode: state.code,
+        error: errorMessage(cause)
+      });
     }
     return selectLocalPuzzle(context.seed);
   }
 
   async #judgeQuestion(
+    roomCode: string,
     puzzle: TurtleSoupPuzzleState,
     question: string
   ): Promise<TurtleSoupQuestionJudgment & { source: "model" | "local" }> {
     try {
       const judged = await this.ai?.judgeQuestion({ puzzle, question });
       if (judged) return { ...judged, source: "model" };
-    } catch {
-      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    } catch (cause) {
+      this.#reportAiFailure({
+        action: "judge-question",
+        roomCode,
+        puzzleId: puzzle.id,
+        puzzleSource: puzzle.source,
+        error: errorMessage(cause)
+      });
     }
     return { ...judgeQuestionLocally(puzzle, question), source: "local" };
   }
 
   async #judgeGuess(
+    roomCode: string,
     puzzle: TurtleSoupPuzzleState,
     guess: string
   ): Promise<TurtleSoupGuessJudgment & { source: "model" | "local" }> {
     try {
       const judged = await this.ai?.judgeGuess({ puzzle, guess });
       if (judged) return { ...judged, source: "model" };
-    } catch {
-      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    } catch (cause) {
+      this.#reportAiFailure({
+        action: "judge-guess",
+        roomCode,
+        puzzleId: puzzle.id,
+        puzzleSource: puzzle.source,
+        error: errorMessage(cause)
+      });
     }
     return { ...judgeGuessLocally(puzzle, guess), source: "local" };
   }
 
   async #createHint(
+    roomCode: string,
     puzzle: TurtleSoupPuzzleState,
     turtleSoup: NonNullable<InternalRoomState["turtleSoup"]>
   ): Promise<{ content: string; source: "model" | "local" }> {
@@ -409,10 +447,24 @@ export class TurtleSoupGameModule implements ServerGameModule {
         log: turtleSoup.log
       });
       if (hint) return { content: hint, source: "model" };
-    } catch {
-      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    } catch (cause) {
+      this.#reportAiFailure({
+        action: "create-hint",
+        roomCode,
+        puzzleId: puzzle.id,
+        puzzleSource: puzzle.source,
+        error: errorMessage(cause)
+      });
     }
     return { content: nextLocalHint(puzzle, turtleSoup), source: "local" };
+  }
+
+  #reportAiFailure(event: TurtleSoupAiFailureEvent): void {
+    try {
+      this.onAiFailure(event);
+    } catch {
+      // Logging must not break the room flow.
+    }
   }
 
   #assertTurtleSoupRoom(state: Pick<InternalRoomState, "gameType">): void {
@@ -529,4 +581,9 @@ function containsAny(normalizedText: string, terms: readonly string[]): boolean 
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+}
+
+function errorMessage(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : "unknown AI adapter error";
+  return message.slice(0, 300);
 }
