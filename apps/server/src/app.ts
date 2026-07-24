@@ -14,6 +14,9 @@ import {
   AdminPasswordChangeRequestSchema,
   AdminSetupRequestSchema,
   CreateRoomRequestSchema,
+  GomokuMatchSubmitRequestSchema,
+  GomokuProgressSyncRequestSchema,
+  GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
@@ -26,6 +29,7 @@ import { Server as SocketServer } from "socket.io";
 import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
+import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
@@ -45,10 +49,16 @@ export async function createApp(options: AppOptions) {
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
-  const games = createGameRegistry({ pokerEnabled: enabledFlag(environment.POKER_ENABLED) });
+  const adminService = new AdminService(repository, environment);
+  const games = createGameRegistry({
+    pokerEnabled: enabledFlag(environment.POKER_ENABLED, true),
+    turtleSoupAi: new ModelTurtleSoupAiAdapter(adminService.createLanguageModelClient()),
+    turtleSoupAiFailureHandler: (event) => {
+      app.log.warn({ turtleSoupAi: event }, "Turtle soup AI fallback");
+    }
+  });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
-  const adminService = new AdminService(repository, environment);
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -165,6 +175,66 @@ export async function createApp(options: AppOptions) {
     try {
       const input = PuzzleResultSubmitRequestSchema.parse(request.body);
       return accountService.submitPuzzleResult(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/account/gomoku/matches", async (request, reply) => {
+    try {
+      const input = GomokuMatchSubmitRequestSchema.parse(request.body);
+      return accountService.submitGomokuMatch(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/gomoku/overview", async (request, reply) => {
+    try {
+      return accountService.gomokuOverview(accountSessionToken(request.headers.cookie));
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/account/gomoku/matches/:matchId", async (request, reply) => {
+    try {
+      const matchId = String((request.params as { matchId?: string }).matchId ?? "");
+      return accountService.gomokuMatch(accountSessionToken(request.headers.cookie), matchId);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : message.includes("不存在") ? 404 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.put("/api/account/gomoku/save", async (request, reply) => {
+    try {
+      const input = GomokuSaveUpdateRequestSchema.parse(request.body);
+      return accountService.updateGomokuSave(
+        accountSessionToken(request.headers.cookie),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.put("/api/account/gomoku/progress", async (request, reply) => {
+    try {
+      const input = GomokuProgressSyncRequestSchema.parse(request.body);
+      return accountService.syncGomokuProgress(
         accountSessionToken(request.headers.cookie),
         input
       );
@@ -610,6 +680,46 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("turtle-soup:ask", async (question, callback) => {
+      try {
+        await roomService.askTurtleSoup(roomCode, playerId, question);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:guess", async (guess, callback) => {
+      try {
+        await roomService.guessTurtleSoup(roomCode, playerId, guess);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:hint", async (callback) => {
+      try {
+        await roomService.requestTurtleSoupHint(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:rematch", async (callback) => {
+      try {
+        await roomService.rematchTurtleSoup(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("chat:send", async (message, callback) => {
       try {
         roomService.sendChat(roomCode, playerId, message);
@@ -669,8 +779,9 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "未知错误";
 }
 
-function enabledFlag(value: string | undefined): boolean {
-  return value === "1" || value?.toLowerCase() === "true" || value?.toLowerCase() === "yes";
+function enabledFlag(value: string | undefined, defaultValue = false): boolean {
+  if (value === undefined || value.trim() === "") return defaultValue;
+  return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";

@@ -1,3 +1,6 @@
 packages:
   - apps/*
   - packages/*
+
+patchedDependencies:
+  renjukit@0.8.0: patches/renjukit@0.8.0.patch

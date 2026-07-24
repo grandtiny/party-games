@@ -1,4 +1,5 @@
 import { randomInt, randomUUID } from "node:crypto";
+import { gomokuLessons, gomokuPuzzles, restoreGomokuGame } from "@party-games/gomoku";
 import type {
   AccountBootstrapRequest,
   AccountInviteView,
@@ -7,6 +8,15 @@ import type {
   AccountRegisterRequest,
   AccountStatusResponse,
   AccountUserView,
+  GomokuGameStatePayload,
+  GomokuMatchDetailView,
+  GomokuMatchSubmitRequest,
+  GomokuMatchView,
+  GomokuOverviewResponse,
+  GomokuProgressSyncRequest,
+  GomokuProgressView,
+  GomokuSaveUpdateRequest,
+  GomokuSaveView,
   PuzzleResultSubmitRequest,
   PuzzleResultView
 } from "@party-games/shared";
@@ -19,11 +29,18 @@ import {
 import type {
   SqliteRoomRepository,
   StoredAccountUser,
+  StoredGomokuMatch,
   StoredPuzzleResult
 } from "./repository.js";
 
 const ACCOUNT_SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const GOMOKU_PROGRESS_IDS = new Set([
+  ...gomokuPuzzles.map((puzzle) => `puzzle:${puzzle.id}`),
+  ...gomokuLessons.flatMap((lesson) =>
+    lesson.exercises.map((exercise) => `lesson:${exercise.id}`)
+  )
+]);
 
 interface AuthenticatedAccount {
   token: string;
@@ -233,6 +250,87 @@ export class AccountService {
     };
   }
 
+  submitGomokuMatch(
+    token: string | undefined,
+    input: GomokuMatchSubmitRequest
+  ): GomokuMatchView {
+    const user = this.requireUser(token);
+    const state = validateGomokuState(input.state, true);
+    const result = state.result;
+    if (!result) throw new Error("只记录已结束的五子棋对局");
+    const outcome =
+      state.mode === "local"
+        ? "local"
+        : result.outcome === "draw"
+          ? "draw"
+          : result.outcome === state.humanColor
+            ? "win"
+            : "loss";
+    const match: StoredGomokuMatch = {
+      id: randomUUID(),
+      userId: user.id,
+      gameId: state.id,
+      ruleSet: state.ruleSet,
+      mode: state.mode,
+      ...(state.aiDifficulty ? { aiDifficulty: state.aiDifficulty } : {}),
+      ...(state.humanColor ? { humanColor: state.humanColor } : {}),
+      winner: result.outcome,
+      outcome,
+      resultReason: result.reason,
+      elapsedSeconds: state.elapsedSeconds,
+      moveCount: state.moves.length,
+      assisted: state.usedUndo || state.usedHint || (state.setupMoveCount ?? 0) > 0,
+      state,
+      createdAt: new Date().toISOString()
+    };
+    if (!this.repository.addGomokuMatch(match)) {
+      const existing = this.repository.findGomokuMatchByGameId(user.id, state.id);
+      if (existing) return gomokuMatchView(existing);
+      throw new Error("五子棋战绩写入失败");
+    }
+    return gomokuMatchView(match);
+  }
+
+  gomokuOverview(token: string | undefined): GomokuOverviewResponse {
+    const user = this.requireUser(token);
+    const save = this.repository.getGomokuSave(user.id);
+    return {
+      stats: this.repository.getGomokuStats(user.id),
+      recentMatches: this.repository.listRecentGomokuMatches(user.id).map(gomokuMatchView),
+      progress: this.repository.listGomokuProgress(user.id).map(gomokuProgressView),
+      ...(save ? { save: gomokuSaveView(save) } : {})
+    };
+  }
+
+  gomokuMatch(token: string | undefined, matchId: string): GomokuMatchDetailView {
+    const user = this.requireUser(token);
+    const match = this.repository.findGomokuMatch(user.id, matchId);
+    if (!match) throw new Error("五子棋对局记录不存在");
+    return { ...gomokuMatchView(match), state: match.state };
+  }
+
+  updateGomokuSave(
+    token: string | undefined,
+    input: GomokuSaveUpdateRequest
+  ): GomokuSaveView {
+    const user = this.requireUser(token);
+    const state = validateGomokuState(input.state, false);
+    return gomokuSaveView(this.repository.upsertGomokuSave(user.id, state));
+  }
+
+  syncGomokuProgress(
+    token: string | undefined,
+    input: GomokuProgressSyncRequest
+  ): GomokuProgressView[] {
+    const user = this.requireUser(token);
+    for (const item of input.items) {
+      if (!GOMOKU_PROGRESS_IDS.has(`${item.contentType}:${item.contentId}`)) {
+        throw new Error("五子棋进度包含未知内容");
+      }
+    }
+    return this.repository.upsertGomokuProgress(user.id, input.items).map(gomokuProgressView);
+  }
+
   private newUser(
     input: { username: string; displayName: string; password: string },
     role: "owner" | "member"
@@ -284,6 +382,63 @@ function puzzleResultView(result: StoredPuzzleResult): PuzzleResultView {
     hints: result.hints,
     createdAt: result.createdAt
   };
+}
+
+function gomokuMatchView(match: StoredGomokuMatch): GomokuMatchView {
+  return {
+    id: match.id,
+    gameId: match.gameId,
+    ruleSet: match.ruleSet,
+    mode: match.mode,
+    ...(match.aiDifficulty ? { aiDifficulty: match.aiDifficulty } : {}),
+    ...(match.humanColor ? { humanColor: match.humanColor } : {}),
+    winner: match.winner,
+    outcome: match.outcome,
+    resultReason: match.resultReason,
+    elapsedSeconds: match.elapsedSeconds,
+    moveCount: match.moveCount,
+    assisted: match.assisted,
+    createdAt: match.createdAt
+  };
+}
+
+function gomokuProgressView(
+  progress: ReturnType<SqliteRoomRepository["listGomokuProgress"]>[number]
+): GomokuProgressView {
+  return progress;
+}
+
+function gomokuSaveView(
+  save: NonNullable<ReturnType<SqliteRoomRepository["getGomokuSave"]>>
+): GomokuSaveView {
+  return save;
+}
+
+function validateGomokuState(
+  state: GomokuGameStatePayload,
+  requireFinished: boolean
+): GomokuGameStatePayload {
+  let replay;
+  try {
+    replay = restoreGomokuGame(state);
+  } catch {
+    throw new Error("五子棋棋谱无法通过规则校验");
+  }
+  if (
+    replay.currentPlayer !== state.currentPlayer ||
+    JSON.stringify(replay.moves) !== JSON.stringify(state.moves)
+  ) {
+    throw new Error("五子棋棋局状态与棋谱不一致");
+  }
+
+  if (!state.result) {
+    if (requireFinished) throw new Error("只记录已结束的五子棋对局");
+    return state;
+  }
+  if (JSON.stringify(replay.result) !== JSON.stringify(state.result)) {
+    throw new Error("五子棋结算结果与棋谱不一致");
+  }
+  return state;
 }
 
 function createInviteCode(): string {

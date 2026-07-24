@@ -14,12 +14,12 @@ afterEach(async () => {
 });
 
 describe("poker socket boundary", () => {
-  it("enables poker explicitly and broadcasts private views after dealing", async () => {
+  it("enables poker by default and broadcasts private views after dealing", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-poker-socket-"));
     const context = await createApp({
       databasePath: join(directory, "test.sqlite"),
       logger: false,
-      environment: { POKER_ENABLED: "true" }
+      environment: {}
     });
     await context.app.listen({ host: "127.0.0.1", port: 0 });
     cleanupTasks.push(async () => {
@@ -30,7 +30,9 @@ describe("poker socket boundary", () => {
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
     const platformResponse = await context.app.inject({ method: "GET", url: "/api/platform" });
-    expect(platformResponse.json()).toEqual({ enabledGames: ["clocktower", "poker"] });
+    expect(platformResponse.json()).toEqual({
+      enabledGames: ["clocktower", "turtle-soup", "poker"]
+    });
 
     const owner = await context.roomService.createRoom({
       gameType: "poker",
@@ -112,6 +114,24 @@ describe("poker socket boundary", () => {
         (player) => player.playerId === actionPlayerId
       )
     ).toMatchObject({ atTable: true, stack: 500, buyIns: 2, netPoints: -5 });
+  });
+
+  it("allows poker to be disabled explicitly", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-poker-disabled-"));
+    const context = await createApp({
+      databasePath: join(directory, "test.sqlite"),
+      logger: false,
+      environment: { POKER_ENABLED: "false" }
+    });
+    cleanupTasks.push(async () => {
+      await context.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    });
+
+    const platformResponse = await context.app.inject({ method: "GET", url: "/api/platform" });
+    const platform = platformResponse.json<{ enabledGames: string[] }>();
+    expect(platform.enabledGames).toContain("clocktower");
+    expect(platform.enabledGames).not.toContain("poker");
   });
 });
 

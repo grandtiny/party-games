@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const GameTypeSchema = z.enum(["clocktower", "poker"]);
+export const GameTypeSchema = z.enum(["clocktower", "poker", "turtle-soup"]);
 export type GameType = z.infer<typeof GameTypeSchema>;
 
 export const RoomPhaseSchema = z.enum([
@@ -25,6 +25,9 @@ export const PokerBlindAdvanceModeSchema = z.enum(["manual", "automatic"]);
 export type PokerBlindAdvanceMode = z.infer<typeof PokerBlindAdvanceModeSchema>;
 export const PokerAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
 export type PokerAiDifficulty = z.infer<typeof PokerAiDifficultySchema>;
+export const TurtleSoupDifficultySchema = z.enum(["easy", "normal", "hard"]);
+export type TurtleSoupDifficulty = z.infer<typeof TurtleSoupDifficultySchema>;
+export const TURTLE_SOUP_PROMPT_VERSION = "turtle-soup-prompt-v1";
 
 export const PokerBlindLevelSchema = z
   .object({
@@ -130,6 +133,12 @@ export const PokerRoomConfigSchema = z
   });
 export type PokerRoomConfig = z.infer<typeof PokerRoomConfigSchema>;
 
+export const TurtleSoupRoomConfigSchema = z.object({
+  difficulty: TurtleSoupDifficultySchema.default("normal"),
+  tags: z.array(z.string().trim().min(1).max(16)).max(6).default([])
+});
+export type TurtleSoupRoomConfig = z.infer<typeof TurtleSoupRoomConfigSchema>;
+
 export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
   z.object({
     gameType: z.literal("clocktower"),
@@ -141,6 +150,12 @@ export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
     nickname: RoomNicknameSchema,
     password: RoomPasswordSchema,
     poker: PokerRoomConfigSchema
+  }),
+  z.object({
+    gameType: z.literal("turtle-soup"),
+    nickname: RoomNicknameSchema,
+    password: RoomPasswordSchema,
+    turtleSoup: TurtleSoupRoomConfigSchema.optional()
   })
 ]);
 export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
@@ -251,6 +266,113 @@ export const PuzzleResultSubmitRequestSchema = z
   });
 export type PuzzleResultSubmitRequest = z.infer<typeof PuzzleResultSubmitRequestSchema>;
 
+export const GomokuStoneSchema = z.enum(["black", "white"]);
+export type GomokuStoneValue = z.infer<typeof GomokuStoneSchema>;
+export const GomokuRuleSetSchema = z.enum(["freestyle", "renju"]);
+export type GomokuRuleSetValue = z.infer<typeof GomokuRuleSetSchema>;
+export const GomokuMatchModeSchema = z.enum(["ai", "local"]);
+export type GomokuMatchModeValue = z.infer<typeof GomokuMatchModeSchema>;
+export const GomokuAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
+export type GomokuAiDifficultyValue = z.infer<typeof GomokuAiDifficultySchema>;
+
+export const GomokuPointSchema = z.object({
+  x: z.number().int().min(0).max(14),
+  y: z.number().int().min(0).max(14)
+});
+export type GomokuPointValue = z.infer<typeof GomokuPointSchema>;
+
+export const GomokuMoveSchema = GomokuPointSchema.extend({
+  player: GomokuStoneSchema,
+  moveNumber: z.number().int().min(1).max(225)
+});
+export type GomokuMoveValue = z.infer<typeof GomokuMoveSchema>;
+
+export const GomokuResultSchema = z.object({
+  outcome: z.enum(["black", "white", "draw"]),
+  reason: z.enum(["five", "board-full", "resign"]),
+  winningLine: z.array(GomokuPointSchema).max(15)
+});
+export type GomokuResultValue = z.infer<typeof GomokuResultSchema>;
+
+export const GomokuGameStatePayloadSchema = z
+  .object({
+    version: z.literal(1),
+    id: z.string().min(1).max(100),
+    ruleSet: GomokuRuleSetSchema,
+    mode: GomokuMatchModeSchema,
+    currentPlayer: GomokuStoneSchema,
+    moves: z.array(GomokuMoveSchema).max(225),
+    result: GomokuResultSchema.nullable(),
+    startedAt: z.number().int().min(0),
+    elapsedSeconds: z.number().int().min(0).max(604_800),
+    seed: z.number().int(),
+    usedUndo: z.boolean(),
+    usedHint: z.boolean(),
+    setupMoveCount: z.number().int().min(0).max(225).optional(),
+    setupCurrentPlayer: GomokuStoneSchema.optional(),
+    aiDifficulty: GomokuAiDifficultySchema.optional(),
+    humanColor: GomokuStoneSchema.optional()
+  })
+  .superRefine((state, context) => {
+    if (state.mode === "ai" && (!state.aiDifficulty || !state.humanColor)) {
+      context.addIssue({
+        code: "custom",
+        message: "人机对局缺少难度或玩家颜色"
+      });
+    }
+    if ((state.setupMoveCount ?? 0) > state.moves.length) {
+      context.addIssue({
+        code: "custom",
+        message: "初始摆盘数量超过棋谱长度",
+        path: ["setupMoveCount"]
+      });
+    }
+    const occupied = new Set<string>();
+    state.moves.forEach((move, index) => {
+      if (move.moveNumber !== index + 1) {
+        context.addIssue({
+          code: "custom",
+          message: "落子序号不连续",
+          path: ["moves", index, "moveNumber"]
+        });
+      }
+      const key = `${move.x}:${move.y}`;
+      if (occupied.has(key)) {
+        context.addIssue({
+          code: "custom",
+          message: "棋谱包含重复落点",
+          path: ["moves", index]
+        });
+      }
+      occupied.add(key);
+    });
+  });
+export type GomokuGameStatePayload = z.infer<typeof GomokuGameStatePayloadSchema>;
+
+export const GomokuMatchSubmitRequestSchema = z.object({
+  state: GomokuGameStatePayloadSchema
+});
+export type GomokuMatchSubmitRequest = z.infer<typeof GomokuMatchSubmitRequestSchema>;
+
+export const GomokuSaveUpdateRequestSchema = z.object({
+  state: GomokuGameStatePayloadSchema
+});
+export type GomokuSaveUpdateRequest = z.infer<typeof GomokuSaveUpdateRequestSchema>;
+
+export const GomokuProgressItemSchema = z.object({
+  contentType: z.enum(["puzzle", "lesson"]),
+  contentId: z.string().min(1).max(100),
+  stars: z.number().int().min(0).max(3).default(0),
+  bestMoves: z.number().int().min(0).max(225).default(0),
+  hintsUsed: z.number().int().min(0).max(3).default(0)
+});
+export type GomokuProgressItem = z.infer<typeof GomokuProgressItemSchema>;
+
+export const GomokuProgressSyncRequestSchema = z.object({
+  items: z.array(GomokuProgressItemSchema).max(200)
+});
+export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -273,6 +395,8 @@ export const AdminLlmConfigUpdateRequestSchema = z.object({
   enabled: z.boolean(),
   endpoint: z.union([z.string().trim().url().max(2048), z.literal("")]),
   model: z.string().trim().max(200),
+  storyModel: z.string().trim().max(200).optional(),
+  judgeModel: z.string().trim().max(200).optional(),
   apiKey: z.string().trim().max(4096).optional(),
   clearApiKey: z.boolean().optional(),
   timeoutMs: z.number().int().min(1000).max(60_000)
@@ -355,10 +479,62 @@ export interface AccountOverviewResponse {
   leaderboards: PuzzleLeaderboardView[];
 }
 
+export interface GomokuMatchView {
+  id: string;
+  gameId: string;
+  ruleSet: GomokuRuleSetValue;
+  mode: GomokuMatchModeValue;
+  aiDifficulty?: GomokuAiDifficultyValue;
+  humanColor?: GomokuStoneValue;
+  winner: "black" | "white" | "draw";
+  outcome: "win" | "loss" | "draw" | "local";
+  resultReason: "five" | "board-full" | "resign";
+  elapsedSeconds: number;
+  moveCount: number;
+  assisted: boolean;
+  createdAt: string;
+}
+
+export interface GomokuMatchDetailView extends GomokuMatchView {
+  state: GomokuGameStatePayload;
+}
+
+export interface GomokuProgressView extends GomokuProgressItem {
+  completedAt: string;
+  updatedAt: string;
+}
+
+export interface GomokuSaveView {
+  state: GomokuGameStatePayload;
+  updatedAt: string;
+}
+
+export interface GomokuOverviewResponse {
+  stats: {
+    total: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    assisted: number;
+    byDifficulty: Array<{
+      difficulty: GomokuAiDifficultyValue;
+      total: number;
+      wins: number;
+      losses: number;
+      draws: number;
+    }>;
+  };
+  recentMatches: GomokuMatchView[];
+  progress: GomokuProgressView[];
+  save?: GomokuSaveView;
+}
+
 export interface AdminLlmConfigView {
   enabled: boolean;
   endpoint: string;
   model: string;
+  storyModel: string;
+  judgeModel: string;
   timeoutMs: number;
   hasApiKey: boolean;
   ready: boolean;
@@ -564,6 +740,71 @@ export interface ChatMessageView {
   createdAt: string;
 }
 
+export type TurtleSoupAnswerView = "yes" | "no" | "irrelevant" | "partial";
+
+export interface TurtleSoupKeyPointView {
+  id: string;
+  found: boolean;
+  text?: string;
+  foundByPlayerId?: string;
+}
+
+export type TurtleSoupLogEntryView =
+  | {
+      id: string;
+      kind: "question";
+      actorPlayerId: string;
+      content: string;
+      answer: TurtleSoupAnswerView;
+      note?: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "guess";
+      actorPlayerId: string;
+      content: string;
+      matchedKeyPointIds: string[];
+      wrong: boolean;
+      comment: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "hint";
+      actorPlayerId: string;
+      content: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "system";
+      content: string;
+      createdAt: string;
+    };
+
+export interface TurtleSoupView {
+  puzzleId: string;
+  title: string;
+  surface: string;
+  source: "model" | "local";
+  judgeSource: "model" | "local";
+  status: "playing" | "solved";
+  questionCount: number;
+  hintsUsed: number;
+  maxHints: number;
+  keyPoints: TurtleSoupKeyPointView[];
+  log: TurtleSoupLogEntryView[];
+  solvedByPlayerId?: string;
+  answer?: string;
+}
+
+export interface TurtleSoupSelfView {
+  canAsk: boolean;
+  canGuess: boolean;
+  canRequestHint: boolean;
+}
+
 export type PokerStreetView = "PREFLOP" | "FLOP" | "TURN" | "RIVER" | "SHOWDOWN";
 export type PokerPlayerStatusView =
   | "ACTIVE"
@@ -678,6 +919,7 @@ export interface RoomView {
     clocktowerReview?: ClocktowerReviewView;
     pokerConfig?: PokerRoomConfig;
     pokerTable?: PokerTableView;
+    turtleSoup?: TurtleSoupView;
     players: PublicPlayerView[];
   };
   self: {
@@ -686,6 +928,7 @@ export interface RoomView {
     privateGame?: ClocktowerPrivateView;
     dayActions?: DayActionPermissions;
     poker?: PokerSelfView;
+    turtleSoup?: TurtleSoupSelfView;
   };
   chatMessages: ChatMessageView[];
 }
@@ -726,6 +969,16 @@ export interface ClientToServerEvents {
   "poker:pause-blinds": (callback: (ack: SocketAck) => void) => void;
   "poker:resume-blinds": (callback: (ack: SocketAck) => void) => void;
   "poker:rematch": (callback: (ack: SocketAck) => void) => void;
+  "turtle-soup:ask": (
+    question: string,
+    callback: (ack: SocketAck) => void
+  ) => void;
+  "turtle-soup:guess": (
+    guess: string,
+    callback: (ack: SocketAck) => void
+  ) => void;
+  "turtle-soup:hint": (callback: (ack: SocketAck) => void) => void;
+  "turtle-soup:rematch": (callback: (ack: SocketAck) => void) => void;
   "chat:send": (
     message: { recipientPlayerId?: string; content: string },
     callback: (ack: SocketAck) => void

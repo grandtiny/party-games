@@ -55,7 +55,7 @@ describe("admin settings", () => {
     });
     expect(configResponse.statusCode).toBe(200);
     expect(configResponse.json()).toMatchObject({
-      databaseSchemaVersion: 4,
+      databaseSchemaVersion: 5,
       llm: { enabled: false, hasApiKey: false, ready: false, source: "none" }
     });
 
@@ -122,6 +122,8 @@ describe("admin settings", () => {
       enabled: true,
       endpoint,
       model: "test-model",
+      storyModel: "story-model",
+      judgeModel: "judge-model",
       apiKey: "test-key",
       timeoutMs: 3000
     };
@@ -157,14 +159,52 @@ describe("admin settings", () => {
       source: "model"
     });
   });
+
+  it("reads platform-level model configuration from environment variables", async () => {
+    const { app } = await createTestApp({
+      PARTY_GAMES_LLM_ENABLED: "true",
+      PARTY_GAMES_LLM_ENDPOINT: "https://example.com/v1",
+      PARTY_GAMES_LLM_API_KEY: "environment-key",
+      PARTY_GAMES_LLM_MODEL: "default-model",
+      PARTY_GAMES_LLM_STORY_MODEL: "story-model",
+      PARTY_GAMES_LLM_JUDGE_MODEL: "judge-model"
+    });
+    const setup = await app.inject({
+      method: "POST",
+      url: "/api/admin/setup",
+      payload: { password: "admin-password" }
+    });
+    const cookie = sessionCookie(setup.headers["set-cookie"]);
+
+    const configResponse = await app.inject({
+      method: "GET",
+      url: "/api/admin/config",
+      headers: { cookie }
+    });
+
+    expect(configResponse.statusCode).toBe(200);
+    expect(configResponse.json()).toMatchObject({
+      llm: {
+        enabled: true,
+        endpoint: "https://example.com/v1",
+        model: "default-model",
+        storyModel: "story-model",
+        judgeModel: "judge-model",
+        hasApiKey: true,
+        ready: true,
+        source: "environment"
+      }
+    });
+    expect(configResponse.body).not.toContain("environment-key");
+  });
 });
 
-async function createTestApp() {
+async function createTestApp(environment: NodeJS.ProcessEnv = {}) {
   const directory = mkdtempSync(join(tmpdir(), "party-games-admin-test-"));
   const context = await createApp({
     databasePath: join(directory, "test.sqlite"),
     logger: false,
-    environment: {}
+    environment
   });
   cleanupTasks.push(async () => {
     await context.app.close();

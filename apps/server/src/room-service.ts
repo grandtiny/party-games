@@ -44,7 +44,9 @@ export class RoomService {
     input: CreateRoomRequest,
     accountUser?: AccountUserView
   ): Promise<RoomSessionResponse> {
-    if (!this.games.has(input.gameType)) throw new Error("德州扑克模块尚未开放");
+    if (!this.games.has(input.gameType)) {
+      throw new Error(input.gameType === "poker" ? "德州扑克模块尚未开放" : "游戏模块尚未开放");
+    }
 
     const roomCode = this.#createRoomCode();
     const playerId = randomUUID();
@@ -58,6 +60,13 @@ export class RoomService {
         : input.gameType === "poker"
           ? input.poker
           : undefined;
+    const turtleSoupConfig =
+      input.gameType === "turtle-soup"
+        ? {
+            difficulty: input.turtleSoup?.difficulty ?? "normal",
+            tags: input.turtleSoup?.tags ?? []
+          }
+        : undefined;
     const state: InternalRoomState = {
       schemaVersion: ROOM_STATE_SCHEMA_VERSION,
       id: randomUUID(),
@@ -84,7 +93,8 @@ export class RoomService {
           isBot: true
         }))
       ],
-      ...(pokerConfig ? { poker: { config: pokerConfig } } : {})
+      ...(pokerConfig ? { poker: { config: pokerConfig } } : {}),
+      ...(turtleSoupConfig ? { turtleSoupConfig } : {})
     };
     this.#gameModule(state).validate(state);
 
@@ -238,7 +248,9 @@ export class RoomService {
     await this.#mutate(roomCode, playerId, "PLAYER_READY_SET", { ready }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能修改准备状态");
       const player = state.players.find((candidate) => candidate.id === playerId);
-      if (ready && player?.seat === null) throw new Error("请先选择座位");
+      if (ready && requiresSeats(state.gameType) && player?.seat === null) {
+        throw new Error("请先选择座位");
+      }
       return {
         players: state.players.map((player) =>
           player.id === playerId ? { ...player, ready } : player
@@ -250,6 +262,7 @@ export class RoomService {
   async setSeat(roomCode: string, playerId: string, seat: number | null): Promise<void> {
     await this.#mutate(roomCode, playerId, "PLAYER_SEAT_SET", { seat }, (state) => {
       if (state.phase !== "lobby") throw new Error("游戏开始后不能调整座位");
+      if (!requiresSeats(state.gameType)) throw new Error("当前游戏不需要座位");
       if (
         seat !== null &&
         (!Number.isInteger(seat) || seat < 1 || seat > state.players.length)
@@ -275,7 +288,7 @@ export class RoomService {
       const state = this.#requireRoom(roomCode);
       if (state.ownerPlayerId !== playerId) throw new Error("只有房主可以开始游戏");
       if (state.phase !== "lobby") throw new Error("游戏已经开始");
-      if (state.players.some((player) => player.seat === null)) {
+      if (requiresSeats(state.gameType) && state.players.some((player) => player.seat === null)) {
         throw new Error("仍有玩家未入座");
       }
       if (state.players.some((player) => !player.ready)) {
@@ -283,7 +296,7 @@ export class RoomService {
       }
 
       const seed = randomBytes(32).toString("hex");
-      const update = this.#gameModule(state).create(state, { seed, now: Date.now() });
+      const update = await this.#gameModule(state).create(state, { seed, now: Date.now() });
       const nextState = this.#nextState(state, update.changes);
 
       this.repository.commit(state.version, nextState, {
@@ -493,6 +506,54 @@ export class RoomService {
     );
   }
 
+  async askTurtleSoup(
+    roomCode: string,
+    playerId: string,
+    question: string
+  ): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_QUESTION_ASKED",
+      "turtle-soup:ask",
+      { question }
+    );
+  }
+
+  async guessTurtleSoup(
+    roomCode: string,
+    playerId: string,
+    guess: string
+  ): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_GUESS_SUBMITTED",
+      "turtle-soup:guess",
+      { guess }
+    );
+  }
+
+  async requestTurtleSoupHint(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_HINT_REQUESTED",
+      "turtle-soup:hint",
+      {}
+    );
+  }
+
+  async rematchTurtleSoup(roomCode: string, playerId: string): Promise<void> {
+    await this.#handleGameCommand(
+      roomCode,
+      playerId,
+      "TURTLE_SOUP_REMATCHED",
+      "turtle-soup:rematch",
+      {}
+    );
+  }
+
   sendChat(
     roomCode: string,
     playerId: string,
@@ -554,7 +615,7 @@ export class RoomService {
     for (const roomCode of roomCodes) {
       await this.#withLock(roomCode, async () => {
         const state = this.#requireRoom(roomCode);
-        const update = this.#gameModule(state).tick(state, { now });
+        const update = await this.#gameModule(state).tick(state, { now });
         if (!update) return;
         if (!update.event) throw new Error("游戏计时更新缺少事件");
         const nextState = this.#nextState(state, update.changes);
@@ -620,7 +681,7 @@ export class RoomService {
       if (!state.players.some((player) => player.id === playerId)) {
         throw new Error("玩家不在房间中");
       }
-      const update = this.#gameModule(state).handle(
+      const update = await this.#gameModule(state).handle(
         state,
         { type: commandType, actorPlayerId: playerId, payload },
         { now: Date.now(), seed: randomBytes(32).toString("hex"), voteIntervalMs: 2500 }
@@ -670,4 +731,8 @@ export class RoomService {
       if (this.#locks.get(roomCode) === tail) this.#locks.delete(roomCode);
     }
   }
+}
+
+function requiresSeats(gameType: InternalRoomState["gameType"]): boolean {
+  return gameType !== "turtle-soup";
 }

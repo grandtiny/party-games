@@ -1,7 +1,9 @@
 import {
   ArrowRight,
   Bomb,
+  CircleDot,
   Clock3,
+  FlaskConical,
   Grid3X3,
   Settings as SettingsIcon,
   Spade
@@ -22,7 +24,12 @@ export function HomePage() {
       .catch(() => setPokerEnabled(false));
   }, []);
 
-  const activePath = active?.gameType === "poker" ? "poker" : "clocktower";
+  const activePath =
+    active?.gameType === "poker"
+      ? "poker"
+      : active?.gameType === "turtle-soup"
+        ? "turtle-soup"
+        : "clocktower";
   return (
     <AppShell
       actions={
@@ -82,11 +89,27 @@ export function HomePage() {
           </span>
           <ArrowRight size={20} />
         </Link>
+        <Link className="game-card game-card--turtle-soup" to="/turtle-soup">
+          <FlaskConical size={34} strokeWidth={1.8} />
+          <span>
+            <strong>海龟汤</strong>
+            <small>多人提问 · 提示词测试</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
         <Link className="game-card game-card--sudoku" to="/sudoku">
           <Grid3X3 size={34} strokeWidth={1.8} />
           <span>
             <strong>数独</strong>
             <small>四档难度 · 候选笔记</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
+        <Link className="game-card game-card--gomoku" to="/gomoku">
+          <CircleDot size={34} strokeWidth={1.8} />
+          <span>
+            <strong>五子棋</strong>
+            <small>禁手规则 · 单人 AI</small>
           </span>
           <ArrowRight size={20} />
         </Link>
