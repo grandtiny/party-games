@@ -7,9 +7,13 @@
 要求：Node.js 24+、pnpm 10+。
 
 ```powershell
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
 ```
+
+首次克隆，以及拉取后 `package.json` 或 `pnpm-lock.yaml` 有变化时，都需要重新执行
+`pnpm install --frozen-lockfile`。否则工作区子包的依赖链接不会生成，编辑器会把缺失模块
+继续放大成大量 TypeScript 类型错误。
 
 浏览器打开 `http://localhost:5173`。开发服务器会把 API 和 Socket.IO 请求代理到 `http://localhost:3000`。
 
@@ -31,14 +35,14 @@ docker compose up --build
 浏览器打开 `http://localhost:18081`。SQLite 数据保存在 Docker 命名卷 `party-games-data`。
 本地 Compose 默认通过 `mirror.gcr.io` 拉取官方 Node 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
 
-德州扑克当前通过功能开关开放：
+德州扑克默认启用。如需临时关闭入口：
 
 ```powershell
-$env:POKER_ENABLED = "true"
+$env:POKER_ENABLED = "false"
 docker compose up -d --build
 ```
 
-未设置时首页保持德扑入口关闭，血染钟楼行为不变。
+直接运行和 Docker Compose 的默认行为一致；只有显式设置为 `false` 时才关闭。
 
 首页右上角提供系统设置入口。首次访问时创建至少 8 位的管理员密码，之后可以在设置页配置 OpenAI 兼容接口、测试连接和修改管理员密码。管理员密码使用加盐哈希保存，模型 API Key 只在服务端持久化且不会通过读取接口返回明文。
 

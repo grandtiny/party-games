@@ -45,7 +45,9 @@ export async function createApp(options: AppOptions) {
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
-  const games = createGameRegistry({ pokerEnabled: enabledFlag(environment.POKER_ENABLED) });
+  const games = createGameRegistry({
+    pokerEnabled: enabledFlag(environment.POKER_ENABLED, true)
+  });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
   const adminService = new AdminService(repository, environment);
@@ -709,8 +711,9 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "未知错误";
 }
 
-function enabledFlag(value: string | undefined): boolean {
-  return value === "1" || value?.toLowerCase() === "true" || value?.toLowerCase() === "yes";
+function enabledFlag(value: string | undefined, defaultValue = false): boolean {
+  if (value === undefined || value.trim() === "") return defaultValue;
+  return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";
