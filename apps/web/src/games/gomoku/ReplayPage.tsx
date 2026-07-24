@@ -1,3 +1,4 @@
+import "./theme.css";
 import { rewindGomokuGame, type GomokuGameState } from "@party-games/gomoku";
 import type { GomokuMatchDetailView } from "@party-games/shared";
 import {

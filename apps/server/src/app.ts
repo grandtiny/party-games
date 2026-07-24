@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
-import Fastify from "fastify";
+import Fastify, { type FastifyReply } from "fastify";
 import {
   AccountBootstrapRequestSchema,
   AccountInviteCreateRequestSchema,
@@ -46,6 +47,11 @@ export interface AppOptions {
 
 export async function createApp(options: AppOptions) {
   const app = Fastify({ logger: options.logger ?? true });
+  await app.register(fastifyCompress, {
+    global: true,
+    threshold: 1024,
+    customTypes: /^(application\/javascript|application\/wasm|application\/json|text\/css|text\/html)/u
+  });
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
@@ -753,12 +759,20 @@ export async function createApp(options: AppOptions) {
 
   const webDistPath = options.webDistPath ? resolve(options.webDistPath) : undefined;
   if (webDistPath && existsSync(webDistPath)) {
-    await app.register(fastifyStatic, { root: webDistPath });
+    await app.register(fastifyStatic, {
+      root: webDistPath,
+      immutable: true,
+      maxAge: "1y"
+    });
+    const sendIndex = (_request: unknown, reply: FastifyReply) =>
+      reply.sendFile("index.html", { immutable: false, maxAge: 0 });
+    app.get("/", sendIndex);
+    app.get("/index.html", sendIndex);
     app.setNotFoundHandler((request, reply) => {
       if (request.url.startsWith("/api/")) {
         return reply.code(404).send({ error: "Not found" });
       }
-      return reply.sendFile("index.html");
+      return reply.sendFile("index.html", { immutable: false, maxAge: 0 });
     });
   }
 

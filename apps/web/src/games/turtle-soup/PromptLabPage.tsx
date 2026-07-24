@@ -1,3 +1,4 @@
+import "./theme.css";
 import { FlaskConical, Play, RefreshCw, Save, Search } from "lucide-react";
 import { TURTLE_SOUP_PROMPT_VERSION } from "@party-games/shared";
 import { useMemo, useState, type FormEvent } from "react";

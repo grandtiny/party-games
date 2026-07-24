@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/compress": "^9.1.0",
     "@fastify/static": "^8.2.0",
     "@party-games/clocktower": "workspace:*",
     "@party-games/game-core": "workspace:*",
