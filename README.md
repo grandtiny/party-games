@@ -33,7 +33,7 @@ docker compose up --build
 ```
 
 浏览器打开 `http://localhost:18081`。SQLite 数据保存在 Docker 命名卷 `party-games-data`。
-本地 Compose 默认通过 `mirror.gcr.io` 拉取官方 Node 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
+Compose 默认拉取官方 `node:24-bookworm-slim` 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
 
 德州扑克默认启用。如需临时关闭入口：
 
