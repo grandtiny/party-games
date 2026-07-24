@@ -3,6 +3,11 @@ import { ClocktowerEntryPage, ClocktowerRoomPage } from "./games/clocktower";
 import { MinesweeperPage } from "./games/minesweeper";
 import { PokerEntryPage, PokerRoomPage } from "./games/poker";
 import { SudokuPage } from "./games/sudoku";
+import {
+  TurtleSoupEntryPage,
+  TurtleSoupPromptLabPage,
+  TurtleSoupRoomPage
+} from "./games/turtle-soup";
 import { AccountPage } from "./platform/AccountPage";
 import { AccountProvider } from "./platform/AccountContext";
 import { HomePage } from "./platform/HomePage";
@@ -12,6 +17,7 @@ import "./games/puzzles.css";
 import "./games/minesweeper/theme.css";
 import "./games/poker/theme.css";
 import "./games/sudoku/theme.css";
+import "./games/turtle-soup/theme.css";
 
 export default function App() {
   return (
@@ -23,6 +29,9 @@ export default function App() {
         <Route path="/clocktower/room/:roomCode" element={<ClocktowerRoomPage />} />
         <Route path="/poker" element={<PokerEntryPage />} />
         <Route path="/poker/room/:roomCode" element={<PokerRoomPage />} />
+        <Route path="/turtle-soup" element={<TurtleSoupEntryPage />} />
+        <Route path="/turtle-soup/room/:roomCode" element={<TurtleSoupRoomPage />} />
+        <Route path="/turtle-soup/lab" element={<TurtleSoupPromptLabPage />} />
         <Route path="/minesweeper" element={<MinesweeperPage />} />
         <Route path="/sudoku" element={<SudokuPage />} />
         <Route path="/settings" element={<SettingsPage />} />

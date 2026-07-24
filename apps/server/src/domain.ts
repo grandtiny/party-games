@@ -1,5 +1,10 @@
 import type { PokerTableState } from "@party-games/poker";
-import type { GameType, PokerRoomConfig, RoomPhase } from "@party-games/shared";
+import type {
+  GameType,
+  PokerRoomConfig,
+  RoomPhase,
+  TurtleSoupAnswerView
+} from "@party-games/shared";
 import type {
   DayPublicEvent,
   FirstNightState,
@@ -43,7 +48,52 @@ export interface InternalRoomState {
     table?: PokerTableState;
     blindTimer?: PokerBlindTimerState;
   } | undefined;
+  turtleSoup?: TurtleSoupState | undefined;
 }
+
+export interface TurtleSoupState {
+  puzzleId: string;
+  status: "playing" | "solved";
+  foundKeyPoints: Record<string, { playerId: string; foundAt: string }>;
+  log: TurtleSoupLogEntry[];
+  hintsUsed: number;
+  solvedByPlayerId?: string;
+  solvedAt?: string;
+}
+
+export type TurtleSoupLogEntry =
+  | {
+      id: string;
+      kind: "question";
+      actorPlayerId: string;
+      content: string;
+      answer: TurtleSoupAnswerView;
+      note?: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "guess";
+      actorPlayerId: string;
+      content: string;
+      matchedKeyPointIds: string[];
+      wrong: boolean;
+      comment: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "hint";
+      actorPlayerId: string;
+      content: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      kind: "system";
+      content: string;
+      createdAt: string;
+    };
 
 export interface PokerBlindTimerState {
   status: "running" | "paused" | "pending" | "finished";
@@ -86,7 +136,11 @@ export interface RoomEvent {
     | "POKER_BLINDS_PAUSED"
     | "POKER_BLINDS_RESUMED"
     | "POKER_BLIND_LEVEL_DUE"
-    | "POKER_REMATCHED";
+    | "POKER_REMATCHED"
+    | "TURTLE_SOUP_QUESTION_ASKED"
+    | "TURTLE_SOUP_GUESS_SUBMITTED"
+    | "TURTLE_SOUP_HINT_REQUESTED"
+    | "TURTLE_SOUP_REMATCHED";
   actorPlayerId: string;
   payload: Record<string, unknown>;
 }
@@ -130,6 +184,17 @@ export function migrateInternalRoomState(value: unknown): InternalRoomState {
                 ? { aiDifficulty: state.poker.config.aiDifficulty ?? "normal" }
                 : {})
             }
+          }
+        }
+      : {}),
+    ...(state.turtleSoup
+      ? {
+          turtleSoup: {
+            ...state.turtleSoup,
+            status: state.turtleSoup.status ?? "playing",
+            foundKeyPoints: state.turtleSoup.foundKeyPoints ?? {},
+            log: state.turtleSoup.log ?? [],
+            hintsUsed: state.turtleSoup.hintsUsed ?? 0
           }
         }
       : {})

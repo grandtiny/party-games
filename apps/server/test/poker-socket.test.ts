@@ -30,7 +30,9 @@ describe("poker socket boundary", () => {
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
     const platformResponse = await context.app.inject({ method: "GET", url: "/api/platform" });
-    expect(platformResponse.json()).toEqual({ enabledGames: ["clocktower", "poker"] });
+    expect(platformResponse.json()).toEqual({
+      enabledGames: ["clocktower", "turtle-soup", "poker"]
+    });
 
     const owner = await context.roomService.createRoom({
       gameType: "poker",

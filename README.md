@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、扫雷和数独入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，以及无需服务端状态的单机扫雷和数独。
+私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷和数独入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及无需服务端状态的单机扫雷和数独。
 
 ## 本地开发
 
@@ -74,6 +74,8 @@ pnpm verify:poker-tournament-local
 
 `verify:poker-tournament-local` 创建两人自动盲注淘汰赛，验证房主暂停/恢复、计时状态投影、拒绝手动跳级，以及截止时间前不会提前提升盲注。
 
+海龟汤第一版使用内置题库和确定性裁定，不依赖大模型也能开局。`/turtle-soup/lab` 是协作提示词测试页，会直接显示可编辑汤面、汤底和要点，并保留原版浏览器侧 Base URL、API Key、故事模型、裁判模型配置；该测试线只用于调提示词，正式多人房间不会把汤底或 Key 广播给玩家。
+
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。
 
 当前实现边界见 [docs/mvp-scope.md](docs/mvp-scope.md)。
@@ -89,6 +91,7 @@ apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
 apps/web/src/games/clocktower/   血染钟楼页面、组件和主题作用域
 apps/web/src/games/poker/        德扑建房、圆桌大厅、多人牌桌和单人 AI 对局
+apps/web/src/games/turtle-soup/  海龟汤入口、多人房间和提示词测试页
 apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
 apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
 ```

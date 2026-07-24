@@ -610,6 +610,46 @@ export async function createApp(options: AppOptions) {
       }
     });
 
+    socket.on("turtle-soup:ask", async (question, callback) => {
+      try {
+        await roomService.askTurtleSoup(roomCode, playerId, question);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:guess", async (guess, callback) => {
+      try {
+        await roomService.guessTurtleSoup(roomCode, playerId, guess);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:hint", async (callback) => {
+      try {
+        await roomService.requestTurtleSoupHint(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
+    socket.on("turtle-soup:rematch", async (callback) => {
+      try {
+        await roomService.rematchTurtleSoup(roomCode, playerId);
+        callback({ ok: true });
+        await broadcastRoom(roomCode);
+      } catch (error) {
+        callback({ ok: false, error: messageOf(error) });
+      }
+    });
+
     socket.on("chat:send", async (message, callback) => {
       try {
         roomService.sendChat(roomCode, playerId, message);
