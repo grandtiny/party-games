@@ -9,7 +9,14 @@ interface AppShellProps {
   backTo?: string;
   actions?: ReactNode;
   hideAccountAction?: boolean;
-  scope?: "platform" | "clocktower" | "poker" | "minesweeper" | "sudoku" | "turtle-soup";
+  scope?:
+    | "platform"
+    | "clocktower"
+    | "poker"
+    | "minesweeper"
+    | "sudoku"
+    | "turtle-soup"
+    | "gomoku";
 }
 
 export function AppShell({

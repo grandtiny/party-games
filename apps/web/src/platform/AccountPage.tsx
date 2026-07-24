@@ -2,6 +2,8 @@ import type {
   AccountInviteView,
   AccountOverviewResponse,
   AccountStatusResponse,
+  GomokuMatchView,
+  GomokuOverviewResponse,
   PuzzleGame
 } from "@party-games/shared";
 import {
@@ -20,12 +22,14 @@ import {
   X
 } from "lucide-react";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import {
   bootstrapAccount,
   changeAccountPassword,
   createAccountInvite,
   getAccountInvites,
   getAccountOverview,
+  getGomokuOverview,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -297,6 +301,7 @@ function AccountWorkspace({
   const user = status.user;
   const [tab, setTab] = useState<AccountTab>("records");
   const [overview, setOverview] = useState<AccountOverviewResponse>();
+  const [gomokuOverview, setGomokuOverview] = useState<GomokuOverviewResponse>();
   const [invites, setInvites] = useState<AccountInviteView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -305,11 +310,13 @@ function AccountWorkspace({
     setLoading(true);
     setError(undefined);
     try {
-      const [nextOverview, nextInvites] = await Promise.all([
+      const [nextOverview, nextGomokuOverview, nextInvites] = await Promise.all([
         getAccountOverview(),
+        getGomokuOverview(),
         user?.role === "owner" ? getAccountInvites() : Promise.resolve([])
       ]);
       setOverview(nextOverview);
+      setGomokuOverview(nextGomokuOverview);
       setInvites(nextInvites);
     } catch (cause) {
       setError(messageOf(cause));
@@ -360,7 +367,9 @@ function AccountWorkspace({
 
       {loading ? <div className="notice">正在读取记录…</div> : null}
       {error ? <div className="notice notice--error">{error}</div> : null}
-      {!loading && overview && tab === "records" ? <RecordsView overview={overview} /> : null}
+      {!loading && overview && gomokuOverview && tab === "records" ? (
+        <RecordsView overview={overview} gomokuOverview={gomokuOverview} />
+      ) : null}
       {!loading && overview && tab === "rankings" ? (
         <RankingsView overview={overview} />
       ) : null}
@@ -377,7 +386,13 @@ function AccountWorkspace({
   );
 }
 
-function RecordsView({ overview }: { overview: AccountOverviewResponse }) {
+function RecordsView({
+  overview,
+  gomokuOverview
+}: {
+  overview: AccountOverviewResponse;
+  gomokuOverview: GomokuOverviewResponse;
+}) {
   return (
     <div className="account-panel-stack">
       <section className="account-summary" aria-label="对局统计">
@@ -431,7 +446,59 @@ function RecordsView({ overview }: { overview: AccountOverviewResponse }) {
           <p className="account-empty">暂无对局记录</p>
         )}
       </section>
+
+      <GomokuRecords overview={gomokuOverview} />
     </div>
+  );
+}
+
+function GomokuRecords({ overview }: { overview: GomokuOverviewResponse }) {
+  const puzzleCount = overview.progress.filter((item) => item.contentType === "puzzle").length;
+  const lessonCount = overview.progress.filter((item) => item.contentType === "lesson").length;
+  return (
+    <section className="account-section account-gomoku-records">
+      <div className="account-section__heading">
+        <History size={21} />
+        <h2>五子棋</h2>
+      </div>
+      <div className="account-summary account-summary--gomoku" aria-label="五子棋统计">
+        <AccountMetric label="人机对局" value={overview.stats.total} />
+        <AccountMetric label="胜局" value={overview.stats.wins} />
+        <AccountMetric label="残局" value={puzzleCount} />
+        <AccountMetric label="练习" value={lessonCount} />
+      </div>
+      {overview.stats.byDifficulty.length > 0 ? (
+        <div className="account-gomoku-difficulties">
+          {overview.stats.byDifficulty.map((item) => (
+            <span key={item.difficulty}>
+              <strong>{gomokuDifficultyLabel(item.difficulty)}</strong>
+              {item.wins} 胜 / {item.losses} 负 / {item.draws} 和
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className="account-section__subheading">最近棋局</div>
+      {overview.recentMatches.length > 0 ? (
+        <div className="account-result-list">
+          {overview.recentMatches.map((match) => (
+            <Link className="account-result-row account-result-link" to={`/gomoku/replay/${match.id}`} key={match.id}>
+              <span>
+                <strong>{gomokuMatchLabel(match)}</strong>
+                <small>
+                  {match.mode === "ai" ? gomokuDifficultyLabel(match.aiDifficulty ?? "normal") : "同屏双人"}
+                  {match.assisted ? " · 有辅助" : ""} · {formatDate(match.createdAt)}
+                </small>
+              </span>
+              <span className={match.outcome === "win" ? "is-win" : match.outcome === "loss" ? "is-loss" : ""}>
+                {match.moveCount} 手
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="account-empty">暂无五子棋记录</p>
+      )}
+    </section>
   );
 }
 
@@ -763,6 +830,18 @@ function difficultyLabel(game: PuzzleGame, difficulty: string): string {
       ? { beginner: "初级", intermediate: "中级", expert: "高级" }
       : { easy: "简单", medium: "普通", hard: "困难", expert: "专家" };
   return labels[difficulty] ?? difficulty;
+}
+
+function gomokuDifficultyLabel(difficulty: "easy" | "normal" | "hard"): string {
+  return difficulty === "easy" ? "入门" : difficulty === "hard" ? "困难" : "普通";
+}
+
+function gomokuMatchLabel(match: GomokuMatchView): string {
+  if (match.outcome === "local") {
+    return `${match.winner === "black" ? "黑方" : match.winner === "white" ? "白方" : "双方"}${match.winner === "draw" ? "和棋" : "获胜"}`;
+  }
+  if (match.outcome === "draw") return "与 AI 战平";
+  return match.outcome === "win" ? "战胜 AI" : "负于 AI";
 }
 
 function formatTime(seconds: number): string {

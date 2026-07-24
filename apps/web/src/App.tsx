@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ClocktowerEntryPage, ClocktowerRoomPage } from "./games/clocktower";
+import { GomokuPage, GomokuReplayPage } from "./games/gomoku";
 import { MinesweeperPage } from "./games/minesweeper";
 import { PokerEntryPage, PokerRoomPage } from "./games/poker";
 import { SudokuPage } from "./games/sudoku";
@@ -13,6 +14,7 @@ import { AccountProvider } from "./platform/AccountContext";
 import { HomePage } from "./platform/HomePage";
 import { SettingsPage } from "./platform/SettingsPage";
 import "./games/clocktower/theme.css";
+import "./games/gomoku/theme.css";
 import "./games/puzzles.css";
 import "./games/minesweeper/theme.css";
 import "./games/poker/theme.css";
@@ -34,6 +36,10 @@ export default function App() {
         <Route path="/turtle-soup/lab" element={<TurtleSoupPromptLabPage />} />
         <Route path="/minesweeper" element={<MinesweeperPage />} />
         <Route path="/sudoku" element={<SudokuPage />} />
+        <Route path="/gomoku" element={<GomokuPage tab="play" />} />
+        <Route path="/gomoku/puzzles" element={<GomokuPage tab="puzzles" />} />
+        <Route path="/gomoku/learn" element={<GomokuPage tab="learn" />} />
+        <Route path="/gomoku/replay/:matchId" element={<GomokuReplayPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
