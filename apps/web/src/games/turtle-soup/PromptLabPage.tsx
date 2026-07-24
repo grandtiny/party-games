@@ -70,7 +70,7 @@ export function TurtleSoupPromptLabPage() {
     setResult("");
     try {
       const model = mode === "story" ? config.storyModel : config.fastModel || config.storyModel;
-      const output = await runBrowserCompletion(config, model, activePrompt, mode === "story");
+      const output = await runBrowserCompletion(config, model, activePrompt, mode);
       setResult(output);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "测试失败");
@@ -115,7 +115,7 @@ export function TurtleSoupPromptLabPage() {
             </div>
           </div>
           <div className="turtle-lab-provider-note">
-            平台级大模型链路预留给正式环境；当前页面保留原版 Base URL / API Key / 双模型配置，Key 仅保存在本浏览器。
+            正式多人房间使用服务端平台级大模型；当前页面保留原版 Base URL / API Key / 双模型配置，Key 仅保存在本浏览器。
           </div>
           <div className="settings-form settings-form--wide">
             <label>
@@ -274,23 +274,32 @@ function promptForMode(
     tags: string;
   }
 ): string {
+  const keyPointTable = JSON.stringify(keyPointRows(input.keyPoints), null, 2);
   if (mode === "ask") {
     return `你是海龟汤裁判。只能根据汤底回答玩家提问，不能剧透。\n\n汤面：${input.surface}\n\n汤底：${input.answer}\n\n玩家提问：${input.question}\n\n只返回 JSON：{"res":"是|不是|无关|是也不是","reason":"不剧透的简短依据"}`;
   }
   if (mode === "guess") {
-    return `你是海龟汤裁判。根据汤底和真相要点评估玩家推理。\n\n汤面：${input.surface}\n\n汤底：${input.answer}\n\n真相要点：\n${input.keyPoints}\n\n玩家推理：${input.guess}\n\n返回 JSON：{"matched_segments":[],"wrong_segments":[],"achieved_points":[],"comment":""}`;
+    return `你是海龟汤裁判。根据汤底和真相要点评估玩家推理。\n\n汤面：${input.surface}\n\n汤底：${input.answer}\n\n真相要点表：\n${keyPointTable}\n\n玩家推理：${input.guess}\n\n返回 JSON：{"matched_segments":[],"wrong_segments":[],"achieved_point_ids":[],"achieved_points":[],"comment":""}`;
   }
   if (mode === "hint") {
-    return `你是海龟汤引导者。根据汤面、汤底和真相要点，给一句不剧透的反问式提示。\n\n汤面：${input.surface}\n\n汤底：${input.answer}\n\n真相要点：\n${input.keyPoints}\n\n只输出提示正文，30 字以内。`;
+    return `你是海龟汤引导者。根据汤面、汤底和真相要点，给一句不剧透的反问式提示。\n\n汤面：${input.surface}\n\n汤底：${input.answer}\n\n真相要点表：\n${keyPointTable}\n\n只输出提示正文，30 字以内。`;
   }
-  return `你是一位侧向思维谜题作者。根据标签创作一题逻辑自洽的海龟汤。\n\n标签：${input.tags}\n\n要求：汤面简洁，以“为什么？”或“发生了什么？”结尾；汤底完整解释反常点；真相要点可验证。\n\n严格返回 JSON：{"title":"","surface":"","answer":"","key_points":[]}`;
+  return `你是一位侧向思维谜题作者。根据标签创作一题逻辑自洽的海龟汤。\n\n标签：${input.tags}\n\n要求：汤面简洁，以“为什么？”或“发生了什么？”结尾；汤底完整解释反常点；真相要点可验证；提示渐进且不直接剧透。\n\n严格返回 JSON：{"title":"","surface":"","answer":"","key_points":[],"hints":[]}`;
+}
+
+function keyPointRows(value: string): Array<{ id: string; text: string }> {
+  return value
+    .split(/\r?\n/u)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text, index) => ({ id: `kp-${index + 1}`, text }));
 }
 
 async function runBrowserCompletion(
   config: LabConfig,
   model: string,
   prompt: string,
-  thinking: boolean
+  mode: LabMode
 ): Promise<string> {
   if (!config.base.trim() || !config.key.trim() || !model.trim()) {
     throw new Error("请先填写 Base URL、API Key 和模型名称");
@@ -303,9 +312,10 @@ async function runBrowserCompletion(
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      ...(thinking ? { enable_thinking: true } : {})
+      messages: [{ role: mode === "story" ? "user" : "system", content: prompt }],
+      temperature: mode === "story" ? 0.85 : mode === "hint" ? 0.45 : 0.1,
+      ...(mode === "hint" ? {} : { response_format: { type: "json_object" } }),
+      ...(mode === "story" ? { enable_thinking: true } : {})
     })
   });
   if (!response.ok) throw new Error(`模型请求失败 HTTP ${response.status}`);

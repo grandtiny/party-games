@@ -5,7 +5,11 @@ import type {
   TurtleSoupLogEntryView,
   TurtleSoupView
 } from "@party-games/shared";
-import { migrateInternalRoomState, type InternalRoomState } from "../domain.js";
+import {
+  migrateInternalRoomState,
+  type InternalRoomState,
+  type TurtleSoupPuzzleState
+} from "../domain.js";
 import type {
   GameRoomCommand,
   GameRoomCreateContext,
@@ -16,27 +20,13 @@ import type {
   GameRoomUpdate,
   ServerGameModule
 } from "../platform/game-module.js";
+import type {
+  TurtleSoupAiAdapter,
+  TurtleSoupGuessJudgment,
+  TurtleSoupQuestionJudgment
+} from "./turtle-soup-ai.js";
 
-interface TurtleSoupPuzzle {
-  id: string;
-  title: string;
-  surface: string;
-  answer: string;
-  maxHints: number;
-  keyPoints: TurtleSoupKeyPoint[];
-  hints: string[];
-  yesTerms: string[];
-  noTerms: string[];
-  partialTerms: string[];
-}
-
-interface TurtleSoupKeyPoint {
-  id: string;
-  text: string;
-  aliases: string[];
-}
-
-const TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzle[] = [
+const LOCAL_TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzleState[] = [
   {
     id: "umbrella-elevator",
     title: "雨天到家",
@@ -44,6 +34,7 @@ const TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzle[] = [
       "一个人每天坐电梯回家，晴天总要提前几层下电梯再爬楼梯，雨天却能直接坐到家门口。为什么？",
     answer:
       "这个人个子很矮，平时够不到自己家的高楼层按钮，只能按到较低楼层再走楼梯。雨天他带着伞，可以用伞尖按到更高的楼层按钮，所以能直接到家。",
+    source: "local",
     maxHints: 3,
     keyPoints: [
       {
@@ -66,10 +57,7 @@ const TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzle[] = [
       "雨天改变的不是电梯，而是他手里多了东西。",
       "关键不在天气本身，而在他能不能碰到某个位置。",
       "想想电梯按钮和身高之间的关系。"
-    ],
-    yesTerms: ["矮", "按钮", "电梯", "伞", "够不到", "楼层"],
-    noTerms: ["怕黑", "停电", "故障", "司机", "公交", "迷路"],
-    partialTerms: ["雨", "下雨", "天气"]
+    ]
   },
   {
     id: "doorbell-double",
@@ -78,6 +66,7 @@ const TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzle[] = [
       "午夜，一个人听见门铃响。他从猫眼看见门外站着“自己”，几分钟后他报了警。为什么？",
     answer:
       "门外并不是他本人，而是一个拿到他证件和外套的陌生人，试图冒充他骗开门。他从猫眼发现对方的伪装和自己的物品，意识到有人要入室或身份冒用，于是报警。",
+    source: "local",
     maxHints: 3,
     keyPoints: [
       {
@@ -100,10 +89,7 @@ const TURTLE_SOUP_PUZZLES: readonly TurtleSoupPuzzle[] = [
       "猫眼里看到的“自己”不一定是本人。",
       "让他报警的不是长相，而是对方掌握了他的东西。",
       "对方真正想要的是让门从里面打开。"
-    ],
-    yesTerms: ["冒充", "假扮", "证件", "外套", "小偷", "骗子", "开门", "入室"],
-    noTerms: ["鬼", "双胞胎", "梦", "穿越", "监控故障", "镜子"],
-    partialTerms: ["长得像", "自己", "门铃"]
+    ]
   }
 ];
 
@@ -113,17 +99,21 @@ export class TurtleSoupGameModule implements ServerGameModule {
   readonly minPlayers = 1;
   readonly maxPlayers = 15;
 
-  create(state: InternalRoomState, context: GameRoomCreateContext): GameRoomUpdate {
+  constructor(private readonly ai?: TurtleSoupAiAdapter) {}
+
+  async create(state: InternalRoomState, context: GameRoomCreateContext): Promise<GameRoomUpdate> {
     this.#assertTurtleSoupRoom(state);
     if (state.players.length < this.minPlayers || state.players.length > this.maxPlayers) {
       throw new Error(`海龟汤需要 ${this.minPlayers} 到 ${this.maxPlayers} 名玩家`);
     }
-    const puzzle = selectPuzzle(context.seed);
+    const puzzle = await this.#createPuzzle(state, context);
     return {
       changes: {
         phase: "playing",
         turtleSoup: {
           puzzleId: puzzle.id,
+          puzzle,
+          judgeSource: puzzle.source,
           status: "playing",
           foundKeyPoints: {},
           hintsUsed: 0,
@@ -131,21 +121,24 @@ export class TurtleSoupGameModule implements ServerGameModule {
             {
               id: `${state.version + 1}:start`,
               kind: "system",
-              content: "汤面已公开，可以开始提问。",
+              content:
+                puzzle.source === "model"
+                  ? "AI 已生成汤面，可以开始提问。"
+                  : "汤面已公开，当前使用本地降级题。",
               createdAt: new Date(context.now).toISOString()
             }
           ]
         }
       },
-      eventPayload: { puzzleId: puzzle.id, title: puzzle.title }
+      eventPayload: { puzzleId: puzzle.id, title: puzzle.title, source: puzzle.source }
     };
   }
 
-  handle(
+  async handle(
     state: InternalRoomState,
     command: GameRoomCommand,
     context: GameRoomHandleContext
-  ): GameRoomUpdate {
+  ): Promise<GameRoomUpdate> {
     this.#assertTurtleSoupRoom(state);
 
     if (command.type === "turtle-soup:rematch") {
@@ -166,16 +159,17 @@ export class TurtleSoupGameModule implements ServerGameModule {
     const turtleSoup = state.turtleSoup;
     if (!turtleSoup) throw new Error("海龟汤状态不存在");
     if (turtleSoup.status !== "playing") throw new Error("当前汤局已经结束");
-    const puzzle = requirePuzzle(turtleSoup.puzzleId);
+    const puzzle = puzzleFor(turtleSoup);
     const createdAt = new Date(context.now).toISOString();
 
     if (command.type === "turtle-soup:ask") {
       const question = trimPayload(command.payload, "question", 2, 180);
-      const judged = judgeQuestion(puzzle, question);
+      const judged = await this.#judgeQuestion(puzzle, question);
       return {
         changes: {
           turtleSoup: {
             ...turtleSoup,
+            judgeSource: judged.source,
             log: [
               ...turtleSoup.log,
               {
@@ -190,13 +184,13 @@ export class TurtleSoupGameModule implements ServerGameModule {
             ]
           }
         },
-        eventPayload: { answer: judged.answer }
+        eventPayload: { answer: judged.answer, source: judged.source }
       };
     }
 
     if (command.type === "turtle-soup:guess") {
       const guess = trimPayload(command.payload, "guess", 2, 500);
-      const judged = judgeGuess(puzzle, guess);
+      const judged = await this.#judgeGuess(puzzle, guess);
       const foundKeyPoints = { ...turtleSoup.foundKeyPoints };
       for (const keyPointId of judged.matchedKeyPointIds) {
         foundKeyPoints[keyPointId] ??= {
@@ -210,6 +204,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
           phase: solved ? "game-over" : "playing",
           turtleSoup: {
             ...turtleSoup,
+            judgeSource: judged.source,
             status: solved ? "solved" : "playing",
             foundKeyPoints,
             ...(solved
@@ -245,18 +240,20 @@ export class TurtleSoupGameModule implements ServerGameModule {
         },
         eventPayload: {
           matchedKeyPointIds: judged.matchedKeyPointIds,
-          solved
+          solved,
+          source: judged.source
         }
       };
     }
 
     if (command.type === "turtle-soup:hint") {
       if (turtleSoup.hintsUsed >= puzzle.maxHints) throw new Error("提示次数已用完");
-      const hint = nextHint(puzzle, turtleSoup);
+      const hinted = await this.#createHint(puzzle, turtleSoup);
       return {
         changes: {
           turtleSoup: {
             ...turtleSoup,
+            judgeSource: hinted.source,
             hintsUsed: turtleSoup.hintsUsed + 1,
             log: [
               ...turtleSoup.log,
@@ -264,13 +261,13 @@ export class TurtleSoupGameModule implements ServerGameModule {
                 id: `${state.version + 1}:hint`,
                 kind: "hint",
                 actorPlayerId: command.actorPlayerId,
-                content: hint,
+                content: hinted.content,
                 createdAt
               }
             ]
           }
         },
-        eventPayload: { hintsUsed: turtleSoup.hintsUsed + 1 }
+        eventPayload: { hintsUsed: turtleSoup.hintsUsed + 1, source: hinted.source }
       };
     }
 
@@ -284,12 +281,14 @@ export class TurtleSoupGameModule implements ServerGameModule {
     this.#assertTurtleSoupRoom(state);
     const turtleSoup = state.turtleSoup;
     if (!turtleSoup) return { room: {}, self: {}, playerStates: {} };
-    const puzzle = requirePuzzle(turtleSoup.puzzleId);
+    const puzzle = puzzleFor(turtleSoup);
     const solved = turtleSoup.status === "solved";
     const view: TurtleSoupView = {
       puzzleId: puzzle.id,
       title: puzzle.title,
       surface: puzzle.surface,
+      source: puzzle.source,
+      judgeSource: turtleSoup.judgeSource ?? puzzle.source,
       status: turtleSoup.status,
       questionCount: turtleSoup.log.filter((entry) => entry.kind === "question").length,
       hintsUsed: turtleSoup.hintsUsed,
@@ -336,7 +335,7 @@ export class TurtleSoupGameModule implements ServerGameModule {
       if (state.phase !== "lobby") throw new Error("非大厅阶段缺少海龟汤状态");
       return;
     }
-    const puzzle = requirePuzzle(turtleSoup.puzzleId);
+    const puzzle = puzzleFor(turtleSoup);
     const playerIds = new Set(state.players.map((player) => player.id));
     for (const found of Object.values(turtleSoup.foundKeyPoints)) {
       if (!playerIds.has(found.playerId)) throw new Error("海龟汤要点包含未知玩家");
@@ -355,49 +354,121 @@ export class TurtleSoupGameModule implements ServerGameModule {
     if (state.phase !== expectedPhase) throw new Error("海龟汤状态与房间阶段不一致");
   }
 
+  async #createPuzzle(
+    state: InternalRoomState,
+    context: GameRoomCreateContext
+  ): Promise<TurtleSoupPuzzleState> {
+    const config = state.turtleSoupConfig ?? { difficulty: "normal" as const, tags: [] };
+    try {
+      const puzzle = await this.ai?.createPuzzle({
+        difficulty: config.difficulty,
+        tags: config.tags,
+        seed: context.seed
+      });
+      if (puzzle) return puzzle;
+    } catch {
+      // Local fallback keeps dev/test rooms usable when the platform model is unavailable.
+    }
+    return selectLocalPuzzle(context.seed);
+  }
+
+  async #judgeQuestion(
+    puzzle: TurtleSoupPuzzleState,
+    question: string
+  ): Promise<TurtleSoupQuestionJudgment & { source: "model" | "local" }> {
+    try {
+      const judged = await this.ai?.judgeQuestion({ puzzle, question });
+      if (judged) return { ...judged, source: "model" };
+    } catch {
+      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    }
+    return { ...judgeQuestionLocally(puzzle, question), source: "local" };
+  }
+
+  async #judgeGuess(
+    puzzle: TurtleSoupPuzzleState,
+    guess: string
+  ): Promise<TurtleSoupGuessJudgment & { source: "model" | "local" }> {
+    try {
+      const judged = await this.ai?.judgeGuess({ puzzle, guess });
+      if (judged) return { ...judged, source: "model" };
+    } catch {
+      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    }
+    return { ...judgeGuessLocally(puzzle, guess), source: "local" };
+  }
+
+  async #createHint(
+    puzzle: TurtleSoupPuzzleState,
+    turtleSoup: NonNullable<InternalRoomState["turtleSoup"]>
+  ): Promise<{ content: string; source: "model" | "local" }> {
+    try {
+      const hint = await this.ai?.createHint({
+        puzzle,
+        foundKeyPointIds: Object.keys(turtleSoup.foundKeyPoints),
+        log: turtleSoup.log
+      });
+      if (hint) return { content: hint, source: "model" };
+    } catch {
+      // Keep room flow alive; the projection exposes that local fallback handled the action.
+    }
+    return { content: nextLocalHint(puzzle, turtleSoup), source: "local" };
+  }
+
   #assertTurtleSoupRoom(state: Pick<InternalRoomState, "gameType">): void {
     if (state.gameType !== this.id) throw new Error("房间与海龟汤模块不匹配");
   }
 }
 
-function selectPuzzle(seed: string): TurtleSoupPuzzle {
+function selectLocalPuzzle(seed: string): TurtleSoupPuzzleState {
   const digest = createHash("sha256").update(seed).digest();
   const firstByte = digest[0] ?? 0;
-  return TURTLE_SOUP_PUZZLES[firstByte % TURTLE_SOUP_PUZZLES.length] ?? TURTLE_SOUP_PUZZLES[0]!;
+  const puzzle =
+    LOCAL_TURTLE_SOUP_PUZZLES[firstByte % LOCAL_TURTLE_SOUP_PUZZLES.length] ??
+    LOCAL_TURTLE_SOUP_PUZZLES[0]!;
+  return structuredClone(puzzle);
 }
 
-function requirePuzzle(puzzleId: string): TurtleSoupPuzzle {
-  const puzzle = TURTLE_SOUP_PUZZLES.find((candidate) => candidate.id === puzzleId);
-  if (!puzzle) throw new Error(`海龟汤题目不存在: ${puzzleId}`);
-  return puzzle;
+function puzzleFor(
+  turtleSoup: Pick<NonNullable<InternalRoomState["turtleSoup"]>, "puzzle" | "puzzleId">
+): TurtleSoupPuzzleState {
+  if (turtleSoup.puzzle) return turtleSoup.puzzle;
+  const puzzle = LOCAL_TURTLE_SOUP_PUZZLES.find(
+    (candidate) => candidate.id === turtleSoup.puzzleId
+  );
+  if (!puzzle) throw new Error(`海龟汤题目不存在: ${turtleSoup.puzzleId}`);
+  return structuredClone(puzzle);
 }
 
-function judgeQuestion(
-  puzzle: TurtleSoupPuzzle,
+function judgeQuestionLocally(
+  puzzle: TurtleSoupPuzzleState,
   question: string
-): { answer: TurtleSoupAnswerView; note?: string } {
+): TurtleSoupQuestionJudgment {
   const normalized = normalize(question);
-  const yes = containsAny(normalized, puzzle.yesTerms);
-  const no = containsAny(normalized, puzzle.noTerms);
-  const partial = containsAny(normalized, puzzle.partialTerms);
-  if ((yes && no) || (yes && partial)) {
-    return { answer: "partial", note: "问题里有一部分方向接近真相。" };
-  }
+  const keyPointTerms = puzzle.keyPoints.flatMap((keyPoint) => [
+    keyPoint.text,
+    ...(keyPoint.aliases ?? [])
+  ]);
+  const answerTerms = [puzzle.answer, ...keyPointTerms];
+  const yes = containsAny(normalized, answerTerms);
+  const no = containsAny(normalized, commonWrongTerms(puzzle));
+  if (yes && no) return { answer: "partial", note: "问题里有一部分方向接近真相。" };
   if (yes) return { answer: "yes" };
   if (no) return { answer: "no" };
-  if (partial) return { answer: "partial" };
   return { answer: "irrelevant" };
 }
 
-function judgeGuess(
-  puzzle: TurtleSoupPuzzle,
+function judgeGuessLocally(
+  puzzle: TurtleSoupPuzzleState,
   guess: string
-): { matchedKeyPointIds: string[]; wrong: boolean; comment: string } {
+): TurtleSoupGuessJudgment {
   const normalized = normalize(guess);
   const matchedKeyPointIds = puzzle.keyPoints
-    .filter((keyPoint) => containsAny(normalized, keyPoint.aliases))
+    .filter((keyPoint) =>
+      containsAny(normalized, [keyPoint.text, ...(keyPoint.aliases ?? [])])
+    )
     .map((keyPoint) => keyPoint.id);
-  const wrong = containsAny(normalized, puzzle.noTerms);
+  const wrong = containsAny(normalized, commonWrongTerms(puzzle));
   return {
     matchedKeyPointIds,
     wrong,
@@ -412,18 +483,19 @@ function judgeGuess(
   };
 }
 
-function nextHint(
-  puzzle: TurtleSoupPuzzle,
+function nextLocalHint(
+  puzzle: TurtleSoupPuzzleState,
   turtleSoup: NonNullable<InternalRoomState["turtleSoup"]>
 ): string {
+  const hints = puzzle.hints ?? [];
   const firstUnfoundIndex = puzzle.keyPoints.findIndex(
     (keyPoint) => !turtleSoup.foundKeyPoints[keyPoint.id]
   );
   const hintIndex =
     firstUnfoundIndex >= 0
-      ? Math.min(firstUnfoundIndex, puzzle.hints.length - 1)
-      : Math.min(turtleSoup.hintsUsed, puzzle.hints.length - 1);
-  return puzzle.hints[hintIndex] ?? "重新审视汤面里最反常的地方。";
+      ? Math.min(firstUnfoundIndex, hints.length - 1)
+      : Math.min(turtleSoup.hintsUsed, hints.length - 1);
+  return hints[hintIndex] ?? "重新审视汤面里最反常的地方。";
 }
 
 function trimPayload(
@@ -439,6 +511,16 @@ function trimPayload(
     throw new Error(`内容长度必须在 ${minLength} 到 ${maxLength} 个字符之间`);
   }
   return trimmed;
+}
+
+function commonWrongTerms(puzzle: TurtleSoupPuzzleState): string[] {
+  if (puzzle.id === "umbrella-elevator") {
+    return ["怕黑", "停电", "故障", "司机", "公交", "迷路"];
+  }
+  if (puzzle.id === "doorbell-double") {
+    return ["鬼", "双胞胎", "梦", "穿越", "监控故障", "镜子"];
+  }
+  return ["鬼", "梦", "穿越", "魔法", "超能力"];
 }
 
 function containsAny(normalizedText: string, terms: readonly string[]): boolean {

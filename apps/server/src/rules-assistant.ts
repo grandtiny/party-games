@@ -3,56 +3,37 @@ import {
   TROUBLE_BREWING_RULES_REFERENCE
 } from "@party-games/clocktower";
 import type { RulesAnswerResponse } from "@party-games/shared";
+import {
+  OpenAICompatibleLanguageModelClient,
+  type LanguageModelClient,
+  type LanguageModelConfig
+} from "./language-model.js";
 
 export interface LanguageModelAdapter {
   answerRules(input: { question: string; references: string }): Promise<string | undefined>;
 }
 
-export interface LanguageModelConfig {
-  enabled: boolean;
-  endpoint: string;
-  apiKey: string;
-  model: string;
-  timeoutMs: number;
-}
+export type { LanguageModelConfig } from "./language-model.js";
 
-export class OpenAICompatibleLanguageModelAdapter implements LanguageModelAdapter {
-  constructor(
-    private readonly endpoint: string,
-    private readonly apiKey: string,
-    private readonly model: string,
-    private readonly timeoutMs = 8000
-  ) {}
+export class RulesLanguageModelAdapter implements LanguageModelAdapter {
+  constructor(private readonly client: LanguageModelClient) {}
 
   async answerRules(input: { question: string; references: string }): Promise<string | undefined> {
-    const response = await fetch(this.endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify({
-        model: this.model,
-        temperature: 0.2,
-        messages: [
-          {
-            role: "system",
-            content:
-              "你是血染钟楼暗流涌动规则助手。只能依据提供的本地资料回答，不推测当前房间隐藏身份，不参与任何游戏裁定。回答使用简洁中文。"
-          },
-          {
-            role: "user",
-            content: `问题：${input.question}\n\n本地资料：\n${input.references}`
-          }
-        ]
-      }),
-      signal: AbortSignal.timeout(this.timeoutMs)
+    return this.client.complete({
+      purpose: "default",
+      temperature: 0.2,
+      messages: [
+        {
+          role: "system",
+          content:
+            "你是血染钟楼暗流涌动规则助手。只能依据提供的本地资料回答，不推测当前房间隐藏身份，不参与任何游戏裁定。回答使用简洁中文。"
+        },
+        {
+          role: "user",
+          content: `问题：${input.question}\n\n本地资料：\n${input.references}`
+        }
+      ]
     });
-    if (!response.ok) throw new Error(`Language model returned HTTP ${response.status}`);
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    return payload.choices?.[0]?.message?.content?.trim() || undefined;
   }
 }
 
@@ -99,17 +80,28 @@ export class RulesAssistant {
 export function createLanguageModelAdapterFromEnvironment(
   environment: NodeJS.ProcessEnv = process.env
 ): LanguageModelAdapter | undefined {
-  const endpoint = environment.CLOCKTOWER_LLM_ENDPOINT?.trim();
-  const apiKey = environment.CLOCKTOWER_LLM_API_KEY?.trim();
-  const model = environment.CLOCKTOWER_LLM_MODEL?.trim();
+  const endpoint =
+    environment.PARTY_GAMES_LLM_ENDPOINT?.trim() ??
+    environment.CLOCKTOWER_LLM_ENDPOINT?.trim();
+  const apiKey =
+    environment.PARTY_GAMES_LLM_API_KEY?.trim() ??
+    environment.CLOCKTOWER_LLM_API_KEY?.trim();
+  const model =
+    environment.PARTY_GAMES_LLM_MODEL?.trim() ??
+    environment.CLOCKTOWER_LLM_MODEL?.trim();
   if (!endpoint || !apiKey || !model) return undefined;
-  const timeout = Number(environment.CLOCKTOWER_LLM_TIMEOUT_MS ?? 8000);
-  return new OpenAICompatibleLanguageModelAdapter(
+  const timeout = Number(
+    environment.PARTY_GAMES_LLM_TIMEOUT_MS ?? environment.CLOCKTOWER_LLM_TIMEOUT_MS ?? 8000
+  );
+  return new RulesLanguageModelAdapter(new OpenAICompatibleLanguageModelClient({
+    enabled: true,
     endpoint,
     apiKey,
     model,
-    Number.isFinite(timeout) && timeout > 0 ? timeout : 8000
-  );
+    storyModel: environment.PARTY_GAMES_LLM_STORY_MODEL?.trim() ?? model,
+    judgeModel: environment.PARTY_GAMES_LLM_JUDGE_MODEL?.trim() ?? model,
+    timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 8000
+  }));
 }
 
 function localRulesAnswer(question: string): RulesAnswerResponse {

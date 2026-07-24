@@ -303,6 +303,8 @@ function SoupPanel({ view }: { view: RoomView }) {
         </div>
         <p>{soup.surface}</p>
         <div className="turtle-stats">
+          <span>{soup.source === "model" ? "AI生成" : "本地降级"}</span>
+          <span>{soup.judgeSource === "model" ? "AI裁判" : "本地裁判"}</span>
           <span>提问 {soup.questionCount}</span>
           <span>
             提示 {soup.hintsUsed}/{soup.maxHints}

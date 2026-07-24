@@ -60,6 +60,13 @@ export class RoomService {
         : input.gameType === "poker"
           ? input.poker
           : undefined;
+    const turtleSoupConfig =
+      input.gameType === "turtle-soup"
+        ? {
+            difficulty: input.turtleSoup?.difficulty ?? "normal",
+            tags: input.turtleSoup?.tags ?? []
+          }
+        : undefined;
     const state: InternalRoomState = {
       schemaVersion: ROOM_STATE_SCHEMA_VERSION,
       id: randomUUID(),
@@ -86,7 +93,8 @@ export class RoomService {
           isBot: true
         }))
       ],
-      ...(pokerConfig ? { poker: { config: pokerConfig } } : {})
+      ...(pokerConfig ? { poker: { config: pokerConfig } } : {}),
+      ...(turtleSoupConfig ? { turtleSoupConfig } : {})
     };
     this.#gameModule(state).validate(state);
 
@@ -285,7 +293,7 @@ export class RoomService {
       }
 
       const seed = randomBytes(32).toString("hex");
-      const update = this.#gameModule(state).create(state, { seed, now: Date.now() });
+      const update = await this.#gameModule(state).create(state, { seed, now: Date.now() });
       const nextState = this.#nextState(state, update.changes);
 
       this.repository.commit(state.version, nextState, {
@@ -604,7 +612,7 @@ export class RoomService {
     for (const roomCode of roomCodes) {
       await this.#withLock(roomCode, async () => {
         const state = this.#requireRoom(roomCode);
-        const update = this.#gameModule(state).tick(state, { now });
+        const update = await this.#gameModule(state).tick(state, { now });
         if (!update) return;
         if (!update.event) throw new Error("游戏计时更新缺少事件");
         const nextState = this.#nextState(state, update.changes);
@@ -670,7 +678,7 @@ export class RoomService {
       if (!state.players.some((player) => player.id === playerId)) {
         throw new Error("玩家不在房间中");
       }
-      const update = this.#gameModule(state).handle(
+      const update = await this.#gameModule(state).handle(
         state,
         { type: commandType, actorPlayerId: playerId, payload },
         { now: Date.now(), seed: randomBytes(32).toString("hex"), voteIntervalMs: 2500 }

@@ -25,6 +25,8 @@ export const PokerBlindAdvanceModeSchema = z.enum(["manual", "automatic"]);
 export type PokerBlindAdvanceMode = z.infer<typeof PokerBlindAdvanceModeSchema>;
 export const PokerAiDifficultySchema = z.enum(["easy", "normal", "hard"]);
 export type PokerAiDifficulty = z.infer<typeof PokerAiDifficultySchema>;
+export const TurtleSoupDifficultySchema = z.enum(["easy", "normal", "hard"]);
+export type TurtleSoupDifficulty = z.infer<typeof TurtleSoupDifficultySchema>;
 
 export const PokerBlindLevelSchema = z
   .object({
@@ -130,6 +132,12 @@ export const PokerRoomConfigSchema = z
   });
 export type PokerRoomConfig = z.infer<typeof PokerRoomConfigSchema>;
 
+export const TurtleSoupRoomConfigSchema = z.object({
+  difficulty: TurtleSoupDifficultySchema.default("normal"),
+  tags: z.array(z.string().trim().min(1).max(16)).max(6).default([])
+});
+export type TurtleSoupRoomConfig = z.infer<typeof TurtleSoupRoomConfigSchema>;
+
 export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
   z.object({
     gameType: z.literal("clocktower"),
@@ -145,7 +153,8 @@ export const CreateRoomRequestSchema = z.discriminatedUnion("gameType", [
   z.object({
     gameType: z.literal("turtle-soup"),
     nickname: RoomNicknameSchema,
-    password: RoomPasswordSchema
+    password: RoomPasswordSchema,
+    turtleSoup: TurtleSoupRoomConfigSchema.optional()
   })
 ]);
 export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
@@ -278,6 +287,8 @@ export const AdminLlmConfigUpdateRequestSchema = z.object({
   enabled: z.boolean(),
   endpoint: z.union([z.string().trim().url().max(2048), z.literal("")]),
   model: z.string().trim().max(200),
+  storyModel: z.string().trim().max(200).optional(),
+  judgeModel: z.string().trim().max(200).optional(),
   apiKey: z.string().trim().max(4096).optional(),
   clearApiKey: z.boolean().optional(),
   timeoutMs: z.number().int().min(1000).max(60_000)
@@ -364,6 +375,8 @@ export interface AdminLlmConfigView {
   enabled: boolean;
   endpoint: string;
   model: string;
+  storyModel: string;
+  judgeModel: string;
   timeoutMs: number;
   hasApiKey: boolean;
   ready: boolean;
@@ -616,6 +629,8 @@ export interface TurtleSoupView {
   puzzleId: string;
   title: string;
   surface: string;
+  source: "model" | "local";
+  judgeSource: "model" | "local";
   status: "playing" | "solved";
   questionCount: number;
   hintsUsed: number;
