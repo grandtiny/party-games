@@ -59,6 +59,15 @@ docker compose up --build
 
 设置页面保存的配置优先于环境变量。`PARTY_GAMES_LLM_STORY_MODEL` 和 `PARTY_GAMES_LLM_JUDGE_MODEL` 未设置时会回退到 `PARTY_GAMES_LLM_MODEL`。旧的 `CLOCKTOWER_LLM_*` 环境变量和 `clocktower.llm` 持久化配置仍会读取，用于兼容已有部署。
 
+本地真实模型联调可以用脚本复用当前 shell 里的 OpenAI/Codex 风格环境变量，不会把 API Key 写入仓库：
+
+```powershell
+pnpm build
+pnpm start:llm-local -- -Port 18082
+```
+
+脚本优先读取 `PARTY_GAMES_LLM_*`，缺省时尝试 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL`、`CODEX_LLM_*` 等变量，并只在启动进程内映射成平台级配置。
+
 ## 验证
 
 ```powershell
