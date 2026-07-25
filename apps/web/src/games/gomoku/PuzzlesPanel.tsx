@@ -146,7 +146,8 @@ function PuzzleWorkspace({
     setState(result.state);
     setPrefix(nextPrefix);
     setNotice(undefined);
-    if (puzzle.objective === "defend" || result.state.result?.outcome === puzzle.toMove) {
+    const proofComplete = puzzle.objective === "prove" && nextLines.some((line) => line.length === nextPrefix.length);
+    if (puzzle.objective === "defend" || result.state.result?.outcome === puzzle.toMove || proofComplete) {
       finish(nextPrefix.length);
       return;
     }
@@ -240,7 +241,7 @@ function PuzzleWorkspace({
           ) : responding ? (
             <><BrainCircuit size={18} /><strong>对手应手</strong></>
           ) : (
-            <><span className={`gomoku-mini-stone is-${state.currentPlayer}`} /><strong>{puzzle.objective === "defend" ? "找到唯一防点" : "找到强制获胜路线"}</strong><span>失误 {mistakes}</span></>
+            <><span className={`gomoku-mini-stone is-${state.currentPlayer}`} /><strong>{puzzleStatusLabel(puzzle)}</strong><span>失误 {mistakes}</span></>
           )}
         </div>
         {notice ? <p className="gomoku-notice">{notice}</p> : null}
@@ -283,8 +284,17 @@ function samePoint(left: GomokuPoint | undefined, right: GomokuPoint | undefined
 function categoryLabel(category: GomokuPuzzle["category"]): string {
   if (category === "finish") return "一步取胜";
   if (category === "defense") return "关键防守";
+  if (category === "double-threat") return "双重威胁";
   if (category === "forbidden") return "禁手判断";
   return category.toUpperCase();
+}
+
+function puzzleStatusLabel(puzzle: GomokuPuzzle): string {
+  if (puzzle.objective === "defend") return "找到唯一防点";
+  if (puzzle.objective === "prove") {
+    return puzzle.category === "vcf" ? "找到连续冲四证明线" : "找到连续威胁证明线";
+  }
+  return "找到强制获胜路线";
 }
 
 function forbiddenLabel(reason: "double-three" | "double-four" | "overline"): string {
