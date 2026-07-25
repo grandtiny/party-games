@@ -2,6 +2,8 @@ import { performance } from "node:perf_hooks";
 import type {
   AdminConfigResponse,
   AdminLlmConfigUpdateRequest,
+  AdminLlmModelListRequest,
+  AdminLlmModelListResponse,
   AdminLlmTestResponse,
   AdminTurtleSoupPromptConfigView,
   AdminTurtleSoupPromptUpdateRequest
@@ -11,6 +13,7 @@ import { createSessionToken, hashPassword, hashSecret, verifyPassword } from "./
 import { SqliteRoomRepository } from "./repository.js";
 import {
   OpenAICompatibleLanguageModelClient,
+  listOpenAICompatibleModels,
   type LanguageModelClient,
   type LanguageModelConfig
 } from "./language-model.js";
@@ -169,6 +172,30 @@ export class AdminService {
       message: answer ? "连接成功，模型已返回内容" : "模型没有返回可用内容",
       latencyMs: Math.round(performance.now() - startedAt)
     };
+  }
+
+  async listLanguageModels(input: AdminLlmModelListRequest): Promise<AdminLlmModelListResponse> {
+    const existing = this.#storedLanguageModelConfig();
+    const effective = this.#effectiveLanguageModelConfig();
+    const storedHasApiKey = existing && Object.prototype.hasOwnProperty.call(existing, "apiKey");
+    const apiKey = input.clearApiKey
+      ? ""
+      : input.apiKey
+        ? input.apiKey
+        : storedHasApiKey
+          ? existing?.apiKey ?? ""
+          : effective.apiKey;
+    const endpoint = input.endpoint || effective.endpoint;
+    if (!endpoint.trim() || !apiKey.trim()) {
+      throw new Error("拉取模型列表需要接口地址和 API Key");
+    }
+    const models = await listOpenAICompatibleModels({
+      endpoint,
+      apiKey,
+      timeoutMs: input.timeoutMs
+    });
+    if (models.length === 0) throw new Error("模型接口未返回可用模型列表");
+    return { models };
   }
 
   createLanguageModelAdapter(): LanguageModelAdapter {

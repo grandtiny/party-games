@@ -403,6 +403,14 @@ export const AdminLlmConfigUpdateRequestSchema = z.object({
 });
 export type AdminLlmConfigUpdateRequest = z.infer<typeof AdminLlmConfigUpdateRequestSchema>;
 
+export const AdminLlmModelListRequestSchema = z.object({
+  endpoint: z.union([z.string().trim().url().max(2048), z.literal("")]),
+  apiKey: z.string().trim().max(4096).optional(),
+  clearApiKey: z.boolean().optional(),
+  timeoutMs: z.number().int().min(1000).max(60_000)
+});
+export type AdminLlmModelListRequest = z.infer<typeof AdminLlmModelListRequestSchema>;
+
 export const AdminTurtleSoupPromptUpdateRequestSchema = z.object({
   version: z.string().trim().min(1).max(80),
   story: z.string().trim().min(100).max(20_000),
@@ -568,6 +576,15 @@ export interface AdminLlmTestResponse {
   ok: boolean;
   message: string;
   latencyMs: number;
+}
+
+export interface AdminLlmModelView {
+  id: string;
+  ownedBy?: string;
+}
+
+export interface AdminLlmModelListResponse {
+  models: AdminLlmModelView[];
 }
 
 export interface RulesAnswerResponse {

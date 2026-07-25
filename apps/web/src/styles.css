@@ -431,6 +431,7 @@ h2 {
 }
 
 .settings-form input:not([type="checkbox"]),
+.settings-form select,
 .settings-form textarea {
   width: 100%;
   min-width: 0;
@@ -442,9 +443,14 @@ h2 {
   font-size: 15px;
 }
 
-.settings-form input:not([type="checkbox"]) {
+.settings-form input:not([type="checkbox"]),
+.settings-form select {
   height: 42px;
   padding: 0 12px;
+}
+
+.settings-form select {
+  appearance: auto;
 }
 
 .settings-form textarea {
@@ -459,6 +465,7 @@ h2 {
 }
 
 .settings-form input:not([type="checkbox"]):focus,
+.settings-form select:focus,
 .settings-form textarea:focus {
   border-color: #7c8980;
   outline: 2px solid rgb(124 137 128 / 18%);

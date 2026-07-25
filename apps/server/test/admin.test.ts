@@ -133,6 +133,25 @@ describe("admin settings", () => {
       timeoutMs: 3000
     };
 
+    const listedWithCandidateKey = await app.inject({
+      method: "POST",
+      url: "/api/admin/config/llm/models",
+      headers: { cookie },
+      payload: {
+        endpoint,
+        apiKey: "test-key",
+        timeoutMs: 3000
+      }
+    });
+    expect(listedWithCandidateKey.statusCode).toBe(200);
+    expect(listedWithCandidateKey.json()).toEqual({
+      models: [
+        { id: "judge-model", ownedBy: "test" },
+        { id: "story-model", ownedBy: "test" },
+        { id: "test-model", ownedBy: "test" }
+      ]
+    });
+
     expect(
       (
         await app.inject({
@@ -152,6 +171,22 @@ describe("admin settings", () => {
     });
     expect(testResponse.statusCode).toBe(200);
     expect(testResponse.json()).toMatchObject({ ok: true });
+
+    const listedWithSavedKey = await app.inject({
+      method: "POST",
+      url: "/api/admin/config/llm/models",
+      headers: { cookie },
+      payload: {
+        endpoint,
+        timeoutMs: 3000
+      }
+    });
+    expect(listedWithSavedKey.statusCode).toBe(200);
+    expect(listedWithSavedKey.json().models.map((model: { id: string }) => model.id)).toEqual([
+      "judge-model",
+      "story-model",
+      "test-model"
+    ]);
 
     const answer = await app.inject({
       method: "POST",
@@ -288,11 +323,22 @@ async function createTestApp(environment: NodeJS.ProcessEnv = {}) {
 }
 
 async function createModelServer(): Promise<Server> {
-  const server = createServer((_request, response) => {
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", "http://127.0.0.1");
     response.writeHead(200, { "content-type": "application/json" });
-    response.end(
-      JSON.stringify({ choices: [{ message: { content: "测试模型回答" } }] })
-    );
+    if (url.pathname.endsWith("/models")) {
+      response.end(
+        JSON.stringify({
+          data: [
+            { id: "test-model", owned_by: "test" },
+            { id: "story-model", owned_by: "test" },
+            { id: "judge-model", owned_by: "test" }
+          ]
+        })
+      );
+      return;
+    }
+    response.end(JSON.stringify({ choices: [{ message: { content: "测试模型回答" } }] }));
   });
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

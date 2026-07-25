@@ -11,6 +11,8 @@ import type {
   AdminAuthStatusResponse,
   AdminConfigResponse,
   AdminLlmConfigUpdateRequest,
+  AdminLlmModelListRequest,
+  AdminLlmModelListResponse,
   AdminLlmTestResponse,
   AdminLoginRequest,
   AdminPasswordChangeRequest,
@@ -177,6 +179,12 @@ export async function testAdminLlmConfig(
   input: AdminLlmConfigUpdateRequest
 ): Promise<AdminLlmTestResponse> {
   return request("/api/admin/config/llm/test", { method: "POST", body: input });
+}
+
+export async function listAdminLlmModels(
+  input: AdminLlmModelListRequest
+): Promise<AdminLlmModelListResponse> {
+  return request("/api/admin/config/llm/models", { method: "POST", body: input });
 }
 
 export async function updateAdminTurtleSoupPrompts(

@@ -11,6 +11,7 @@ import {
   KeyRound,
   LogOut,
   PlugZap,
+  RefreshCw,
   RotateCcw,
   Save,
   ServerCog,
@@ -23,6 +24,7 @@ import {
   changeAdminPassword,
   getAdminConfig,
   getAdminStatus,
+  listAdminLlmModels,
   loginAdmin,
   logoutAdmin,
   resetAdminTurtleSoupPrompts,
@@ -215,12 +217,13 @@ function SettingsWorkspace({
   onConfigChange: (config: AdminConfigResponse) => void;
 }) {
   const [llm, setLlm] = useState<AdminLlmConfigUpdateRequest>(() => draftFrom(config));
+  const [modelOptions, setModelOptions] = useState<string[]>(() => modelOptionsFrom(config));
   const [prompts, setPrompts] = useState<AdminTurtleSoupPromptUpdateRequest>(() =>
     promptDraftFrom(config)
   );
   const [apiKey, setApiKey] = useState("");
   const [clearApiKey, setClearApiKey] = useState(false);
-  const [busy, setBusy] = useState<"save" | "test">();
+  const [busy, setBusy] = useState<"save" | "test" | "models">();
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
   const [promptBusy, setPromptBusy] = useState<"save" | "reset">();
@@ -259,6 +262,35 @@ function SettingsWorkspace({
     try {
       const result = await testAdminLlmConfig(input());
       setMessage(`${result.message} · ${result.latencyMs} ms`);
+    } catch (cause) {
+      setError(messageOf(cause));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const detectModels = async () => {
+    setBusy("models");
+    setMessage(undefined);
+    setError(undefined);
+    try {
+      const result = await listAdminLlmModels({
+        endpoint: llm.endpoint,
+        timeoutMs: llm.timeoutMs,
+        ...(apiKey ? { apiKey } : {}),
+        ...(clearApiKey ? { clearApiKey: true } : {})
+      });
+      const nextOptions = result.models.map((model) => model.id);
+      setModelOptions(nextOptions);
+      if (!llm.model && nextOptions[0]) {
+        setLlm({
+          ...llm,
+          model: nextOptions[0],
+          storyModel: llm.storyModel || nextOptions[0],
+          judgeModel: llm.judgeModel || nextOptions[0]
+        });
+      }
+      setMessage(`已读取 ${nextOptions.length} 个模型`);
     } catch (cause) {
       setError(messageOf(cause));
     } finally {
@@ -332,14 +364,13 @@ function SettingsWorkspace({
             />
           </label>
           <div className="settings-field-grid">
-            <label>
-              模型名称
-              <input
-                value={llm.model}
-                onChange={(event) => setLlm({ ...llm, model: event.target.value })}
-                required={llm.enabled}
-              />
-            </label>
+            <ModelNameField
+              label="模型名称"
+              value={llm.model}
+              onChange={(model) => setLlm({ ...llm, model })}
+              options={modelOptions}
+              required={llm.enabled}
+            />
             <label>
               超时时间（毫秒）
               <input
@@ -354,22 +385,20 @@ function SettingsWorkspace({
             </label>
           </div>
           <div className="settings-field-grid">
-            <label>
-              海龟汤故事模型
-              <input
-                value={llm.storyModel ?? ""}
-                onChange={(event) => setLlm({ ...llm, storyModel: event.target.value })}
-                placeholder="默认使用模型名称"
-              />
-            </label>
-            <label>
-              海龟汤裁判模型
-              <input
-                value={llm.judgeModel ?? ""}
-                onChange={(event) => setLlm({ ...llm, judgeModel: event.target.value })}
-                placeholder="默认使用模型名称"
-              />
-            </label>
+            <ModelNameField
+              label="海龟汤故事模型"
+              value={llm.storyModel ?? ""}
+              onChange={(storyModel) => setLlm({ ...llm, storyModel })}
+              options={modelOptions}
+              placeholder="默认使用模型名称"
+            />
+            <ModelNameField
+              label="海龟汤裁判模型"
+              value={llm.judgeModel ?? ""}
+              onChange={(judgeModel) => setLlm({ ...llm, judgeModel })}
+              options={modelOptions}
+              placeholder="默认使用模型名称"
+            />
           </div>
           <label>
             API Key
@@ -400,6 +429,15 @@ function SettingsWorkspace({
           {message ? <div className="notice notice--success">{message}</div> : null}
           {error ? <div className="notice notice--error">{error}</div> : null}
           <div className="settings-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={detectModels}
+              disabled={Boolean(busy) || clearApiKey}
+            >
+              <RefreshCw className={busy === "models" ? "spin" : ""} size={18} />
+              {busy === "models" ? "检测中…" : "检测模型"}
+            </button>
             <button
               className="secondary-button"
               type="button"
@@ -547,6 +585,54 @@ function AccountManagementSection() {
         </Link>
       </div>
     </section>
+  );
+}
+
+function ModelNameField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = "请选择模型",
+  required = false
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+  required?: boolean;
+}) {
+  const choices = uniqueValues([value, ...options]).filter(Boolean);
+  if (choices.length === 0) {
+    return (
+      <label>
+        {label}
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required={required}
+        />
+      </label>
+    );
+  }
+  return (
+    <label>
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        required={required}
+      >
+        <option value="">{placeholder}</option>
+        {choices.map((model) => (
+          <option key={model} value={model}>
+            {model}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -700,6 +786,14 @@ function draftFrom(config: AdminConfigResponse): AdminLlmConfigUpdateRequest {
   };
 }
 
+function modelOptionsFrom(config: AdminConfigResponse): string[] {
+  return uniqueValues([
+    config.llm.model,
+    config.llm.storyModel,
+    config.llm.judgeModel
+  ]).filter(Boolean);
+}
+
 function promptDraftFrom(config: AdminConfigResponse): AdminTurtleSoupPromptUpdateRequest {
   return {
     version: config.turtleSoupPrompts.version,
@@ -718,6 +812,10 @@ function sourceLabel(source: AdminConfigResponse["llm"]["source"]): string {
 
 function promptSourceLabel(source: AdminConfigResponse["turtleSoupPrompts"]["source"]): string {
   return source === "saved" ? "已保存" : "默认";
+}
+
+function uniqueValues(values: readonly string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function messageOf(cause: unknown): string {

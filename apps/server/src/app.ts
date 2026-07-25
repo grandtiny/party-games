@@ -11,6 +11,7 @@ import {
   AccountProfileUpdateRequestSchema,
   AccountRegisterRequestSchema,
   AdminLlmConfigUpdateRequestSchema,
+  AdminLlmModelListRequestSchema,
   AdminLoginRequestSchema,
   AdminPasswordChangeRequestSchema,
   AdminSetupRequestSchema,
@@ -372,6 +373,19 @@ export async function createApp(options: AppOptions) {
       requireAdminAuthentication(request.headers.cookie, accountService, adminService);
       const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
       return await adminService.testLanguageModelConfig(input);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.post("/api/admin/config/llm/models", async (request, reply) => {
+    try {
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      const input = AdminLlmModelListRequestSchema.parse(request.body);
+      return await adminService.listLanguageModels(input);
     } catch (error) {
       const message = messageOf(error);
       return reply
