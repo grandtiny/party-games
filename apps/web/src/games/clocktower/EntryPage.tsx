@@ -1,4 +1,3 @@
-import "./theme.css";
 import { KeyRound, LogIn, RefreshCw } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";

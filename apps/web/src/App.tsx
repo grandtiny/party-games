@@ -4,6 +4,13 @@ import { AccountPage } from "./platform/AccountPage";
 import { AccountProvider } from "./platform/AccountContext";
 import { HomePage } from "./platform/HomePage";
 import { SettingsPage } from "./platform/SettingsPage";
+import "./games/clocktower/theme.css";
+import "./games/gomoku/theme.css";
+import "./games/puzzles.css";
+import "./games/minesweeper/theme.css";
+import "./games/poker/theme.css";
+import "./games/sudoku/theme.css";
+import "./games/turtle-soup/theme.css";
 
 const ClocktowerEntryPage = lazy(() =>
   import("./games/clocktower/EntryPage").then(({ ClocktowerEntryPage }) => ({

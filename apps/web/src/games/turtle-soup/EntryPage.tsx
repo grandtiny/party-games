@@ -1,4 +1,3 @@
-import "./theme.css";
 import { FlaskConical, KeyRound, LogIn, RefreshCw } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";

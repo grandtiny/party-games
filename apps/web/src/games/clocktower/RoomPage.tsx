@@ -1,4 +1,3 @@
-import "./theme.css";
 import {
   Check,
   Clock3,

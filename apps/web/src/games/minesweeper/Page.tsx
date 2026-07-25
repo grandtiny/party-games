@@ -1,5 +1,3 @@
-import "../puzzles.css";
-import "./theme.css";
 import {
   Bomb,
   Flag,

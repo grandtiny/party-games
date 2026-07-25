@@ -23,6 +23,7 @@ import { syncGomokuProgress } from "../../api";
 import { useAccount } from "../../platform/AccountContext";
 import { GomokuBoard } from "./Board";
 import {
+  createGomokuClientId,
   gomokuProgressItems,
   loadGomokuProgress,
   saveGomokuGame,
@@ -62,7 +63,7 @@ export function GomokuPuzzlesPanel() {
       onChallenge={(state) => {
         saveGomokuGame({
           ...state,
-          id: crypto.randomUUID(),
+          id: createGomokuClientId(),
           mode: "ai",
           humanColor: state.currentPlayer,
           aiDifficulty: "normal",
