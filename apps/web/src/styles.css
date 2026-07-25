@@ -29,7 +29,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -429,20 +430,36 @@ h2 {
   font-weight: 720;
 }
 
-.settings-form input:not([type="checkbox"]) {
+.settings-form input:not([type="checkbox"]),
+.settings-form textarea {
   width: 100%;
   min-width: 0;
-  height: 42px;
   border: 1px solid #cfd5ce;
   border-radius: 6px;
   background: #fff;
-  padding: 0 12px;
   color: #1f2421;
   font: inherit;
   font-size: 15px;
 }
 
-.settings-form input:not([type="checkbox"]):focus {
+.settings-form input:not([type="checkbox"]) {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.settings-form textarea {
+  min-height: 180px;
+  resize: vertical;
+  padding: 11px 12px;
+  line-height: 1.55;
+}
+
+.settings-form textarea.settings-textarea--story {
+  min-height: 360px;
+}
+
+.settings-form input:not([type="checkbox"]):focus,
+.settings-form textarea:focus {
   border-color: #7c8980;
   outline: 2px solid rgb(124 137 128 / 18%);
 }
@@ -522,6 +539,27 @@ h2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(160px, 0.45fr);
   gap: 14px;
+}
+
+.settings-placeholder-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  color: #69716b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.settings-placeholder-list code {
+  overflow-wrap: anywhere;
+  border: 1px solid #dfe3dd;
+  border-radius: 6px;
+  background: #f8f9f6;
+  padding: 10px;
+  color: #333a35;
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.5;
 }
 
 .settings-actions {

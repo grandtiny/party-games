@@ -1,14 +1,17 @@
 import type {
   AdminAuthStatusResponse,
   AdminConfigResponse,
-  AdminLlmConfigUpdateRequest
+  AdminLlmConfigUpdateRequest,
+  AdminTurtleSoupPromptUpdateRequest
 } from "@party-games/shared";
 import {
   Check,
   Database,
+  FileText,
   KeyRound,
   LogOut,
   PlugZap,
+  RotateCcw,
   Save,
   ServerCog,
   ShieldCheck,
@@ -22,9 +25,11 @@ import {
   getAdminStatus,
   loginAdmin,
   logoutAdmin,
+  resetAdminTurtleSoupPrompts,
   setupAdmin,
   testAdminLlmConfig,
-  updateAdminLlmConfig
+  updateAdminLlmConfig,
+  updateAdminTurtleSoupPrompts
 } from "../api";
 import { AppShell } from "./AppShell";
 
@@ -210,11 +215,17 @@ function SettingsWorkspace({
   onConfigChange: (config: AdminConfigResponse) => void;
 }) {
   const [llm, setLlm] = useState<AdminLlmConfigUpdateRequest>(() => draftFrom(config));
+  const [prompts, setPrompts] = useState<AdminTurtleSoupPromptUpdateRequest>(() =>
+    promptDraftFrom(config)
+  );
   const [apiKey, setApiKey] = useState("");
   const [clearApiKey, setClearApiKey] = useState(false);
   const [busy, setBusy] = useState<"save" | "test">();
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
+  const [promptBusy, setPromptBusy] = useState<"save" | "reset">();
+  const [promptMessage, setPromptMessage] = useState<string>();
+  const [promptError, setPromptError] = useState<string>();
 
   const input = (): AdminLlmConfigUpdateRequest => ({
     ...llm,
@@ -252,6 +263,39 @@ function SettingsWorkspace({
       setError(messageOf(cause));
     } finally {
       setBusy(undefined);
+    }
+  };
+
+  const savePrompts = async (event: FormEvent) => {
+    event.preventDefault();
+    setPromptBusy("save");
+    setPromptMessage(undefined);
+    setPromptError(undefined);
+    try {
+      const next = await updateAdminTurtleSoupPrompts(prompts);
+      onConfigChange(next);
+      setPrompts(promptDraftFrom(next));
+      setPromptMessage("海龟汤提示词已保存");
+    } catch (cause) {
+      setPromptError(messageOf(cause));
+    } finally {
+      setPromptBusy(undefined);
+    }
+  };
+
+  const resetPrompts = async () => {
+    setPromptBusy("reset");
+    setPromptMessage(undefined);
+    setPromptError(undefined);
+    try {
+      const next = await resetAdminTurtleSoupPrompts();
+      onConfigChange(next);
+      setPrompts(promptDraftFrom(next));
+      setPromptMessage("已恢复默认提示词");
+    } catch (cause) {
+      setPromptError(messageOf(cause));
+    } finally {
+      setPromptBusy(undefined);
     }
   };
 
@@ -373,6 +417,117 @@ function SettingsWorkspace({
         </form>
       </section>
 
+      <section className="settings-section">
+        <div className="settings-section__heading">
+          <FileText size={23} />
+          <div>
+            <h2>海龟汤提示词</h2>
+            <span
+              className={`config-state ${
+                config.turtleSoupPrompts.source === "saved" ? "is-ready" : ""
+              }`}
+            >
+              {promptSourceLabel(config.turtleSoupPrompts.source)}
+            </span>
+          </div>
+        </div>
+
+        <form className="settings-form settings-form--wide" onSubmit={savePrompts}>
+          <div className="settings-field-grid">
+            <label>
+              版本号
+              <input
+                value={prompts.version}
+                maxLength={80}
+                onChange={(event) =>
+                  setPrompts({ ...prompts, version: event.target.value })
+                }
+                required
+              />
+            </label>
+            <div className="settings-placeholder-list">
+              <span>占位符</span>
+              <code>
+                {
+                  "{{promptVersion}} {{tags}} {{difficulty}} {{difficultyText}} {{keyPointCount}} {{seed}} {{surface}} {{answer}} {{question}} {{guess}} {{keyPointsJson}} {{foundKeyPoints}} {{unfoundKeyPoints}} {{recentQuestions}} {{recentHints}}"
+                }
+              </code>
+            </div>
+          </div>
+          <label>
+            故事生成提示词
+            <textarea
+              className="settings-textarea settings-textarea--story"
+              value={prompts.story}
+              minLength={100}
+              maxLength={20000}
+              onChange={(event) =>
+                setPrompts({ ...prompts, story: event.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            提问裁判提示词
+            <textarea
+              className="settings-textarea"
+              value={prompts.question}
+              minLength={100}
+              maxLength={12000}
+              onChange={(event) =>
+                setPrompts({ ...prompts, question: event.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            猜底裁判提示词
+            <textarea
+              className="settings-textarea"
+              value={prompts.guess}
+              minLength={100}
+              maxLength={12000}
+              onChange={(event) =>
+                setPrompts({ ...prompts, guess: event.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            提示生成提示词
+            <textarea
+              className="settings-textarea"
+              value={prompts.hint}
+              minLength={60}
+              maxLength={8000}
+              onChange={(event) =>
+                setPrompts({ ...prompts, hint: event.target.value })
+              }
+              required
+            />
+          </label>
+          {promptMessage ? (
+            <div className="notice notice--success">{promptMessage}</div>
+          ) : null}
+          {promptError ? <div className="notice notice--error">{promptError}</div> : null}
+          <div className="settings-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={resetPrompts}
+              disabled={Boolean(promptBusy)}
+            >
+              <RotateCcw size={18} />
+              {promptBusy === "reset" ? "恢复中…" : "恢复默认"}
+            </button>
+            <button className="primary-button" type="submit" disabled={Boolean(promptBusy)}>
+              <Save size={18} />
+              {promptBusy === "save" ? "保存中…" : "保存提示词"}
+            </button>
+          </div>
+        </form>
+      </section>
+
       <SystemStatus config={config} />
       {authenticationMode === "legacy" ? <PasswordSection /> : <AccountManagementSection />}
     </div>
@@ -423,6 +578,13 @@ function SystemStatus({ config }: { config: AdminConfigResponse }) {
           <dt>海龟汤模型</dt>
           <dd>
             {config.llm.storyModel || "-"} / {config.llm.judgeModel || "-"}
+          </dd>
+        </div>
+        <div>
+          <dt>海龟汤提示词</dt>
+          <dd>
+            {config.turtleSoupPrompts.version} ·{" "}
+            {promptSourceLabel(config.turtleSoupPrompts.source)}
           </dd>
         </div>
         <div>
@@ -538,10 +700,24 @@ function draftFrom(config: AdminConfigResponse): AdminLlmConfigUpdateRequest {
   };
 }
 
+function promptDraftFrom(config: AdminConfigResponse): AdminTurtleSoupPromptUpdateRequest {
+  return {
+    version: config.turtleSoupPrompts.version,
+    story: config.turtleSoupPrompts.story,
+    question: config.turtleSoupPrompts.question,
+    guess: config.turtleSoupPrompts.guess,
+    hint: config.turtleSoupPrompts.hint
+  };
+}
+
 function sourceLabel(source: AdminConfigResponse["llm"]["source"]): string {
   if (source === "saved") return "设置页面";
   if (source === "environment") return "环境变量";
   return "未配置";
+}
+
+function promptSourceLabel(source: AdminConfigResponse["turtleSoupPrompts"]["source"]): string {
+  return source === "saved" ? "已保存" : "默认";
 }
 
 function messageOf(cause: unknown): string {

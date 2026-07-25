@@ -56,7 +56,12 @@ describe("admin settings", () => {
     expect(configResponse.statusCode).toBe(200);
     expect(configResponse.json()).toMatchObject({
       databaseSchemaVersion: 5,
-      llm: { enabled: false, hasApiKey: false, ready: false, source: "none" }
+      llm: { enabled: false, hasApiKey: false, ready: false, source: "none" },
+      turtleSoupPrompts: {
+        version: expect.any(String),
+        story: expect.stringContaining("hints"),
+        source: "default"
+      }
     });
 
     const savedConfig = await app.inject({
@@ -157,6 +162,75 @@ describe("admin settings", () => {
     expect(answer.json()).toMatchObject({
       answer: "测试模型回答",
       source: "model"
+    });
+  });
+
+  it("lets admins hot-update and reset turtle soup prompts", async () => {
+    const { app } = await createTestApp();
+    const setup = await app.inject({
+      method: "POST",
+      url: "/api/admin/setup",
+      payload: { password: "admin-password" }
+    });
+    const cookie = sessionCookie(setup.headers["set-cookie"]);
+    const configResponse = await app.inject({
+      method: "GET",
+      url: "/api/admin/config",
+      headers: { cookie }
+    });
+    const defaultPrompts = configResponse.json().turtleSoupPrompts;
+    const promptPayload = {
+      version: "collab-prompt-v1",
+      story: `${defaultPrompts.story}\n后台热更测试标记`,
+      question: defaultPrompts.question,
+      guess: defaultPrompts.guess,
+      hint: defaultPrompts.hint
+    };
+
+    expect(
+      (
+        await app.inject({
+          method: "PUT",
+          url: "/api/admin/config/turtle-soup-prompts",
+          payload: promptPayload
+        })
+      ).statusCode
+    ).toBe(401);
+
+    const invalid = await app.inject({
+      method: "PUT",
+      url: "/api/admin/config/turtle-soup-prompts",
+      headers: { cookie },
+      payload: {
+        ...promptPayload,
+        story: promptPayload.story.replace("随机种子：{{seed}}", "随机种子：固定")
+      }
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.body).toContain("海龟汤提示词配置不可用");
+
+    const saved = await app.inject({
+      method: "PUT",
+      url: "/api/admin/config/turtle-soup-prompts",
+      headers: { cookie },
+      payload: promptPayload
+    });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().turtleSoupPrompts).toMatchObject({
+      version: "collab-prompt-v1",
+      story: expect.stringContaining("后台热更测试标记"),
+      source: "saved"
+    });
+
+    const reset = await app.inject({
+      method: "POST",
+      url: "/api/admin/config/turtle-soup-prompts/reset",
+      headers: { cookie }
+    });
+    expect(reset.statusCode).toBe(200);
+    expect(reset.json().turtleSoupPrompts).toMatchObject({
+      version: defaultPrompts.version,
+      source: "default"
     });
   });
 

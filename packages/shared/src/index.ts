@@ -403,6 +403,17 @@ export const AdminLlmConfigUpdateRequestSchema = z.object({
 });
 export type AdminLlmConfigUpdateRequest = z.infer<typeof AdminLlmConfigUpdateRequestSchema>;
 
+export const AdminTurtleSoupPromptUpdateRequestSchema = z.object({
+  version: z.string().trim().min(1).max(80),
+  story: z.string().trim().min(100).max(20_000),
+  question: z.string().trim().min(100).max(12_000),
+  guess: z.string().trim().min(100).max(12_000),
+  hint: z.string().trim().min(60).max(8_000)
+});
+export type AdminTurtleSoupPromptUpdateRequest = z.infer<
+  typeof AdminTurtleSoupPromptUpdateRequestSchema
+>;
+
 export interface AdminAuthStatusResponse {
   initialized: boolean;
   authenticated: boolean;
@@ -541,10 +552,16 @@ export interface AdminLlmConfigView {
   source: "saved" | "environment" | "none";
 }
 
+export interface AdminTurtleSoupPromptConfigView
+  extends AdminTurtleSoupPromptUpdateRequest {
+  source: "default" | "saved";
+}
+
 export interface AdminConfigResponse {
   databaseSchemaVersion: number;
   rulesRateLimitPerMinute: number;
   llm: AdminLlmConfigView;
+  turtleSoupPrompts: AdminTurtleSoupPromptConfigView;
 }
 
 export interface AdminLlmTestResponse {
