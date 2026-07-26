@@ -9,7 +9,7 @@ import {
   Undo2
 } from "lucide-react";
 import { getSudoku } from "sudoku-gen";
-import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { getAccountOverview, submitPuzzleResult } from "../../api";
 import { useAccount } from "../../platform/AccountContext";
 import { AppShell } from "../../platform/AppShell";
@@ -68,6 +68,7 @@ export function SudokuPage() {
   const [bestTimes, setBestTimes] = useState<Partial<Record<SudokuDifficulty, number>>>(() =>
     loadBestTimes()
   );
+  const [difficultyMenuOpen, setDifficultyMenuOpen] = useState(false);
   const submittedPuzzleRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -166,160 +167,184 @@ export function SudokuPage() {
 
   return (
     <AppShell scope="sudoku" title="数独" backTo="/">
-      <section className="puzzle-header sudoku-heading">
-        <div>
-          <p className="eyebrow">SUDOKU</p>
-          <h1>数独</h1>
-        </div>
-        <button
-          className="icon-button"
-          type="button"
-          onClick={() => startNewPuzzle()}
-          aria-label="新题"
-          title="新题"
-        >
-          <RefreshCw size={19} />
-        </button>
-      </section>
+      <div className="sk-page">
+        {/* —— 标题栏（单行精简）—— */}
+        <header className="sk-header">
+          <div className="sk-header__title">
+            <h1>数独</h1>
+            <p className="eyebrow">SUDOKU</p>
+          </div>
 
-      <section className="puzzle-controls" aria-label="数独设置">
-        <div
-          className="segmented puzzle-difficulty"
-          role="tablist"
-          aria-label="数独难度"
-          style={{ "--difficulty-count": 4 } as CSSProperties}
-        >
-          {(Object.entries(difficulties) as Array<[SudokuDifficulty, string]>).map(
-            ([value, label]) => (
+          {/* —— 状态条（玻璃胶囊，置于 header 中间填充）—— */}
+          <div className={`sk-statusbar ${state.status === "complete" ? "is-done" : ""}`} aria-live="polite">
+            <div className="sk-diff-menu">
               <button
                 type="button"
-                className={state.difficulty === value ? "is-active" : ""}
-                aria-selected={state.difficulty === value}
-                onClick={() => startNewPuzzle(value)}
-                key={value}
+                className="sk-diff-pill"
+                aria-expanded={difficultyMenuOpen}
+                aria-haspopup="menu"
+                aria-label="选择难度"
+                onClick={() => setDifficultyMenuOpen((open) => !open)}
               >
-                {label}
+                {difficulties[state.difficulty]} <span className="sk-diff-arrow">▾</span>
               </button>
-            )
-          )}
-        </div>
-
-        <div className="puzzle-status-row" aria-live="polite">
-          <span className="puzzle-stat">
-            <Timer size={17} />
-            <strong>{formatTime(state.elapsedSeconds)}</strong>
-          </span>
-          <span className="puzzle-stat">
-            <CircleX size={17} />
-            错误 <strong>{state.mistakes}</strong>
-          </span>
-          <span className="puzzle-stat">
-            剩余 <strong>{remainingCells}</strong>
-          </span>
-          {bestTimes[state.difficulty] !== undefined ? (
-            <span className="puzzle-stat">
-              最佳 <strong>{formatTime(bestTimes[state.difficulty] ?? 0)}</strong>
+              {difficultyMenuOpen ? (
+                <div className="sk-diff-popover" role="menu">
+                  {(Object.entries(difficulties) as Array<[SudokuDifficulty, string]>).map(
+                    ([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={state.difficulty === value}
+                        className={state.difficulty === value ? "is-active" : ""}
+                        onClick={() => {
+                          startNewPuzzle(value);
+                          setDifficultyMenuOpen(false);
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </div>
+            <span className="sk-stat">
+              <Timer size={14} />
+              <strong>{formatTime(state.elapsedSeconds)}</strong>
             </span>
-          ) : null}
-          <span
-            className={`puzzle-status-message ${state.status === "complete" ? "is-win" : ""}`}
-          >
-            {state.status === "complete" ? "题目完成" : `${difficulties[state.difficulty]}难度`}
-          </span>
-        </div>
-      </section>
+            <span className="sk-stat sk-stat--error">
+              <CircleX size={14} />
+              <strong>{state.mistakes}</strong>
+            </span>
+            <span className="sk-stat">
+              剩 <strong>{remainingCells}</strong>
+            </span>
+            {bestTimes[state.difficulty] !== undefined ? (
+              <span className="sk-stat sk-stat--best">
+                最佳 <strong>{formatTime(bestTimes[state.difficulty] ?? 0)}</strong>
+              </span>
+            ) : null}
+            {state.status === "complete" ? (
+              <span className="sk-status-done">题目完成</span>
+            ) : null}
+          </div>
 
-      <div
-        className={`sudoku-layout ${state.noteMode ? "is-note-mode" : ""} is-${state.status}`}
-      >
-        <div className="sudoku-board-frame">
-          <div
-            className="sudoku-board"
-            role="grid"
-            aria-label="数独棋盘"
-            data-status={state.status}
+          <button
+            className="icon-button sk-new-btn"
+            type="button"
+            onClick={() => startNewPuzzle()}
+            aria-label="新题"
+            title="新题"
           >
-            {state.values.map((value, index) => {
-              const row = Math.floor(index / 9);
-              const column = index % 9;
-              const given = state.puzzle[index] !== "-";
-              const selected = state.selectedIndex === index;
-              const peer = state.selectedIndex !== null && isPeer(index, state.selectedIndex);
-              const sameValue = Boolean(value && selectedValue && value === selectedValue);
-              const error = Boolean(value && value !== state.solution[index]);
-              const hinted = state.hintedIndexes.includes(index);
-              const notes = state.notes[index] ?? [];
+            <RefreshCw size={18} />
+          </button>
+        </header>
+
+        {/* —— 棋盘区 —— */}
+        <div className="sk-board-wrap">
+          <div className="sudoku-board-frame">
+            <div
+              className={`sudoku-board ${state.status === "complete" ? "is-complete" : ""}`}
+              role="grid"
+              aria-label="数独棋盘"
+              data-status={state.status}
+            >
+              {state.values.map((value, index) => {
+                const row = Math.floor(index / 9);
+                const column = index % 9;
+                const given = state.puzzle[index] !== "-";
+                const selected = state.selectedIndex === index;
+                const peer = state.selectedIndex !== null && isPeer(index, state.selectedIndex);
+                const sameValue = Boolean(value && selectedValue && value === selectedValue);
+                const error = Boolean(value && value !== state.solution[index]);
+                const hinted = state.hintedIndexes.includes(index);
+                const notes = state.notes[index] ?? [];
+                return (
+                  <button
+                    className={[
+                      "sudoku-cell",
+                      given ? "is-given" : "is-editable",
+                      selected ? "is-selected" : "",
+                      peer ? "is-peer" : "",
+                      sameValue ? "is-same-value" : "",
+                      error ? "is-error" : "",
+                      hinted ? "is-hinted" : "",
+                      column === 2 || column === 5 ? "is-box-right" : "",
+                      row === 2 || row === 5 ? "is-box-bottom" : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    type="button"
+                    role="gridcell"
+                    aria-label={sudokuCellLabel(index, value, given, notes)}
+                    aria-selected={selected}
+                    onClick={() => dispatch({ type: "select", index })}
+                    key={index}
+                  >
+                    {value ? (
+                      <span className="sudoku-value">{value}</span>
+                    ) : notes.length > 0 ? (
+                      <span className="sudoku-notes" aria-hidden="true">
+                        {Array.from({ length: 9 }, (_, noteIndex) => noteIndex + 1).map((note) => (
+                          <span key={note}>{notes.includes(note) ? note : ""}</span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* —— 底部控制区（合并式）—— */}
+        <div className="sk-controls" aria-label="数独输入">
+          {/* 5×2 网格：1-5 / 6-9 + 撤销 */}
+          <div className="sk-numpad-combo">
+            {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => {
+              const valueCount = state.values.filter((v) => v === String(value)).length;
+              const fullyFilled = valueCount >= 9;
               return (
                 <button
-                  className={[
-                    "sudoku-cell",
-                    given ? "is-given" : "is-editable",
-                    selected ? "is-selected" : "",
-                    peer ? "is-peer" : "",
-                    sameValue ? "is-same-value" : "",
-                    error ? "is-error" : "",
-                    hinted ? "is-hinted" : "",
-                    column === 2 || column === 5 ? "is-box-right" : "",
-                    row === 2 || row === 5 ? "is-box-bottom" : ""
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
                   type="button"
-                  role="gridcell"
-                  aria-label={sudokuCellLabel(index, value, given, notes)}
-                  aria-selected={selected}
-                  onClick={() => dispatch({ type: "select", index })}
-                  key={index}
+                  className={selectedValue === String(value) ? "is-current" : ""}
+                  aria-pressed={selectedValue === String(value)}
+                  aria-label={fullyFilled ? `${value}（已填满）` : `${value}`}
+                  onClick={() => dispatch({ type: "input", value })}
+                  disabled={state.status === "complete"}
+                  data-filled={fullyFilled ? "true" : "false"}
+                  key={value}
                 >
-                  {value ? (
-                    <span className="sudoku-value">{value}</span>
-                  ) : notes.length > 0 ? (
-                    <span className="sudoku-notes" aria-hidden="true">
-                      {Array.from({ length: 9 }, (_, noteIndex) => noteIndex + 1).map((note) => (
-                        <span key={note}>{notes.includes(note) ? note : ""}</span>
-                      ))}
-                    </span>
-                  ) : null}
+                  {value}
                 </button>
               );
             })}
-          </div>
-        </div>
-
-        <aside className="sudoku-input" aria-label="数独输入">
-          <div className="sudoku-number-pad">
-            {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => (
-              <button
-                type="button"
-                className={selectedValue === String(value) ? "is-current" : ""}
-                aria-pressed={selectedValue === String(value)}
-                onClick={() => dispatch({ type: "input", value })}
-                disabled={state.status === "complete"}
-                key={value}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-
-          <div className="sudoku-tool-grid">
             <button
               type="button"
+              className="sk-undo-btn"
               onClick={() => dispatch({ type: "undo" })}
               disabled={state.history.length === 0}
               title="撤销"
+              aria-label="撤销"
             >
-              <Undo2 size={18} />
-              撤销
+              <Undo2 size={16} />
+              <span>撤销</span>
             </button>
+          </div>
+
+          {/* 3 列工具栏 */}
+          <div className="sk-toolbar">
             <button
               type="button"
               onClick={() => dispatch({ type: "erase" })}
               disabled={state.status === "complete"}
               title="擦除"
+              aria-label="擦除"
             >
-              <Eraser size={18} />
-              擦除
+              <Eraser size={16} />
+              <span>擦除</span>
             </button>
             <button
               type="button"
@@ -328,28 +353,30 @@ export function SudokuPage() {
               onClick={() => dispatch({ type: "toggle-note-mode" })}
               disabled={state.status === "complete"}
               title="候选笔记"
+              aria-label="候选笔记"
             >
-              <Pencil size={18} />
-              笔记
+              <Pencil size={16} />
+              <span>笔记</span>
             </button>
             <button
               type="button"
               onClick={() => dispatch({ type: "hint" })}
               disabled={state.status === "complete"}
               title="提示"
+              aria-label="提示"
             >
-              <Lightbulb size={18} />
-              提示
+              <Lightbulb size={16} />
+              <span>提示</span>
             </button>
           </div>
 
           {state.status === "complete" ? (
-            <div className="sudoku-complete" role="status">
-              <CheckCircle2 size={22} />
-              <strong>{formatTime(state.elapsedSeconds)}</strong>
+            <div className="sk-complete-banner" role="status">
+              <CheckCircle2 size={18} />
+              <span>用时 {formatTime(state.elapsedSeconds)}</span>
             </div>
           ) : null}
-        </aside>
+        </div>
       </div>
     </AppShell>
   );
