@@ -63,7 +63,7 @@ docker compose up --build
 
 ```powershell
 pnpm build
-pnpm start:llm-local -- -Port 18082
+pnpm start:llm-local -- -Port 18083
 ```
 
 脚本优先读取 `PARTY_GAMES_LLM_*`，缺省时尝试 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL`、`CODEX_LLM_*` 等变量；如果本机存在 `C:\Code\30_Tools\cli\CLIProxyAPI_6.10.9_windows_amd64\config.yaml`，还会自动复用本地 CPA 的 OpenAI-compatible 入口和 client key。所有映射只存在于启动进程环境中，不会把 API Key 写入仓库或 `.env`。
@@ -71,7 +71,7 @@ pnpm start:llm-local -- -Port 18082
 默认 CPA 模型为已通过本地验收的 `codex-auto-review`。如需切换模型：
 
 ```powershell
-pnpm start:llm-local -- -Port 18082 -CpaModel codex-auto-review
+pnpm start:llm-local -- -Port 18083 -CpaModel codex-auto-review
 ```
 
 ## 验证

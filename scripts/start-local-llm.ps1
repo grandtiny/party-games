@@ -1,5 +1,5 @@
 param(
-  [int]$Port = 3000,
+  [int]$Port = 18083,
   [string]$HostName = "127.0.0.1",
   [string]$DatabasePath = "",
   [string]$CpaConfigPath = "",
@@ -10,6 +10,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
+
+if ($Port -eq 18082) {
+  throw "Port 18082 is reserved for Media Records Importer. Use Party Games port 18083."
+}
 
 function Get-FirstEnvironmentValue {
   param([string[]]$Names)
