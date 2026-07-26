@@ -177,14 +177,17 @@ export function SudokuPage() {
 
           {/* —— 状态条（玻璃胶囊，置于 header 中间填充）—— */}
           <div className={`sk-statusbar ${state.status === "complete" ? "is-done" : ""}`} aria-live="polite">
-            <button
-              type="button"
-              className="sk-diff-pill"
-              aria-expanded={difficultyMenuOpen}
-              aria-label="选择难度"
-              onClick={() => setDifficultyMenuOpen((open) => !open)}
-            >
-              {difficulties[state.difficulty]} <span className="sk-diff-arrow">▾</span>
+            <div className="sk-diff-menu">
+              <button
+                type="button"
+                className="sk-diff-pill"
+                aria-expanded={difficultyMenuOpen}
+                aria-haspopup="menu"
+                aria-label="选择难度"
+                onClick={() => setDifficultyMenuOpen((open) => !open)}
+              >
+                {difficulties[state.difficulty]} <span className="sk-diff-arrow">▾</span>
+              </button>
               {difficultyMenuOpen ? (
                 <div className="sk-diff-popover" role="menu">
                   {(Object.entries(difficulties) as Array<[SudokuDifficulty, string]>).map(
@@ -206,7 +209,7 @@ export function SudokuPage() {
                   )}
                 </div>
               ) : null}
-            </button>
+            </div>
             <span className="sk-stat">
               <Timer size={14} />
               <strong>{formatTime(state.elapsedSeconds)}</strong>
