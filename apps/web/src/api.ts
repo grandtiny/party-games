@@ -16,6 +16,14 @@ import type {
   AdminPasswordChangeRequest,
   AdminSetupRequest,
   CreateRoomRequest,
+  GomokuMatchDetailView,
+  GomokuMatchSubmitRequest,
+  GomokuMatchView,
+  GomokuOverviewResponse,
+  GomokuProgressSyncRequest,
+  GomokuProgressView,
+  GomokuSaveUpdateRequest,
+  GomokuSaveView,
   JoinRoomRequest,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
@@ -80,6 +88,32 @@ export async function submitPuzzleResult(
   input: PuzzleResultSubmitRequest
 ): Promise<PuzzleResultView> {
   return request("/api/account/puzzle-results", { method: "POST", body: input });
+}
+
+export async function submitGomokuMatch(
+  input: GomokuMatchSubmitRequest
+): Promise<GomokuMatchView> {
+  return request("/api/account/gomoku/matches", { method: "POST", body: input });
+}
+
+export async function getGomokuOverview(): Promise<GomokuOverviewResponse> {
+  return request("/api/account/gomoku/overview");
+}
+
+export async function getGomokuMatch(matchId: string): Promise<GomokuMatchDetailView> {
+  return request(`/api/account/gomoku/matches/${encodeURIComponent(matchId)}`);
+}
+
+export async function updateGomokuSave(
+  input: GomokuSaveUpdateRequest
+): Promise<GomokuSaveView> {
+  return request("/api/account/gomoku/save", { method: "PUT", body: input });
+}
+
+export async function syncGomokuProgress(
+  input: GomokuProgressSyncRequest
+): Promise<GomokuProgressView[]> {
+  return request("/api/account/gomoku/progress", { method: "PUT", body: input });
 }
 
 export async function getAccountInvites(): Promise<AccountInviteView[]> {

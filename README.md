@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷和数独入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及无需服务端状态的单机扫雷和数独。
+私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷、数独和五子棋入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及扫雷、数独和支持标准禁手、离线 AI、残局、教学、存档与复盘的五子棋。
 
 ## 本地开发
 
@@ -44,18 +44,35 @@ docker compose up -d --build
 
 直接运行和 Docker Compose 的默认行为一致；只有显式设置为 `false` 时才关闭。
 
-首页右上角提供系统设置入口。首次访问时创建至少 8 位的管理员密码，之后可以在设置页配置 OpenAI 兼容接口、测试连接和修改管理员密码。管理员密码使用加盐哈希保存，模型 API Key 只在服务端持久化且不会通过读取接口返回明文。
+首页右上角提供系统设置入口。首次访问时创建至少 8 位的管理员密码，之后可以在设置页配置平台级 OpenAI 兼容接口、测试连接和修改管理员密码。管理员密码使用加盐哈希保存，模型 API Key 只在服务端持久化且不会通过读取接口返回明文。
 
-规则问答默认使用仓库内置资料，不需要外部服务。除设置页面外，也可以使用环境变量提供初始 OpenAI 兼容配置：
+血染规则问答默认使用仓库内置资料。海龟汤正式多人房间优先使用平台级大模型生成汤面、汤底和真相要点，并使用裁判模型处理提问、猜谜和提示；接口未配置、关闭、超时或返回无效 JSON 时会标记为本地降级。除设置页面外，也可以使用环境变量提供初始 OpenAI 兼容配置：
 
 ```powershell
-$env:CLOCKTOWER_LLM_ENDPOINT = "https://example.com/v1/chat/completions"
-$env:CLOCKTOWER_LLM_API_KEY = "your-key"
-$env:CLOCKTOWER_LLM_MODEL = "model-name"
+$env:PARTY_GAMES_LLM_ENDPOINT = "https://example.com/v1"
+$env:PARTY_GAMES_LLM_API_KEY = "your-key"
+$env:PARTY_GAMES_LLM_MODEL = "default-model"
+$env:PARTY_GAMES_LLM_STORY_MODEL = "story-model"
+$env:PARTY_GAMES_LLM_JUDGE_MODEL = "judge-model"
 docker compose up --build
 ```
 
-设置页面保存的配置优先于环境变量。接口未配置、关闭、超时或返回错误时会自动使用本地资料，不影响游戏状态机和裁定。
+设置页面保存的配置优先于环境变量。`PARTY_GAMES_LLM_STORY_MODEL` 和 `PARTY_GAMES_LLM_JUDGE_MODEL` 未设置时会回退到 `PARTY_GAMES_LLM_MODEL`。旧的 `CLOCKTOWER_LLM_*` 环境变量和 `clocktower.llm` 持久化配置仍会读取，用于兼容已有部署。
+
+本地真实模型联调可以用脚本复用当前 shell 里的 OpenAI/Codex 风格环境变量，不会把 API Key 写入仓库：
+
+```powershell
+pnpm build
+pnpm start:llm-local -- -Port 18082
+```
+
+脚本优先读取 `PARTY_GAMES_LLM_*`，缺省时尝试 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL`、`CODEX_LLM_*` 等变量；如果本机存在 `C:\Code\30_Tools\cli\CLIProxyAPI_6.10.9_windows_amd64\config.yaml`，还会自动复用本地 CPA 的 OpenAI-compatible 入口和 client key。所有映射只存在于启动进程环境中，不会把 API Key 写入仓库或 `.env`。
+
+默认 CPA 模型为已通过本地验收的 `codex-auto-review`。如需切换模型：
+
+```powershell
+pnpm start:llm-local -- -Port 18082 -CpaModel codex-auto-review
+```
 
 ## 验证
 
@@ -67,6 +84,7 @@ $env:BASE_URL = "http://127.0.0.1:18081"
 pnpm verify:local
 pnpm verify:poker-local
 pnpm verify:poker-ai-local
+pnpm verify:turtle-soup-ai-local
 pnpm verify:poker-tournament-local
 ```
 
@@ -76,13 +94,19 @@ pnpm verify:poker-tournament-local
 
 `verify:poker-ai-local` 创建一名真人和三名 AI 的积分桌，验证自动入座与准备、拒绝额外真人加入、AI 按顺序逐个行动并停回真人、底牌隔离和筹码守恒。
 
+`verify:turtle-soup-ai-local` 创建单人海龟汤房间并要求题目生成、提问裁判和提示生成均来自模型；如需临时允许本地降级，可设置 `$env:REQUIRE_TURTLE_SOUP_MODEL = "false"`。
+
 `verify:poker-tournament-local` 创建两人自动盲注淘汰赛，验证房主暂停/恢复、计时状态投影、拒绝手动跳级，以及截止时间前不会提前提升盲注。
 
-海龟汤第一版使用内置题库和确定性裁定，不依赖大模型也能开局。`/turtle-soup/lab` 是协作提示词测试页，会直接显示可编辑汤面、汤底和要点，并保留原版浏览器侧 Base URL、API Key、故事模型、裁判模型配置；该测试线只用于调提示词，正式多人房间不会把汤底或 Key 广播给玩家。
+`/turtle-soup/lab` 是协作提示词测试页，会直接显示可编辑汤面、汤底和要点，并保留原 LABYRINTH 浏览器侧 Base URL、API Key、故事模型、裁判模型配置；该测试线只用于调提示词。猜谜判定优先返回 `achieved_point_ids`，旧版 `achieved_points` 文本仍兼容。正式多人房间只使用服务端平台级大模型配置，服务端持有汤底，玩家解出前不会广播汤底、未命中要点正文或 API Key。
 
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。
 
 当前实现边界见 [docs/mvp-scope.md](docs/mvp-scope.md)。
+
+## 开发协作
+
+分支职责、worktree 隔离、验证门槛和合入规则见 [AGENTS.md](AGENTS.md)。功能开发不要直接写入 `main`；每个功能分支应跟踪同名远端，并在合入前同步最新主线完成组合验证。
 
 ## 模块结构
 
@@ -90,6 +114,7 @@ pnpm verify:poker-tournament-local
 packages/game-core/              游戏模块契约与注册表
 packages/clocktower/             暗流涌动规则状态机与本地资料
 packages/poker/                  德扑规则内核、确定性快照与桌型领域层
+packages/gomoku/                 五子棋规则、禁手、三档 AI、残局和教学内容
 apps/server/src/platform/        房间平台接口
 apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
@@ -98,6 +123,7 @@ apps/web/src/games/poker/        德扑建房、圆桌大厅、多人牌桌和�
 apps/web/src/games/turtle-soup/  海龟汤入口、多人房间和提示词测试页
 apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
 apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
+apps/web/src/games/gomoku/       五子棋对局、残局、教学、账号同步和逐手复盘
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。

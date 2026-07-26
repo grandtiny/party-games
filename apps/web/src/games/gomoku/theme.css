@@ -1,0 +1,1009 @@
+.app-shell--gomoku {
+  --action-background: #65401f;
+  --action-border: #65401f;
+  --action-focus: rgb(101 64 31 / 14%);
+  --game-accent: #65401f;
+  background: #eef0eb;
+}
+
+.app-shell--gomoku .page {
+  width: min(100%, 1180px);
+  padding-top: 18px;
+}
+
+.gomoku-tabs {
+  display: grid;
+  width: min(100%, 420px);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 0 auto 18px;
+  border: 1px solid #c9cec6;
+  border-radius: 7px;
+  background: #e1e5de;
+  padding: 4px;
+}
+
+.gomoku-tabs a {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: #626a63;
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.gomoku-tabs a.is-active {
+  background: #fff;
+  color: #2d312e;
+  box-shadow: 0 1px 5px rgb(30 37 31 / 11%);
+}
+
+.gomoku-play-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) 270px;
+  justify-content: center;
+  gap: 18px;
+  align-items: start;
+}
+
+.gomoku-match,
+.gomoku-settings,
+.gomoku-actions,
+.gomoku-toggles {
+  border: 1px solid #cfd4cc;
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.gomoku-match {
+  overflow: hidden;
+  box-shadow: 0 16px 42px rgb(38 43 38 / 9%);
+}
+
+.gomoku-match__status {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #d5d9d2;
+  padding: 10px 16px;
+}
+
+.gomoku-turn {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.gomoku-turn > span:last-child {
+  display: grid;
+  gap: 1px;
+}
+
+.gomoku-turn small,
+.gomoku-result small {
+  color: #727a73;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gomoku-turn strong {
+  font-size: 17px;
+}
+
+.gomoku-turn__stone,
+.gomoku-result__stone {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+}
+
+.gomoku-turn.is-black .gomoku-turn__stone,
+.gomoku-result__stone.is-black {
+  background: radial-gradient(circle at 32% 28%, #5b5b59, #121211 50%, #000 100%);
+}
+
+.gomoku-turn.is-white .gomoku-turn__stone,
+.gomoku-result__stone.is-white {
+  border: 1px solid #c8c2b8;
+  background: radial-gradient(circle at 32% 28%, #fff, #eee9df 68%, #c9c1b4 100%);
+}
+
+.gomoku-match__metrics {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #5b635d;
+  font-size: 13px;
+  font-weight: 690;
+}
+
+.gomoku-match__metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.gomoku-board-frame {
+  width: min(100%, 720px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  padding: 18px;
+  background: #2c302c;
+}
+
+.gomoku-board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.gomoku-board__surface {
+  fill: #d4a35c;
+  stroke: #9a6f39;
+  stroke-width: 4;
+}
+
+.gomoku-board__grid line {
+  stroke: #523719;
+  stroke-width: 1.6;
+}
+
+.gomoku-board__star {
+  fill: #4a3017;
+}
+
+.gomoku-board__winning-line {
+  stroke: #ce3a31;
+  stroke-width: 7;
+  stroke-linecap: round;
+  opacity: 0.84;
+}
+
+.gomoku-stone {
+  animation: gomoku-stone-in 140ms ease-out;
+}
+
+.gomoku-stone.is-winning circle:first-child {
+  stroke: #dc493f;
+  stroke-width: 3;
+}
+
+.gomoku-stone__last {
+  fill: #d63b35;
+  stroke: #fff;
+  stroke-width: 1.2;
+}
+
+.gomoku-stone.is-white .gomoku-stone__last {
+  fill: #bd2924;
+}
+
+.gomoku-board__pending {
+  stroke: #cf4338;
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+  opacity: 0.72;
+}
+
+.gomoku-board__pending.is-black {
+  fill: #151514;
+}
+
+.gomoku-board__pending.is-white {
+  fill: #f4f0e8;
+}
+
+.gomoku-board__forbidden circle {
+  fill: rgb(183 48 43 / 14%);
+  stroke: #b7302b;
+  stroke-width: 1.5;
+}
+
+.gomoku-board__forbidden path {
+  fill: none;
+  stroke: #a92723;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.gomoku-board__hit {
+  cursor: pointer;
+  fill: transparent;
+  outline: none;
+}
+
+.gomoku-board__hit:focus-visible {
+  fill: rgb(255 255 255 / 22%);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.gomoku-confirm-row,
+.gomoku-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #d6dad3;
+  padding: 10px 14px;
+}
+
+.gomoku-confirm-row > span:first-child {
+  margin-right: auto;
+  font-weight: 720;
+}
+
+.gomoku-notice {
+  margin: 0;
+  border-top: 1px solid #e5c0bd;
+  background: #fff0ee;
+  padding: 10px 14px;
+  color: #922f2a;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.gomoku-result {
+  background: #f2f5ef;
+}
+
+.gomoku-result > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.gomoku-result strong {
+  font-size: 17px;
+}
+
+.gomoku-sidebar {
+  display: grid;
+  gap: 12px;
+}
+
+.gomoku-settings,
+.gomoku-toggles {
+  display: grid;
+  gap: 13px;
+  padding: 14px;
+}
+
+.gomoku-setting {
+  display: grid;
+  gap: 6px;
+}
+
+.gomoku-setting > span {
+  color: #606861;
+  font-size: 12px;
+  font-weight: 730;
+}
+
+.gomoku-segmented.is-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gomoku-new-game {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.gomoku-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+
+.gomoku-actions button:last-child {
+  grid-column: 1 / -1;
+}
+
+.gomoku-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.gomoku-toggle {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #4e5650;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.gomoku-toggle input {
+  width: 38px;
+  height: 22px;
+  accent-color: #65401f;
+}
+
+.gomoku-ai-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cfd4cc;
+  border-radius: 7px;
+  background: #f8faf6;
+  padding: 10px 12px;
+  color: #606861;
+  font-size: 12px;
+  font-weight: 660;
+}
+
+.gomoku-coming-stage {
+  display: grid;
+  min-height: 420px;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px solid #cfd4cc;
+  border-radius: 8px;
+  background: #fff;
+  color: #555d57;
+}
+
+.gomoku-coming-stage strong {
+  color: #252a26;
+  font-size: 20px;
+}
+
+.gomoku-coming-stage span {
+  font-size: 13px;
+}
+
+.gomoku-content-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 680px) 220px;
+  justify-content: center;
+  gap: 14px;
+  align-items: start;
+}
+
+.gomoku-content-list,
+.gomoku-content-board,
+.gomoku-content-tools,
+.gomoku-lesson-list,
+.gomoku-lesson-main,
+.gomoku-lesson-nav {
+  border: 1px solid #cfd4cc;
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.gomoku-content-list {
+  overflow: hidden;
+}
+
+.gomoku-content-filter {
+  margin: 10px;
+}
+
+.gomoku-puzzle-grid {
+  display: grid;
+  max-height: 665px;
+  gap: 1px;
+  overflow-y: auto;
+  border-top: 1px solid #d8dcd5;
+  background: #e2e5df;
+}
+
+.gomoku-puzzle-grid button {
+  display: grid;
+  min-height: 58px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 0;
+  background: #fbfcfa;
+  padding: 8px 10px;
+  color: #2f3530;
+  text-align: left;
+}
+
+.gomoku-puzzle-grid button:hover,
+.gomoku-puzzle-grid button.is-active {
+  background: #f0e5d6;
+}
+
+.gomoku-puzzle-grid button.is-active {
+  box-shadow: inset 3px 0 #7a4b21;
+}
+
+.gomoku-puzzle-grid button > span {
+  color: #8a623e;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.gomoku-puzzle-grid strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gomoku-puzzle-grid small {
+  color: #798078;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.gomoku-content-board {
+  overflow: hidden;
+}
+
+.gomoku-content-heading {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #d6dad3;
+  padding: 10px 16px;
+}
+
+.gomoku-content-heading h1 {
+  margin-top: 3px;
+  font-size: 23px;
+}
+
+.gomoku-side-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.gomoku-side-chip.is-black {
+  background: #222;
+  color: #fff;
+}
+
+.gomoku-side-chip.is-white {
+  border: 1px solid #c9c4ba;
+  background: #fff;
+  color: #333;
+}
+
+.gomoku-side-chip.is-draw {
+  border: 1px solid #aeb5ac;
+  background: #e9ece6;
+  color: #4f5751;
+}
+
+.gomoku-puzzle-status {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid #d6dad3;
+  padding: 8px 14px;
+  color: #515952;
+  font-size: 13px;
+}
+
+.gomoku-puzzle-status strong {
+  flex: 1;
+  color: #282d29;
+}
+
+.gomoku-mini-stone {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.gomoku-mini-stone.is-black {
+  background: #171716;
+}
+
+.gomoku-mini-stone.is-white {
+  border: 1px solid #bdb7ad;
+  background: #f5f1e9;
+}
+
+.gomoku-content-tools {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  background: #d7dbd4;
+}
+
+.gomoku-content-tools > section {
+  display: grid;
+  gap: 10px;
+  background: #fbfcfa;
+  padding: 13px;
+}
+
+.gomoku-content-tools p {
+  min-height: 62px;
+  margin: 0;
+  color: #535b54;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gomoku-tool-actions {
+  grid-template-columns: 1fr;
+}
+
+.gomoku-puzzle-nav {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+
+.gomoku-puzzle-nav > span {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 730;
+}
+
+.gomoku-puzzle-nav button:disabled,
+.gomoku-content-tools button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.gomoku-progress-summary {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  color: #5c645d;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.gomoku-learn-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 680px) 170px;
+  justify-content: center;
+  gap: 14px;
+  align-items: start;
+}
+
+.gomoku-lesson-list {
+  display: grid;
+  overflow: hidden;
+}
+
+.gomoku-lesson-list button {
+  display: grid;
+  min-height: 56px;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 0;
+  border-bottom: 1px solid #dde0da;
+  background: transparent;
+  padding: 8px 11px;
+  text-align: left;
+}
+
+.gomoku-lesson-list button:last-child {
+  border-bottom: 0;
+}
+
+.gomoku-lesson-list button.is-active {
+  background: #f0e5d6;
+  box-shadow: inset 3px 0 #7a4b21;
+}
+
+.gomoku-lesson-list button > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e3e6e0;
+  color: #606861;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.gomoku-lesson-list strong {
+  font-size: 13px;
+}
+
+.gomoku-lesson-main {
+  overflow: hidden;
+}
+
+.gomoku-lesson-copy {
+  padding: 14px 16px 4px;
+}
+
+.gomoku-lesson-copy p {
+  margin-bottom: 8px;
+  color: #343a35;
+  font-size: 14px;
+  font-weight: 680;
+  line-height: 1.55;
+}
+
+.gomoku-lesson-copy ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 20px;
+  color: #626a63;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gomoku-exercise-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 16px 0;
+  border-top: 1px solid #d9ddd6;
+  padding-top: 12px;
+}
+
+.gomoku-exercise-heading > span {
+  flex: none;
+  border-radius: 999px;
+  background: #e8e2d8;
+  padding: 4px 8px;
+  color: #715033;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.gomoku-exercise-heading strong {
+  font-size: 13px;
+}
+
+.gomoku-lesson-feedback {
+  margin: 0;
+  border-top: 1px solid #e4c6c3;
+  background: #fff1ef;
+  padding: 11px 14px;
+  color: #983b34;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.gomoku-lesson-feedback.is-success {
+  border-color: #bdd8c7;
+  background: #edf8f0;
+  color: #28623e;
+}
+
+.gomoku-lesson-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #d9ddd6;
+  padding: 10px 14px;
+}
+
+.gomoku-lesson-actions > div {
+  display: flex;
+  gap: 6px;
+}
+
+.gomoku-lesson-actions > div button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  place-items: center;
+  border: 1px solid #c7ccc5;
+  border-radius: 5px;
+  background: #fff;
+  color: #616961;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.gomoku-lesson-actions > div button.is-active {
+  border-color: #72502f;
+  background: #72502f;
+  color: #fff;
+}
+
+.gomoku-lesson-nav {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  color: #626a63;
+  font-size: 12px;
+}
+
+.gomoku-lesson-nav strong {
+  color: #252a26;
+  font-size: 24px;
+}
+
+.gomoku-lesson-nav > div {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.gomoku-lesson-nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.gomoku-replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) 270px;
+  justify-content: center;
+  align-items: start;
+  gap: 18px;
+}
+
+.gomoku-replay-panel {
+  display: grid;
+  gap: 18px;
+  border: 1px solid #cfd4cc;
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 18px;
+}
+
+.gomoku-replay-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gomoku-replay-count span,
+.gomoku-replay-meta dt {
+  color: #737b74;
+  font-size: 12px;
+}
+
+.gomoku-replay-count strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gomoku-replay-panel input[type="range"] {
+  width: 100%;
+  accent-color: #65401f;
+}
+
+.gomoku-replay-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.gomoku-replay-controls .icon-button.is-primary {
+  border-color: #65401f;
+  background: #65401f;
+  color: #fff;
+}
+
+.gomoku-replay-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.gomoku-replay-meta {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-block: 1px solid #dce0da;
+}
+
+.gomoku-replay-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e3e6e1;
+  padding: 10px 0;
+}
+
+.gomoku-replay-meta > div:last-child {
+  border-bottom: 0;
+}
+
+.gomoku-replay-meta dd {
+  margin: 0;
+  font-weight: 720;
+}
+
+.gomoku-assisted-note,
+.gomoku-replay-empty p {
+  margin: 0;
+  color: #6a5140;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gomoku-replay-empty {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  width: min(100% - 24px, 520px);
+  margin: 60px auto;
+}
+
+@keyframes gomoku-stone-in {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+@media (max-width: 900px) {
+  .gomoku-play-layout {
+    grid-template-columns: minmax(0, 720px);
+  }
+
+  .gomoku-sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gomoku-settings {
+    grid-row: span 2;
+  }
+
+  .gomoku-content-layout,
+  .gomoku-learn-layout,
+  .gomoku-replay-layout {
+    grid-template-columns: minmax(0, 720px);
+  }
+
+  .gomoku-content-list,
+  .gomoku-lesson-list {
+    order: 2;
+  }
+
+  .gomoku-content-tools,
+  .gomoku-lesson-nav {
+    order: 3;
+  }
+
+  .gomoku-puzzle-grid {
+    max-height: 320px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gomoku-content-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gomoku-content-tools > section:first-child {
+    grid-row: span 2;
+  }
+
+  .gomoku-lesson-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .app-shell--gomoku .page {
+    padding: 10px 0 calc(32px + env(safe-area-inset-bottom));
+  }
+
+  .gomoku-tabs {
+    width: calc(100% - 24px);
+    margin-bottom: 10px;
+  }
+
+  .gomoku-play-layout {
+    display: block;
+  }
+
+  .gomoku-match {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .gomoku-match__status {
+    min-height: 60px;
+    padding: 8px 12px;
+  }
+
+  .gomoku-match__metrics {
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .gomoku-board-frame {
+    width: 100%;
+    padding: 7px;
+  }
+
+  .gomoku-sidebar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px 0;
+  }
+
+  .gomoku-settings {
+    grid-row: auto;
+  }
+
+  .gomoku-confirm-row {
+    position: sticky;
+    z-index: 5;
+    bottom: 0;
+    background: #fff;
+  }
+
+  .gomoku-result {
+    flex-wrap: wrap;
+  }
+
+  .gomoku-result .primary-button {
+    width: 100%;
+  }
+
+  .gomoku-content-layout,
+  .gomoku-learn-layout,
+  .gomoku-replay-layout {
+    display: block;
+  }
+
+  .gomoku-replay-panel {
+    margin: 10px 12px 0;
+  }
+
+  .gomoku-content-board,
+  .gomoku-lesson-main {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .gomoku-content-list,
+  .gomoku-content-tools,
+  .gomoku-lesson-list,
+  .gomoku-lesson-nav {
+    margin: 10px 12px 0;
+  }
+
+  .gomoku-puzzle-grid {
+    grid-template-columns: 1fr;
+    max-height: 320px;
+  }
+
+  .gomoku-content-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .gomoku-content-tools > section:first-child {
+    grid-row: auto;
+  }
+
+  .gomoku-lesson-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gomoku-stone {
+    animation: none;
+  }
+}

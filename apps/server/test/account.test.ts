@@ -1,6 +1,14 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  createGomokuGame,
+  gomokuLessons,
+  gomokuPuzzles,
+  playGomokuMove,
+  resignGomokuGame,
+  type GomokuGameState
+} from "@party-games/gomoku";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 
@@ -257,7 +265,165 @@ describe("platform accounts and puzzle records", () => {
         .room.players.find((player) => player.id === guestSession.playerId)
     ).not.toHaveProperty("accountUserId");
   });
+
+  it("validates, deduplicates and restores gomoku account data", async () => {
+    const { app } = await createTestApp();
+    const setup = await app.inject({
+      method: "POST",
+      url: "/api/account/bootstrap",
+      payload: {
+        username: "owner",
+        displayName: "房主",
+        password: "owner-password"
+      }
+    });
+    const cookie = sessionCookie(setup.headers["set-cookie"]);
+    let state = createGomokuGame({
+      id: "gomoku-test-game",
+      ruleSet: "renju",
+      mode: "ai",
+      aiDifficulty: "normal",
+      humanColor: "black",
+      startedAt: Date.now(),
+      seed: 42
+    });
+    for (const point of [
+      { x: 0, y: 0 },
+      { x: 0, y: 1 },
+      { x: 1, y: 0 },
+      { x: 1, y: 1 }
+    ]) {
+      state = playRequired(state, point);
+    }
+
+    const saved = await app.inject({
+      method: "PUT",
+      url: "/api/account/gomoku/save",
+      headers: { cookie },
+      payload: { state }
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(saved.json()).toMatchObject({ state: { id: "gomoku-test-game", moves: state.moves } });
+
+    for (const point of [
+      { x: 2, y: 0 },
+      { x: 2, y: 1 },
+      { x: 3, y: 0 },
+      { x: 3, y: 1 },
+      { x: 4, y: 0 }
+    ]) {
+      state = playRequired(state, point);
+    }
+    state = { ...state, elapsedSeconds: 19 };
+    const first = await app.inject({
+      method: "POST",
+      url: "/api/account/gomoku/matches",
+      headers: { cookie },
+      payload: { state }
+    });
+    expect(first.statusCode).toBe(200);
+    expect(first.json()).toMatchObject({
+      gameId: "gomoku-test-game",
+      outcome: "win",
+      winner: "black",
+      moveCount: 9,
+      assisted: false
+    });
+    const duplicate = await app.inject({
+      method: "POST",
+      url: "/api/account/gomoku/matches",
+      headers: { cookie },
+      payload: { state }
+    });
+    expect(duplicate.statusCode).toBe(200);
+    expect(duplicate.json().id).toBe(first.json().id);
+
+    const puzzle = gomokuPuzzles[0];
+    const exercise = gomokuLessons[0]?.exercises[0];
+    if (!puzzle || !exercise) throw new Error("gomoku content missing");
+    const progress = await app.inject({
+      method: "PUT",
+      url: "/api/account/gomoku/progress",
+      headers: { cookie },
+      payload: {
+        items: [
+          {
+            contentType: "puzzle",
+            contentId: puzzle.id,
+            stars: 2,
+            bestMoves: 3,
+            hintsUsed: 1
+          },
+          {
+            contentType: "lesson",
+            contentId: exercise.id,
+            stars: 0,
+            bestMoves: 0,
+            hintsUsed: 0
+          }
+        ]
+      }
+    });
+    expect(progress.statusCode).toBe(200);
+    expect(progress.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ contentType: "puzzle", contentId: puzzle.id, stars: 2 }),
+        expect.objectContaining({ contentType: "lesson", contentId: exercise.id })
+      ])
+    );
+
+    const overview = await app.inject({
+      method: "GET",
+      url: "/api/account/gomoku/overview",
+      headers: { cookie }
+    });
+    expect(overview.statusCode).toBe(200);
+    expect(overview.json()).toMatchObject({
+      stats: { total: 1, wins: 1, losses: 0, draws: 0, assisted: 0 },
+      recentMatches: [{ gameId: "gomoku-test-game", outcome: "win" }],
+      save: { state: { id: "gomoku-test-game" } }
+    });
+    const detail = await app.inject({
+      method: "GET",
+      url: `/api/account/gomoku/matches/${first.json().id}`,
+      headers: { cookie }
+    });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json()).toMatchObject({ state: { result: { outcome: "black", reason: "five" } } });
+
+    const invalid = resignGomokuGame(
+      createGomokuGame({
+        id: "invalid-resign",
+        ruleSet: "renju",
+        mode: "ai",
+        aiDifficulty: "easy",
+        humanColor: "black",
+        startedAt: Date.now(),
+        seed: 7
+      }),
+      "white"
+    );
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/api/account/gomoku/matches",
+          headers: { cookie },
+          payload: { state: invalid }
+        })
+      ).statusCode
+    ).toBe(400);
+  });
 });
+
+function playRequired(
+  state: GomokuGameState,
+  point: { x: number; y: number }
+): GomokuGameState {
+  const result = playGomokuMove(state, point);
+  if (!result.ok) throw new Error(`gomoku move failed: ${result.failure.reason}`);
+  return result.state;
+}
 
 async function submitResult(
   app: Awaited<ReturnType<typeof createTestApp>>["app"],

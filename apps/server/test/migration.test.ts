@@ -63,7 +63,7 @@ describe("sqlite migrations", () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-migration-new-"));
     const databasePath = join(directory, "test.sqlite");
     const repository = new SqliteRoomRepository(databasePath);
-    expect(repository.getSchemaVersion()).toBe(4);
+    expect(repository.getSchemaVersion()).toBe(5);
     repository.close();
     rmSync(directory, { recursive: true, force: true });
   });
@@ -118,7 +118,7 @@ describe("sqlite migrations", () => {
     legacy.close();
 
     const repository = new SqliteRoomRepository(databasePath);
-    expect(repository.getSchemaVersion()).toBe(4);
+    expect(repository.getSchemaVersion()).toBe(5);
     expect(repository.getRoom("LEGACY")).toMatchObject({
       schemaVersion: 1,
       id: "legacy-room",

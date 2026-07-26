@@ -1,6 +1,7 @@
 import { FlaskConical, KeyRound, LogIn, RefreshCw } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import type { TurtleSoupDifficulty } from "@party-games/shared";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 import { saveSession } from "../../session";
@@ -14,6 +15,8 @@ export function TurtleSoupEntryPage() {
   const [password, setPassword] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
+  const [difficulty, setDifficulty] = useState<TurtleSoupDifficulty>("normal");
+  const [tags, setTags] = useState("悬疑 日常反常");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +27,12 @@ export function TurtleSoupEntryPage() {
     try {
       const session =
         mode === "create"
-          ? await createRoom({ gameType: "turtle-soup", nickname, password })
+          ? await createRoom({
+              gameType: "turtle-soup",
+              nickname,
+              password,
+              turtleSoup: { difficulty, tags: parseTags(tags) }
+            })
           : mode === "join"
             ? await joinRoom({ roomCode, nickname, password })
             : await recoverRoom({ roomCode, recoveryCode });
@@ -128,6 +136,36 @@ export function TurtleSoupEntryPage() {
             </label>
           )}
 
+          {mode === "create" ? (
+            <>
+              <label>
+                题目标签
+                <input
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  maxLength={80}
+                  placeholder="悬疑 日常反常 电梯"
+                />
+              </label>
+              <div className="segmented" role="tablist" aria-label="海龟汤难度">
+                {([
+                  ["easy", "简单"],
+                  ["normal", "标准"],
+                  ["hard", "困难"]
+                ] as const).map(([value, label]) => (
+                  <button
+                    type="button"
+                    className={difficulty === value ? "is-active" : ""}
+                    onClick={() => setDifficulty(value)}
+                    key={value}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-button" type="submit" disabled={busy}>
             {busy ? (
@@ -142,5 +180,17 @@ export function TurtleSoupEntryPage() {
         </form>
       </section>
     </AppShell>
+  );
+}
+
+function parseTags(value: string): string[] {
+  return Array.from(
+    new Set(
+      value
+        .split(/[\s,，、/]+/u)
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .slice(0, 6)
+    )
   );
 }

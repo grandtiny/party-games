@@ -3,7 +3,8 @@ import type {
   GameType,
   PokerRoomConfig,
   RoomPhase,
-  TurtleSoupAnswerView
+  TurtleSoupAnswerView,
+  TurtleSoupDifficulty
 } from "@party-games/shared";
 import type {
   DayPublicEvent,
@@ -48,11 +49,36 @@ export interface InternalRoomState {
     table?: PokerTableState;
     blindTimer?: PokerBlindTimerState;
   } | undefined;
+  turtleSoupConfig?: TurtleSoupRoomConfigState | undefined;
   turtleSoup?: TurtleSoupState | undefined;
+}
+
+export interface TurtleSoupRoomConfigState {
+  difficulty: TurtleSoupDifficulty;
+  tags: string[];
+}
+
+export interface TurtleSoupPuzzleState {
+  id: string;
+  title: string;
+  surface: string;
+  answer: string;
+  source: "model" | "local";
+  maxHints: number;
+  keyPoints: TurtleSoupPuzzleKeyPointState[];
+  hints?: string[];
+}
+
+export interface TurtleSoupPuzzleKeyPointState {
+  id: string;
+  text: string;
+  aliases?: string[];
 }
 
 export interface TurtleSoupState {
   puzzleId: string;
+  puzzle?: TurtleSoupPuzzleState;
+  judgeSource?: "model" | "local";
   status: "playing" | "solved";
   foundKeyPoints: Record<string, { playerId: string; foundAt: string }>;
   log: TurtleSoupLogEntry[];
@@ -191,6 +217,7 @@ export function migrateInternalRoomState(value: unknown): InternalRoomState {
       ? {
           turtleSoup: {
             ...state.turtleSoup,
+            judgeSource: state.turtleSoup.judgeSource ?? state.turtleSoup.puzzle?.source ?? "local",
             status: state.turtleSoup.status ?? "playing",
             foundKeyPoints: state.turtleSoup.foundKeyPoints ?? {},
             log: state.turtleSoup.log ?? [],

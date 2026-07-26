@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Bomb,
+  CircleDot,
   Clock3,
   FlaskConical,
   Grid3X3,
@@ -101,6 +102,14 @@ export function HomePage() {
           <span>
             <strong>数独</strong>
             <small>四档难度 · 候选笔记</small>
+          </span>
+          <ArrowRight size={20} />
+        </Link>
+        <Link className="game-card game-card--gomoku" to="/gomoku">
+          <CircleDot size={34} strokeWidth={1.8} />
+          <span>
+            <strong>五子棋</strong>
+            <small>禁手规则 · 单人 AI</small>
           </span>
           <ArrowRight size={20} />
         </Link>

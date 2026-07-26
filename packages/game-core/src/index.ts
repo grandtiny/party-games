@@ -12,6 +12,8 @@ export interface GameCommand<
   payload: TPayload;
 }
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export interface GameModule<
   TState,
   TCommand,
@@ -23,10 +25,10 @@ export interface GameModule<
   TUpdate,
   TGameId extends string = string
 > extends GameModuleDescriptor<TGameId> {
-  create(state: TState, context: TCreateContext): TUpdate;
-  handle(state: TState, command: TCommand, context: THandleContext): TUpdate;
+  create(state: TState, context: TCreateContext): MaybePromise<TUpdate>;
+  handle(state: TState, command: TCommand, context: THandleContext): MaybePromise<TUpdate>;
   project(state: TState, context: TProjectionContext): TProjection;
-  tick(state: TState, context: TTickContext): TUpdate | undefined;
+  tick(state: TState, context: TTickContext): MaybePromise<TUpdate | undefined>;
   migrate(value: unknown): TState;
   validate(state: TState): void;
 }
