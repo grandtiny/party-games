@@ -5,21 +5,30 @@ import {
   decode_y
 } from "../packages/gomoku/node_modules/@renju-note/quintet/quintet.js";
 
-const targetPerKind = 1;
+const targetPerKind = Number.parseInt(process.argv[2] ?? "12", 10);
+const maxAttempts = Number.parseInt(process.argv[3] ?? "6000", 10);
+const minSolutionLength = Number.parseInt(process.argv[4] ?? "5", 10);
+const maxSolutionLength = Number.parseInt(process.argv[5] ?? "13", 10);
 const found = { vcf: [], vct: [] };
+const seen = new Set();
 let randomState = 0x51f15e5d;
 
-for (let attempt = 0; attempt < 800; attempt += 1) {
-  if (attempt > 0 && attempt % 50 === 0) process.stdout.write(`attempt ${attempt}\n`);
-  const state = randomGame(20 + randomInt(12));
+for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+  if (attempt > 0 && attempt % 250 === 0) {
+    process.stderr.write(`attempt ${attempt}, vcf ${found.vcf.length}, vct ${found.vct.length}\n`);
+  }
+  const state = randomGame(18 + randomInt(18));
   if (!state || state.result) continue;
   const encoded = encodeState(state);
+  const key = state.moves.map((move) => `${move.player[0]}${move.x},${move.y}`).join("|");
+  if (seen.has(key)) continue;
 
   if (found.vcf.length < targetPerKind) {
     const path = solve_vcf(encoded.black, encoded.white, state.currentPlayer === "black", 7);
-    if (path && path.length >= 3 && path.length <= 9) {
+    if (path && path.length >= minSolutionLength && path.length <= maxSolutionLength) {
+      seen.add(key);
       found.vcf.push({ state, solution: decodePath(path) });
-      process.stdout.write(`found vcf ${found.vcf.length} at attempt ${attempt}\n`);
+      process.stderr.write(`found vcf ${found.vcf.length} at attempt ${attempt}, length ${path.length}\n`);
     }
   }
 
@@ -27,9 +36,10 @@ for (let attempt = 0; attempt < 800; attempt += 1) {
     const vcf = solve_vcf(encoded.black, encoded.white, state.currentPlayer === "black", 7);
     if (!vcf) {
       const path = solve_vct(encoded.black, encoded.white, state.currentPlayer === "black", 5);
-      if (path && path.length >= 3 && path.length <= 9) {
+      if (path && path.length >= minSolutionLength && path.length <= maxSolutionLength) {
+        seen.add(key);
         found.vct.push({ state, solution: decodePath(path) });
-        process.stdout.write(`found vct ${found.vct.length} at attempt ${attempt}\n`);
+        process.stderr.write(`found vct ${found.vct.length} at attempt ${attempt}, length ${path.length}\n`);
       }
     }
   }

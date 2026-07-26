@@ -20,8 +20,22 @@ describe("gomoku content", () => {
 
   it("covers every planned puzzle category", () => {
     expect(new Set(gomokuPuzzles.map((puzzle) => puzzle.category))).toEqual(
-      new Set(["finish", "defense", "forbidden", "vcf", "vct"])
+      new Set(["vcf", "vct"])
     );
+  });
+
+  it("keeps puzzle mode focused on multi-step tactical problems", () => {
+    expect(new Set(gomokuPuzzles.map((puzzle) => puzzle.objective))).toEqual(new Set(["prove"]));
+    expect(new Set(gomokuPuzzles.map((puzzle) => puzzle.solutionLines[0]?.length))).toEqual(
+      new Set([5, 7, 9, 11, 13])
+    );
+    expect(gomokuPuzzles.every((puzzle) => (puzzle.solutionLines[0]?.length ?? 0) >= 5)).toBe(true);
+    expect(new Set(gomokuPuzzles.map((puzzle) => puzzle.difficulty))).toEqual(
+      new Set(["beginner", "intermediate", "advanced"])
+    );
+    for (const difficulty of ["beginner", "intermediate", "advanced"]) {
+      expect(gomokuPuzzles.filter((puzzle) => puzzle.difficulty === difficulty)).toHaveLength(20);
+    }
   });
 
   it("provides eight lessons with two legal exercises each", () => {

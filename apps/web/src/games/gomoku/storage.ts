@@ -189,6 +189,28 @@ export function markGomokuLocalMatchSynced(gameId: string): void {
   window.localStorage.setItem(MATCHES_KEY, JSON.stringify(next));
 }
 
+export function createGomokuClientId(): string {
+  try {
+    if (typeof globalThis.crypto?.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+  } catch {
+    // Plain HTTP contexts can expose crypto partially or not at all.
+  }
+  return `gomoku-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function createGomokuSeed(): number {
+  try {
+    if (typeof globalThis.crypto?.getRandomValues === "function") {
+      return globalThis.crypto.getRandomValues(new Uint32Array(1))[0] ?? Date.now();
+    }
+  } catch {
+    // This seed is only used to vary AI choices, not for security.
+  }
+  return Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
+}
+
 function bestPositive(left: number | undefined, right: number): number {
   if (!left) return right;
   if (!right) return left;

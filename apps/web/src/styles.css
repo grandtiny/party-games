@@ -48,6 +48,14 @@ a {
   min-height: 100vh;
 }
 
+.route-loading {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: #626b65;
+  font-size: 15px;
+}
+
 .topbar {
   position: sticky;
   z-index: 20;

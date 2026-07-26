@@ -40,6 +40,8 @@ import { GomokuLearnPanel } from "./LearnPanel";
 import { GomokuPuzzlesPanel } from "./PuzzlesPanel";
 import {
   addGomokuLocalMatch,
+  createGomokuClientId,
+  createGomokuSeed,
   gomokuProgressItems,
   loadGomokuGame,
   loadGomokuGameSnapshot,
@@ -484,11 +486,11 @@ function ResultPanel({ game, onRestart }: { game: GomokuGameState; onRestart: ()
 
 function newGame(config: MatchConfig): GomokuGameState {
   return createGomokuGame({
-    id: crypto.randomUUID(),
+    id: createGomokuClientId(),
     ruleSet: config.ruleSet,
     mode: config.mode,
     startedAt: Date.now(),
-    seed: randomSeed(),
+    seed: createGomokuSeed(),
     ...(config.mode === "ai" ? { aiDifficulty: config.difficulty, humanColor: config.humanColor } : {})
   });
 }
@@ -527,10 +529,6 @@ function difficultyLabel(difficulty: GomokuAiDifficulty): string {
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   return `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-}
-
-function randomSeed(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0] ?? Date.now();
 }
 
 function coordinateLabel(point: GomokuPoint): string {

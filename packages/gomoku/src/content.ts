@@ -1,4 +1,5 @@
 import { createGomokuGame, playGomokuMove } from "./game.js";
+import { gomokuPuzzleSeeds, type GomokuPuzzleSeedKind } from "./puzzle-seeds.js";
 import { GomokuPosition, otherStone } from "./position.js";
 import type {
   GomokuGameState,
@@ -16,7 +17,7 @@ export type GomokuPuzzleCategory =
   | "vcf"
   | "vct";
 export type GomokuPuzzleDifficulty = "beginner" | "intermediate" | "advanced";
-export type GomokuPuzzleObjective = "win" | "defend";
+export type GomokuPuzzleObjective = "win" | "defend" | "prove";
 
 export interface GomokuPuzzle {
   id: string;
@@ -54,173 +55,38 @@ export interface GomokuLesson {
   exercises: GomokuLessonExercise[];
 }
 
-interface PuzzleTemplate extends Omit<GomokuPuzzle, "id" | "number" | "title"> {
-  title: string;
-}
+const NOTE_COLUMNS = "ABCDEFGHIJKLMNO";
 
-const TRANSFORMS = [
-  { id: "a", shift: [0, 0], map: (x: number, y: number) => [x, y] as const },
-  { id: "b", shift: [1, -1], map: (x: number, y: number) => [14 - y, x] as const },
-  { id: "c", shift: [-1, 1], map: (x: number, y: number) => [14 - x, 14 - y] as const },
-  { id: "d", shift: [1, 1], map: (x: number, y: number) => [y, 14 - x] as const },
-  { id: "e", shift: [-1, -1], map: (x: number, y: number) => [14 - x, y] as const },
-  { id: "f", shift: [0, 1], map: (x: number, y: number) => [y, x] as const }
-] as const;
+export const gomokuPuzzles: readonly GomokuPuzzle[] = gomokuPuzzleSeeds.map((seed, index) => {
+  const moves = parseNotationList(seed.moves);
+  const solution = parseNotationList(seed.solution);
+  const number = index + 1;
+  return {
+    id: "gomoku-" + String(number).padStart(3, "0"),
+    number,
+    title: puzzleTitle(seed.kind, number),
+    category: seed.kind,
+    difficulty: seed.difficulty,
+    ruleSet: "renju",
+    toMove: moves.length % 2 === 0 ? "black" : "white",
+    black: moves.filter((_, moveIndex) => moveIndex % 2 === 0),
+    white: moves.filter((_, moveIndex) => moveIndex % 2 === 1),
+    objective: "prove",
+    solutionLines: [solution],
+    hints: puzzleHints(seed.kind, solution.length),
+    forbiddenDecoys: []
+  };
+});
 
-const puzzleTemplates: PuzzleTemplate[] = [
-  {
-    title: "封口成五",
-    category: "finish",
-    difficulty: "beginner",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[4, 7], [5, 7], [6, 7], [7, 7]]),
-    white: points([[3, 7]]),
-    objective: "win",
-    solutionLines: [points([[8, 7]])],
-    hints: ["寻找只差一子的连续棋形。", "白棋已经封住其中一端。", "落在四颗黑棋的另一端。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "纵向收束",
-    category: "finish",
-    difficulty: "beginner",
-    ruleSet: "renju",
-    toMove: "white",
-    black: points([[7, 3]]),
-    white: points([[7, 4], [7, 5], [7, 6], [7, 7]]),
-    objective: "win",
-    solutionLines: [points([[7, 8]])],
-    hints: ["白方没有禁手限制。", "观察纵向的四颗白棋。", "在下端补成五连。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "补齐断点",
-    category: "finish",
-    difficulty: "beginner",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[4, 7], [5, 7], [6, 7], [8, 7]]),
-    white: points([[3, 7]]),
-    objective: "win",
-    solutionLines: [points([[7, 7]])],
-    hints: ["连续五子可以包含当前空缺。", "不要只观察棋形两端。", "填入黑棋中间的唯一断点。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "斜线终结",
-    category: "finish",
-    difficulty: "beginner",
-    ruleSet: "freestyle",
-    toMove: "white",
-    black: points([[3, 3]]),
-    white: points([[4, 4], [5, 5], [6, 6], [7, 7]]),
-    objective: "win",
-    solutionLines: [points([[8, 8]])],
-    hints: ["斜线同样可以形成五连。", "左上方向已经被黑棋封住。", "延伸右下端。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "唯一防点",
-    category: "defense",
-    difficulty: "intermediate",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[3, 7]]),
-    white: points([[4, 7], [5, 7], [6, 7], [7, 7]]),
-    objective: "defend",
-    solutionLines: [points([[8, 7]])],
-    hints: ["先检查对手下一手是否能直接获胜。", "白棋的四连只有一端开放。", "封住白棋右端。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "斜线拦截",
-    category: "defense",
-    difficulty: "intermediate",
-    ruleSet: "renju",
-    toMove: "white",
-    black: points([[4, 4], [5, 5], [6, 6], [7, 7]]),
-    white: points([[3, 3]]),
-    objective: "defend",
-    solutionLines: [points([[8, 8]])],
-    hints: ["黑方下一手能够形成正好五连。", "左上端已经被白棋占据。", "封住右下端。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "避开三三",
-    category: "forbidden",
-    difficulty: "intermediate",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([
-      [6, 7], [8, 7], [7, 6], [7, 8],
-      [4, 3], [5, 3], [6, 3], [7, 3]
-    ]),
-    white: points([[3, 3]]),
-    objective: "win",
-    solutionLines: [points([[8, 3]])],
-    hints: ["中心看似强势，但黑方需要检查禁手。", "中心落子会同时形成两个活三。", "先完成上方已经存在的四连。"],
-    forbiddenDecoys: points([[7, 7]])
-  },
-  {
-    title: "五连优先",
-    category: "forbidden",
-    difficulty: "intermediate",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[3, 7], [4, 7], [5, 7], [6, 7], [7, 5], [7, 6], [7, 8]]),
-    white: [],
-    objective: "win",
-    solutionLines: [points([[7, 7]])],
-    hints: ["禁手判定需要先检查是否已经正好五连。", "中心落子会产生横向五连。", "正好五连优先获胜。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "连续冲四",
-    category: "vcf",
-    difficulty: "advanced",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[7, 7], [5, 8], [8, 6], [8, 7], [8, 9], [7, 5], [9, 7], [6, 10], [5, 10], [7, 3], [7, 9]]),
-    white: points([[6, 7], [8, 8], [10, 9], [7, 6], [10, 10], [9, 8], [5, 7], [5, 6], [5, 4], [4, 6], [9, 6]]),
-    objective: "win",
-    solutionLines: [
-      points([[10, 7], [11, 7], [6, 4], [5, 3], [10, 8]]),
-      points([[10, 7], [11, 7], [6, 4], [10, 8], [5, 3]])
-    ],
-    hints: ["每一步都要制造对手必须回应的冲四。", "第一步从右侧横线施压。", "从 K8 开始连续冲四。"],
-    forbiddenDecoys: []
-  },
-  {
-    title: "连续威胁",
-    category: "vct",
-    difficulty: "advanced",
-    ruleSet: "renju",
-    toMove: "black",
-    black: points([[7, 7], [7, 6], [9, 8], [6, 7], [7, 3], [9, 7], [11, 6], [6, 4], [8, 4], [8, 9]]),
-    white: points([[8, 8], [8, 7], [8, 5], [7, 8], [8, 6], [6, 10], [7, 5], [11, 7], [4, 7], [7, 10]]),
-    objective: "win",
-    solutionLines: [
-      points([[9, 4], [7, 4], [9, 5], [9, 6], [6, 2], [5, 1], [10, 6]]),
-      points([[9, 4], [7, 4], [9, 5], [9, 6], [6, 2], [10, 6], [5, 1]])
-    ],
-    hints: ["连续威胁不只包含冲四，也可以利用活三。", "先扩大右上区域的进攻空间。", "第一步落在 J11。"],
-    forbiddenDecoys: []
-  }
-];
+const lessonVcfTemplate = {
+  black: points([[7, 7], [5, 8], [8, 6], [8, 7], [8, 9], [7, 5], [9, 7], [6, 10], [5, 10], [7, 3], [7, 9]]),
+  white: points([[6, 7], [8, 8], [10, 9], [7, 6], [10, 10], [9, 8], [5, 7], [5, 6], [5, 4], [4, 6], [9, 6]])
+};
 
-export const gomokuPuzzles: readonly GomokuPuzzle[] = puzzleTemplates.flatMap(
-  (template, templateIndex) =>
-    TRANSFORMS.map((transform, transformIndex) => {
-      const number = templateIndex * TRANSFORMS.length + transformIndex + 1;
-      return {
-        ...transformPuzzle(template, transform),
-        id: `gomoku-${String(number).padStart(3, "0")}`,
-        number,
-        title: `${template.title} ${transformIndex + 1}`
-      };
-    })
-);
+const lessonVctTemplate = {
+  black: points([[7, 7], [7, 6], [9, 8], [6, 7], [7, 3], [9, 7], [11, 6], [6, 4], [8, 4], [8, 9]]),
+  white: points([[8, 8], [8, 7], [8, 5], [7, 8], [8, 6], [6, 10], [7, 5], [11, 7], [4, 7], [7, 10]])
+};
 
 export const gomokuLessons: readonly GomokuLesson[] = [
   lesson(1, "落子与胜负", "双方轮流在交叉点落子，先连成五子的一方获胜。", [
@@ -250,11 +116,11 @@ export const gomokuLessons: readonly GomokuLesson[] = [
   lesson(7, "VCF 连续冲四", "连续冲四让对手每一手都只能处理成五威胁。", [
     "计算时要同时检查自己的下一次冲四位置。",
     "中途停止制造冲四，主动权通常就会丢失。"
-  ], [exercise("vcf-start", "找到连续冲四的第一步。", "K8 是求解器验证的连续冲四起点。", "renju", "black", puzzleTemplates[8]?.black ?? [], puzzleTemplates[8]?.white ?? [], [[10, 7]]), exercise("vcf-follow", "在回应后继续制造下一次冲四。", "第二次冲四延续强制应对。", "renju", "black", [...(puzzleTemplates[8]?.black ?? []), [10, 7]], [...(puzzleTemplates[8]?.white ?? []), [11, 7]], [[6, 4]])]),
+  ], [exercise("vcf-start", "找到连续冲四的第一步。", "K8 是求解器验证的连续冲四起点。", "renju", "black", lessonVcfTemplate.black, lessonVcfTemplate.white, [[10, 7]]), exercise("vcf-follow", "在回应后继续制造下一次冲四。", "第二次冲四延续强制应对。", "renju", "black", [...lessonVcfTemplate.black, [10, 7]], [...lessonVcfTemplate.white, [11, 7]], [[6, 4]])]),
   lesson(8, "VCT 连续威胁", "连续威胁结合活三和冲四，搜索范围比 VCF 更广。", [
     "先寻找能够持续保留先手的落点。",
     "困难 AI 和高级残局会调用本地 VCT 求解器。"
-  ], [exercise("vct-start", "找到连续威胁的第一步。", "J11 打开了右上区域的连续进攻。", "renju", "black", puzzleTemplates[9]?.black ?? [], puzzleTemplates[9]?.white ?? [], [[9, 4]]), exercise("vct-follow", "回应后继续保持先手。", "J10 延续威胁链。", "renju", "black", [...(puzzleTemplates[9]?.black ?? []), [9, 4]], [...(puzzleTemplates[9]?.white ?? []), [7, 4]], [[9, 5]])])
+  ], [exercise("vct-start", "找到连续威胁的第一步。", "J11 打开了右上区域的连续进攻。", "renju", "black", lessonVctTemplate.black, lessonVctTemplate.white, [[9, 4]]), exercise("vct-follow", "回应后继续保持先手。", "J10 延续威胁链。", "renju", "black", [...lessonVctTemplate.black, [9, 4]], [...lessonVctTemplate.white, [7, 4]], [[9, 5]])])
 ];
 
 export function createGomokuPuzzleState(puzzle: GomokuPuzzle): GomokuGameState {
@@ -297,6 +163,12 @@ export function validateGomokuPuzzle(puzzle: GomokuPuzzle): void {
     if (puzzle.objective === "win" && state.result?.outcome !== puzzle.toMove) {
       throw new Error(`${puzzle.id} 解答没有让指定方获胜`);
     }
+    if (puzzle.objective === "prove") {
+      if (line.length < 5) throw new Error(`${puzzle.id} 证明线过短`);
+      if (state.result && state.result.outcome !== puzzle.toMove) {
+        throw new Error(`${puzzle.id} 证明线让对手获胜`);
+      }
+    }
     if (puzzle.objective === "defend") {
       const position = GomokuPosition.fromMoves(state.moves);
       const opponent = otherStone(puzzle.toMove);
@@ -336,28 +208,37 @@ function positionState(
   };
 }
 
-function transformPuzzle(
-  template: PuzzleTemplate,
-  transform: (typeof TRANSFORMS)[number]
-): PuzzleTemplate {
-  const map = (point: GomokuPoint): GomokuPoint => {
-    const [mappedX, mappedY] = transform.map(point.x, point.y);
-    const pointWithShift = {
-      x: mappedX + transform.shift[0],
-      y: mappedY + transform.shift[1]
-    };
-    if (pointWithShift.x < 0 || pointWithShift.y < 0 || pointWithShift.x >= 15 || pointWithShift.y >= 15) {
-      throw new Error(`关卡变换越界: ${transform.id}`);
+function parseNotationList(value: string): GomokuPoint[] {
+  if (value.trim().length === 0) return [];
+  return value.split(",").map((notation) => {
+    const column = NOTE_COLUMNS.indexOf(notation[0] ?? "");
+    const row = Number.parseInt(notation.slice(1), 10) - 1;
+    if (column < 0 || !Number.isInteger(row) || row < 0 || row >= 15) {
+      throw new Error("无效五子棋坐标: " + notation);
     }
-    return pointWithShift;
-  };
-  return {
-    ...template,
-    black: template.black.map(map),
-    white: template.white.map(map),
-    solutionLines: template.solutionLines.map((line) => line.map(map)),
-    forbiddenDecoys: template.forbiddenDecoys.map(map)
-  };
+    return { x: column, y: row };
+  });
+}
+
+function puzzleTitle(kind: GomokuPuzzleSeedKind, number: number): string {
+  const label = kind === "vcf" ? "连续冲四" : "连续威胁";
+  return label + " " + String(number).padStart(2, "0");
+}
+
+function puzzleHints(kind: GomokuPuzzleSeedKind, solutionLength: number): [string, string, string] {
+  const attackerMoves = Math.ceil(solutionLength / 2);
+  if (kind === "vcf") {
+    return [
+      "这题不是直接成五，需要连续冲四保持先手。",
+      "完整解线需要 " + attackerMoves + " 次主动落子。",
+      "从能迫使对手唯一应手的冲四点开始。"
+    ];
+  }
+  return [
+    "这题需要先制造连续威胁，不一定每一步都是直接冲四。",
+    "完整解线需要 " + attackerMoves + " 次主动落子。",
+    "优先寻找能同时保留后续威胁的落点。"
+  ];
 }
 
 function lesson(

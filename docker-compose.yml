@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        NODE_IMAGE: ${NODE_IMAGE:-mirror.gcr.io/library/node:24-bookworm-slim}
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-bookworm-slim}
     environment:
       NODE_ENV: production
       PORT: 3000
