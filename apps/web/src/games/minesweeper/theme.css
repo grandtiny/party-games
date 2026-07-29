@@ -1,303 +1,596 @@
+/* ============================================================
+   扫雷 · Windows XP 经典风格
+   所有样式限定在 .app-shell--minesweeper 作用域内。
+   ============================================================ */
+
 .app-shell--minesweeper {
-  --action-background: #a94818;
-  --action-border: #a94818;
-  --action-focus: rgb(169 72 24 / 18%);
-  --game-accent: #a94818;
-  background:
-    linear-gradient(90deg, rgb(54 65 59 / 4%) 1px, transparent 1px),
-    linear-gradient(rgb(54 65 59 / 4%) 1px, transparent 1px),
-    #f1f3ef;
-  background-size: 40px 40px;
+  /* XP 经典色板 */
+  --xp-face: #d4d0c8;      /* 窗口正文区灰 */
+  --xp-cell: #c0c0c0;      /* 未翻开格灰 */
+  --xp-revealed: #d4d0c8;  /* 翻开格 */
+  --xp-hi: #ffffff;        /* bevel 亮边 */
+  --xp-hi2: #dfdfdf;       /* bevel 次亮边 */
+  --xp-lo: #808080;        /* bevel 暗边 */
+  --xp-lo2: #000000;       /* bevel 最暗边 */
+  --xp-title-from: #0a246a;
+  --xp-title-to: #3a6ea5;
+  --xp-led-on: #ff0000;
+  --xp-led-off: #330000;
+  --xp-led-bg: #000000;
+
+  /* 现有顶栏/账号按钮仍读取 --game-accent，给一个协调色 */
+  --action-background: #0a246a;
+  --action-border: #0a246a;
+  --action-focus: rgb(10 36 106 / 14%);
+  --game-accent: #0a246a;
+
+  /* 窗外底色：XP 经典 Bliss 壁纸（草地+蓝天白云）
+     底色保留桌面蓝，作为图片加载前/失败时的兜底 */
+  background-color: #3a6ea5;
+  background-image: url("./assets/bliss.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  /* cover：图片等比缩放铺满整个视口，绝不变形 */
+  background-size: cover;
+  /* fixed：图片固定不随页面滚动（桌面端经典效果）。
+     iOS Safari 对 fixed+cover 有放大模糊 bug，在下方移动端媒体查询里改为 scroll */
+  background-attachment: fixed;
+  background-origin: border-box;
 }
 
 .app-shell--minesweeper .page {
   width: min(100%, 1180px);
 }
 
-.minesweeper-heading {
-  color: #9f4217;
+/* ---------- XP 窗口外框 ---------- */
+
+.ms-window {
+  position: relative;
+  margin: 0 auto;
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid var(--xp-lo);
+  border-top-color: var(--xp-hi2);
+  border-left-color: var(--xp-hi2);
+  border-radius: 8px 8px 0 0;
+  background: var(--xp-face);
+  box-shadow:
+    inset -1px -1px 0 var(--xp-lo2),
+    inset 1px 1px 0 var(--xp-hi),
+    /* 多层投影：近处清晰 + 远处扩散，模拟窗口浮起 */
+    0 3px 6px rgb(0 0 0 / 45%),
+    0 12px 24px rgb(0 0 0 / 50%),
+    0 28px 60px rgb(0 0 0 / 60%);
 }
 
-.app-shell--minesweeper .puzzle-controls {
-  grid-template-columns: minmax(390px, 1fr) minmax(280px, 360px);
+/* ---------- 标题栏 ---------- */
+
+.ms-titlebar {
+  display: flex;
   align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding-inline: 4px;
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, #094ab3 0%, var(--xp-title-to) 8%, var(--xp-title-from) 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 40%);
+  user-select: none;
 }
 
-.app-shell--minesweeper .puzzle-status-row {
-  grid-column: 1 / -1;
-  grid-row: 2;
+.ms-titlebar__icon {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  place-items: center;
 }
 
-.minesweeper-input-mode {
-  width: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.ms-titlebar__icon svg {
+  width: 15px;
+  height: 15px;
 }
 
-.minesweeper-input-mode button {
+.ms-titlebar__text {
+  flex: 1;
+}
+
+.ms-titlebar__controls {
+  display: flex;
+  gap: 2px;
+}
+
+.ms-titlebar__btn {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #4575c8, #2a5a9e);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: default;
+}
+
+.ms-titlebar__btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ---------- 菜单栏 ---------- */
+
+.ms-menubar {
+  display: flex;
+  gap: 0;
+  height: 22px;
+  align-items: stretch;
+  padding-inline: 2px;
+  background: var(--xp-face);
+  border-bottom: 1px solid var(--xp-lo);
+  box-shadow: inset 0 -1px 0 var(--xp-hi);
+  user-select: none;
+}
+
+.ms-menubar__item {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
+  height: 18px;
+  margin-top: 2px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: #000;
+  font-size: 12px;
+  cursor: default;
 }
 
-.minesweeper-input-mode button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.ms-menubar__item:hover {
+  border-color: var(--xp-title-to);
+  background: var(--xp-title-to);
+  color: #fff;
 }
 
-.minesweeper-stage {
-  overflow: hidden;
-  border: 1px solid #39413d;
-  border-radius: 8px;
-  background:
-    repeating-linear-gradient(135deg, rgb(255 255 255 / 2%) 0 1px, transparent 1px 8px),
-    #262e2a;
-  padding: 22px;
+.ms-menubar__item u {
+  text-decoration: underline;
+}
+
+/* ---------- 正文区 ---------- */
+
+.ms-body {
+  padding: 6px;
+}
+
+/* 顶部状态条：3D 内凹面板（双层阶梯，更深嵌感）*/
+.ms-counter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+  /* 内凹 bevel：暗边在上左，亮边在下右 */
+  border-top: 2px solid var(--xp-lo);
+  border-left: 2px solid var(--xp-lo);
+  border-right: 2px solid var(--xp-hi);
+  border-bottom: 2px solid var(--xp-hi);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 8%),
-    0 18px 42px rgb(30 37 33 / 14%);
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+    inset 1px 1px 0 var(--xp-lo2),
+    inset 2px 2px 0 var(--xp-lo),
+    inset -1px -1px 0 var(--xp-hi2),
+    inset -2px -2px 0 var(--xp-hi);
+  background: var(--xp-face);
 }
 
-.minesweeper-stage--beginner {
-  width: min(100%, 560px);
-  margin-inline: auto;
+/* ---------- 7 段数码管 LED ---------- */
+
+.ms-led {
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  background: var(--xp-led-bg);
+  /* 内凹：嵌进面板 */
+  box-shadow: inset 1px 1px 2px rgb(0 0 0 / 80%);
 }
 
-.minesweeper-stage--intermediate {
-  width: min(100%, 680px);
-  margin-inline: auto;
+.ms-led svg {
+  display: block;
 }
 
-.minesweeper-stage.is-win {
-  border-color: #3c7f5f;
+.ms-led__seg {
+  fill: var(--xp-led-off);
+  transition: fill 60ms ease;
+}
+
+.ms-led__seg.is-on {
+  fill: var(--xp-led-on);
+}
+
+/* ---------- 笑脸按钮 ---------- */
+
+.ms-face {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  cursor: pointer;
+  /* 凸边 bevel */
+  border-top: 2px solid var(--xp-hi);
+  border-left: 2px solid var(--xp-hi);
+  border-right: 2px solid var(--xp-lo);
+  border-bottom: 2px solid var(--xp-lo);
   box-shadow:
-    inset 0 0 0 1px rgb(92 170 126 / 30%),
-    0 18px 42px rgb(30 37 33 / 14%);
+    inset 1px 1px 0 var(--xp-hi2),
+    inset -1px -1px 0 var(--xp-lo2);
+  background: var(--xp-face);
+  padding: 0;
 }
 
-.minesweeper-stage.is-loss {
-  border-color: #9c3438;
+.ms-face:active,
+.ms-face.is-pressed {
+  border-top-color: var(--xp-lo);
+  border-left-color: var(--xp-lo);
+  border-right-color: var(--xp-hi);
+  border-bottom-color: var(--xp-hi);
   box-shadow:
-    inset 0 0 0 1px rgb(204 70 76 / 30%),
-    0 18px 42px rgb(30 37 33 / 14%);
+    inset 1px 1px 0 var(--xp-lo2),
+    inset -1px -1px 0 var(--xp-hi2);
 }
 
-.minesweeper-board-scroll {
+.ms-face svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- 棋盘 ---------- */
+
+.ms-board-scroll {
   max-width: 100%;
   overflow-x: auto;
-  padding: 4px 2px 10px;
-  scrollbar-color: #818b85 #1f2622;
+  padding: 2px;
+  scrollbar-color: #808080 var(--xp-face);
   scrollbar-width: thin;
 }
 
-.minesweeper-board {
+.ms-board {
   display: grid;
   width: max-content;
   grid-template-columns: repeat(var(--mine-columns), var(--mine-cell-size));
-  gap: 2px;
-  border: 5px solid #141a17;
-  border-radius: 5px;
-  background: #202723;
-  padding: 4px;
+  gap: 0;
+  /* 棋盘整体内凹边框（双层阶梯，更深嵌感）*/
+  border-top: 2px solid var(--xp-lo);
+  border-left: 2px solid var(--xp-lo);
+  border-right: 2px solid var(--xp-hi);
+  border-bottom: 2px solid var(--xp-hi);
+  background: var(--xp-face);
   box-shadow:
-    0 0 0 1px #59635d,
-    0 14px 28px rgb(0 0 0 / 25%);
+    inset 1px 1px 0 var(--xp-lo2),
+    inset 2px 2px 0 var(--xp-lo),
+    inset -1px -1px 0 var(--xp-hi2),
+    inset -2px -2px 0 var(--xp-hi);
+  padding: 0;
 }
 
-.minesweeper-board--beginner {
-  --mine-cell-size: 44px !important;
-}
+/* ---------- 格子 ---------- */
 
-.minesweeper-board--intermediate {
-  --mine-cell-size: 34px !important;
-}
-
-.minesweeper-board--expert {
-  --mine-cell-size: 29px !important;
-}
-
-.minesweeper-cell {
+.app-shell--minesweeper .minesweeper-cell {
   display: grid;
   width: var(--mine-cell-size);
   height: var(--mine-cell-size);
   cursor: pointer;
   place-items: center;
-  border: 2px solid;
-  border-color: #aab2ad #39413d #39413d #aab2ad;
-  border-radius: 2px;
-  background: #68736d;
-  color: #111713;
-  font-size: calc(var(--mine-cell-size) * 0.5);
-  font-weight: 850;
+  /* XP 凸起格：双层 bevel 阶梯（box-shadow 精细模拟经典立体方块）*/
+  border: 0;
+  border-top: 2px solid var(--xp-hi);
+  border-left: 2px solid var(--xp-hi);
+  border-right: 2px solid var(--xp-lo);
+  border-bottom: 2px solid var(--xp-lo);
+  box-shadow:
+    inset -1px -1px 0 var(--xp-lo2),
+    inset 1px 1px 0 var(--xp-hi2);
+  background: var(--xp-cell);
+  color: #000;
+  font-size: calc(var(--mine-cell-size) * 0.55);
+  font-weight: 700;
+  font-family: "Tahoma", "Segoe UI", sans-serif;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  text-shadow: 0 1px rgb(255 255 255 / 28%);
-  transition:
-    background-color 100ms ease,
-    border-color 100ms ease,
-    transform 80ms ease;
+  padding: 0;
+  transition: none;
 }
 
-.minesweeper-cell svg {
-  width: 52%;
-  height: 52%;
-  stroke-width: 2.6;
+.app-shell--minesweeper .minesweeper-cell svg {
+  width: 56%;
+  height: 56%;
+  stroke-width: 2;
 }
 
-.minesweeper-cell:hover:not(.is-revealed, .is-detonated) {
-  border-color: #d6bc75 #654c25 #654c25 #d6bc75;
-  background: #7b8175;
-}
-
-.minesweeper-cell:focus-visible {
+/* XP 原版：未翻开格无 hover 变色，仅聚焦可见 */
+.app-shell--minesweeper .minesweeper-cell:focus-visible {
   z-index: 2;
-  outline: 3px solid #ffd166;
-  outline-offset: -2px;
+  outline: 2px dotted #000;
+  outline-offset: -3px;
 }
 
-.minesweeper-cell:active:not(.is-revealed, .is-detonated) {
-  border-color: #39413d #8e9892 #8e9892 #39413d;
-  transform: translateY(1px);
-}
-
-.minesweeper-cell.is-revealed,
-.minesweeper-cell.is-detonated {
+/* 翻开格：平面化（去掉 bevel，1px 灰边） */
+.app-shell--minesweeper .minesweeper-cell.is-revealed,
+.app-shell--minesweeper .minesweeper-cell.is-detonated {
   cursor: default;
-  border: 1px solid #bfc6c1;
-  background: #e7ebe7;
-  animation: minesweeper-reveal 140ms ease-out;
+  border: 1px solid var(--xp-lo);
+  background: var(--xp-revealed);
+  animation: none;
 }
 
-.minesweeper-cell.is-empty {
-  background: #f0f2ef;
+/* 数字配色（XP 经典） */
+.app-shell--minesweeper .minesweeper-cell[data-count="1"] {
+  color: #0000ff;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="2"] {
+  color: #007b00;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="3"] {
+  color: #ff0000;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="4"] {
+  color: #00007b;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="5"] {
+  color: #7b0000;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="6"] {
+  color: #007b7b;
+}
+.app-shell--minesweeper .minesweeper-cell[data-count="7"],
+.app-shell--minesweeper .minesweeper-cell[data-count="8"] {
+  color: #000000;
 }
 
-.minesweeper-cell.is-flagged,
-.minesweeper-cell.is-winning-flag {
-  border-color: #d8be73 #353c38 #353c38 #d8be73;
-  background: #4b554f;
-  color: #ffd05a;
-  filter: drop-shadow(0 0 5px rgb(255 196 58 / 24%));
-  animation: minesweeper-flag 170ms ease-out;
+/* 插旗格：保持凸起（XP 原版插旗格不翻开，仍立体）+ 双层 bevel */
+.app-shell--minesweeper .minesweeper-cell.is-flagged,
+.app-shell--minesweeper .minesweeper-cell.is-winning-flag {
+  border-top: 2px solid var(--xp-hi);
+  border-left: 2px solid var(--xp-hi);
+  border-right: 2px solid var(--xp-lo);
+  border-bottom: 2px solid var(--xp-lo);
+  box-shadow:
+    inset -1px -1px 0 var(--xp-lo2),
+    inset 1px 1px 0 var(--xp-hi2);
+  background: var(--xp-cell);
+  color: #c80000;
+  animation: none;
 }
 
-.minesweeper-cell.is-winning-flag {
-  border-color: #89c9a8 #28543d #28543d #89c9a8;
-  background: #356249;
-  color: #fff2a8;
+/* 引爆格：红色背景 */
+.app-shell--minesweeper .minesweeper-cell.is-detonated {
+  border: 1px solid var(--xp-lo);
+  background: #ff0000;
+  color: #000;
+  animation: none;
 }
 
-.minesweeper-cell.is-detonated {
-  border-color: #761f24;
-  background: #cf3942;
-  color: #fff;
-  text-shadow: none;
-  animation: minesweeper-detonate 260ms ease-out;
+/* 失败时暴露的非引爆雷：浅灰底 */
+.app-shell--minesweeper .minesweeper-cell.is-revealed.is-mine:not(.is-detonated) {
+  background: var(--xp-revealed);
+  color: #000;
 }
 
-.minesweeper-cell.is-revealed.is-mine:not(.is-detonated) {
-  background: #cbd0cc;
-  color: #6c2529;
+/* 错误插旗（失败后）：打叉 */
+.app-shell--minesweeper .minesweeper-cell.is-flagged.is-wrong {
+  background: var(--xp-revealed);
 }
 
-.minesweeper-cell[data-count="1"] {
-  color: #2456ae;
+/* ---------- 格子尺寸分档 ---------- */
+
+.ms-board--beginner {
+  --mine-cell-size: 30px;
 }
 
-.minesweeper-cell[data-count="2"] {
-  color: #14704a;
+.ms-board--intermediate {
+  --mine-cell-size: 26px;
 }
 
-.minesweeper-cell[data-count="3"] {
-  color: #b12831;
+.ms-board--expert {
+  --mine-cell-size: 24px;
 }
 
-.minesweeper-cell[data-count="4"] {
-  color: #603d9a;
+/* ---------- 窗口下方辅助工具条（XP 旗帜面板风格）---------- */
+
+.ms-toolbar {
+  width: max-content;
+  max-width: 100%;
+  margin: 10px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  padding: 6px;
+  /* XP 凸起面板 bevel：亮边在上左，暗边在下右 */
+  border-top: 1px solid var(--xp-hi);
+  border-left: 1px solid var(--xp-hi);
+  border-right: 1px solid var(--xp-lo2);
+  border-bottom: 1px solid var(--xp-lo2);
+  border-radius: 8px;
+  background: var(--xp-face);
+  box-shadow:
+    inset 1px 1px 0 var(--xp-hi2),
+    inset -1px -1px 0 var(--xp-lo),
+    0 6px 16px rgb(0 0 0 / 30%);
+  font-size: 12px;
+  color: #000;
 }
 
-.minesweeper-cell[data-count="5"] {
-  color: #8b3f15;
+.ms-toolbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* 每组之间用 XP 内凹分隔 */
+  padding: 3px 6px;
+  border-top: 1px solid var(--xp-lo);
+  border-left: 1px solid var(--xp-lo);
+  border-right: 1px solid var(--xp-hi);
+  border-bottom: 1px solid var(--xp-hi);
+  background: var(--xp-face);
 }
 
-.minesweeper-cell[data-count="6"] {
-  color: #08717a;
+.ms-toolbar__label {
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
 }
 
-.minesweeper-cell[data-count="7"],
-.minesweeper-cell[data-count="8"] {
-  color: #252a26;
+/* segmented 容器：XP 凹槽面板 */
+.app-shell--minesweeper .segmented {
+  background: var(--xp-face);
+  border: 0;
+  border-top: 1px solid var(--xp-lo);
+  border-left: 1px solid var(--xp-lo);
+  border-right: 1px solid var(--xp-hi);
+  border-bottom: 1px solid var(--xp-hi);
+  border-radius: 2px;
+  padding: 2px;
+  gap: 2px;
 }
 
-@keyframes minesweeper-reveal {
-  from {
-    opacity: 0.55;
-    transform: scale(0.9);
-  }
+/* segmented 按钮：XP 凸起方块 */
+.app-shell--minesweeper .segmented button {
+  min-height: 23px;
+  padding: 0 8px;
+  border: 0;
+  border-top: 1px solid var(--xp-hi);
+  border-left: 1px solid var(--xp-hi);
+  border-right: 1px solid var(--xp-lo);
+  border-bottom: 1px solid var(--xp-lo);
+  border-radius: 3px;
+  background: var(--xp-cell);
+  box-shadow:
+    inset 1px 1px 0 var(--xp-hi2),
+    inset -1px -1px 0 var(--xp-lo);
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  font-family: "Tahoma", "Segoe UI", sans-serif;
+  transition: none;
 }
 
-@keyframes minesweeper-flag {
-  50% {
-    transform: scale(1.12);
-  }
+.app-shell--minesweeper .segmented button:hover:not(:disabled):not(.is-active) {
+  border-color: var(--xp-title-to);
 }
 
-@keyframes minesweeper-detonate {
-  40% {
-    transform: scale(1.12);
-  }
+.app-shell--minesweeper .segmented button:active:not(:disabled) {
+  border-top-color: var(--xp-lo);
+  border-left-color: var(--xp-lo);
+  border-right-color: var(--xp-hi);
+  border-bottom-color: var(--xp-hi);
+  box-shadow:
+    inset 1px 1px 0 var(--xp-lo2),
+    inset -1px -1px 0 var(--xp-hi2);
 }
+
+/* 激活态：XP 按下凹陷（内凹 bevel） */
+.app-shell--minesweeper .segmented button.is-active {
+  border-top-color: var(--xp-lo);
+  border-left-color: var(--xp-lo);
+  border-right-color: var(--xp-hi);
+  border-bottom-color: var(--xp-hi);
+  background: var(--xp-face);
+  color: #000;
+  box-shadow:
+    inset 1px 1px 1px var(--xp-lo2),
+    inset -1px -1px 0 var(--xp-hi2);
+}
+
+.app-shell--minesweeper .segmented button:disabled {
+  color: var(--xp-lo);
+  text-shadow: 1px 1px 0 var(--xp-hi);
+  cursor: default;
+}
+
+.ms-toolbar__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  color: #000;
+  font-weight: 700;
+}
+
+.ms-toolbar__stat svg {
+  color: var(--xp-title-from);
+}
+
+.ms-toolbar__status {
+  font-weight: 700;
+  color: #000;
+}
+
+.ms-toolbar__status.is-win {
+  color: #007b00;
+}
+
+.ms-toolbar__status.is-loss {
+  color: #c80000;
+}
+
+/* ---------- 响应式 ---------- */
 
 @media (min-width: 760px) {
-  .minesweeper-board--beginner,
-  .minesweeper-board--intermediate,
-  .minesweeper-board--expert {
+  .ms-window {
     margin-inline: auto;
   }
 }
 
 @media (max-width: 760px) {
-  .app-shell--minesweeper .puzzle-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .app-shell--minesweeper .puzzle-status-row {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .minesweeper-input-mode {
-    width: 100%;
-  }
-
-  .minesweeper-stage {
-    padding: 12px 8px 8px;
-  }
-
-  .minesweeper-board--beginner {
-    --mine-cell-size: min(35px, calc((100vw - 80px) / 9)) !important;
+  .ms-window {
     margin-inline: auto;
   }
 
-  .minesweeper-board--intermediate {
-    --mine-cell-size: 30px !important;
+  .ms-board--beginner {
+    --mine-cell-size: min(34px, calc((100vw - 76px) / 9));
   }
 
-  .minesweeper-board--expert {
-    --mine-cell-size: 28px !important;
+  .ms-board--intermediate {
+    --mine-cell-size: 28px;
   }
 
-  .puzzle-difficulty button {
+  .ms-board--expert {
+    --mine-cell-size: 24px;
+  }
+
+  .ms-toolbar {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ms-toolbar__group {
+    justify-content: center;
+  }
+
+  .app-shell--minesweeper .segmented.puzzle-difficulty button {
     padding-inline: 5px;
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  /* 移动端背景适配：
+     iOS Safari 对 background-attachment:fixed + size:cover 组合有 bug，
+     会把图片按整个文档高度拉伸，导致严重放大模糊。
+     改为 scroll + 确保视口高度铺满，图片随窗口滚动但首屏即正确铺满。 */
+  .app-shell--minesweeper {
+    background-attachment: scroll;
+    min-height: 100dvh;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .minesweeper-cell,
-  .minesweeper-stage {
-    animation: none;
-    transition: none;
+  .app-shell--minesweeper * {
+    animation: none !important;
+    transition: none !important;
   }
 }
