@@ -104,6 +104,10 @@ export function GomokuPage({ tab }: GomokuPageProps) {
   gameRef.current = game;
 
   useEffect(() => {
+    if (tab !== "play") {
+      workerRef.current = undefined;
+      return undefined;
+    }
     const worker = new Worker(new URL("./ai.worker.ts", import.meta.url), { type: "module" });
     workerRef.current = worker;
     worker.onmessage = (event: MessageEvent<AiWorkerResponse>) => {
@@ -134,8 +138,11 @@ export function GomokuPage({ tab }: GomokuPageProps) {
         setThinking(false);
       }, delay);
     };
-    return () => worker.terminate();
-  }, [settings.sound]);
+    return () => {
+      if (workerRef.current === worker) workerRef.current = undefined;
+      worker.terminate();
+    };
+  }, [settings.sound, tab]);
 
   useEffect(() => saveGomokuGame(game), [game]);
   useEffect(() => saveGomokuSettings(settings), [settings]);
