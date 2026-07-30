@@ -505,6 +505,76 @@ describe("poker table domain", () => {
     ]);
   });
 
+  it("settles a postflop fold when busted seats remain at the table", () => {
+    const initial = createPokerTable(fourPlayerInput());
+    const preparedEngine = restorePokerEngine(initial.engine);
+    const preparedPlayers = preparedEngine.state.players.map((player, seat) => {
+      if (!player) return player;
+      const stack = seat === 0 || seat === 2 ? 1_000 : 0;
+      return {
+        ...player,
+        stack,
+        status: stack > 0 ? PlayerStatus.WAITING : PlayerStatus.BUSTED,
+        hand: null,
+        shownCards: null,
+        betThisStreet: 0,
+        totalInvestedThisHand: 0
+      };
+    });
+    Object.assign(preparedEngine.state, { players: preparedPlayers, initialChips: 2_000 });
+
+    let state = deal({
+      ...initial,
+      engine: createPokerEngineEnvelope(preparedEngine, initial.engine.tableSeed)
+    });
+    const actCurrentPlayer = (
+      action: "fold" | "check" | "call" | "bet" | "raise",
+      now: number,
+      amount?: number
+    ): void => {
+      const engine = restorePokerEngine(state.engine);
+      const actingSeat = engine.state.actionTo;
+      if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+      const actorPlayerId = engine.state.players[actingSeat]?.id;
+      if (!actorPlayerId) throw new Error("测试牌局行动座位为空");
+      state = handle(
+        state,
+        command({
+          type: "poker:act",
+          actorPlayerId,
+          payload: amount === undefined ? { action } : { action, amount }
+        }),
+        now
+      );
+    };
+
+    actCurrentPlayer("raise", 2_100, 319);
+    actCurrentPlayer("call", 2_200);
+    actCurrentPlayer("check", 2_300);
+    actCurrentPlayer("bet", 2_400, 240);
+    actCurrentPlayer("fold", 2_500);
+
+    const settledEngine = restorePokerEngine(state.engine);
+    const view = projectPokerTable(state, OWNER_ID);
+    expect(state.status).toBe("waiting-hand");
+    expect(settledEngine.state.street).toBe("SHOWDOWN");
+    expect(settledEngine.state.actionTo).toBeNull();
+    expect(settledEngine.state.pots).toEqual([]);
+    expect(settledEngine.state.currentBets).toEqual(new Map());
+    expect(view.totalPot).toBe(638);
+    expect(view.table.winners).toEqual([
+      expect.objectContaining({ seat: 0, amount: 638 })
+    ]);
+    expect(view.actionHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "uncalled-return", amount: 240, potAfter: 638 })
+      ])
+    );
+    expect(
+      settledEngine.state.players.reduce((total, player) => total + (player?.stack ?? 0), 0)
+    ).toBe(2_000);
+  });
+
   it("calculates points as stack plus cash-outs minus total buy-ins", () => {
     const state = createPokerTable(BASE_INPUT);
     state.players[0] = {
