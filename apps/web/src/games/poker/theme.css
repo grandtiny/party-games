@@ -1,8 +1,67 @@
+/* ============================================================
+   德州扑克 · 黑金现代赌场主题
+   以 .app-shell--poker 为根作用域，不污染平台层、不影响其他游戏。
+   设计语言：
+     - 背景：纯黑底 + 顶部冷金光晕（吊灯）+ 左右霓虹反射 + 金粉颗粒
+     - 毛毡：墨绿 + 织物纹理 + 内嵌金色双环 + 黑金包边
+     - 强调：香槟金（冷调）多层立体；冷调红（危险/全下）
+     - 文字：冷白 / 暗金；牌背黑底金印
+     - 卡片：玻璃拟态（backdrop-filter blur）
+   ============================================================ */
+
 .app-shell--poker {
-  --action-background: #166443;
-  --action-border: #166443;
-  --action-focus: rgb(22 100 67 / 15%);
-  --game-accent: #166443;
+  /* —— 黑金双轨 —— */
+  --pk-bg:           #050505;   /* 纯黑主底 */
+  --pk-bg-mid:       #0d0d0f;   /* 中过渡 */
+  --pk-bg-elev:      #14141a;   /* 抬升面/卡片底 */
+  --pk-bg-glass:     rgb(20 20 26 / 72%);  /* 玻璃面板 */
+
+  /* —— 香槟金（冷调）—— */
+  --pk-gold:         #c9a227;   /* 香槟金（主线条/描边） */
+  --pk-gold-bright:  #f0d56a;   /* 亮金（高光/渐变起点） */
+  --pk-gold-deep:    #8e7430;   /* 深金（渐变终点，原古铜保留兼容） */
+  --pk-gold-soft:    #8a7430;   /* 暗金（暗描边） */
+  --pk-gold-glow:    rgb(240 213 106 / 28%);  /* 金色冷光晕 */
+
+  /* —— 毛毡墨绿（更深更冷）—— */
+  --pk-emerald:      #0c6b3f;
+  --pk-emerald-deep: #053d24;
+
+  /* —— 冷调红（脱离暖血红）—— */
+  --pk-blood:        #a52a2a;
+  --pk-blood-bright: #c0392b;
+
+  /* —— 兼容旧变量（部分旧规则仍引用，保持等价映射）—— */
+  --pk-panel:        var(--pk-bg-elev);
+  --pk-panel-2:      #1c1c24;
+  --pk-line:         rgb(201 162 39 / 26%);
+
+  /* —— 冷白文字（脱离暖白）—— */
+  --pk-text:         #e8e6e0;
+  --pk-text-dim:     #9a968c;
+  --pk-text-faint:   #5a564e;
+
+  /* —— 共享 token 覆盖：primary-button / input focus / entry-heading 全部变金 —— */
+  --action-background: var(--pk-gold);
+  --action-border:     var(--pk-gold-soft);
+  --action-focus:      var(--pk-gold-glow);
+  --game-accent:       var(--pk-gold);
+
+  /* —— 整页纯黑 + 多层光晕 + 金粉颗粒 —— */
+  color: var(--pk-text);
+  background-color: var(--pk-bg);
+  background-image:
+    /* 1. 顶部冷金光晕（吊灯光感） */
+    radial-gradient(ellipse 70% 45% at 50% -5%, var(--pk-gold-glow) 0%, transparent 55%),
+    /* 2. 左上冷蓝光（霓虹反射） */
+    radial-gradient(ellipse 40% 60% at 0% 20%, rgb(80 120 160 / 8%) 0%, transparent 50%),
+    /* 3. 右上紫光（霓虹反射） */
+    radial-gradient(ellipse 40% 60% at 100% 15%, rgb(120 80 160 / 7%) 0%, transparent 50%),
+    /* 4. 底部深渊渐隐 */
+    radial-gradient(ellipse 90% 35% at 50% 110%, rgb(0 0 0 / 50%) 0%, transparent 60%),
+    /* 5. 金粉颗粒噪点（极低透明度，制造"空气中的金尘"） */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.6 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-attachment: fixed;
 }
 
 .app-shell--poker .page {
@@ -10,7 +69,7 @@
 }
 
 .poker-entry .entry-heading {
-  color: #166443;
+  color: var(--pk-gold);
 }
 
 .poker-mode-switch {
@@ -28,16 +87,16 @@
 .poker-entry select {
   width: 100%;
   min-height: 44px;
-  border: 1px solid #bec5bd;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 6px;
-  background: #fbfcfa;
+  background: var(--pk-panel);
   padding: 9px 11px;
-  color: #1f2421;
+  color: var(--pk-text);
   outline: none;
 }
 
 .poker-entry select:focus {
-  border-color: var(--action-background);
+  border-color: var(--pk-gold);
   box-shadow: 0 0 0 3px var(--action-focus);
 }
 
@@ -52,12 +111,12 @@
 }
 
 .poker-ai-settings {
-  border-top: 1px solid #e1e5df;
+  border-top: 1px solid var(--pk-line);
   padding-top: 16px;
 }
 
 .poker-difficulty-control > strong {
-  color: #334139;
+  color: var(--pk-text-dim);
   font-size: 13px;
 }
 
@@ -74,19 +133,19 @@
 .blind-editor {
   display: grid;
   gap: 10px;
-  border-top: 1px solid #e1e5df;
+  border-top: 1px solid var(--pk-line);
   padding-top: 16px;
 }
 
 .blind-schedule-editor {
   display: grid;
   gap: 10px;
-  border-top: 1px solid #e1e5df;
+  border-top: 1px solid var(--pk-line);
   padding-top: 16px;
 }
 
 .blind-schedule-editor > strong {
-  color: #334139;
+  color: var(--pk-text-dim);
   font-size: 13px;
 }
 
@@ -108,7 +167,7 @@
   height: 42px;
   flex: none;
   place-items: center;
-  color: #727a74;
+  color: var(--pk-text-faint);
   font-size: 12px;
   font-weight: 760;
 }
@@ -127,12 +186,239 @@
   gap: 14px;
 }
 
+/* ============================================================
+   平台壳层覆盖：顶栏 / 按钮 / 表单 / 通知 / 卡片
+   把 styles.css 里硬编码的浅色平台类，在 poker 作用域下改深底金边。
+   ============================================================ */
+
+/* —— 顶栏：深墨底 + 金底分隔线，保留毛玻璃 —— */
+.app-shell--poker .topbar {
+  border-bottom: 1px solid var(--pk-line);
+  background: rgb(20 8 11 / 88%);
+  backdrop-filter: blur(14px);
+}
+
+.app-shell--poker .topbar__title {
+  color: var(--pk-text);
+}
+
+.app-shell--poker .brand-mark {
+  background: linear-gradient(135deg, var(--pk-gold-bright), var(--pk-gold-deep));
+  color: #20140a;
+}
+
+/* —— 图标按钮：深底 + 金描边，hover 金光 —— */
+.app-shell--poker .icon-button {
+  border-color: var(--pk-gold-deep);
+  background: var(--pk-panel);
+  color: var(--pk-gold);
+}
+
+.app-shell--poker .icon-button:hover {
+  border-color: var(--pk-gold);
+  background: var(--pk-panel-2);
+  box-shadow: 0 0 0 3px var(--action-focus);
+}
+
+.app-shell--poker .icon-button.is-account-active {
+  border-color: var(--pk-gold);
+  background: rgb(212 175 55 / 12%);
+  color: var(--pk-gold-bright);
+}
+
+/* —— 主按钮：多层立体金（金属凸起质感）—— */
+.app-shell--poker .primary-button {
+  border: 1px solid var(--pk-gold-soft);
+  background:
+    /* 顶亮高光带 */
+    linear-gradient(180deg, rgb(255 240 180 / 45%) 0%, transparent 18%),
+    /* 主金色渐变 */
+    linear-gradient(180deg, var(--pk-gold-bright) 0%, var(--pk-gold) 50%, var(--pk-gold-soft) 100%);
+  color: #1a1408;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 35%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 180 / 60%),   /* 顶部锐利高光 */
+    inset 0 -2px 4px rgb(0 0 0 / 25%),       /* 底部内阴影 */
+    inset 0 0 0 1px rgb(255 220 120 / 20%),  /* 内描金边 */
+    0 4px 12px rgb(0 0 0 / 50%),             /* 外投影 */
+    0 0 16px var(--pk-gold-glow);            /* 金色外发光 */
+}
+
+.app-shell--poker .primary-button:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgb(255 248 200 / 55%) 0%, transparent 22%),
+    linear-gradient(180deg, #f8e07a 0%, var(--pk-gold-bright) 50%, var(--pk-gold) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 250 200 / 75%),
+    inset 0 -2px 4px rgb(0 0 0 / 20%),
+    inset 0 0 0 1px rgb(255 220 120 / 30%),
+    0 6px 16px rgb(0 0 0 / 55%),
+    0 0 24px var(--pk-gold-glow);
+}
+
+/* primary-button--dark：纯黑底金边 + 金字（庄重感） */
+.app-shell--poker .primary-button--dark {
+  border: 1px solid var(--pk-gold-soft);
+  background: linear-gradient(180deg, #1c1c22 0%, var(--pk-bg) 100%);
+  color: var(--pk-gold-bright);
+  text-shadow: 0 0 8px rgb(240 213 106 / 30%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 6%),
+    inset 0 0 0 1px rgb(201 162 39 / 25%),
+    0 4px 12px rgb(0 0 0 / 50%);
+}
+
+.app-shell--poker .primary-button--dark:hover:not(:disabled) {
+  background: linear-gradient(180deg, #262630 0%, #0d0d0f 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(201 162 39 / 40%),
+    0 0 16px var(--pk-gold-glow),
+    0 4px 12px rgb(0 0 0 / 50%);
+}
+
+/* —— 次要按钮：深玻璃底 + 金边 + 冷白字 —— */
+.app-shell--poker .secondary-button {
+  border: 1px solid var(--pk-gold-soft);
+  background: var(--pk-bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--pk-text);
+}
+
+.app-shell--poker .secondary-button:hover:not(:disabled) {
+  border-color: var(--pk-gold);
+  background: rgb(28 28 36 / 80%);
+  box-shadow: 0 0 0 3px var(--action-focus), 0 0 12px var(--pk-gold-glow);
+}
+
+/* danger-button（平台类，poker 暂未用，统一以防） */
+.app-shell--poker .danger-button {
+  border-color: var(--pk-blood);
+  background: rgb(192 57 43 / 16%);
+  color: var(--pk-blood-bright);
+}
+
+/* —— 分段控件 segmented：深玻璃底金边 —— */
+.app-shell--poker .segmented {
+  border-color: var(--pk-gold-soft);
+  background: var(--pk-bg-glass);
+  backdrop-filter: blur(8px);
+}
+
+.app-shell--poker .segmented button {
+  color: var(--pk-text-dim);
+}
+
+.app-shell--poker .segmented button.is-active {
+  background: linear-gradient(180deg, #262630, var(--pk-bg-elev));
+  color: var(--pk-gold-bright);
+  box-shadow: inset 0 0 0 1px var(--pk-gold), 0 0 12px var(--pk-gold-glow);
+}
+
+/* —— 入口表单 entry-form：深底卡片 + 金边（入口页虽非重点，但深底上需适配） —— */
+.app-shell--poker .entry-form {
+  border-color: var(--pk-gold-deep);
+  background: var(--pk-panel);
+}
+
+.app-shell--poker .entry-form label {
+  color: var(--pk-text-dim);
+}
+
+.app-shell--poker .entry-form input {
+  border-color: var(--pk-gold-deep);
+  background: var(--pk-bg);
+  color: var(--pk-text);
+}
+
+.app-shell--poker .entry-form input::placeholder {
+  color: var(--pk-text-faint);
+}
+
+.app-shell--poker .entry-form input:focus {
+  border-color: var(--pk-gold);
+}
+
+/* —— 通用 notice：深底红描边 —— */
+.app-shell--poker .notice {
+  border-color: rgb(168 36 36 / 50%);
+  background: rgb(139 26 26 / 14%);
+  color: var(--pk-text);
+}
+
+.app-shell--poker .notice--error,
+.app-shell--poker .form-error {
+  color: #ff8a8a;
+}
+
+.app-shell--poker .notice--success {
+  color: #6dd9a8;
+}
+
+/* —— 共享卡片底：room-summary / panel / session-strip / role-reveal —— */
+.app-shell--poker .room-summary,
+.app-shell--poker .panel,
+.app-shell--poker .session-strip,
+.app-shell--poker .role-reveal {
+  border-color: var(--pk-gold-deep);
+  background: var(--pk-panel);
+}
+
+.app-shell--poker .summary-label,
+.app-shell--poker .eyebrow {
+  color: var(--pk-gold);
+}
+
+.app-shell--poker .phase-label,
+.app-shell--poker .status-label {
+  border: 1px solid var(--pk-gold-deep);
+  background: rgb(212 175 55 / 12%);
+  color: var(--pk-gold-bright);
+}
+
+.app-shell--poker .room-summary strong,
+.app-shell--poker .session-strip strong {
+  color: var(--pk-text);
+}
+
+.app-shell--poker .session-strip {
+  color: var(--pk-text-dim);
+}
+
+/* —— 连接状态 / 在线点 —— */
+.app-shell--poker .connection-state {
+  color: var(--pk-text-dim);
+}
+
+.app-shell--poker .connection-state > span,
+.app-shell--poker .presence-dot {
+  background: var(--pk-gold-deep);
+}
+
+.app-shell--poker .connection-state.is-online > span,
+.app-shell--poker .presence-dot.is-online {
+  background: #4caf6a;
+}
+
+/* —— 加载态 —— */
+.app-shell--poker .loading-block {
+  color: var(--pk-text-dim);
+}
+
+.app-shell--poker .route-loading {
+  color: var(--pk-text-dim);
+}
+
+/* —— 滚动条（深底适配，非必须但更协调） —— */
+.app-shell--poker * {
+  scrollbar-color: var(--pk-gold-deep) var(--pk-panel);
+}
+
 .poker-room.has-fixed-controls {
   padding-bottom: 116px;
 }
 
 .poker-room-summary {
-  border-color: #cbd4ce;
+  border-color: var(--pk-gold-deep);
 }
 
 .poker-config-bar {
@@ -141,14 +427,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 18px;
-  border-block: 1px solid #d9ded9;
+  border-block: 1px solid var(--pk-line);
   padding: 8px 2px;
-  color: #69716c;
+  color: var(--pk-text-dim);
   font-size: 12px;
 }
 
 .poker-config-bar strong {
-  color: #26312b;
+  color: var(--pk-gold-bright);
 }
 
 .poker-blind-clock {
@@ -156,9 +442,9 @@
   min-height: 48px;
   align-items: center;
   gap: 10px;
-  border-block: 1px solid #d7ddd8;
+  border-block: 1px solid var(--pk-line);
   padding: 7px 2px;
-  color: #385146;
+  color: var(--pk-gold);
 }
 
 .poker-blind-clock > div {
@@ -169,12 +455,13 @@
 
 .poker-blind-clock > div span,
 .poker-blind-clock > span {
-  color: #707a74;
+  color: var(--pk-text-faint);
   font-size: 10px;
 }
 
 .poker-blind-clock > div strong {
   font-size: 14px;
+  color: var(--pk-gold-bright);
 }
 
 .poker-blind-clock > span {
@@ -186,12 +473,12 @@
 }
 
 .poker-blind-clock.is-pending {
-  border-color: #d8bd69;
-  color: #735c18;
+  border-color: var(--pk-gold);
+  color: var(--pk-gold-bright);
 }
 
 .poker-blind-clock.is-paused {
-  color: #6f4e24;
+  color: var(--pk-gold-soft);
 }
 
 .poker-lobby-table,
@@ -207,41 +494,59 @@
   position: relative;
   width: min(100%, 880px);
   margin: 0 auto;
-  border: 8px solid #30352f;
+  /* 黑金包边：更黑 */
+  border: 10px solid #1a1410;
   border-radius: 50%;
+  /* 毛毡：墨绿 + 织物纹理 + 中心冷光高光 */
   background:
-    radial-gradient(circle at 50% 45%, rgb(255 255 255 / 7%), transparent 42%),
-    #176447;
+    /* 织物纹理（绿色 SVG 噪点） */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.04 0 0 0 0 0.15 0 0 0 0 0.09 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)'/%3E%3C/svg%3E"),
+    /* 中心冷光高光 */
+    radial-gradient(circle at 50% 42%, rgb(255 255 255 / 8%), transparent 40%),
+    /* 墨绿毛毡 */
+    radial-gradient(circle at 50% 50%, var(--pk-emerald) 0%, var(--pk-emerald-deep) 70%, #031a0f 100%);
+  /* 金色双内嵌环 + 加深内阴影 + 金外描 */
   box-shadow:
-    inset 0 0 0 2px #a88c58,
-    0 18px 36px rgb(31 36 33 / 16%);
+    inset 0 0 0 2px var(--pk-gold),
+    inset 0 0 0 6px #062418,
+    inset 0 0 0 8px var(--pk-gold-soft),
+    inset 0 0 80px rgb(0 0 0 / 50%),
+    0 0 0 2px var(--pk-gold-soft),
+    0 24px 60px rgb(0 0 0 / 65%);
 }
 
 .poker-felt--lobby {
-  aspect-ratio: 1.8 / 1;
+  aspect-ratio: 1.6 / 1;
 }
 
 .poker-felt--game {
-  aspect-ratio: 1.85 / 1;
+  aspect-ratio: 1.6 / 1;
 }
 
+/* 中心烫金徽标区 */
 .poker-felt__mark {
   position: absolute;
   inset: 36% 38%;
   display: grid;
   place-items: center;
-  border: 1px solid rgb(255 255 255 / 18%);
+  border: 1px solid var(--pk-gold);
   border-radius: 50%;
-  color: rgb(255 255 255 / 72%);
+  background: radial-gradient(circle, rgb(212 175 55 / 10%), transparent 70%);
+  color: var(--pk-gold-bright);
+  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 28%);
 }
 
 .poker-felt__mark span {
-  font-family: Georgia, serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--pk-gold-bright);
+  text-shadow: 0 0 8px rgb(212 175 55 / 45%);
 }
 
 .poker-felt__mark small {
   font-size: 11px;
+  color: var(--pk-gold-soft);
 }
 
 .poker-seat-position {
@@ -257,11 +562,15 @@
   width: 100%;
   min-height: 82px;
   place-items: center;
-  border: 1px solid #cbd2ca;
+  border: 1px solid var(--pk-gold-soft);
   border-radius: 7px;
-  background: #fff;
+  background: var(--pk-bg-glass);
+  backdrop-filter: blur(12px);
   padding: 8px;
-  box-shadow: 0 8px 20px rgb(18 30 23 / 18%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 8%),      /* 玻璃顶部高光 */
+    inset 0 0 0 1px rgb(201 162 39 / 12%),    /* 内金边 */
+    0 8px 24px rgb(0 0 0 / 50%);
   text-align: center;
 }
 
@@ -275,37 +584,45 @@
 
 .poker-lobby-seat.is-self,
 .poker-player-seat.is-self {
-  border-color: #d0a94c;
-  box-shadow: 0 0 0 3px rgb(224 184 85 / 28%), 0 8px 20px rgb(18 30 23 / 18%);
+  border-color: var(--pk-gold);
+  box-shadow:
+    0 0 0 2px var(--pk-gold-glow),
+    inset 0 1px 0 rgb(255 255 255 / 10%),
+    inset 0 0 0 1px rgb(201 162 39 / 25%),
+    0 8px 24px rgb(0 0 0 / 50%);
 }
 
+/* 当前行动玩家：金色冷光呼吸（呼吸光在动效步骤追加） */
 .poker-player-seat.is-action {
-  border-color: #d5a91f;
-  background: #fffbed;
+  border-color: var(--pk-gold-bright);
+  background: rgb(40 30 8 / 60%);
   box-shadow:
-    0 0 0 5px rgb(247 204 64 / 48%),
-    0 10px 24px rgb(18 30 23 / 26%);
+    inset 0 1px 0 rgb(255 240 180 / 18%),
+    0 0 0 2px var(--pk-gold-glow),
+    0 0 28px var(--pk-gold-glow),
+    0 8px 24px rgb(0 0 0 / 50%);
 }
 
 .poker-player-seat.is-folded {
-  border-color: #b8beb9;
-  background: #ecefec;
-  box-shadow: 0 5px 12px rgb(18 30 23 / 10%);
+  border-color: #3a3a3a;
+  background: rgb(15 15 15 / 60%);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
 }
 
 .poker-player-seat.is-folded > :not(.poker-player-state-badge, .poker-position-badges) {
-  opacity: 0.58;
+  opacity: 0.5;
 }
 
 .poker-player-seat.is-all-in {
-  border-color: #ad3c44;
+  border-color: var(--pk-blood-bright);
+  box-shadow: 0 0 0 2px rgb(192 57 43 / 40%), 0 0 16px rgb(192 57 43 / 25%), 0 8px 24px rgb(0 0 0 / 50%);
 }
 
 .poker-player-seat.is-away {
   border-style: dashed;
-  background: #f3f5f2;
-  color: #747c77;
-  box-shadow: 0 5px 12px rgb(18 30 23 / 12%);
+  background: rgb(8 8 8 / 70%);
+  color: var(--pk-text-faint);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
 }
 
 .poker-avatar {
@@ -313,17 +630,18 @@
   width: 34px;
   height: 34px;
   place-items: center;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 50%;
-  background: #e8ede9;
-  color: #334139;
+  background: linear-gradient(180deg, #3a2818, #241108);
+  color: var(--pk-gold-bright);
   font-size: 12px;
   font-weight: 800;
 }
 
 .poker-avatar.is-bot,
 .poker-bot-mark {
-  background: #dcebe3;
-  color: #166443;
+  background: linear-gradient(180deg, #1a3a2a, #0e2418);
+  color: var(--pk-gold);
 }
 
 .poker-bot-mark {
@@ -332,7 +650,7 @@
   height: 18px;
   flex: none;
   place-items: center;
-  border: 1px solid #b9d3c4;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 50%;
 }
 
@@ -341,12 +659,13 @@
   max-width: 100%;
   overflow: hidden;
   font-size: 12px;
+  color: var(--pk-text);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .poker-lobby-seat small {
-  color: #737b75;
+  color: var(--pk-text-dim);
   font-size: 9px;
 }
 
@@ -363,12 +682,14 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #f5ead3;
+  color: var(--pk-gold-bright);
   font-size: 11px;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 60%);
 }
 
 .poker-pot strong {
   font-size: 16px;
+  color: #ffe9a8;
 }
 
 .community-cards,
@@ -384,12 +705,13 @@
   width: 48px;
   aspect-ratio: 0.7;
   align-content: space-between;
-  border: 1px solid #d7dad5;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 6px;
-  background: #fff;
+  /* 暖白象牙底 + 细微金高光 */
+  background: linear-gradient(180deg, #fffdf6, #f6efe0);
   padding: 5px;
-  color: #202521;
-  box-shadow: 0 3px 8px rgb(0 0 0 / 18%);
+  color: #1a1a1a;
+  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 20%), 0 3px 9px rgb(0 0 0 / 42%);
   line-height: 1;
 }
 
@@ -403,20 +725,28 @@
 }
 
 .playing-card.is-red {
-  color: #b42631;
+  color: #c0202c;
 }
 
+/* 牌背：黑底金印（菱形烫印 + 金边内外描） */
 .playing-card.is-hidden {
-  border-color: #f2e7cf;
+  border-color: var(--pk-gold);
   background:
-    repeating-linear-gradient(45deg, rgb(255 255 255 / 12%) 0 3px, transparent 3px 7px),
-    #8f2530;
-  box-shadow: inset 0 0 0 3px #f1dfbd, 0 3px 8px rgb(0 0 0 / 18%);
+    /* 金色菱形烫印网格 */
+    repeating-linear-gradient(45deg, rgb(212 175 55 / 22%) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(-45deg, rgb(212 175 55 / 22%) 0 2px, transparent 2px 8px),
+    /* 中心金徽光 */
+    radial-gradient(circle at 50% 50%, rgb(212 175 55 / 28%), transparent 55%),
+    #14080b;
+  box-shadow:
+    inset 0 0 0 2px #14080b,
+    inset 0 0 0 3px var(--pk-gold),
+    0 3px 9px rgb(0 0 0 / 55%);
 }
 
 .playing-card.is-empty {
-  border-color: rgb(255 255 255 / 22%);
-  background: rgb(0 0 0 / 8%);
+  border-color: rgb(212 175 55 / 22%);
+  background: rgb(0 0 0 / 22%);
   box-shadow: none;
 }
 
@@ -437,8 +767,9 @@
 .poker-board__meta {
   display: flex;
   gap: 12px;
-  color: rgb(255 255 255 / 72%);
+  color: var(--pk-gold-soft);
   font-size: 10px;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 60%);
 }
 
 .poker-player-seat {
@@ -472,27 +803,29 @@
   height: 22px;
   align-items: center;
   gap: 3px;
-  border: 1px solid rgb(20 26 22 / 25%);
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 4px;
   padding: 0 6px;
-  box-shadow: 0 2px 6px rgb(13 20 16 / 20%);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
   font-size: 9px;
   font-weight: 850;
 }
 
 .poker-player-state-badge.is-action {
-  background: #f4ca3d;
-  color: #2f2814;
+  background: linear-gradient(180deg, var(--pk-gold-bright), var(--pk-gold));
+  color: #2a1d08;
 }
 
 .poker-player-state-badge.is-folded {
-  background: #555e58;
-  color: #fff;
+  background: #3a3530;
+  color: var(--pk-text-dim);
+  border-color: #4a4239;
 }
 
 .poker-player-state-badge.is-all-in {
-  background: #a72f39;
+  background: linear-gradient(180deg, var(--pk-blood-bright), var(--pk-blood));
   color: #fff;
+  border-color: var(--pk-blood);
 }
 
 .poker-position-badges {
@@ -511,28 +844,30 @@
   min-width: 24px;
   height: 22px;
   place-items: center;
-  border: 1px solid rgb(20 26 22 / 32%);
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 4px;
-  box-shadow: 0 2px 5px rgb(13 20 16 / 22%);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 45%);
   font-size: 9px;
   font-weight: 850;
 }
 
 .poker-position-badge.is-dealer {
   min-width: 22px;
+  border-color: var(--pk-gold);
   border-radius: 50%;
-  background: #fbfbf8;
-  color: #202621;
+  background: linear-gradient(180deg, var(--pk-gold-bright), var(--pk-gold));
+  color: #2a1d08;
 }
 
 .poker-position-badge.is-small-blind {
-  background: #e8c85c;
-  color: #252214;
+  background: linear-gradient(180deg, #f0d070, var(--pk-gold));
+  color: #2a1d08;
 }
 
 .poker-position-badge.is-big-blind {
-  background: #9b3636;
+  background: linear-gradient(180deg, var(--pk-blood-bright), var(--pk-blood));
   color: #fff;
+  border-color: var(--pk-blood);
 }
 
 .poker-player-seat__metrics {
@@ -550,16 +885,16 @@
   display: grid;
   justify-items: center;
   gap: 1px;
-  border: 1px solid #d9ded9;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 4px;
   padding: 3px 2px;
-  background: #f7f9f7;
+  background: var(--pk-bg);
   line-height: 1.05;
 }
 
 .poker-player-seat__stack small,
 .poker-player-seat__bet small {
-  color: #727a75;
+  color: var(--pk-text-faint);
   font-size: 8px;
 }
 
@@ -567,34 +902,34 @@
 .poker-player-seat__bet strong {
   max-width: none;
   overflow: visible;
-  color: #2d493a;
+  color: var(--pk-gold-bright);
   font-size: 12px;
   font-weight: 850;
   text-overflow: clip;
 }
 
 .poker-player-seat__bet {
-  border-color: #dfc46d;
-  background: #fff3c5;
+  border-color: var(--pk-gold);
+  background: linear-gradient(180deg, #3a2a10, #251908);
 }
 
 .poker-player-seat__bet small,
 .poker-player-seat__bet strong {
-  color: #6d5310;
+  color: #ffd76a;
 }
 
 .poker-player-seat__status {
-  color: #737a75;
+  color: var(--pk-text-dim);
   font-size: 9px;
 }
 
 .poker-player-seat__status.is-action {
-  color: #725812;
+  color: var(--pk-gold-bright);
   font-weight: 800;
 }
 
 .poker-player-seat__status.is-folded {
-  color: #4f5752;
+  color: var(--pk-text-faint);
   font-weight: 800;
 }
 
@@ -614,16 +949,17 @@
 .poker-board__turn {
   min-height: 23px;
   gap: 4px;
-  border: 1px solid rgb(255 255 255 / 20%);
+  border: 1px solid var(--pk-gold);
   border-radius: 4px;
   padding: 3px 7px;
-  background: rgb(7 42 29 / 46%);
-  color: rgb(255 255 255 / 82%);
+  background: rgb(20 8 11 / 72%);
+  color: var(--pk-text-dim);
   font-size: 9px;
+  box-shadow: 0 0 10px rgb(212 175 55 / 22%);
 }
 
 .poker-board__turn strong {
-  color: #fff4c4;
+  color: var(--pk-gold-bright);
   font-size: 11px;
 }
 
@@ -646,10 +982,11 @@
 .poker-controls {
   display: grid;
   gap: 12px;
-  border-top: 1px solid #d8ddd7;
+  border-top: 1px solid var(--pk-line);
   padding-top: 16px;
 }
 
+/* 行动时固定底栏：黑金玻璃 + 金描边 + 金光阴影 */
 .poker-controls.is-turn-fixed {
   position: fixed;
   z-index: 30;
@@ -660,12 +997,13 @@
   align-items: center;
   gap: 12px;
   transform: translateX(-50%);
-  border: 1px solid #bfc8c1;
+  border: 1px solid var(--pk-gold);
   border-radius: 8px;
-  background: rgb(250 251 248 / 97%);
+  background: rgb(8 8 10 / 88%);
+  backdrop-filter: blur(16px);
   padding: 10px 12px;
-  box-shadow: 0 14px 36px rgb(18 30 23 / 24%);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px var(--pk-gold-glow), 0 14px 40px rgb(0 0 0 / 65%), 0 0 30px var(--pk-gold-glow);
+  backdrop-filter: blur(16px);
 }
 
 .poker-controls.is-turn-fixed .poker-own-hand {
@@ -689,7 +1027,7 @@
 .poker-hand-summary {
   display: grid;
   gap: 12px;
-  border-block: 1px solid #d8ddd7;
+  border-block: 1px solid var(--pk-line);
   padding: 14px 2px;
 }
 
@@ -708,11 +1046,11 @@
 
 .poker-hand-summary__heading > span {
   gap: 7px;
-  color: #244334;
+  color: var(--pk-gold);
 }
 
 .poker-hand-summary__heading small {
-  color: #69716c;
+  color: var(--pk-text-dim);
   font-size: 11px;
 }
 
@@ -721,14 +1059,15 @@
   gap: 7px;
 }
 
+/* 获奖行：金线左边 + 深暖底 */
 .poker-award-row {
   display: grid;
   min-height: 72px;
   grid-template-columns: minmax(180px, 1fr) auto;
   align-items: center;
   gap: 14px;
-  border-left: 3px solid #c9a84f;
-  background: #f7f6f0;
+  border-left: 3px solid var(--pk-gold);
+  background: linear-gradient(90deg, rgb(212 175 55 / 10%), var(--pk-panel) 60%);
   padding: 10px 12px;
 }
 
@@ -746,12 +1085,12 @@
 }
 
 .poker-award-result__topline strong {
-  color: #243329;
+  color: var(--pk-text);
   font-size: 14px;
 }
 
 .poker-award-result__topline span {
-  color: #166443;
+  color: var(--pk-gold-bright);
   font-size: 14px;
   font-weight: 800;
 }
@@ -759,7 +1098,7 @@
 .poker-award-result small {
   min-width: 0;
   overflow: hidden;
-  color: #666f69;
+  color: var(--pk-text-dim);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -779,13 +1118,13 @@
 }
 
 .poker-award-hand__label {
-  color: #737b76;
+  color: var(--pk-text-faint);
   font-size: 10px;
   font-weight: 700;
 }
 
 .poker-award-hand.is-primary .poker-award-hand__label {
-  color: #244334;
+  color: var(--pk-gold);
 }
 
 .poker-award-cards {
@@ -799,24 +1138,24 @@
   min-width: 27px;
   height: 30px;
   place-items: center;
-  border: 1px solid #d7dad5;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 4px;
-  background: #fff;
-  color: #202521;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 10%);
+  background: linear-gradient(180deg, #fffdf6, #f6efe0);
+  color: #1a1a1a;
+  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 18%), 0 2px 5px rgb(0 0 0 / 35%);
   font-size: 9px;
   font-weight: 800;
 }
 
 .poker-award-card.is-red {
-  color: #b42631;
+  color: #c0202c;
 }
 
 .poker-award-card.is-emphasized {
   min-width: 38px;
   height: 42px;
-  border-color: #c9a84f;
-  box-shadow: 0 3px 7px rgb(0 0 0 / 14%);
+  border-color: var(--pk-gold);
+  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 28%), 0 3px 8px rgb(0 0 0 / 40%);
   font-size: 13px;
 }
 
@@ -833,27 +1172,27 @@
 .poker-action-history li {
   min-height: 32px;
   gap: 8px;
-  border-bottom: 1px solid #edf0ed;
-  color: #505a54;
+  border-bottom: 1px solid var(--pk-line);
+  color: var(--pk-text-dim);
   font-size: 11px;
 }
 
 .poker-action-history li > span:first-child {
   width: 48px;
   flex: none;
-  color: #818983;
+  color: var(--pk-text-faint);
 }
 
 .poker-action-history li strong {
   width: 96px;
   overflow: hidden;
-  color: #28352e;
+  color: var(--pk-text);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .poker-action-history li em {
-  color: #a42c35;
+  color: var(--pk-blood-bright);
   font-size: 10px;
   font-style: normal;
   font-weight: 800;
@@ -861,19 +1200,19 @@
 
 .poker-action-history li small {
   margin-left: auto;
-  color: #7a827d;
+  color: var(--pk-gold-soft);
 }
 
 .poker-action-history__empty {
   margin: 0;
-  color: #7a827d;
+  color: var(--pk-text-faint);
   font-size: 12px;
 }
 
 .poker-ranking {
   display: grid;
   gap: 10px;
-  border-bottom: 1px solid #d8ddd7;
+  border-bottom: 1px solid var(--pk-line);
   padding: 2px 2px 14px;
 }
 
@@ -886,7 +1225,7 @@
 
 .poker-ranking__heading {
   gap: 7px;
-  color: #4f421d;
+  color: var(--pk-gold);
 }
 
 .poker-ranking ol {
@@ -908,9 +1247,10 @@
   height: 24px;
   flex: none;
   place-items: center;
-  border: 1px solid #c8b36c;
+  border: 1px solid var(--pk-gold);
   border-radius: 50%;
-  color: #6c5616;
+  background: linear-gradient(180deg, var(--pk-gold-bright), var(--pk-gold));
+  color: #2a1d08;
   font-size: 11px;
   font-weight: 850;
 }
@@ -918,14 +1258,14 @@
 .poker-ranking li strong {
   min-width: 0;
   overflow: hidden;
-  color: #2e3832;
+  color: var(--pk-text);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .poker-ranking li small {
-  color: #777f79;
+  color: var(--pk-text-dim);
   font-size: 10px;
 }
 
@@ -944,12 +1284,12 @@
 
 .poker-own-hand__score {
   justify-items: end;
-  color: #5f6862;
+  color: var(--pk-text-dim);
   font-size: 12px;
 }
 
 .poker-own-hand__score strong {
-  color: #166443;
+  color: var(--pk-gold-bright);
 }
 
 .poker-own-hand__cards .playing-card {
@@ -961,8 +1301,8 @@
   min-width: 126px;
   min-height: 62px;
   place-items: center;
-  border: 1px dashed #c5ccc6;
-  color: #737c76;
+  border: 1px dashed var(--pk-gold-deep);
+  color: var(--pk-text-faint);
   font-size: 12px;
 }
 
@@ -972,8 +1312,29 @@
   gap: 10px;
 }
 
-.poker-fold-button {
-  color: #a3262e;
+/* 弃牌按钮：冷调红（危险语义）。带作用域前缀以盖过 .secondary-button */
+.app-shell--poker .poker-fold-button {
+  border: 1px solid var(--pk-blood);
+  background:
+    linear-gradient(180deg, rgb(255 120 110 / 35%) 0%, transparent 20%),
+    linear-gradient(180deg, var(--pk-blood-bright), var(--pk-blood));
+  color: #fff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 40%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 150 140 / 40%),
+    inset 0 -2px 4px rgb(0 0 0 / 25%),
+    0 4px 10px rgb(0 0 0 / 45%);
+}
+
+.app-shell--poker .poker-fold-button:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgb(255 140 130 / 45%) 0%, transparent 22%),
+    linear-gradient(180deg, #d63a2c, var(--pk-blood-bright));
+  box-shadow:
+    inset 0 1px 0 rgb(255 160 150 / 55%),
+    inset 0 -2px 4px rgb(0 0 0 / 20%),
+    0 0 12px rgb(192 57 43 / 30%),
+    0 4px 10px rgb(0 0 0 / 45%);
 }
 
 .poker-bet-control {
@@ -982,19 +1343,28 @@
   gap: 8px;
 }
 
+/* 下注输入框：深底金边金字 */
 .poker-bet-control input {
   min-width: 0;
-  border: 1px solid #bcc5bd;
+  border: 1px solid var(--pk-gold-deep);
   border-radius: 6px;
+  background: var(--pk-bg);
   padding: 0 10px;
+  color: var(--pk-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.poker-bet-control input:focus {
+  border-color: var(--pk-gold);
+  outline: 2px solid var(--action-focus);
 }
 
 .poker-no-raise {
   display: grid;
   min-height: 42px;
   place-items: center;
-  border: 1px dashed #cbd1cc;
-  color: #747c77;
+  border: 1px dashed var(--pk-gold-deep);
+  color: var(--pk-text-faint);
   font-size: 12px;
 }
 
@@ -1005,13 +1375,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-block: 1px solid #e0e4df;
-  color: #68716b;
+  border-block: 1px solid var(--pk-line);
+  color: var(--pk-text-dim);
   font-size: 13px;
 }
 
+/* 获胜横幅：黑金发光绶带 */
 .poker-result-banner {
-  color: #5a4317;
+  color: var(--pk-gold-bright);
+  background: linear-gradient(90deg, rgb(20 16 8 / 80%), rgb(40 32 12 / 80%));
+  border-block-color: var(--pk-gold);
+  text-shadow: 0 0 12px var(--pk-gold-glow);
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 30%), 0 0 24px var(--pk-gold-glow);
 }
 
 .poker-table-commands {
@@ -1021,9 +1396,70 @@
   gap: 8px;
 }
 
+/* ============================================================
+   节制动效：仅行动玩家呼吸光 + 获胜横幅淡入。
+   全部尊重 prefers-reduced-motion（减少动态时关闭）。
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* 当前行动玩家：金色光晕呼吸（覆盖 is-action 的静态金光，叠一层呼吸） */
+  .poker-player-seat.is-action {
+    animation: pk-action-glow 2s ease-in-out infinite;
+  }
+
+  /* 主/弃牌按钮 hover：亮度上扬 + 轻微上浮 */
+  .app-shell--poker .primary-button,
+  .app-shell--poker .primary-button--dark,
+  .app-shell--poker .secondary-button,
+  .app-shell--poker .poker-fold-button {
+    transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .app-shell--poker .primary-button:not(:disabled):hover,
+  .app-shell--poker .primary-button--dark:not(:disabled):hover,
+  .app-shell--poker .secondary-button:not(:disabled):hover,
+  .app-shell--poker .poker-fold-button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  /* 获胜横幅淡入 */
+  .poker-result-banner {
+    animation: pk-fade-in 420ms ease both;
+  }
+
+  @keyframes pk-action-glow {
+    0%,
+    100% {
+      box-shadow:
+        inset 0 1px 0 rgb(255 240 180 / 18%),
+        0 0 0 2px var(--pk-gold-glow),
+        0 0 16px var(--pk-gold-glow),
+        0 8px 24px rgb(0 0 0 / 50%);
+    }
+    50% {
+      box-shadow:
+        inset 0 1px 0 rgb(255 240 180 / 30%),
+        0 0 0 3px var(--pk-gold-glow),
+        0 0 32px var(--pk-gold-glow),
+        0 8px 24px rgb(0 0 0 / 50%);
+    }
+  }
+
+  @keyframes pk-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 @media (max-width: 960px) {
+  /* 加大底栏避让空间，避免底部座位被固定操作栏遮挡 */
   .poker-room.has-fixed-controls {
-    padding-bottom: 186px;
+    padding-bottom: 210px;
   }
 
   .poker-controls.is-turn-fixed {
@@ -1079,19 +1515,21 @@
     border-width: 6px;
   }
 
+  /* 窄屏牌桌改稍宽椭圆（1.3/1），避免正圆导致横向拥挤、纵向溢出 */
   .poker-felt--lobby,
   .poker-felt--game {
-    aspect-ratio: 1.15 / 1;
+    aspect-ratio: 1.3 / 1;
   }
 
+  /* 座位宽度收紧，给椭圆边缘留出余量 */
   .poker-seat-position {
-    width: 82px;
+    width: 76px;
   }
 
   .poker-lobby-seat,
   .poker-player-seat {
-    min-height: 82px;
-    padding: 6px;
+    min-height: 76px;
+    padding: 5px;
   }
 
   .poker-avatar {
@@ -1165,6 +1603,14 @@
   .blind-level > span {
     width: 24px;
   }
+
+  /* 配置信息密度：窄屏从 flex-wrap 改 2 列网格，避免碎片化 */
+  .poker-config-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 12px;
+    font-size: 11px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1174,8 +1620,19 @@
     font-size: 12px;
   }
 
+  /* 最窄屏：座位进一步收紧 + 牌桌稍宽椭圆，确保底部座位不溢出 */
+  .poker-felt--game {
+    aspect-ratio: 1.25 / 1;
+  }
+
   .poker-seat-position {
-    width: 72px;
+    width: 64px;
+  }
+
+  .poker-lobby-seat,
+  .poker-player-seat {
+    min-height: 64px;
+    padding: 4px;
   }
 
   .poker-blind-clock {
