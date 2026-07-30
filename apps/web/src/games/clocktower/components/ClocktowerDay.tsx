@@ -29,6 +29,7 @@ import type {
 } from "@party-games/shared";
 
 type PlayerView = RoomView["room"]["players"][number];
+type ChatMode = "public" | "private";
 
 interface ClocktowerDayProps {
   view: RoomView;
@@ -531,23 +532,51 @@ export function ChatPanel({
   players,
   selfPlayerId,
   writable,
+  mode: controlledMode,
+  onModeChange,
+  privatePlayerId: controlledPrivatePlayerId,
+  onPrivatePlayerIdChange,
+  publicUnreadCount = 0,
+  privateUnreadCounts = {},
   onSend
 }: {
   messages: ChatMessageView[];
   players: PlayerView[];
   selfPlayerId: string;
   writable: boolean;
+  mode?: ChatMode;
+  onModeChange?: (mode: ChatMode) => void;
+  privatePlayerId?: string;
+  onPrivatePlayerIdChange?: (playerId: string) => void;
+  publicUnreadCount?: number;
+  privateUnreadCounts?: Record<string, number>;
   onSend: (message: { recipientPlayerId?: string; content: string }) => void;
 }) {
   const otherPlayers = players.filter((player) => player.id !== selfPlayerId);
-  const [mode, setMode] = useState<"public" | "private">("public");
-  const [privatePlayerId, setPrivatePlayerId] = useState(otherPlayers[0]?.id ?? "");
+  const [internalMode, setInternalMode] = useState<ChatMode>("public");
+  const [internalPrivatePlayerId, setInternalPrivatePlayerId] = useState(otherPlayers[0]?.id ?? "");
   const [content, setContent] = useState("");
   const feedRef = useRef<HTMLDivElement>(null);
+  const mode = controlledMode ?? internalMode;
+  const privatePlayerId = controlledPrivatePlayerId ?? internalPrivatePlayerId;
+  const privateUnreadTotal = useMemo(
+    () => Object.values(privateUnreadCounts).reduce((total, count) => total + count, 0),
+    [privateUnreadCounts]
+  );
+  const setModeValue = (nextMode: ChatMode) => {
+    if (controlledMode === undefined) setInternalMode(nextMode);
+    onModeChange?.(nextMode);
+  };
+  const setPrivatePlayerIdValue = (playerId: string) => {
+    if (controlledPrivatePlayerId === undefined) setInternalPrivatePlayerId(playerId);
+    onPrivatePlayerIdChange?.(playerId);
+  };
 
   useEffect(() => {
-    if (!privatePlayerId && otherPlayers[0]) setPrivatePlayerId(otherPlayers[0].id);
-  }, [otherPlayers, privatePlayerId]);
+    const currentPlayerStillExists = otherPlayers.some((player) => player.id === privatePlayerId);
+    if (currentPlayerStillExists) return;
+    setPrivatePlayerIdValue(otherPlayers[0]?.id ?? "");
+  }, [controlledPrivatePlayerId, onPrivatePlayerIdChange, otherPlayers, privatePlayerId]);
 
   const visibleMessages = useMemo(() => {
     if (mode === "public") return messages.filter((message) => !message.recipientPlayerId);
@@ -585,30 +614,54 @@ export function ChatPanel({
         {!writable ? <span className="chat-locked"><Moon size={14} /> 已锁定</span> : null}
       </div>
       <div className="chat-tabs" role="tablist" aria-label="聊天频道">
-        <button className={mode === "public" ? "is-active" : ""} type="button" onClick={() => setMode("public")}>
+        <button
+          className={`${mode === "public" ? "is-active" : ""}${publicUnreadCount > 0 ? " has-unread" : ""}`}
+          type="button"
+          onClick={() => setModeValue("public")}
+        >
           <MessageCircle size={17} /> 公屏
+          {publicUnreadCount > 0 ? (
+            <span className="chat-unread-badge">{formatUnreadCount(publicUnreadCount)}</span>
+          ) : null}
         </button>
         <button
-          className={mode === "private" ? "is-active" : ""}
+          className={`${mode === "private" ? "is-active" : ""}${privateUnreadTotal > 0 ? " has-unread" : ""}`}
           type="button"
           disabled={otherPlayers.length === 0}
-          onClick={() => setMode("private")}
+          onClick={() => setModeValue("private")}
         >
           <Users size={17} /> 私聊
+          {privateUnreadTotal > 0 ? (
+            <span className="chat-unread-badge">{formatUnreadCount(privateUnreadTotal)}</span>
+          ) : null}
         </button>
       </div>
 
       {mode === "private" ? (
-        <label className="chat-recipient">
+        <div className="chat-recipient">
           <span>私聊对象</span>
-          <select value={privatePlayerId} onChange={(event) => setPrivatePlayerId(event.target.value)}>
+          <div className="chat-recipient-list" role="list" aria-label="私聊对象">
             {otherPlayers.map((player) => (
-              <option value={player.id} key={player.id}>
-                {player.seat ?? "?"}. {player.nickname}
-              </option>
+              <button
+                className={`chat-recipient-option${
+                  player.id === privatePlayerId ? " is-active" : ""
+                }${(privateUnreadCounts[player.id] ?? 0) > 0 ? " has-unread" : ""}`}
+                type="button"
+                key={player.id}
+                onClick={() => setPrivatePlayerIdValue(player.id)}
+              >
+                <span>
+                  {player.seat ?? "?"}. {player.nickname}
+                </span>
+                {(privateUnreadCounts[player.id] ?? 0) > 0 ? (
+                  <span className="chat-unread-badge">
+                    {formatUnreadCount(privateUnreadCounts[player.id] ?? 0)}
+                  </span>
+                ) : null}
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
       ) : null}
 
       <div className="chat-feed" ref={feedRef} aria-live="polite">
@@ -641,6 +694,10 @@ export function ChatPanel({
       </form>
     </section>
   );
+}
+
+function formatUnreadCount(count: number): string {
+  return count > 99 ? "99+" : String(count);
 }
 
 function ChatMessage({

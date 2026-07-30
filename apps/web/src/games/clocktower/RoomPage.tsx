@@ -48,9 +48,14 @@ export function ClocktowerRoomPage() {
   const [connected, setConnected] = useState(false);
   const [nightSelection, setNightSelection] = useState<string[]>([]);
   const [now, setNow] = useState(Date.now());
+  const [chatMode, setChatMode] = useState<"public" | "private">("public");
+  const [privateChatPlayerId, setPrivateChatPlayerId] = useState("");
+  const [seenPublicChatCount, setSeenPublicChatCount] = useState(0);
+  const [seenPrivateChatCounts, setSeenPrivateChatCounts] = useState<Record<string, number>>({});
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | undefined>(
     undefined
   );
+  const seenChatRoomKeyRef = useRef<string | undefined>(undefined);
   const sessionToken = session?.sessionToken;
 
   useEffect(() => {
@@ -123,14 +128,68 @@ export function ClocktowerRoomPage() {
     }
   }, [phase, tabs, activeTab]);
 
+  const selfPlayerId = view?.self.playerId;
+  const incomingPublicChatCount = useMemo(() => {
+    if (!selfPlayerId) return 0;
+    return (view?.chatMessages ?? []).filter(
+      (message) => !message.recipientPlayerId && message.senderPlayerId !== selfPlayerId
+    ).length;
+  }, [selfPlayerId, view?.chatMessages]);
+  const incomingPrivateChatCounts = useMemo(() => {
+    if (!selfPlayerId) return {};
+    const counts: Record<string, number> = {};
+    for (const message of view?.chatMessages ?? []) {
+      if (message.recipientPlayerId !== selfPlayerId || message.senderPlayerId === selfPlayerId) {
+        continue;
+      }
+      counts[message.senderPlayerId] = (counts[message.senderPlayerId] ?? 0) + 1;
+    }
+    return counts;
+  }, [selfPlayerId, view?.chatMessages]);
+  const privateChatUnreadCounts = useMemo(() => {
+    const unreadCounts: Record<string, number> = {};
+    for (const [playerId, count] of Object.entries(incomingPrivateChatCounts)) {
+      const unreadCount = count - (seenPrivateChatCounts[playerId] ?? 0);
+      if (unreadCount > 0) unreadCounts[playerId] = unreadCount;
+    }
+    return unreadCounts;
+  }, [incomingPrivateChatCounts, seenPrivateChatCounts]);
+  const publicChatUnreadCount = Math.max(0, incomingPublicChatCount - seenPublicChatCount);
+  const hasUnreadChat =
+    publicChatUnreadCount > 0 ||
+    Object.values(privateChatUnreadCounts).some((unreadCount) => unreadCount > 0);
+
   // —— unread 红点（聊天新消息 + 待办操作）——
-  const [seenChatCount, setSeenChatCount] = useState(0);
-  const chatMsgCount = view?.chatMessages.length ?? 0;
   useEffect(() => {
-    if (activeTab === "chat") setSeenChatCount(chatMsgCount);
-  }, [activeTab, chatMsgCount]);
+    if (!selfPlayerId) return;
+    const roomKey = `${roomCode}:${selfPlayerId}`;
+    if (seenChatRoomKeyRef.current === roomKey) return;
+    seenChatRoomKeyRef.current = roomKey;
+    setSeenPublicChatCount(incomingPublicChatCount);
+    setSeenPrivateChatCounts(incomingPrivateChatCounts);
+  }, [incomingPrivateChatCounts, incomingPublicChatCount, roomCode, selfPlayerId]);
+  useEffect(() => {
+    if (activeTab !== "chat") return;
+    if (chatMode === "public") {
+      setSeenPublicChatCount(incomingPublicChatCount);
+      return;
+    }
+    if (!privateChatPlayerId) return;
+    const nextSeenCount = incomingPrivateChatCounts[privateChatPlayerId] ?? 0;
+    setSeenPrivateChatCounts((current) =>
+      current[privateChatPlayerId] === nextSeenCount
+        ? current
+        : { ...current, [privateChatPlayerId]: nextSeenCount }
+    );
+  }, [
+    activeTab,
+    chatMode,
+    incomingPrivateChatCounts,
+    incomingPublicChatCount,
+    privateChatPlayerId
+  ]);
   const unread: Partial<Record<CtTabId, boolean>> = {
-    chat: chatMsgCount > seenChatCount && activeTab !== "chat",
+    chat: hasUnreadChat && activeTab !== "chat",
     operate: Boolean(view?.self.dayActions?.canNominate) && activeTab !== "operate",
     action: Boolean(view?.self.privateGame?.nightAction) && activeTab !== "action",
     vote: phase === "voting" && activeTab !== "vote"
@@ -331,6 +390,12 @@ export function ClocktowerRoomPage() {
                 players={view.room.players}
                 selfPlayerId={view.self.playerId}
                 writable={["day", "nominations", "voting"].includes(phase ?? "")}
+                mode={chatMode}
+                onModeChange={setChatMode}
+                privatePlayerId={privateChatPlayerId}
+                onPrivatePlayerIdChange={setPrivateChatPlayerId}
+                publicUnreadCount={publicChatUnreadCount}
+                privateUnreadCounts={privateChatUnreadCounts}
                 onSend={(message) =>
                   send((callback) => socketRef.current?.emit("chat:send", message, callback))
                 }
