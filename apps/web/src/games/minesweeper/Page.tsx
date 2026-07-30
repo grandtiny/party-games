@@ -24,6 +24,9 @@ type MinesweeperLevel = "beginner" | "intermediate" | "expert";
 type InputMode = "reveal" | "flag";
 type FaceMood = "smile" | "oh" | "win" | "loss";
 
+const TOUCH_FLAG_HOLD_MS = 420;
+const TOUCH_MOVE_CANCEL_DISTANCE = 12;
+
 const levels: Record<
   MinesweeperLevel,
   { label: string; difficulty: Difficulty; sizeLabel: string }
@@ -196,6 +199,12 @@ export function MinesweeperPage() {
   // 笑脸"oh"状态：鼠标按下未翻开格子时为 true
   const [pressing, setPressing] = useState(false);
   const pressingRef = useRef(false);
+  const touchFlagTimerRef = useRef<number | undefined>(undefined);
+  const touchFlagPressRef = useRef<
+    { pointerId: number; startX: number; startY: number } | undefined
+  >(undefined);
+  const suppressNextClickRef = useRef(false);
+  const suppressNextContextMenuRef = useRef(false);
 
   useEffect(() => {
     if (game.status !== "running") return;
@@ -254,12 +263,25 @@ export function MinesweeperPage() {
     }).catch(() => undefined);
   }, [accountStatus?.authenticated, elapsedSeconds, game.randSeed, game.status, level]);
 
+  const clearTouchFlagPress = () => {
+    if (touchFlagTimerRef.current !== undefined) {
+      window.clearTimeout(touchFlagTimerRef.current);
+      touchFlagTimerRef.current = undefined;
+    }
+    touchFlagPressRef.current = undefined;
+  };
+
+  useEffect(() => () => clearTouchFlagPress(), []);
+
   const startNewGame = (nextLevel = level) => {
     setLevel(nextLevel);
     setElapsedSeconds(0);
     setInputMode("reveal");
     setPressing(false);
     pressingRef.current = false;
+    clearTouchFlagPress();
+    suppressNextClickRef.current = false;
+    suppressNextContextMenuRef.current = false;
     dispatch(startGame({ difficulty: levels[nextLevel].difficulty, randSeed: randomSeed() }));
   };
 
@@ -282,6 +304,57 @@ export function MinesweeperPage() {
   const activateCell = (x: number, y: number) => {
     if (inputMode === "flag") flagAt(x, y);
     else revealAt(x, y);
+  };
+
+  const activateCellFromClick = (x: number, y: number) => {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    activateCell(x, y);
+  };
+
+  const handleCellPointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    x: number,
+    y: number
+  ) => {
+    if (event.pointerType === "mouse" || game.status !== "running") return;
+    const cell = game.grid[y]?.[x];
+    if (!cell || cell.status === "revealed" || cell.status === "detonated") return;
+
+    clearTouchFlagPress();
+    touchFlagPressRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY
+    };
+    touchFlagTimerRef.current = window.setTimeout(() => {
+      touchFlagTimerRef.current = undefined;
+      touchFlagPressRef.current = undefined;
+      suppressNextClickRef.current = true;
+      suppressNextContextMenuRef.current = true;
+      flagAt(x, y);
+      window.setTimeout(() => {
+        suppressNextClickRef.current = false;
+        suppressNextContextMenuRef.current = false;
+      }, 900);
+    }, TOUCH_FLAG_HOLD_MS);
+  };
+
+  const handleCellPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const press = touchFlagPressRef.current;
+    if (!press || press.pointerId !== event.pointerId) return;
+    const distance = Math.hypot(event.clientX - press.startX, event.clientY - press.startY);
+    if (distance > TOUCH_MOVE_CANCEL_DISTANCE) clearTouchFlagPress();
+  };
+
+  const handleCellPointerEnd = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (touchFlagPressRef.current?.pointerId === event.pointerId) clearTouchFlagPress();
+  };
+
+  const handleBoardContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
   };
 
   // 笑脸表情派生
@@ -369,6 +442,7 @@ export function MinesweeperPage() {
 
           <div
             className="ms-board-scroll"
+            onContextMenuCapture={handleBoardContextMenu}
             onMouseDown={handleBoardMouseDown}
             onMouseUp={handleBoardMouseUp}
             onMouseLeave={handleBoardMouseLeave}
@@ -408,11 +482,19 @@ export function MinesweeperPage() {
                       role="gridcell"
                       data-count={cell.status === "revealed" ? cell.mineCount : undefined}
                       aria-label={cellLabel(cell.status, cell.mineCount, x, y)}
-                      onClick={() => activateCell(x, y)}
+                      onClick={() => activateCellFromClick(x, y)}
                       onContextMenu={(event) => {
                         event.preventDefault();
+                        if (suppressNextContextMenuRef.current) {
+                          suppressNextContextMenuRef.current = false;
+                          return;
+                        }
                         flagAt(x, y);
                       }}
+                      onPointerDown={(event) => handleCellPointerDown(event, x, y)}
+                      onPointerMove={handleCellPointerMove}
+                      onPointerUp={handleCellPointerEnd}
+                      onPointerCancel={handleCellPointerEnd}
                       key={`${x}-${y}`}
                     >
                       {content}
@@ -427,7 +509,7 @@ export function MinesweeperPage() {
 
       {/* 窗口下方辅助工具条 */}
       <div className="ms-toolbar">
-        <div className="ms-toolbar__group">
+        <div className="ms-toolbar__group ms-toolbar__group--difficulty">
           <span className="ms-toolbar__label">难度</span>
           <div
             className="segmented puzzle-difficulty"
@@ -451,7 +533,7 @@ export function MinesweeperPage() {
           </div>
         </div>
 
-        <div className="ms-toolbar__group">
+        <div className="ms-toolbar__group ms-toolbar__group--input">
           <div className="segmented minesweeper-input-mode" role="tablist" aria-label="点击模式">
             <button
               type="button"
@@ -475,7 +557,7 @@ export function MinesweeperPage() {
           </div>
         </div>
 
-        <div className="ms-toolbar__group">
+        <div className="ms-toolbar__group ms-toolbar__group--status">
           {bestTimes[level] !== undefined ? (
             <span className="ms-toolbar__stat">
               <Trophy size={14} />
