@@ -30,6 +30,7 @@
   /* —— 冷调红（脱离暖血红）—— */
   --pk-blood:        #a52a2a;
   --pk-blood-bright: #c0392b;
+  --pk-blood-text:   #d95b50;
 
   /* —— 兼容旧变量（部分旧规则仍引用，保持等价映射）—— */
   --pk-panel:        var(--pk-bg-elev);
@@ -39,7 +40,7 @@
   /* —— 冷白文字（脱离暖白）—— */
   --pk-text:         #e8e6e0;
   --pk-text-dim:     #9a968c;
-  --pk-text-faint:   #5a564e;
+  --pk-text-faint:   #807b71;
 
   /* —— 共享 token 覆盖：primary-button / input focus / entry-heading 全部变金 —— */
   --action-background: var(--pk-gold);
@@ -294,7 +295,7 @@
 .app-shell--poker .danger-button {
   border-color: var(--pk-blood);
   background: rgb(192 57 43 / 16%);
-  color: var(--pk-blood-bright);
+  color: var(--pk-blood-text);
 }
 
 /* —— 分段控件 segmented：深玻璃底金边 —— */
@@ -1003,7 +1004,6 @@
   backdrop-filter: blur(16px);
   padding: 10px 12px;
   box-shadow: 0 0 0 1px var(--pk-gold-glow), 0 14px 40px rgb(0 0 0 / 65%), 0 0 30px var(--pk-gold-glow);
-  backdrop-filter: blur(16px);
 }
 
 .poker-controls.is-turn-fixed .poker-own-hand {
@@ -1192,7 +1192,7 @@
 }
 
 .poker-action-history li em {
-  color: var(--pk-blood-bright);
+  color: var(--pk-blood-text);
   font-size: 10px;
   font-style: normal;
   font-weight: 800;
@@ -1511,6 +1511,10 @@
 
 @media (max-width: 760px) {
 
+  .app-shell--poker {
+    background-attachment: scroll;
+  }
+
   .poker-felt {
     border-width: 6px;
   }
@@ -1529,6 +1533,7 @@
   .poker-lobby-seat,
   .poker-player-seat {
     min-height: 76px;
+    backdrop-filter: none;
     padding: 5px;
   }
 
