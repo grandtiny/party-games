@@ -302,6 +302,11 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
   padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   transition: none;
 }
 
@@ -571,6 +576,16 @@
 
   .ms-toolbar__group {
     justify-content: center;
+  }
+
+  .ms-toolbar__group--input {
+    order: -1;
+  }
+
+  .app-shell--minesweeper .minesweeper-input-mode button {
+    min-width: 78px;
+    min-height: 32px;
+    font-size: 12px;
   }
 
   .app-shell--minesweeper .segmented.puzzle-difficulty button {
