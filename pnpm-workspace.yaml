@@ -3,4 +3,5 @@ packages:
   - packages/*
 
 patchedDependencies:
+  '@pokertools/engine@1.0.16': patches/@pokertools__engine@1.0.16.patch
   renjukit@0.8.0: patches/renjukit@0.8.0.patch

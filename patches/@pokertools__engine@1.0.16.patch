@@ -1,0 +1,18 @@
+diff --git a/dist/actions/betting.js b/dist/actions/betting.js
+index 8f6d84106dfd44138ed92753c2674f47c6944e4f..af9017fa51b2a8ad6374948db664726d32810398 100644
+--- a/dist/actions/betting.js
++++ b/dist/actions/betting.js
+@@ -39,9 +39,10 @@ function handleFold(state, action) {
+         timeBankActiveSeat: null,
+         timestamp: action.timestamp,
+     };
+-    const playersWithLiveHands = currentState.players.filter((p) => p && p.status !== "FOLDED" /* PlayerStatus.FOLDED */);
+-    if (playersWithLiveHands.length === 1 && playersWithLiveHands[0]) {
+-        return awardPotToLastPlayer(currentState, playersWithLiveHands[0].seat);
++    const remainingSeat = newActivePlayers.length === 1 ? newActivePlayers[0] : null;
++    const remainingPlayer = remainingSeat === null ? null : currentState.players[remainingSeat];
++    if (remainingPlayer) {
++        return awardPotToLastPlayer(currentState, remainingPlayer.seat);
+     }
+     const nextToAct = (0, action_order_1.getNextToAct)(currentState);
+     return {
