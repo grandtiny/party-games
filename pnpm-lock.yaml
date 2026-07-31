@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@pokertools/engine@1.0.16':
-    hash: f3daa0244079f6165ba4fc31159107b7e62d5802e2fa5c949637afdb0a408031
+    hash: a1881d83e19d616b465ef8ab432098f91adf227a6498e51b3956d425b182c0c5
     path: patches/@pokertools__engine@1.0.16.patch
   renjukit@0.8.0:
     hash: 47566c35df8ce741998deb712456e76ca6ee657074c6c7dc91750008aad05f1b
@@ -150,7 +150,7 @@ importers:
         version: link:../game-core
       '@pokertools/engine':
         specifier: 1.0.16
-        version: 1.0.16(patch_hash=f3daa0244079f6165ba4fc31159107b7e62d5802e2fa5c949637afdb0a408031)(@pokertools/evaluator@1.0.16)(@pokertools/types@1.0.16)
+        version: 1.0.16(patch_hash=a1881d83e19d616b465ef8ab432098f91adf227a6498e51b3956d425b182c0c5)(@pokertools/evaluator@1.0.16)(@pokertools/types@1.0.16)
     devDependencies:
       vitest:
         specifier: ^3.2.4
@@ -1770,7 +1770,7 @@ snapshots:
 
   '@pinojs/redact@0.4.0': {}
 
-  '@pokertools/engine@1.0.16(patch_hash=f3daa0244079f6165ba4fc31159107b7e62d5802e2fa5c949637afdb0a408031)(@pokertools/evaluator@1.0.16)(@pokertools/types@1.0.16)':
+  '@pokertools/engine@1.0.16(patch_hash=a1881d83e19d616b465ef8ab432098f91adf227a6498e51b3956d425b182c0c5)(@pokertools/evaluator@1.0.16)(@pokertools/types@1.0.16)':
     dependencies:
       '@pokertools/evaluator': 1.0.16
       '@pokertools/types': 1.0.16
