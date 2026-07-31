@@ -1198,6 +1198,10 @@ export class SqliteRoomRepository {
       .run(key, value, new Date().toISOString());
   }
 
+  deleteSetting(key: string): void {
+    this.#database.prepare("DELETE FROM app_settings WHERE key = ?").run(key);
+  }
+
   getSchemaVersion(): number {
     const row = this.#database
       .prepare("SELECT MAX(version) AS version FROM schema_migrations")

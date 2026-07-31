@@ -1,10 +1,14 @@
-import {
-  TURTLE_SOUP_PROMPT_VERSION,
-  type TurtleSoupAnswerView,
-  type TurtleSoupDifficulty
-} from "@party-games/shared";
+import type { TurtleSoupAnswerView, TurtleSoupDifficulty } from "@party-games/shared";
 import type { LanguageModelClient } from "../language-model.js";
 import type { TurtleSoupLogEntry, TurtleSoupPuzzleState } from "../domain.js";
+import {
+  DEFAULT_TURTLE_SOUP_PROMPT_CONFIG,
+  renderTurtleSoupGuessPrompt,
+  renderTurtleSoupHintPrompt,
+  renderTurtleSoupQuestionPrompt,
+  renderTurtleSoupStoryPrompt,
+  type TurtleSoupPromptProvider
+} from "./turtle-soup-prompts.js";
 
 export interface TurtleSoupCreateInput {
   tags: string[];
@@ -47,11 +51,16 @@ export interface TurtleSoupAiAdapter {
 }
 
 export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
-  constructor(private readonly client: LanguageModelClient) {}
+  constructor(
+    private readonly client: LanguageModelClient,
+    private readonly promptProvider: TurtleSoupPromptProvider = () =>
+      DEFAULT_TURTLE_SOUP_PROMPT_CONFIG
+  ) {}
 
   async createPuzzle(input: TurtleSoupCreateInput): Promise<TurtleSoupPuzzleState | undefined> {
     let validationError = "";
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      const prompts = await this.promptProvider();
       const text = await this.client.complete({
         purpose: "story",
         temperature: 0.85,
@@ -60,10 +69,11 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
         messages: [
           {
             role: "user",
-            content:
-              attempt === 0
-                ? storyPrompt(input)
-                : storyRetryPrompt(input, validationError)
+            content: renderTurtleSoupStoryPrompt(
+              prompts,
+              input,
+              attempt === 0 ? "" : validationError
+            )
           }
         ]
       });
@@ -80,6 +90,7 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
   async judgeQuestion(
     input: TurtleSoupQuestionInput
   ): Promise<TurtleSoupQuestionJudgment | undefined> {
+    const prompts = await this.promptProvider();
     const text = await this.client.complete({
       purpose: "judge",
       temperature: 0.1,
@@ -88,7 +99,7 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
       messages: [
         {
           role: "system",
-          content: questionPrompt(input)
+          content: renderTurtleSoupQuestionPrompt(prompts, input)
         }
       ]
     });
@@ -101,6 +112,7 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
   }
 
   async judgeGuess(input: TurtleSoupGuessInput): Promise<TurtleSoupGuessJudgment | undefined> {
+    const prompts = await this.promptProvider();
     const text = await this.client.complete({
       purpose: "judge",
       temperature: 0.1,
@@ -109,7 +121,7 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
       messages: [
         {
           role: "system",
-          content: guessPrompt(input)
+          content: renderTurtleSoupGuessPrompt(prompts, input)
         }
       ]
     });
@@ -130,6 +142,7 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
   }
 
   async createHint(input: TurtleSoupHintInput): Promise<string | undefined> {
+    const prompts = await this.promptProvider();
     const text = await this.client.complete({
       purpose: "judge",
       temperature: 0.45,
@@ -138,121 +151,12 @@ export class ModelTurtleSoupAiAdapter implements TurtleSoupAiAdapter {
       messages: [
         {
           role: "system",
-          content: hintPrompt(input)
+          content: renderTurtleSoupHintPrompt(prompts, input)
         }
       ]
     });
     return stringField(text, 60) || undefined;
   }
-}
-
-function storyPrompt(input: TurtleSoupCreateInput): string {
-  const tags = input.tags.length > 0 ? input.tags.join("、") : "日常反常、悬疑、逻辑";
-  const difficultyText =
-    input.difficulty === "easy"
-      ? "逻辑直观，线索较明显，适合团建破冰。"
-      : input.difficulty === "hard"
-        ? "核心诡计隐蔽，可以有复杂因果链，但不能依赖冷门专业知识。"
-        : "标准海龟汤难度，需要侧向思维，可以有适度误导。";
-  const keyPointCount = input.difficulty === "easy" ? "3-4" : input.difficulty === "hard" ? "6-8" : "4-6";
-  return `${promptVersionLine()}
-你是一位侧向思维谜题大师。根据标签创作一个逻辑严密的海龟汤。
-
-标签：${tags}
-难度：${input.difficulty}，${difficultyText}
-随机种子：${input.seed}
-
-要求：
-1. 汤面简洁、不剧透，以“为什么？”或“发生了什么？”结尾。
-2. 汤底必须完整解释汤面中的所有反常点，避免纯巧合和不可验证超自然解释。
-3. 标题要有悬疑感，但不能暗示核心诡计。
-4. 提取 ${keyPointCount} 个真相要点，每个要点是独立、可验证的事实片段。
-5. 给出 2-5 条渐进提示，提示不能直接说出答案。
-
-严格返回 JSON：
-{"title":"","surface":"","answer":"","key_points":[],"hints":[]}`;
-}
-
-function storyRetryPrompt(input: TurtleSoupCreateInput, validationError: string): string {
-  return `${storyPrompt(input)}
-
-上一次输出未通过服务端校验：${validationError}
-请重新生成一题，不要解释错误原因，只返回符合契约的 JSON。`;
-}
-
-function questionPrompt(input: TurtleSoupQuestionInput): string {
-  return `${promptVersionLine()}
-你是一个海龟汤裁判。
-【汤面】：${input.puzzle.surface}
-【汤底】：${input.puzzle.answer}
-
-任务：根据汤底回答玩家提问：“${input.question}”
-
-判定准则：
-1. 汤底是真相唯一依据，允许合理常识推断。
-2. 只能回答“是”“不是”“无关”“是也不是”。
-3. 问题部分正确、前提有误或涉及主观错觉时，回答“是也不是”。
-4. 严禁剧透，reason 只能说明判定类型，不能透露未猜中的真相细节。
-
-严格返回 JSON：{"res":"是|不是|无关|是也不是","reason":""}`;
-}
-
-function guessPrompt(input: TurtleSoupGuessInput): string {
-  const keyPoints = input.puzzle.keyPoints.map((point) => ({
-    id: point.id,
-    text: point.text
-  }));
-  return `${promptVersionLine()}
-你是一个海龟汤裁判。
-【汤面】：${input.puzzle.surface}
-【汤底】：${input.puzzle.answer}
-【真相要点表】：${JSON.stringify(keyPoints)}
-
-任务：分析玩家推理：“${input.guess}”
-
-判定规则：
-1. 做语义匹配，不做死板字面匹配。
-2. achieved_point_ids 只能填写真相要点表中的 id，且必须是玩家已经实质性猜中的要点。
-3. achieved_points 兼容填写真相要点表中的原文；如果能返回 id，优先返回 achieved_point_ids。
-4. wrong_segments 只能填写玩家输入中的原文片段，用于明显矛盾或完全错误的部分。
-5. matched_segments 只能填写玩家输入中的原文片段，用于和真相吻合的部分。
-6. 不要把模糊提问或纯假设强行判定为命中。
-7. comment 不超过 15 个字，不能剧透未命中的真相。
-
-严格返回 JSON：
-{"matched_segments":[],"wrong_segments":[],"achieved_point_ids":[],"achieved_points":[],"comment":""}`;
-}
-
-function hintPrompt(input: TurtleSoupHintInput): string {
-  const found = input.puzzle.keyPoints
-    .filter((point) => input.foundKeyPointIds.includes(point.id))
-    .map((point) => point.text);
-  const unfound = input.puzzle.keyPoints
-    .filter((point) => !input.foundKeyPointIds.includes(point.id))
-    .map((point) => point.text);
-  const recentQuestions = input.log
-    .filter((entry) => entry.kind === "question")
-    .slice(-5)
-    .map((entry) => entry.content);
-  const recentHints = input.log
-    .filter((entry) => entry.kind === "hint")
-    .slice(-5)
-    .map((entry) => entry.content);
-  return `${promptVersionLine()}
-你是一个海龟汤引导者。
-【汤面】：${input.puzzle.surface}
-【汤底】：${input.puzzle.answer}
-【已猜中】：${found.length > 0 ? found.join("；") : "暂无"}
-【未猜中】：${unfound.length > 0 ? unfound.join("；") : "已全部猜中"}
-【近期提问】：${recentQuestions.length > 0 ? recentQuestions.join("；") : "暂无"}
-【已有提示】：${recentHints.length > 0 ? recentHints.join("；") : "暂无"}
-
-给一句反问式提示，引导玩家思考尚未猜中的要点。
-要求：不剧透、不重复已有提示、不直接说答案，30 字以内。只输出提示正文。`;
-}
-
-function promptVersionLine(): string {
-  return `Prompt 版本：${TURTLE_SOUP_PROMPT_VERSION}`;
 }
 
 function normalizePuzzle(data: Record<string, unknown>, input: TurtleSoupCreateInput): TurtleSoupPuzzleState {

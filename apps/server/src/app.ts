@@ -11,9 +11,11 @@ import {
   AccountProfileUpdateRequestSchema,
   AccountRegisterRequestSchema,
   AdminLlmConfigUpdateRequestSchema,
+  AdminLlmModelListRequestSchema,
   AdminLoginRequestSchema,
   AdminPasswordChangeRequestSchema,
   AdminSetupRequestSchema,
+  AdminTurtleSoupPromptUpdateRequestSchema,
   CreateRoomRequestSchema,
   GomokuMatchSubmitRequestSchema,
   GomokuProgressSyncRequestSchema,
@@ -58,7 +60,10 @@ export async function createApp(options: AppOptions) {
   const adminService = new AdminService(repository, environment);
   const games = createGameRegistry({
     pokerEnabled: enabledFlag(environment.POKER_ENABLED, true),
-    turtleSoupAi: new ModelTurtleSoupAiAdapter(adminService.createLanguageModelClient()),
+    turtleSoupAi: new ModelTurtleSoupAiAdapter(
+      adminService.createLanguageModelClient(),
+      adminService.createTurtleSoupPromptProvider()
+    ),
     turtleSoupAiFailureHandler: (event) => {
       app.log.warn({ turtleSoupAi: event }, "Turtle soup AI fallback");
     }
@@ -368,6 +373,44 @@ export async function createApp(options: AppOptions) {
       requireAdminAuthentication(request.headers.cookie, accountService, adminService);
       const input = AdminLlmConfigUpdateRequestSchema.parse(request.body);
       return await adminService.testLanguageModelConfig(input);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.post("/api/admin/config/llm/models", async (request, reply) => {
+    try {
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      const input = AdminLlmModelListRequestSchema.parse(request.body);
+      return await adminService.listLanguageModels(input);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.put("/api/admin/config/turtle-soup-prompts", async (request, reply) => {
+    try {
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      const input = AdminTurtleSoupPromptUpdateRequestSchema.parse(request.body);
+      return adminService.updateTurtleSoupPromptConfig(input);
+    } catch (error) {
+      const message = messageOf(error);
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  app.post("/api/admin/config/turtle-soup-prompts/reset", async (request, reply) => {
+    try {
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      return adminService.resetTurtleSoupPromptConfig();
     } catch (error) {
       const message = messageOf(error);
       return reply

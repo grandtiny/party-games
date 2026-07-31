@@ -15,6 +15,17 @@ export interface LanguageModelConfig {
   timeoutMs: number;
 }
 
+export interface LanguageModelListConfig {
+  endpoint: string;
+  apiKey: string;
+  timeoutMs: number;
+}
+
+export interface LanguageModelInfo {
+  id: string;
+  ownedBy?: string;
+}
+
 export interface LanguageModelCompletionInput {
   purpose?: LanguageModelPurpose;
   messages: LanguageModelMessage[];
@@ -64,10 +75,71 @@ export class OpenAICompatibleLanguageModelClient implements LanguageModelClient 
 }
 
 export function completionEndpoint(endpoint: string): string {
-  const trimmed = endpoint.trim().replace(/\/$/, "");
-  return trimmed.endsWith("/chat/completions") ? trimmed : `${trimmed}/chat/completions`;
+  return `${baseEndpoint(endpoint)}/chat/completions`;
+}
+
+export function modelsEndpoint(endpoint: string): string {
+  return `${baseEndpoint(endpoint)}/models`;
+}
+
+export async function listOpenAICompatibleModels(
+  config: LanguageModelListConfig
+): Promise<LanguageModelInfo[]> {
+  const response = await fetch(modelsEndpoint(config.endpoint), {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${config.apiKey}`
+    },
+    signal: AbortSignal.timeout(config.timeoutMs)
+  });
+  if (!response.ok) throw new Error(`Language model returned HTTP ${response.status}`);
+  const payload = (await response.json()) as unknown;
+  return normalizeModelList(payload);
 }
 
 export function stripThinking(value: string): string {
   return value.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+}
+
+function baseEndpoint(endpoint: string): string {
+  const trimmed = endpoint.trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/chat/completions")
+    ? trimmed.slice(0, -"/chat/completions".length)
+    : trimmed;
+}
+
+function normalizeModelList(payload: unknown): LanguageModelInfo[] {
+  const items = Array.isArray(payload)
+    ? payload
+    : isRecord(payload) && Array.isArray(payload.data)
+      ? payload.data
+      : isRecord(payload) && Array.isArray(payload.models)
+        ? payload.models
+        : [];
+  const models = new Map<string, LanguageModelInfo>();
+  for (const item of items) {
+    const id =
+      typeof item === "string"
+        ? item
+        : isRecord(item) && typeof item.id === "string"
+          ? item.id
+          : "";
+    const trimmedId = id.trim();
+    if (!trimmedId) continue;
+    const ownedBy =
+      isRecord(item) && typeof item.owned_by === "string"
+        ? item.owned_by.trim()
+        : isRecord(item) && typeof item.ownedBy === "string"
+          ? item.ownedBy.trim()
+          : "";
+    models.set(trimmedId, {
+      id: trimmedId,
+      ...(ownedBy ? { ownedBy } : {})
+    });
+  }
+  return [...models.values()].sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }

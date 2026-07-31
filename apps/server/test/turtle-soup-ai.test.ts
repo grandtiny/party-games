@@ -76,6 +76,54 @@ describe("turtle soup AI adapter", () => {
     }
   });
 
+  it("reads prompt templates from the provider for each model call", async () => {
+    let version = "hot-v1";
+    const client = new FakeLanguageModelClient(
+      JSON.stringify({
+        title: "雨夜来电",
+        surface: "她接到自己的来电后立刻关灯。为什么？",
+        answer:
+          "电话来自她提前设置的定时语音提醒，她用自己的声音提醒自己有人可能在窗外观察，所以先关灯隐藏位置。",
+        key_points: [
+          "电话是提前设置的定时提醒",
+          "来电声音来自她自己",
+          "她担心窗外有人观察",
+          "关灯是为了隐藏自己的位置"
+        ],
+        hints: ["声音不一定来自实时通话。", "她关灯是在保护自己的位置。"]
+      })
+    );
+    const adapter = new ModelTurtleSoupAiAdapter(client, () => ({
+      version,
+      story:
+        "故事热更 {{promptVersion}} {{tags}} {{difficulty}} {{seed}} {{keyPointCount}} title surface answer key_points hints",
+      question: "裁判 {{promptVersion}} {{surface}} {{answer}} {{question}} res reason",
+      guess:
+        "猜底 {{promptVersion}} {{surface}} {{answer}} {{keyPointsJson}} {{guess}} achieved_point_ids wrong_segments comment",
+      hint:
+        "提示 {{promptVersion}} {{surface}} {{answer}} {{foundKeyPoints}} {{unfoundKeyPoints}}"
+    }));
+
+    await adapter.createPuzzle({
+      difficulty: "normal",
+      tags: ["学校", "暗恋"],
+      seed: "seed-hot-1"
+    });
+    version = "hot-v2";
+    await adapter.createPuzzle({
+      difficulty: "normal",
+      tags: ["学校", "暗恋"],
+      seed: "seed-hot-2"
+    });
+
+    expect(client.requests[0]?.messages[0]?.content).toContain(
+      "故事热更 hot-v1 学校、暗恋 normal seed-hot-1 4-6"
+    );
+    expect(client.requests[1]?.messages[0]?.content).toContain(
+      "故事热更 hot-v2 学校、暗恋 normal seed-hot-2 4-6"
+    );
+  });
+
   it("retries puzzle generation when the model returns a low quality payload", async () => {
     const client = new FakeLanguageModelClient([
       JSON.stringify({

@@ -214,7 +214,7 @@ async function createTurtleSoupModelServer(): Promise<Server> {
 }
 
 function modelContent(prompt: string): string {
-  if (prompt.includes("侧向思维谜题大师")) {
+  if (prompt.includes("精通海龟汤")) {
     return JSON.stringify({
       title: "天花板上的节目效果",
       surface: "团建时，主持人刚关灯，所有人都看向天花板并笑了。为什么？",

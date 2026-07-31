@@ -2,12 +2,18 @@ import { performance } from "node:perf_hooks";
 import type {
   AdminConfigResponse,
   AdminLlmConfigUpdateRequest,
-  AdminLlmTestResponse
+  AdminLlmModelListRequest,
+  AdminLlmModelListResponse,
+  AdminLlmTestResponse,
+  AdminTurtleSoupPromptConfigView,
+  AdminTurtleSoupPromptUpdateRequest
 } from "@party-games/shared";
+import { AdminTurtleSoupPromptUpdateRequestSchema } from "@party-games/shared";
 import { createSessionToken, hashPassword, hashSecret, verifyPassword } from "./auth.js";
 import { SqliteRoomRepository } from "./repository.js";
 import {
   OpenAICompatibleLanguageModelClient,
+  listOpenAICompatibleModels,
   type LanguageModelClient,
   type LanguageModelConfig
 } from "./language-model.js";
@@ -15,9 +21,15 @@ import {
   RulesLanguageModelAdapter,
   type LanguageModelAdapter
 } from "./rules-assistant.js";
+import {
+  DEFAULT_TURTLE_SOUP_PROMPT_CONFIG,
+  assertTurtleSoupPromptConfigUsable,
+  type TurtleSoupPromptProvider
+} from "./games/turtle-soup-prompts.js";
 
 const LLM_SETTING_KEY = "platform.llm";
 const LEGACY_LLM_SETTING_KEY = "clocktower.llm";
+const TURTLE_SOUP_PROMPT_SETTING_KEY = "turtle-soup.prompts";
 const ADMIN_SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
 
 interface StoredLanguageModelConfig {
@@ -95,7 +107,8 @@ export class AdminService {
         hasApiKey: Boolean(llm.apiKey),
         ready: this.#isLanguageModelReady(llm),
         source: llm.source
-      }
+      },
+      turtleSoupPrompts: this.getTurtleSoupPromptConfig()
     };
   }
 
@@ -161,8 +174,60 @@ export class AdminService {
     };
   }
 
+  async listLanguageModels(input: AdminLlmModelListRequest): Promise<AdminLlmModelListResponse> {
+    const existing = this.#storedLanguageModelConfig();
+    const effective = this.#effectiveLanguageModelConfig();
+    const storedHasApiKey = existing && Object.prototype.hasOwnProperty.call(existing, "apiKey");
+    const apiKey = input.clearApiKey
+      ? ""
+      : input.apiKey
+        ? input.apiKey
+        : storedHasApiKey
+          ? existing?.apiKey ?? ""
+          : effective.apiKey;
+    const endpoint = input.endpoint || effective.endpoint;
+    if (!endpoint.trim() || !apiKey.trim()) {
+      throw new Error("拉取模型列表需要接口地址和 API Key");
+    }
+    const models = await listOpenAICompatibleModels({
+      endpoint,
+      apiKey,
+      timeoutMs: input.timeoutMs
+    });
+    if (models.length === 0) throw new Error("模型接口未返回可用模型列表");
+    return { models };
+  }
+
   createLanguageModelAdapter(): LanguageModelAdapter {
     return new RulesLanguageModelAdapter(this.createLanguageModelClient());
+  }
+
+  getTurtleSoupPromptConfig(): AdminTurtleSoupPromptConfigView {
+    const stored = this.#storedTurtleSoupPromptConfig();
+    return {
+      ...(stored ?? DEFAULT_TURTLE_SOUP_PROMPT_CONFIG),
+      source: stored ? "saved" : "default"
+    };
+  }
+
+  updateTurtleSoupPromptConfig(
+    input: AdminTurtleSoupPromptUpdateRequest
+  ): AdminConfigResponse {
+    assertTurtleSoupPromptConfigUsable(input);
+    this.repository.setSetting(TURTLE_SOUP_PROMPT_SETTING_KEY, JSON.stringify(input));
+    return this.getConfig();
+  }
+
+  resetTurtleSoupPromptConfig(): AdminConfigResponse {
+    this.repository.deleteSetting(TURTLE_SOUP_PROMPT_SETTING_KEY);
+    return this.getConfig();
+  }
+
+  createTurtleSoupPromptProvider(): TurtleSoupPromptProvider {
+    return () => {
+      const { source: _source, ...config } = this.getTurtleSoupPromptConfig();
+      return config;
+    };
   }
 
   createLanguageModelClient(): LanguageModelClient {
@@ -203,6 +268,18 @@ export class AdminService {
     if (!stored) return undefined;
     try {
       return JSON.parse(stored) as StoredLanguageModelConfig;
+    } catch {
+      return undefined;
+    }
+  }
+
+  #storedTurtleSoupPromptConfig(): AdminTurtleSoupPromptUpdateRequest | undefined {
+    const stored = this.repository.getSetting(TURTLE_SOUP_PROMPT_SETTING_KEY);
+    if (!stored) return undefined;
+    try {
+      const parsed = AdminTurtleSoupPromptUpdateRequestSchema.parse(JSON.parse(stored));
+      assertTurtleSoupPromptConfigUsable(parsed);
+      return parsed;
     } catch {
       return undefined;
     }
