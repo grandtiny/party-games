@@ -152,9 +152,11 @@ function repairInactiveBustedPlayers(engine: PokerEngine): void {
   let changed = false;
   const players = engine.state.players.map((player, seat) => {
     if (!player || player.stack > 0 || player.pendingAddOn > 0) return player;
-    const inactiveInCurrentHand =
-      !engine.state.activePlayers.includes(seat) && !engine.state.currentBets.has(seat);
-    if (!handComplete && !inactiveInCurrentHand) return player;
+    const representedInCurrentHand =
+      engine.state.activePlayers.includes(seat) ||
+      engine.state.currentBets.has(seat) ||
+      engine.state.pots.some((pot) => pot.eligibleSeats.includes(seat));
+    if (!handComplete && representedInCurrentHand) return player;
     if (
       player.status === PlayerStatus.BUSTED &&
       player.hand === null &&

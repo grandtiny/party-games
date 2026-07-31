@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   POKER_FIXED_BUY_IN,
   PlayerStatus,
+  Street,
   createPokerEngineEnvelope,
   createPokerTable,
   handlePokerTableCommand,
@@ -263,6 +264,49 @@ describe("poker table domain", () => {
 
     expect(reboughtPlayer).toMatchObject({ buyIns: 2, totalBuyIn: 1_000 });
     expect(reboughtEnginePlayer?.pendingAddOn).toBe(POKER_FIXED_BUY_IN);
+    const nextHand = deal(rebought);
+    const nextHandEngine = restorePokerEngine(nextHand.engine);
+    expect(nextHand.status).toBe("in-hand");
+    expect(nextHandEngine.state.handNumber).toBe(2);
+    expect(
+      nextHandEngine.state.players.find((player) => player?.id === bustedPlayer.id)?.pendingAddOn
+    ).toBe(0);
+  });
+
+  it("preserves current-hand all-in players when restoring snapshots", () => {
+    const state = deal(createPokerTable(fourPlayerInput()));
+    const engine = restorePokerEngine(state.engine);
+    const allInSeat = engine.state.activePlayers[0];
+    if (allInSeat === undefined) throw new Error("测试牌局缺少全下玩家座位");
+    const player = engine.state.players[allInSeat];
+    if (!player) throw new Error("测试牌局全下座位为空");
+    const currentBets = new Map(engine.state.currentBets);
+    currentBets.delete(allInSeat);
+    const players = [...engine.state.players];
+    players[allInSeat] = {
+      ...player,
+      stack: 0,
+      status: PlayerStatus.ALL_IN,
+      betThisStreet: 0,
+      totalInvestedThisHand: 125
+    };
+    Object.assign(engine.state, {
+      street: Street.FLOP,
+      players,
+      currentBets,
+      pots: [{ amount: 125, eligibleSeats: [allInSeat], type: "MAIN", capPerPlayer: 125 }],
+      activePlayers: engine.state.activePlayers.filter((seat) => seat !== allInSeat),
+      winners: null
+    });
+
+    const restored = restorePokerEngine(
+      createPokerEngineEnvelope(engine, state.engine.tableSeed)
+    );
+    expect(restored.state.players[allInSeat]).toMatchObject({
+      status: PlayerStatus.ALL_IN,
+      totalInvestedThisHand: 125,
+      hand: player.hand
+    });
   });
 
   it("never permits tournament rebuys", () => {
@@ -503,6 +547,84 @@ describe("poker table domain", () => {
         allIn: false
       })
     ]);
+  });
+
+  it("awards the pot when the only live opponent is already all-in", () => {
+    const initial = createPokerTable(BASE_INPUT);
+    const preparedEngine = restorePokerEngine(initial.engine);
+    const players = preparedEngine.state.players.map((player, seat) =>
+      player ? { ...player, stack: seat === 0 ? 990 : 10 } : player
+    );
+    Object.assign(preparedEngine.state, { players, initialChips: 1_000 });
+    let state = deal({
+      ...initial,
+      engine: createPokerEngineEnvelope(preparedEngine, initial.engine.tableSeed)
+    });
+    const engine = restorePokerEngine(state.engine);
+    const actingSeat = engine.state.actionTo;
+    if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+    const actorPlayerId = engine.state.players[actingSeat]?.id;
+    if (!actorPlayerId) throw new Error("测试牌局行动座位为空");
+
+    state = handle(
+      state,
+      command({ type: "poker:act", actorPlayerId, payload: { action: "fold" } }),
+      2_100
+    );
+    const settledEngine = restorePokerEngine(state.engine);
+    expect(state.status).toBe("waiting-hand");
+    expect(settledEngine.state.winners).toEqual([
+      expect.objectContaining({ seat: 1, amount: 5 })
+    ]);
+    expect(settledEngine.state.pots).toEqual([]);
+    expect(settledEngine.state.currentBets).toEqual(new Map());
+    expect(
+      settledEngine.state.players.reduce((total, player) => total + (player?.stack ?? 0), 0)
+    ).toBe(1_000);
+  });
+
+  it("runs out the board when folds leave only all-in players", () => {
+    const initial = createPokerTable(fourPlayerInput());
+    const preparedEngine = restorePokerEngine(initial.engine);
+    const players = preparedEngine.state.players.map((player, seat) => {
+      if (!player) return player;
+      return { ...player, stack: seat < 2 ? 490 : 10 };
+    });
+    Object.assign(preparedEngine.state, { players, initialChips: 1_000 });
+    let state = deal({
+      ...initial,
+      engine: createPokerEngineEnvelope(preparedEngine, initial.engine.tableSeed)
+    });
+
+    const actCurrentPlayer = (action: "fold" | "call", now: number): void => {
+      const engine = restorePokerEngine(state.engine);
+      const actingSeat = engine.state.actionTo;
+      if (actingSeat === null) throw new Error("测试牌局缺少行动玩家");
+      const actorPlayerId = engine.state.players[actingSeat]?.id;
+      if (!actorPlayerId) throw new Error("测试牌局行动座位为空");
+      state = handle(
+        state,
+        command({ type: "poker:act", actorPlayerId, payload: { action } }),
+        now
+      );
+    };
+
+    actCurrentPlayer("call", 2_100);
+    actCurrentPlayer("call", 2_200);
+    actCurrentPlayer("call", 2_300);
+    expect(restorePokerEngine(state.engine).state.street).toBe(Street.FLOP);
+    actCurrentPlayer("fold", 2_400);
+    actCurrentPlayer("fold", 2_500);
+
+    const settledEngine = restorePokerEngine(state.engine);
+    expect(state.status).toBe("waiting-hand");
+    expect(settledEngine.state.street).toBe(Street.SHOWDOWN);
+    expect(settledEngine.state.board).toHaveLength(5);
+    expect(settledEngine.state.actionTo).toBeNull();
+    expect(settledEngine.state.winners?.length).toBeGreaterThan(0);
+    expect(
+      settledEngine.state.players.reduce((total, player) => total + (player?.stack ?? 0), 0)
+    ).toBe(1_000);
   });
 
   it("settles a postflop fold when busted seats remain at the table", () => {
