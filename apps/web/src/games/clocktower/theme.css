@@ -1260,9 +1260,37 @@
   box-shadow: inset 0 -2px var(--ct-gold), 0 1px 4px rgb(0 0 0 / 25%);
 }
 
+.app-shell--clocktower .chat-tabs button.has-unread:not(.is-active) {
+  color: var(--ct-evil);
+}
+
+.app-shell--clocktower .chat-unread-badge {
+  background: var(--ct-evil);
+  color: #fff7f7;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 35%);
+}
+
 .app-shell--clocktower .chat-recipient {
   border-bottom-color: var(--ct-parchment-edge);
   color: var(--ct-ink-soft);
+}
+
+.app-shell--clocktower .chat-recipient-option {
+  border-color: var(--ct-parchment-edge);
+  background: var(--ct-parchment);
+  color: var(--ct-ink);
+}
+
+.app-shell--clocktower .chat-recipient-option.is-active {
+  border-color: var(--ct-gold);
+  background: rgb(196 151 63 / 16%);
+  color: var(--ct-gold-deep);
+}
+
+.app-shell--clocktower .chat-recipient-option.has-unread:not(.is-active) {
+  border-color: color-mix(in srgb, var(--ct-evil) 55%, var(--ct-parchment-edge));
+  background: rgb(164 42 51 / 12%);
+  color: var(--ct-evil);
 }
 
 .app-shell--clocktower .chat-feed {
