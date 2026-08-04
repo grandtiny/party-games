@@ -1389,6 +1389,11 @@ h2 {
   font-size: 15px;
 }
 
+.session-strip__copy {
+  margin-left: auto;
+  flex: none;
+}
+
 .room-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

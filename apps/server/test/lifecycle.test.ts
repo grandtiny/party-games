@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
 import { RoomService } from "../src/room-service.js";
+import { testAccount } from "./test-account.js";
 
 const cleanupTasks: Array<() => void> = [];
 
@@ -30,7 +31,7 @@ async function createDayRoom(service: RoomService) {
     gameType: "clocktower",
     nickname: "Owner",
     password: "secret"
-  });
+  }, testAccount("Owner"));
   const sessions = [owner];
   for (let index = 2; index <= 5; index += 1) {
     sessions.push(
@@ -38,7 +39,7 @@ async function createDayRoom(service: RoomService) {
         roomCode: owner.roomCode,
         nickname: `Player ${index}`,
         password: "secret"
-      })
+      }, testAccount(`Player ${index}`))
     );
   }
   for (let index = 0; index < sessions.length; index += 1) {

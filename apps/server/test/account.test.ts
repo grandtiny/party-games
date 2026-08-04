@@ -220,9 +220,16 @@ describe("platform accounts and puzzle records", () => {
     ).toBe(401);
   });
 
-  it("binds an authenticated account to its room player while guests remain supported", async () => {
+  it("requires matching accounts to create, join and recover room identities", async () => {
     const context = await createTestApp();
     const { app, roomService } = context;
+    const guestCreate = await app.inject({
+      method: "POST",
+      url: "/api/rooms",
+      payload: { gameType: "clocktower", nickname: "游客", password: "room-pass" }
+    });
+    expect(guestCreate.statusCode).toBe(401);
+
     const ownerSetup = await app.inject({
       method: "POST",
       url: "/api/account/bootstrap",
@@ -248,7 +255,7 @@ describe("platform accounts and puzzle records", () => {
         .room.players.find((player) => player.id === session.playerId)
     ).toMatchObject({ accountUserId, nickname: "房主" });
 
-    const guest = await app.inject({
+    const guestJoin = await app.inject({
       method: "POST",
       url: "/api/rooms/join",
       payload: {
@@ -257,13 +264,80 @@ describe("platform accounts and puzzle records", () => {
         password: "room-pass"
       }
     });
-    expect(guest.statusCode).toBe(200);
-    const guestSession = guest.json();
+    expect(guestJoin.statusCode).toBe(401);
+
+    const invite = await app.inject({
+      method: "POST",
+      url: "/api/account/invites",
+      headers: { cookie: ownerCookie },
+      payload: { expiresInDays: 1 }
+    });
+    const memberSetup = await app.inject({
+      method: "POST",
+      url: "/api/account/register",
+      payload: {
+        username: "member",
+        displayName: "成员",
+        password: "member-password",
+        inviteCode: invite.json().code
+      }
+    });
+    const memberCookie = sessionCookie(memberSetup.headers["set-cookie"]);
+    const member = await app.inject({
+      method: "POST",
+      url: "/api/rooms/join",
+      headers: { cookie: memberCookie },
+      payload: {
+        roomCode: session.roomCode,
+        nickname: "成员",
+        password: "room-pass"
+      }
+    });
+    expect(member.statusCode).toBe(200);
+    const memberSession = member.json();
     expect(
       roomService
-        .getView(session.roomCode, guestSession.playerId)
-        .room.players.find((player) => player.id === guestSession.playerId)
-    ).not.toHaveProperty("accountUserId");
+        .getView(session.roomCode, memberSession.playerId)
+        .room.players.find((player) => player.id === memberSession.playerId)
+    ).toMatchObject({ accountUserId: memberSetup.json().user.id, nickname: "成员" });
+
+    const guestRecover = await app.inject({
+      method: "POST",
+      url: "/api/rooms/recover",
+      payload: {
+        roomCode: session.roomCode,
+        recoveryCode: memberSession.recoveryCode
+      }
+    });
+    expect(guestRecover.statusCode).toBe(401);
+
+    const wrongAccountRecover = await app.inject({
+      method: "POST",
+      url: "/api/rooms/recover",
+      headers: { cookie: ownerCookie },
+      payload: {
+        roomCode: session.roomCode,
+        recoveryCode: memberSession.recoveryCode
+      }
+    });
+    expect(wrongAccountRecover.statusCode).toBe(400);
+    expect(wrongAccountRecover.json().error).toContain("恢复码与当前账号不匹配");
+
+    const recovered = await app.inject({
+      method: "POST",
+      url: "/api/rooms/recover",
+      headers: { cookie: memberCookie },
+      payload: {
+        roomCode: session.roomCode,
+        recoveryCode: memberSession.recoveryCode
+      }
+    });
+    expect(recovered.statusCode).toBe(200);
+    expect(recovered.json()).toMatchObject({
+      roomCode: session.roomCode,
+      playerId: memberSession.playerId,
+      recoveryCode: memberSession.recoveryCode
+    });
   });
 
   it("validates, deduplicates and restores gomoku account data", async () => {

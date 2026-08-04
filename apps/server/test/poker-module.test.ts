@@ -17,6 +17,7 @@ import type { ServerGameModule } from "../src/platform/game-module.js";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
 import { RoomService } from "../src/room-service.js";
+import { testAccount } from "./test-account.js";
 
 const tempDirectories: string[] = [];
 const openRepositories = new Set<SqliteRoomRepository>();
@@ -68,12 +69,12 @@ async function createStartedPokerRoom(
     nickname: "Owner",
     password: "secret",
     poker
-  });
+  }, testAccount("Owner"));
   const second = await service.joinRoom({
     roomCode: owner.roomCode,
     nickname: "Player 2",
     password: "secret"
-  });
+  }, testAccount("Player 2"));
   await service.setSeat(owner.roomCode, owner.playerId, 1);
   await service.setSeat(owner.roomCode, second.playerId, 2);
   await service.setReady(owner.roomCode, owner.playerId, true);
@@ -120,12 +121,15 @@ describe("poker server module", () => {
     const { repository } = createRepository();
     const defaultService = new RoomService(repository, new PresenceTracker());
     await expect(
-      defaultService.createRoom({
-        gameType: "poker",
-        nickname: "Owner",
-        password: "secret",
-        poker: { mode: "points", smallBlind: 5, bigBlind: 10 }
-      })
+      defaultService.createRoom(
+        {
+          gameType: "poker",
+          nickname: "Owner",
+          password: "secret",
+          poker: { mode: "points", smallBlind: 5, bigBlind: 10 }
+        },
+        testAccount("Owner")
+      )
     ).rejects.toThrow("德州扑克模块尚未开放");
   });
 
@@ -186,18 +190,21 @@ describe("poker server module", () => {
   it("runs a solo room with deterministic AI opponents", async () => {
     const { repository } = createRepository();
     const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
-    const owner = await service.createRoom({
-      gameType: "poker",
-      nickname: "Solo Player",
-      password: "secret",
-      poker: {
-        mode: "points",
-        smallBlind: 5,
-        bigBlind: 10,
-        aiPlayerCount: 3,
-        aiDifficulty: "hard"
-      }
-    });
+    const owner = await service.createRoom(
+      {
+        gameType: "poker",
+        nickname: "Solo Player",
+        password: "secret",
+        poker: {
+          mode: "points",
+          smallBlind: 5,
+          bigBlind: 10,
+          aiPlayerCount: 3,
+          aiDifficulty: "hard"
+        }
+      },
+      testAccount("Solo Player")
+    );
 
     const lobby = service.getView(owner.roomCode, owner.playerId);
     expect(lobby.room.pokerConfig?.aiDifficulty).toBe("hard");
@@ -215,11 +222,14 @@ describe("poker server module", () => {
       ])
     );
     await expect(
-      service.joinRoom({
-        roomCode: owner.roomCode,
-        nickname: "Unexpected Player",
-        password: "secret"
-      })
+      service.joinRoom(
+        {
+          roomCode: owner.roomCode,
+          nickname: "Unexpected Player",
+          password: "secret"
+        },
+        testAccount("Unexpected Player")
+      )
     ).rejects.toThrow("单人 AI 房间不接受其他玩家加入");
 
     await service.startRoom(owner.roomCode, owner.playerId);

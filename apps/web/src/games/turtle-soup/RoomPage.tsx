@@ -2,7 +2,6 @@ import {
   Check,
   Copy,
   FlaskConical,
-  KeyRound,
   Lightbulb,
   RefreshCw,
   Send,
@@ -21,6 +20,7 @@ import type {
   TurtleSoupLogEntryView
 } from "@party-games/shared";
 import { AppShell } from "../../platform/AppShell";
+import { RoomRecoveryCode } from "../../platform/RoomRecoveryCode";
 import { getSession } from "../../session";
 
 type InputMode = "ask" | "guess";
@@ -154,18 +154,14 @@ export function TurtleSoupRoomPage() {
             </span>
           </section>
 
+          <RoomRecoveryCode recoveryCode={session.recoveryCode} />
+
           {view.room.phase === "lobby" ? (
             <>
               <LobbyPanel
                 view={view}
                 pending={pendingAction}
               />
-              <section className="session-strip">
-                <KeyRound size={18} />
-                <span>
-                  身份恢复码 <strong>{session.recoveryCode}</strong>
-                </span>
-              </section>
               <div className="room-actions">
                 <button
                   className={selfPlayer?.ready ? "secondary-button" : "primary-button"}

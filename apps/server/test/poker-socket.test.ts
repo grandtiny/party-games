@@ -6,6 +6,7 @@ import type { RoomSessionResponse, RoomView } from "@party-games/shared";
 import { io, type Socket } from "socket.io-client";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
+import { testAccount } from "./test-account.js";
 
 const cleanupTasks: Array<() => Promise<void> | void> = [];
 
@@ -39,12 +40,12 @@ describe("poker socket boundary", () => {
       nickname: "Owner",
       password: "secret",
       poker: { mode: "points", smallBlind: 5, bigBlind: 10 }
-    });
+    }, testAccount("Owner"));
     const second = await context.roomService.joinRoom({
       roomCode: owner.roomCode,
       nickname: "Player 2",
       password: "secret"
-    });
+    }, testAccount("Player 2"));
     await context.roomService.setSeat(owner.roomCode, owner.playerId, 1);
     await context.roomService.setSeat(owner.roomCode, second.playerId, 2);
     await context.roomService.setReady(owner.roomCode, owner.playerId, true);

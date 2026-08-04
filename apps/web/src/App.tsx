@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AccountPage } from "./platform/AccountPage";
 import { AccountProvider } from "./platform/AccountContext";
 import { HomePage } from "./platform/HomePage";
+import { RequireAccount } from "./platform/RequireAccount";
 import { SettingsPage } from "./platform/SettingsPage";
 import "./games/clocktower/theme.css";
 import "./games/gomoku/theme.css";
@@ -65,12 +66,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/account" element={<AccountPage />} />
-          <Route path="/clocktower" element={<ClocktowerEntryPage />} />
-          <Route path="/clocktower/room/:roomCode" element={<ClocktowerRoomPage />} />
-          <Route path="/poker" element={<PokerEntryPage />} />
-          <Route path="/poker/room/:roomCode" element={<PokerRoomPage />} />
-          <Route path="/turtle-soup" element={<TurtleSoupEntryPage />} />
-          <Route path="/turtle-soup/room/:roomCode" element={<TurtleSoupRoomPage />} />
+          <Route element={<RequireAccount />}>
+            <Route path="/clocktower" element={<ClocktowerEntryPage />} />
+            <Route path="/clocktower/room/:roomCode" element={<ClocktowerRoomPage />} />
+            <Route path="/poker" element={<PokerEntryPage />} />
+            <Route path="/poker/room/:roomCode" element={<PokerRoomPage />} />
+            <Route path="/turtle-soup" element={<TurtleSoupEntryPage />} />
+            <Route path="/turtle-soup/room/:roomCode" element={<TurtleSoupRoomPage />} />
+          </Route>
           <Route path="/turtle-soup/lab" element={<TurtleSoupPromptLabPage />} />
           <Route path="/minesweeper" element={<MinesweeperPage />} />
           <Route path="/sudoku" element={<SudokuPage />} />
