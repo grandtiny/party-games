@@ -9,7 +9,6 @@ import {
   Pause,
   Play,
   RefreshCw,
-  ShieldCheck,
   Timer,
   Trophy,
   TrendingUp,
@@ -29,6 +28,7 @@ import type {
   SocketAck
 } from "@party-games/shared";
 import { AppShell } from "../../platform/AppShell";
+import { RoomRecoveryCode } from "../../platform/RoomRecoveryCode";
 import { getSession } from "../../session";
 
 export function PokerRoomPage() {
@@ -142,6 +142,8 @@ export function PokerRoomPage() {
             <span className="phase-label">{pokerPhaseLabel(view)}</span>
           </section>
 
+          <RoomRecoveryCode recoveryCode={session.recoveryCode} />
+
           <PokerConfigBar view={view} />
 
           {table ? (
@@ -167,12 +169,6 @@ export function PokerRoomPage() {
                   send((callback) => socketRef.current?.emit("room:set-seat", seat, callback))
                 }
               />
-              <section className="session-strip">
-                <ShieldCheck size={18} />
-                <span>
-                  身份恢复码 <strong>{session.recoveryCode}</strong>
-                </span>
-              </section>
               <div className="room-actions poker-lobby-actions">
                 <button
                   className={selfPlayer?.ready ? "secondary-button" : "primary-button"}

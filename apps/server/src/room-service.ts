@@ -42,7 +42,7 @@ export class RoomService {
 
   async createRoom(
     input: CreateRoomRequest,
-    accountUser?: AccountUserView
+    accountUser: AccountUserView
   ): Promise<RoomSessionResponse> {
     if (!this.games.has(input.gameType)) {
       throw new Error(input.gameType === "poker" ? "德州扑克模块尚未开放" : "游戏模块尚未开放");
@@ -80,7 +80,7 @@ export class RoomService {
       players: [
         {
           id: playerId,
-          ...(accountUser ? { accountUserId: accountUser.id } : {}),
+          accountUserId: accountUser.id,
           nickname: input.nickname,
           seat: aiPlayerCount > 0 ? 1 : null,
           ready: aiPlayerCount > 0
@@ -118,7 +118,7 @@ export class RoomService {
 
   async joinRoom(
     input: JoinRoomRequest,
-    accountUser?: AccountUserView
+    accountUser: AccountUserView
   ): Promise<RoomSessionResponse> {
     return this.#withLock(input.roomCode, async () => {
       const state = this.#requireRoom(input.roomCode);
@@ -127,10 +127,7 @@ export class RoomService {
         throw new Error("单人 AI 房间不接受其他玩家加入");
       }
       if (state.players.length >= 15) throw new Error("房间人数已满");
-      if (
-        accountUser &&
-        state.players.some((player) => player.accountUserId === accountUser.id)
-      ) {
+      if (state.players.some((player) => player.accountUserId === accountUser.id)) {
         throw new Error("当前账号已在房间中，请使用恢复码恢复身份");
       }
       if (
@@ -154,7 +151,7 @@ export class RoomService {
           ...state.players,
           {
             id: playerId,
-            ...(accountUser ? { accountUserId: accountUser.id } : {}),
+            accountUserId: accountUser.id,
             nickname: input.nickname,
             seat: null,
             ready: false
@@ -179,7 +176,10 @@ export class RoomService {
     });
   }
 
-  async recoverRoom(input: RecoverRoomRequest): Promise<RoomSessionResponse> {
+  async recoverRoom(
+    input: RecoverRoomRequest,
+    accountUser: AccountUserView
+  ): Promise<RoomSessionResponse> {
     const session = this.repository.findSessionByRecovery(
       input.roomCode,
       hashSecret(input.recoveryCode)
@@ -188,6 +188,10 @@ export class RoomService {
 
     const state = this.#requireRoom(input.roomCode);
     if (state.id !== session.room_id) throw new Error("恢复码与房间不匹配");
+    const player = state.players.find((candidate) => candidate.id === session.player_id);
+    if (player?.accountUserId !== accountUser.id) {
+      throw new Error("恢复码与当前账号不匹配");
+    }
 
     const sessionToken = createSessionToken();
     this.repository.rotateSessionToken(session.player_id, hashSecret(sessionToken));
@@ -204,6 +208,8 @@ export class RoomService {
     if (!session) throw new Error("会话无效，请重新加入或使用恢复码");
     const room = this.#requireRoom(roomCode);
     if (room.id !== session.room_id) throw new Error("会话与房间不匹配");
+    const player = room.players.find((candidate) => candidate.id === session.player_id);
+    if (!player?.accountUserId) throw new Error("玩家身份未绑定账号，请重新加入");
     return session.player_id;
   }
 

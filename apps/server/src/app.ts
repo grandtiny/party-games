@@ -466,10 +466,11 @@ export async function createApp(options: AppOptions) {
       const input = CreateRoomRequestSchema.parse(request.body);
       return await roomService.createRoom(
         input,
-        accountService.userForToken(accountSessionToken(request.headers.cookie))
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
       );
     } catch (error) {
-      return reply.code(400).send({ error: messageOf(error) });
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
   });
 
@@ -478,19 +479,24 @@ export async function createApp(options: AppOptions) {
       const input = JoinRoomRequestSchema.parse(request.body);
       return await roomService.joinRoom(
         input,
-        accountService.userForToken(accountSessionToken(request.headers.cookie))
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
       );
     } catch (error) {
-      return reply.code(400).send({ error: messageOf(error) });
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
   });
 
   app.post("/api/rooms/recover", async (request, reply) => {
     try {
       const input = RecoverRoomRequestSchema.parse(request.body);
-      return await roomService.recoverRoom(input);
+      return await roomService.recoverRoom(
+        input,
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
     } catch (error) {
-      return reply.code(400).send({ error: messageOf(error) });
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
   });
 

@@ -22,7 +22,7 @@ import {
   X
 } from "lucide-react";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   bootstrapAccount,
   changeAccountPassword,
@@ -44,22 +44,37 @@ type AccountTab = "records" | "rankings" | "profile";
 
 export function AccountPage() {
   const { status, loading, error, refresh } = useAccount();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const returnTo = accountReturnPath(location.state);
+  const authenticated = async () => {
+    await refresh();
+    if (returnTo) navigate(returnTo, { replace: true });
+  };
 
   return (
     <AppShell scope="platform" title="账号与记录" backTo="/" hideAccountAction>
       {loading ? <div className="notice">正在读取账号…</div> : null}
       {error ? <div className="notice notice--error">{error}</div> : null}
       {!loading && status && !status.initialized ? (
-        <BootstrapForm status={status} onAuthenticated={refresh} />
+        <BootstrapForm status={status} onAuthenticated={authenticated} />
       ) : null}
       {!loading && status?.initialized && !status.authenticated ? (
-        <AccountAccessForm onAuthenticated={refresh} />
+        <AccountAccessForm onAuthenticated={authenticated} />
       ) : null}
       {!loading && status?.authenticated && status.user ? (
         <AccountWorkspace status={status} onStatusChange={refresh} />
       ) : null}
     </AppShell>
   );
+}
+
+function accountReturnPath(state: unknown): string | undefined {
+  if (!state || typeof state !== "object" || !("returnTo" in state)) return undefined;
+  const returnTo = (state as { returnTo?: unknown }).returnTo;
+  return typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")
+    ? returnTo
+    : undefined;
 }
 
 function BootstrapForm({

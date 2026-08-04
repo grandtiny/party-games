@@ -1,15 +1,17 @@
 import { FlaskConical, KeyRound, LogIn, RefreshCw } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { TurtleSoupDifficulty } from "@party-games/shared";
 import { createRoom, joinRoom, recoverRoom } from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { useAccount } from "../../platform/AccountContext";
 import { saveSession } from "../../session";
 
 type EntryMode = "create" | "join" | "recover";
 
 export function TurtleSoupEntryPage() {
   const navigate = useNavigate();
+  const { status } = useAccount();
   const [mode, setMode] = useState<EntryMode>("create");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,10 @@ export function TurtleSoupEntryPage() {
   const [tags, setTags] = useState("悬疑 日常反常");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (status?.user && !nickname) setNickname(status.user.displayName);
+  }, [status?.user?.id]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

@@ -6,6 +6,7 @@ import type { RoomSessionResponse, RoomView } from "@party-games/shared";
 import { io, type Socket } from "socket.io-client";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
+import { testAccount } from "./test-account.js";
 
 const cleanupTasks: Array<() => Promise<void> | void> = [];
 
@@ -72,7 +73,7 @@ async function createDayRoom(context: Awaited<ReturnType<typeof createTestApp>>,
     gameType: "clocktower",
     nickname: "Player 1",
     password: "secret"
-  });
+  }, testAccount("Player 1"));
   const sessions = [owner];
   for (let index = 2; index <= count; index += 1) {
     sessions.push(
@@ -80,7 +81,7 @@ async function createDayRoom(context: Awaited<ReturnType<typeof createTestApp>>,
         roomCode: owner.roomCode,
         nickname: `Player ${index}`,
         password: "secret"
-      })
+      }, testAccount(`Player ${index}`))
     );
   }
   for (let index = 0; index < sessions.length; index += 1) {
@@ -169,7 +170,7 @@ describe("socket reconnect", () => {
       gameType: "clocktower",
       nickname: "Player 1",
       password: "secret"
-    });
+    }, testAccount("Player 1"));
     const sessions = [owner];
     for (let index = 2; index <= 15; index += 1) {
       sessions.push(
@@ -177,7 +178,7 @@ describe("socket reconnect", () => {
           roomCode: owner.roomCode,
           nickname: `Player ${index}`,
           password: "secret"
-        })
+        }, testAccount(`Player ${index}`))
       );
     }
 

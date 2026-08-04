@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
 import { RoomService } from "../src/room-service.js";
+import { testAccount } from "./test-account.js";
 
 const tempDirectories: string[] = [];
 
@@ -34,7 +35,7 @@ describe("room projections", () => {
       gameType: "clocktower",
       nickname: "Owner",
       password: "secret"
-    });
+    }, testAccount("Owner"));
     const sessions = [owner];
 
     for (let index = 2; index <= 5; index += 1) {
@@ -43,7 +44,7 @@ describe("room projections", () => {
           roomCode: owner.roomCode,
           nickname: `Player ${index}`,
           password: "secret"
-        })
+        }, testAccount(`Player ${index}`))
       );
     }
 
@@ -68,10 +69,13 @@ describe("room projections", () => {
     expect(roleIds).toHaveLength(5);
 
     const originalToken = sessions[1]?.sessionToken;
-    const recovered = await service.recoverRoom({
-      roomCode: owner.roomCode,
-      recoveryCode: sessions[1]?.recoveryCode ?? ""
-    });
+    const recovered = await service.recoverRoom(
+      {
+        roomCode: owner.roomCode,
+        recoveryCode: sessions[1]?.recoveryCode ?? ""
+      },
+      testAccount("Player 2")
+    );
     expect(service.authenticate(owner.roomCode, recovered.sessionToken)).toBe(
       sessions[1]?.playerId
     );

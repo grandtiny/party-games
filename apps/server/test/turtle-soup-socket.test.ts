@@ -7,6 +7,7 @@ import type { RoomSessionResponse, RoomView } from "@party-games/shared";
 import { io, type Socket } from "socket.io-client";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
+import { testAccount } from "./test-account.js";
 
 const cleanupTasks: Array<() => Promise<void> | void> = [];
 
@@ -33,12 +34,12 @@ describe("turtle soup socket boundary", () => {
       nickname: "Owner",
       password: "secret",
       turtleSoup: { difficulty: "normal", tags: ["团建", "误会"] }
-    });
+    }, testAccount("Owner"));
     const second = await context.roomService.joinRoom({
       roomCode: owner.roomCode,
       nickname: "Player 2",
       password: "secret"
-    });
+    }, testAccount("Player 2"));
 
     const ownerConnection = await connectWithView(context.baseUrl, owner);
     const secondConnection = await connectWithView(context.baseUrl, second);

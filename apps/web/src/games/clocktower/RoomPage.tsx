@@ -4,8 +4,7 @@ import {
   Eye,
   EyeOff,
   Moon,
-  RefreshCw,
-  ShieldCheck
+  RefreshCw
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Navigate, useParams } from "react-router-dom";
@@ -20,6 +19,7 @@ import type {
 } from "@party-games/shared";
 import { getSession } from "../../session";
 import { AppShell } from "../../platform/AppShell";
+import { RoomRecoveryCode } from "../../platform/RoomRecoveryCode";
 import { ClocktowerDay } from "./components/ClocktowerDay";
 import {
   DayControlPanel,
@@ -231,6 +231,7 @@ export function ClocktowerRoomPage() {
     >
       {error ? <div className="notice notice--error">{error}</div> : null}
       {actionError ? <div className="notice notice--error">{actionError}</div> : null}
+      <RoomRecoveryCode recoveryCode={session.recoveryCode} />
 
       {!view ? (
         <div className="loading-block">
@@ -308,12 +309,6 @@ export function ClocktowerRoomPage() {
                     send((callback) => socketRef.current?.emit("clocktower:confirm-role", callback))
                   }
                 />
-                <section className="session-strip">
-                  <ShieldCheck size={18} />
-                  <span>
-                    身份恢复码 <strong>{session.recoveryCode}</strong>
-                  </span>
-                </section>
               </div>
             ) : null}
 

@@ -9,6 +9,7 @@ import type { TurtleSoupAiAdapter } from "../src/games/turtle-soup-ai.js";
 import { PresenceTracker } from "../src/presence.js";
 import { SqliteRoomRepository } from "../src/repository.js";
 import { RoomService } from "../src/room-service.js";
+import { testAccount } from "./test-account.js";
 
 const cleanupTasks: Array<() => void> = [];
 
@@ -52,12 +53,12 @@ describe("turtle soup server module", () => {
       gameType: "turtle-soup",
       nickname: "Owner",
       password: "secret"
-    });
+    }, testAccount("Owner"));
     const second = await service.joinRoom({
       roomCode: owner.roomCode,
       nickname: "Player 2",
       password: "secret"
-    });
+    }, testAccount("Player 2"));
 
     await expect(service.setSeat(owner.roomCode, owner.playerId, 1)).rejects.toThrow(
       "当前游戏不需要座位"
@@ -112,7 +113,7 @@ describe("turtle soup server module", () => {
       gameType: "turtle-soup",
       nickname: "Owner",
       password: "secret"
-    });
+    }, testAccount("Owner"));
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
     await service.guessTurtleSoup(
@@ -156,7 +157,7 @@ describe("turtle soup server module", () => {
       nickname: "Owner",
       password: "secret",
       turtleSoup: { difficulty: "hard", tags: ["录音", "密室"] }
-    });
+    }, testAccount("Owner"));
 
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
@@ -205,7 +206,7 @@ describe("turtle soup server module", () => {
       gameType: "turtle-soup",
       nickname: "Owner",
       password: "secret"
-    });
+    }, testAccount("Owner"));
 
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
@@ -252,7 +253,7 @@ describe("turtle soup server module", () => {
       gameType: "turtle-soup",
       nickname: "Owner",
       password: "secret"
-    });
+    }, testAccount("Owner"));
 
     await service.setReady(owner.roomCode, owner.playerId, true);
     await service.startRoom(owner.roomCode, owner.playerId);
