@@ -20,6 +20,7 @@ import type {
 import {
   migrateInternalRoomState,
   type InternalRoomState,
+  type PokerActionTimerState,
   type PokerBlindTimerState
 } from "../domain.js";
 import type {
@@ -35,6 +36,7 @@ import type {
 import { comparePlayersBySeat } from "../platform/players.js";
 
 export const POKER_BOT_ACTION_DELAY_MS = 900;
+export const POKER_ACTION_TIMEOUT_MS = 15_000;
 const MINUTE_MS = 60_000;
 
 export class PokerGameModule implements ServerGameModule {
@@ -52,7 +54,7 @@ export class PokerGameModule implements ServerGameModule {
     return {
       changes: {
         phase: "playing",
-        poker: { ...poker, table, ...(blindTimer ? { blindTimer } : {}) }
+        poker: pokerStateWithTable(poker, table, blindTimer)
       },
       eventPayload: {
         mode: poker.config.mode,
@@ -83,7 +85,7 @@ export class PokerGameModule implements ServerGameModule {
       return {
         changes: {
           phase: "playing",
-          poker: { ...poker, table, ...(blindTimer ? { blindTimer } : {}) }
+          poker: pokerStateWithTable(poker, table, blindTimer)
         },
         eventPayload: { mode: poker.config.mode, playerCount: state.players.length }
       };
@@ -99,6 +101,13 @@ export class PokerGameModule implements ServerGameModule {
       blindAdvanceMode(poker.config) === "automatic"
     ) {
       throw new Error("自动盲注模式不能手动提升级别");
+    }
+    if (
+      command.type === "poker:act" &&
+      poker.actionTimer &&
+      context.now >= poker.actionTimer.deadlineAt
+    ) {
+      throw new Error("行动时间已结束");
     }
 
     let table = poker.table;
@@ -125,10 +134,11 @@ export class PokerGameModule implements ServerGameModule {
       table = this.#rebuyBustedBots(state, table, context.now + 1);
     }
     blindTimer = this.#finishBlindTimer(table, blindTimer);
+    const actionTimer = this.#createActionTimer(table, context.now);
     return {
       changes: {
         phase: table.status === "complete" ? "game-over" : "playing",
-        poker: { ...poker, table, ...(blindTimer ? { blindTimer } : {}) }
+        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer)
       },
       eventPayload: {
         command: command.type,
@@ -157,7 +167,7 @@ export class PokerGameModule implements ServerGameModule {
     return {
       room: {
         pokerConfig: poker.config,
-        pokerTable: this.#tableView(projection, poker.blindTimer)
+        pokerTable: this.#tableView(projection, poker.blindTimer, poker.actionTimer)
       },
       self: projection.self ? { poker: projection.self } : {},
       playerStates: {}
@@ -174,51 +184,41 @@ export class PokerGameModule implements ServerGameModule {
     const blindTimerUpdate = this.#tickBlindTimer(state, poker, context.now);
     if (blindTimerUpdate) return blindTimerUpdate;
     if (poker.table.status !== "in-hand") return undefined;
-    const actorPlayerId = this.#botActorPlayerId(state, poker.table);
-    if (!actorPlayerId) return undefined;
-
-    const lastUpdatedAt = Date.parse(state.updatedAt);
-    if (
-      Number.isFinite(lastUpdatedAt) &&
-      context.now < lastUpdatedAt + POKER_BOT_ACTION_DELAY_MS
-    ) {
-      return undefined;
+    const actionTimer = poker.actionTimer;
+    const actorPlayerId = this.#actionPlayerId(poker.table);
+    if (!actionTimer || actionTimer.playerId !== actorPlayerId) {
+      throw new Error("德扑行动计时与当前玩家不一致");
     }
 
-    const decision = decidePokerBotAction(
-      poker.table,
+    const actor = state.players.find((player) => player.id === actorPlayerId);
+    if (!actor) throw new Error("德扑行动玩家不在房间中");
+    if (actor.isBot) {
+      const actionStartedAt = actionTimer.deadlineAt - POKER_ACTION_TIMEOUT_MS;
+      if (context.now < actionStartedAt + POKER_BOT_ACTION_DELAY_MS) return undefined;
+      const decision = decidePokerBotAction(
+        poker.table,
+        actorPlayerId,
+        pokerBotDifficulty(poker.config)
+      );
+      return this.#automatedActionUpdate(
+        state,
+        poker,
+        actorPlayerId,
+        decision,
+        context.now,
+        "POKER_BOT_ACTION"
+      );
+    }
+    if (context.now < actionTimer.deadlineAt) return undefined;
+    const action = this.#timeoutAction(poker.table, actorPlayerId);
+    return this.#automatedActionUpdate(
+      state,
+      poker,
       actorPlayerId,
-      pokerBotDifficulty(poker.config)
+      { action },
+      context.now,
+      "POKER_ACTION_TIMEOUT"
     );
-    let table = handlePokerTableCommand(
-      poker.table,
-      {
-        type: "poker:act",
-        actorPlayerId,
-        payload: decision
-      },
-      { now: context.now, ownerPlayerId: state.ownerPlayerId }
-    );
-    if (table.status !== "in-hand") {
-      table = this.#rebuyBustedBots(state, table, context.now + 1);
-    }
-    const blindTimer = this.#finishBlindTimer(table, poker.blindTimer);
-    return {
-      changes: {
-        phase: table.status === "complete" ? "game-over" : "playing",
-        poker: { ...poker, table, ...(blindTimer ? { blindTimer } : {}) }
-      },
-      event: {
-        type: "POKER_BOT_ACTION",
-        actorPlayerId,
-        payload: {
-          action: decision.action,
-          ...(decision.amount === undefined ? {} : { amount: decision.amount }),
-          handNumber: projectPokerTable(table).table.handNumber,
-          status: table.status
-        }
-      }
-    };
   }
 
   migrate(value: unknown): InternalRoomState {
@@ -232,12 +232,19 @@ export class PokerGameModule implements ServerGameModule {
         table,
         Number.isFinite(Date.parse(state.updatedAt)) ? Date.parse(state.updatedAt) : 0
       );
+    const migratedAt = Number.isFinite(Date.parse(state.updatedAt))
+      ? Date.parse(state.updatedAt)
+      : 0;
+    const actionPlayerId =
+      table.status === "in-hand" ? this.#actionPlayerId(table) : undefined;
+    const actionTimer =
+      actionPlayerId && state.poker.actionTimer?.playerId === actionPlayerId
+        ? state.poker.actionTimer
+        : this.#createActionTimer(table, migratedAt);
     return {
       ...state,
       poker: {
-        ...state.poker,
-        table,
-        ...(blindTimer ? { blindTimer } : {})
+        ...pokerStateWithTable(state.poker, table, blindTimer, actionTimer)
       }
     };
   }
@@ -257,11 +264,13 @@ export class PokerGameModule implements ServerGameModule {
     if (!poker.table) {
       if (state.phase !== "lobby") throw new Error("非大厅阶段缺少德扑牌桌状态");
       if (poker.blindTimer) throw new Error("大厅阶段不能存在盲注计时器");
+      if (poker.actionTimer) throw new Error("大厅阶段不能存在行动计时器");
       return;
     }
 
     validatePokerTable(poker.table);
     this.#validateBlindTimer(poker.config, poker.table, poker.blindTimer);
+    this.#validateActionTimer(poker.table, poker.actionTimer);
     if (poker.table.mode !== poker.config.mode) throw new Error("德扑模式与房间配置不一致");
     const roomPlayers = new Map(state.players.map((player) => [player.id, player]));
     if (poker.table.players.length !== roomPlayers.size) {
@@ -313,7 +322,8 @@ export class PokerGameModule implements ServerGameModule {
 
   #tableView(
     projection: ReturnType<typeof projectPokerTable>,
-    blindTimer: PokerBlindTimerState | undefined
+    blindTimer: PokerBlindTimerState | undefined,
+    actionTimer: PokerActionTimerState | undefined
   ): PublicPokerTableView {
     const table = projection.table;
     const playerIdAt = (seat: number | null): string | undefined =>
@@ -334,6 +344,9 @@ export class PokerGameModule implements ServerGameModule {
       ...(smallBlindPlayerId ? { smallBlindPlayerId } : {}),
       ...(bigBlindPlayerId ? { bigBlindPlayerId } : {}),
       ...(actionPlayerId ? { actionPlayerId } : {}),
+      ...(actionTimer && actionTimer.playerId === actionPlayerId
+        ? { actionDeadlineAt: actionTimer.deadlineAt }
+        : {}),
       smallBlind: table.smallBlind,
       bigBlind: table.bigBlind,
       ante: table.ante,
@@ -623,19 +636,91 @@ export class PokerGameModule implements ServerGameModule {
     }
   }
 
-  #botActorPlayerId(
-    state: InternalRoomState,
-    table: ReturnType<typeof createPokerTable>
-  ): string | undefined {
+  #createActionTimer(
+    table: ReturnType<typeof createPokerTable>,
+    now: number
+  ): PokerActionTimerState | undefined {
+    if (table.status !== "in-hand") return undefined;
+    return {
+      playerId: this.#actionPlayerId(table),
+      deadlineAt: now + POKER_ACTION_TIMEOUT_MS
+    };
+  }
+
+  #validateActionTimer(
+    table: ReturnType<typeof createPokerTable>,
+    timer: PokerActionTimerState | undefined
+  ): void {
+    if (table.status !== "in-hand") {
+      if (timer) throw new Error("非行动阶段不能存在德扑行动计时器");
+      return;
+    }
+    const playerId = this.#actionPlayerId(table);
+    if (!timer) throw new Error("进行中的牌局缺少行动计时器");
+    if (timer.playerId !== playerId) throw new Error("德扑行动计时玩家不一致");
+    if (!Number.isFinite(timer.deadlineAt) || timer.deadlineAt < 0) {
+      throw new Error("德扑行动截止时间无效");
+    }
+  }
+
+  #actionPlayerId(table: ReturnType<typeof createPokerTable>): string {
     const publicTable = projectPokerTable(table).table;
-    const actorPlayerId =
+    const playerId =
       publicTable.actionTo === null
         ? undefined
         : publicTable.players[publicTable.actionTo]?.id;
-    if (!actorPlayerId) throw new Error("德扑 AI 行动座位不存在");
-    const actor = state.players.find((player) => player.id === actorPlayerId);
-    if (!actor) throw new Error("德扑行动玩家不在房间中");
-    return actor.isBot ? actorPlayerId : undefined;
+    if (!playerId) throw new Error("德扑行动座位不存在");
+    return playerId;
+  }
+
+  #timeoutAction(
+    table: ReturnType<typeof createPokerTable>,
+    actorPlayerId: string
+  ): "check" | "fold" {
+    const actions = projectPokerTable(table, actorPlayerId).self?.legalActions?.actions;
+    if (actions?.includes("check")) return "check";
+    if (actions?.includes("fold")) return "fold";
+    throw new Error("德扑超时玩家没有可执行的默认动作");
+  }
+
+  #automatedActionUpdate(
+    state: InternalRoomState,
+    poker: NonNullable<InternalRoomState["poker"]>,
+    actorPlayerId: string,
+    decision: { action: PokerPlayerAction; amount?: number },
+    now: number,
+    eventType: "POKER_BOT_ACTION" | "POKER_ACTION_TIMEOUT"
+  ): GameRoomUpdate {
+    let table = handlePokerTableCommand(
+      poker.table as NonNullable<typeof poker.table>,
+      {
+        type: "poker:act",
+        actorPlayerId,
+        payload: decision
+      },
+      { now, ownerPlayerId: state.ownerPlayerId }
+    );
+    if (table.status !== "in-hand") {
+      table = this.#rebuyBustedBots(state, table, now + 1);
+    }
+    const blindTimer = this.#finishBlindTimer(table, poker.blindTimer);
+    const actionTimer = this.#createActionTimer(table, now);
+    return {
+      changes: {
+        phase: table.status === "complete" ? "game-over" : "playing",
+        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer)
+      },
+      event: {
+        type: eventType,
+        actorPlayerId,
+        payload: {
+          action: decision.action,
+          ...(decision.amount === undefined ? {} : { amount: decision.amount }),
+          handNumber: projectPokerTable(table).table.handNumber,
+          status: table.status
+        }
+      }
+    };
   }
 
   #rebuyBustedBots(
@@ -662,6 +747,26 @@ export class PokerGameModule implements ServerGameModule {
 
 function isPokerPlayerAction(value: unknown): value is PokerPlayerAction {
   return value === "fold" || value === "check" || value === "call" || value === "bet" || value === "raise";
+}
+
+function pokerStateWithTable(
+  poker: NonNullable<InternalRoomState["poker"]>,
+  table: NonNullable<NonNullable<InternalRoomState["poker"]>["table"]>,
+  blindTimer?: PokerBlindTimerState,
+  actionTimer?: PokerActionTimerState
+): NonNullable<InternalRoomState["poker"]> {
+  const {
+    table: _table,
+    blindTimer: _blindTimer,
+    actionTimer: _actionTimer,
+    ...configState
+  } = poker;
+  return {
+    ...configState,
+    table,
+    ...(blindTimer ? { blindTimer } : {}),
+    ...(actionTimer ? { actionTimer } : {})
+  };
 }
 
 function pokerTableSettings(config: PokerRoomConfig): PokerTableSettings {

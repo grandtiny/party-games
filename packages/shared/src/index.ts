@@ -906,6 +906,7 @@ export interface PokerTableView {
   smallBlindPlayerId?: string;
   bigBlindPlayerId?: string;
   actionPlayerId?: string;
+  actionDeadlineAt?: number;
   smallBlind: number;
   bigBlind: number;
   ante: number;

@@ -100,7 +100,7 @@ export function restorePokerEngine(envelope: PokerEngineEnvelope): PokerEngine {
   if (!envelope.tableSeed) throw new Error("德扑桌种子不存在");
 
   const engine = PokerEngine.restore(envelope.snapshot);
-  repairInactiveBustedPlayers(engine);
+  repairInactiveBustedPlayers(engine, false);
   setRandomProvider(
     engine,
     randomForHand(envelope.tableSeed, engine.state.handNumber + 1)
@@ -145,7 +145,10 @@ function setRandomProvider(engine: PokerEngine, randomProvider: () => number): v
   Object.assign(engine.state.config, { randomProvider });
 }
 
-function repairInactiveBustedPlayers(engine: PokerEngine): void {
+function repairInactiveBustedPlayers(
+  engine: PokerEngine,
+  clearCompletedHand: boolean
+): void {
   // Engine 1.0.16 skips zero-stack seats during a new-hand reset, leaving prior-hand chips behind.
   const handComplete =
     engine.state.street === Street.SHOWDOWN && engine.state.winners !== null;
@@ -156,7 +159,7 @@ function repairInactiveBustedPlayers(engine: PokerEngine): void {
       engine.state.activePlayers.includes(seat) ||
       engine.state.currentBets.has(seat) ||
       engine.state.pots.some((pot) => pot.eligibleSeats.includes(seat));
-    if (!handComplete && representedInCurrentHand) return player;
+    if (representedInCurrentHand && (!handComplete || !clearCompletedHand)) return player;
     if (
       player.status === PlayerStatus.BUSTED &&
       player.hand === null &&
@@ -187,7 +190,7 @@ interface ParkedPlayer {
 
 function parkBustedPlayers(engine: PokerEngine): ParkedPlayer[] {
   // Exclude unfunded seats only while dealing so heads-up blinds use the funded players.
-  repairInactiveBustedPlayers(engine);
+  repairInactiveBustedPlayers(engine, true);
   const players = [...engine.state.players];
   const timeBanks = new Map(engine.state.timeBanks);
   const parkedPlayers: ParkedPlayer[] = [];

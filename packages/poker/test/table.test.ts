@@ -412,6 +412,40 @@ describe("poker table domain", () => {
     expect(view.table.players[1]?.hand).toBeNull();
   });
 
+  it("reveals every live player's hole cards after showdown", () => {
+    let state = createPokerTable({
+      ...BASE_INPUT,
+      smallBlind: 250,
+      bigBlind: 500
+    });
+    state = deal(state);
+    const engine = restorePokerEngine(state.engine);
+    const actingSeat = engine.state.actionTo;
+    if (actingSeat === null) throw new Error("摊牌测试缺少行动玩家");
+    const actorPlayerId = engine.state.players[actingSeat]?.id;
+    if (!actorPlayerId) throw new Error("摊牌测试行动座位为空");
+
+    state = handle(
+      state,
+      command({ type: "poker:act", actorPlayerId, payload: { action: "call" } }),
+      2_100
+    );
+
+    expect(state.status).toBe("waiting-hand");
+    for (const viewerPlayerId of BASE_INPUT.players.map((player) => player.playerId)) {
+      const view = projectPokerTable(state, viewerPlayerId);
+      expect(
+        view.table.players
+          .filter((player) => player !== null)
+          .every(
+            (player) =>
+              player?.hand?.length === 2 &&
+              player.hand.every((card) => typeof card === "string")
+          )
+      ).toBe(true);
+    }
+  });
+
   it("projects server-authoritative legal actions only for the acting player", () => {
     const state = deal(createPokerTable(BASE_INPUT));
     const engine = restorePokerEngine(state.engine);

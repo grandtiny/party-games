@@ -48,6 +48,7 @@ export interface InternalRoomState {
     config: PokerRoomConfig;
     table?: PokerTableState;
     blindTimer?: PokerBlindTimerState;
+    actionTimer?: PokerActionTimerState;
   } | undefined;
   turtleSoupConfig?: TurtleSoupRoomConfigState | undefined;
   turtleSoup?: TurtleSoupState | undefined;
@@ -127,6 +128,11 @@ export interface PokerBlindTimerState {
   remainingMs?: number;
 }
 
+export interface PokerActionTimerState {
+  playerId: string;
+  deadlineAt: number;
+}
+
 export interface NewSession {
   playerId: string;
   tokenHash: string;
@@ -155,6 +161,7 @@ export interface RoomEvent {
     | "POKER_HAND_DEALT"
     | "POKER_ACTION"
     | "POKER_BOT_ACTION"
+    | "POKER_ACTION_TIMEOUT"
     | "POKER_REBUY"
     | "POKER_CASHED_OUT"
     | "POKER_BOUGHT_IN"
