@@ -1,6 +1,7 @@
 import type { GameCommand } from "@party-games/game-core";
 import {
   ActionType,
+  PlayerStatus,
   Street,
   type ActionRecord,
   type BlindLevel,
@@ -274,11 +275,13 @@ export function handlePokerTableCommand(
     advancePokerBlindLevel(engine, context.now);
   }
 
+  const commandCanAdvanceHand =
+    command.type === "poker:deal" || command.type === "poker:act";
+  if (commandCanAdvanceHand) revealShowdownHands(engine, context.now);
+
   const tournament = settleTournamentPlayers(state.mode, engine, players);
   players = tournament.players;
   const winnerPlayerId = tournament.winnerPlayerId;
-  const commandCanAdvanceHand =
-    command.type === "poker:deal" || command.type === "poker:act";
   const nextState: PokerTableState = {
     ...state,
     status: winnerPlayerId
@@ -311,7 +314,7 @@ export function projectPokerTable(
   return {
     mode: state.mode,
     status: state.status,
-    table: engine.view(viewerPlayerId),
+    table: projectEngineView(engine, viewerPlayerId),
     totalPot: currentPot(engine),
     actionHistory: projectActionHistory(engine.state.actionHistory),
     blindPositions,
@@ -337,6 +340,25 @@ export function projectPokerTable(
           }
         }
       : {})
+  };
+}
+
+function projectEngineView(engine: PokerEngine, viewerPlayerId?: string): PublicState {
+  const view = engine.view(viewerPlayerId);
+  if (engine.state.street !== Street.SHOWDOWN) return view;
+  return {
+    ...view,
+    players: view.players.map((player, seat) => {
+      const source = engine.state.players[seat];
+      if (!player || !source?.hand || source.status === PlayerStatus.FOLDED) return player;
+      if (!source.shownCards?.length) return player;
+      return {
+        ...player,
+        hand: source.hand.map((card, index) =>
+          source.shownCards?.includes(index) ? card : null
+        )
+      };
+    })
   };
 }
 
@@ -467,6 +489,28 @@ function act(
     engine.act({ type: ActionType.CHECK, playerId: command.actorPlayerId, timestamp });
   } else {
     engine.act({ type: ActionType.CALL, playerId: command.actorPlayerId, timestamp });
+  }
+}
+
+function revealShowdownHands(engine: PokerEngine, now: number): void {
+  if (engine.state.street !== Street.SHOWDOWN || engine.state.winners === null) return;
+  let timestamp = now;
+  for (const player of engine.state.players) {
+    if (
+      !player?.hand ||
+      (player.status !== PlayerStatus.ACTIVE &&
+        player.status !== PlayerStatus.ALL_IN &&
+        player.status !== PlayerStatus.BUSTED) ||
+      player.shownCards?.length === player.hand.length
+    ) {
+      continue;
+    }
+    timestamp = nextPokerTimestamp(engine, timestamp + 1);
+    engine.act({
+      type: ActionType.SHOW,
+      playerId: player.id,
+      timestamp
+    });
   }
 }
 

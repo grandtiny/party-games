@@ -462,6 +462,7 @@ function PokerTableStage({
             <div className="poker-board__status" aria-label="当前行动玩家">
               <span className="poker-board__turn">
                 轮到 <strong>{actionPlayer.nickname}</strong>
+                <PokerActionCountdown deadlineAt={table.actionDeadlineAt} />
               </span>
             </div>
           ) : null}
@@ -479,11 +480,16 @@ function PokerTableStage({
           const isButton = player.playerId === table.buttonPlayerId;
           const isSmallBlind = player.playerId === table.smallBlindPlayerId;
           const isBigBlind = player.playerId === table.bigBlindPlayerId;
+          const isShowdown =
+            table.street === "SHOWDOWN" &&
+            player.status !== "FOLDED" &&
+            player.hand?.length === 2 &&
+            player.hand.every((card) => typeof card === "string");
           const roomPlayer = roomPlayerById.get(player.playerId);
           return (
             <div className="poker-seat-position" style={position} key={player.playerId}>
               <div
-                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${isFolded ? "is-folded" : ""} ${isAllIn ? "is-all-in" : ""} ${!player.atTable ? "is-away" : ""}`}
+                className={`poker-player-seat ${isSelf ? "is-self" : ""} ${isAction ? "is-action" : ""} ${isFolded ? "is-folded" : ""} ${isAllIn ? "is-all-in" : ""} ${isShowdown ? "is-showdown" : ""} ${!player.atTable ? "is-away" : ""}`}
                 aria-current={isAction ? "true" : undefined}
               >
                 {isAction ? (
@@ -555,7 +561,11 @@ function PokerTableStage({
                       ? `第 ${player.finishPlace} 名`
                       : playerStatusLabel(player.status)}
                 </span>
-                <MiniHand player={player} inHand={table.status === "in-hand"} />
+                <MiniHand
+                  player={player}
+                  inHand={table.status === "in-hand"}
+                  showdown={table.street === "SHOWDOWN"}
+                />
               </div>
             </div>
           );
@@ -693,8 +703,40 @@ function PokerHandSummary({
   );
 }
 
-function MiniHand({ player, inHand }: { player: PokerTablePlayerView; inHand: boolean }) {
-  if (!inHand || player.status === "WAITING" || player.status === "BUSTED") return null;
+function MiniHand({
+  player,
+  inHand,
+  showdown
+}: {
+  player: PokerTablePlayerView;
+  inHand: boolean;
+  showdown: boolean;
+}) {
+  if (showdown) {
+    if (
+      player.status === "FOLDED" ||
+      player.hand?.length !== 2 ||
+      !player.hand.every((card) => typeof card === "string")
+    ) {
+      return null;
+    }
+    return (
+      <span className="mini-hand is-revealed" aria-label={`${player.nickname} 的摊牌底牌`}>
+        {player.hand.map((card, index) => (
+          <PlayingCard code={card ?? undefined} compact key={index} />
+        ))}
+      </span>
+    );
+  }
+  if (
+    player.status === "WAITING" ||
+    player.status === "BUSTED" ||
+    player.status === "SITTING_OUT" ||
+    player.status === "RESERVED"
+  ) {
+    return null;
+  }
+  if (!inHand) return null;
   return (
     <span className="mini-hand" aria-hidden="true">
       {player.hand ? (
@@ -705,6 +747,30 @@ function MiniHand({ player, inHand }: { player: PokerTablePlayerView; inHand: bo
           <PlayingCard hidden compact />
         </>
       )}
+    </span>
+  );
+}
+
+function PokerActionCountdown({ deadlineAt }: { deadlineAt: number | undefined }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!deadlineAt) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 200);
+    return () => window.clearInterval(timer);
+  }, [deadlineAt]);
+
+  if (!deadlineAt) return null;
+  const seconds = Math.max(0, Math.ceil((deadlineAt - now) / 1000));
+  return (
+    <span
+      className={`poker-action-countdown ${seconds <= 5 ? "is-urgent" : ""}`}
+      aria-label={`剩余行动时间 ${seconds} 秒`}
+    >
+      <Timer size={11} />
+      <strong>{seconds}</strong>
+      <small>秒</small>
     </span>
   );
 }

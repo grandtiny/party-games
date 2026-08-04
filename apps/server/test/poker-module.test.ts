@@ -7,8 +7,9 @@ import {
   type GameType,
   type RoomSessionResponse
 } from "@party-games/shared";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  POKER_ACTION_TIMEOUT_MS,
   POKER_BOT_ACTION_DELAY_MS,
   PokerGameModule
 } from "../src/games/poker.js";
@@ -23,6 +24,7 @@ const tempDirectories: string[] = [];
 const openRepositories = new Set<SqliteRoomRepository>();
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const repository of openRepositories) repository.close();
   openRepositories.clear();
   for (const directory of tempDirectories.splice(0)) {
@@ -188,6 +190,7 @@ describe("poker server module", () => {
   });
 
   it("runs a solo room with deterministic AI opponents", async () => {
+    vi.useFakeTimers();
     const { repository } = createRepository();
     const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
     const owner = await service.createRoom(
@@ -244,10 +247,14 @@ describe("poker server module", () => {
     expect(view.room.pokerTable?.actionHistory).toHaveLength(0);
 
     const dealtState = repository.getRoom(owner.roomCode);
-    if (!dealtState) throw new Error("单人 AI 测试房间不存在");
+    if (!dealtState?.poker?.actionTimer) throw new Error("单人 AI 测试房间缺少行动计时器");
     const firstBotDueAt =
-      Date.parse(dealtState.updatedAt) + POKER_BOT_ACTION_DELAY_MS;
+      dealtState.poker.actionTimer.deadlineAt -
+      POKER_ACTION_TIMEOUT_MS +
+      POKER_BOT_ACTION_DELAY_MS;
+    vi.setSystemTime(firstBotDueAt - 1);
     expect(await service.tickActiveGames(firstBotDueAt - 1)).toEqual([]);
+    vi.setSystemTime(firstBotDueAt);
     expect(await service.tickActiveGames(firstBotDueAt)).toEqual([owner.roomCode]);
 
     view = service.getView(owner.roomCode, owner.playerId);
@@ -273,11 +280,16 @@ describe("poker server module", () => {
     expect(view.room.pokerTable?.actionHistory).toHaveLength(historyBeforeHumanAction + 1);
 
     const queuedBotState = repository.getRoom(owner.roomCode);
-    if (!queuedBotState) throw new Error("单人 AI 测试房间不存在");
+    if (!queuedBotState?.poker?.actionTimer) {
+      throw new Error("单人 AI 测试房间缺少排队行动计时器");
+    }
     const historyBeforeBotAction = view.room.pokerTable?.actionHistory.length ?? 0;
-    await service.tickActiveGames(
-      Date.parse(queuedBotState.updatedAt) + POKER_BOT_ACTION_DELAY_MS
-    );
+    const queuedBotDueAt =
+      queuedBotState.poker.actionTimer.deadlineAt -
+      POKER_ACTION_TIMEOUT_MS +
+      POKER_BOT_ACTION_DELAY_MS;
+    vi.setSystemTime(queuedBotDueAt);
+    await service.tickActiveGames(queuedBotDueAt);
     view = service.getView(owner.roomCode, owner.playerId);
     expect(view.room.pokerTable?.actionHistory).toHaveLength(historyBeforeBotAction + 1);
     expect(view.room.pokerTable?.actionHistory.at(-1)?.playerId).toBe(queuedBotPlayerId);
@@ -292,10 +304,13 @@ describe("poker server module", () => {
       const actorPlayerId = view.room.pokerTable.actionPlayerId;
       expect(view.room.players.find((player) => player.id === actorPlayerId)?.isBot).toBe(true);
       const state = repository.getRoom(owner.roomCode);
-      if (!state) throw new Error("单人 AI 测试房间不存在");
-      await service.tickActiveGames(
-        Date.parse(state.updatedAt) + POKER_BOT_ACTION_DELAY_MS
-      );
+      if (!state?.poker?.actionTimer) throw new Error("单人 AI 测试房间缺少连续行动计时器");
+      const botDueAt =
+        state.poker.actionTimer.deadlineAt -
+        POKER_ACTION_TIMEOUT_MS +
+        POKER_BOT_ACTION_DELAY_MS;
+      vi.setSystemTime(botDueAt);
+      await service.tickActiveGames(botDueAt);
       view = service.getView(owner.roomCode, owner.playerId);
     }
 
@@ -304,6 +319,79 @@ describe("poker server module", () => {
       expect(view.room.pokerTable.actionPlayerId).toBe(owner.playerId);
       expect(view.self.poker?.legalActions).toBeDefined();
     }
+  });
+
+  it("checks or folds for a human player after the 15 second action deadline", async () => {
+    vi.useFakeTimers();
+    const { repository } = createRepository();
+    const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const { owner } = await createStartedPokerRoom(service, {
+      mode: "points",
+      smallBlind: 5,
+      bigBlind: 10
+    });
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    let view = service.getView(owner.roomCode, owner.playerId);
+    const firstActorPlayerId = view.room.pokerTable?.actionPlayerId;
+    const firstDeadlineAt = view.room.pokerTable?.actionDeadlineAt;
+    if (!firstActorPlayerId || !firstDeadlineAt) {
+      throw new Error("超时测试缺少首个行动玩家或截止时间");
+    }
+    const dealtState = repository.getRoom(owner.roomCode);
+    if (!dealtState?.poker?.actionTimer) throw new Error("超时测试缺少持久化计时器");
+    expect(dealtState.poker.actionTimer).toEqual({
+      playerId: firstActorPlayerId,
+      deadlineAt: firstDeadlineAt
+    });
+    expect(
+      firstDeadlineAt - Date.parse(dealtState.updatedAt)
+    ).toBeGreaterThanOrEqual(POKER_ACTION_TIMEOUT_MS - 100);
+    vi.setSystemTime(firstDeadlineAt - 1);
+    expect(await service.tickActiveGames(firstDeadlineAt - 1)).toEqual([]);
+    vi.setSystemTime(firstDeadlineAt);
+    await expect(
+      service.actPoker(owner.roomCode, firstActorPlayerId, "fold")
+    ).rejects.toThrow("行动时间已结束");
+    expect(await service.tickActiveGames(firstDeadlineAt)).toEqual([owner.roomCode]);
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.status).toBe("waiting-hand");
+    expect(view.room.pokerTable?.actionDeadlineAt).toBeUndefined();
+    expect(view.room.pokerTable?.actionHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ playerId: firstActorPlayerId, action: "fold" })
+      ])
+    );
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    view = service.getView(owner.roomCode, owner.playerId);
+    const callerPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!callerPlayerId) throw new Error("超时过牌测试缺少跟注玩家");
+    expect(
+      service.getView(owner.roomCode, callerPlayerId).self.poker?.legalActions?.actions
+    ).toContain("call");
+    await service.actPoker(owner.roomCode, callerPlayerId, "call");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    const checkingPlayerId = view.room.pokerTable?.actionPlayerId;
+    const checkDeadlineAt = view.room.pokerTable?.actionDeadlineAt;
+    if (!checkingPlayerId || !checkDeadlineAt) {
+      throw new Error("超时过牌测试缺少行动玩家或截止时间");
+    }
+    expect(
+      service.getView(owner.roomCode, checkingPlayerId).self.poker?.legalActions?.actions
+    ).toContain("check");
+    vi.setSystemTime(checkDeadlineAt);
+    await service.tickActiveGames(checkDeadlineAt);
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.actionHistory.at(-1)).toMatchObject({
+      playerId: checkingPlayerId,
+      action: "check"
+    });
+    expect(view.room.pokerTable?.status).toBe("in-hand");
+    expect(view.room.pokerTable?.actionDeadlineAt).toBeGreaterThan(checkDeadlineAt);
   });
 
   it("advances tournament blinds through the owner-only service boundary", async () => {

@@ -965,7 +965,7 @@
 }
 
 .poker-board__turn {
-  max-width: 150px;
+  max-width: 190px;
 }
 
 .poker-board__turn strong {
@@ -974,10 +974,56 @@
   white-space: nowrap;
 }
 
+.poker-action-countdown {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  border-left: 1px solid var(--pk-gold-deep);
+  margin-left: 2px;
+  padding-left: 6px;
+  color: var(--pk-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.poker-action-countdown strong {
+  min-width: 14px;
+  overflow: visible;
+  font-size: 11px;
+  text-align: right;
+}
+
+.poker-action-countdown small {
+  color: var(--pk-text-dim);
+  font-size: 8px;
+}
+
+.poker-action-countdown.is-urgent,
+.poker-action-countdown.is-urgent strong,
+.poker-action-countdown.is-urgent small {
+  color: var(--pk-blood-text);
+}
+
 .mini-hand {
   position: absolute;
   right: 7px;
   bottom: 6px;
+}
+
+.poker-player-seat.is-showdown {
+  border-color: var(--pk-gold-bright);
+}
+
+.poker-player-seat.is-showdown .poker-player-seat__status {
+  visibility: hidden;
+}
+
+.mini-hand.is-revealed {
+  gap: 3px;
+}
+
+.mini-hand.is-revealed .playing-card {
+  box-shadow: 0 0 0 1px rgb(255 233 168 / 24%), 0 3px 9px rgb(0 0 0 / 55%);
 }
 
 .poker-controls {
@@ -1679,8 +1725,19 @@
     font-size: 7px;
   }
 
-  .mini-hand {
+  .mini-hand:not(.is-revealed) {
     display: none;
+  }
+
+  .mini-hand.is-revealed {
+    right: 3px;
+    bottom: 4px;
+    display: flex;
+    gap: 2px;
+  }
+
+  .mini-hand.is-revealed .playing-card {
+    width: 18px;
   }
 
   .poker-board {
