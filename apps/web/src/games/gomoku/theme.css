@@ -505,6 +505,30 @@
   color: #282d29;
 }
 
+.gomoku-puzzle-status.is-won {
+  background: #edf7ef;
+  color: #287340;
+}
+
+.gomoku-puzzle-status.is-won strong {
+  color: #195c30;
+}
+
+.gomoku-puzzle-status.is-lost,
+.gomoku-puzzle-status.is-error {
+  background: #fff1ee;
+  color: #a13b2e;
+}
+
+.gomoku-puzzle-status.is-lost strong,
+.gomoku-puzzle-status.is-error strong {
+  color: #842b21;
+}
+
+.gomoku-puzzle-status.is-draw {
+  background: #f3f4f1;
+}
+
 .gomoku-mini-stone {
   width: 18px;
   height: 18px;
