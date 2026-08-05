@@ -1,8 +1,10 @@
 import {
-  GomokuPosition,
+  advanceGomokuPuzzleSolution,
   createGomokuPuzzleState,
   gomokuPuzzles,
+  nextGomokuPuzzleSolutionMove,
   playGomokuMove,
+  type GomokuAiDecision,
   type GomokuGameState,
   type GomokuPoint,
   type GomokuPuzzle,
@@ -15,21 +17,27 @@ import {
   ChevronRight,
   Lightbulb,
   RefreshCw,
-  Star
+  Star,
+  X
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { syncGomokuProgress } from "../../api";
 import { useAccount } from "../../platform/AccountContext";
 import { GomokuBoard } from "./Board";
 import {
-  createGomokuClientId,
   gomokuProgressItems,
   loadGomokuProgress,
-  saveGomokuGame,
   saveGomokuProgress,
   type GomokuLocalProgress
 } from "./storage";
+
+interface AiWorkerResponse {
+  requestId: number;
+  decision?: GomokuAiDecision;
+  error?: string;
+}
+
+type PuzzleOutcome = "playing" | "won" | "lost" | "draw" | "error";
 
 const difficultyLabels: Record<GomokuPuzzleDifficulty, string> = {
   beginner: "入门",
@@ -39,7 +47,6 @@ const difficultyLabels: Record<GomokuPuzzleDifficulty, string> = {
 
 export function GomokuPuzzlesPanel() {
   const { status: accountStatus } = useAccount();
-  const navigate = useNavigate();
   const [difficulty, setDifficulty] = useState<GomokuPuzzleDifficulty>("beginner");
   const filtered = useMemo(
     () => gomokuPuzzles.filter((puzzle) => puzzle.difficulty === difficulty),
@@ -60,20 +67,6 @@ export function GomokuPuzzlesPanel() {
       }}
       onSelect={setSelectedId}
       syncAccount={Boolean(accountStatus?.authenticated)}
-      onChallenge={(state) => {
-        saveGomokuGame({
-          ...state,
-          id: createGomokuClientId(),
-          mode: "ai",
-          humanColor: state.currentPlayer,
-          aiDifficulty: "normal",
-          startedAt: Date.now(),
-          elapsedSeconds: 0,
-          usedUndo: false,
-          usedHint: false
-        });
-        navigate("/gomoku");
-      }}
     />
   );
 }
@@ -84,7 +77,6 @@ function PuzzleWorkspace({
   difficulty,
   onDifficulty,
   onSelect,
-  onChallenge,
   syncAccount
 }: {
   puzzle: GomokuPuzzle;
@@ -92,81 +84,57 @@ function PuzzleWorkspace({
   difficulty: GomokuPuzzleDifficulty;
   onDifficulty: (difficulty: GomokuPuzzleDifficulty) => void;
   onSelect: (id: string) => void;
-  onChallenge: (state: GomokuGameState) => void;
   syncAccount: boolean;
 }) {
   const [state, setState] = useState(() => createGomokuPuzzleState(puzzle));
-  const [prefix, setPrefix] = useState<GomokuPoint[]>([]);
-  const [mistakes, setMistakes] = useState(0);
+  const [solutionPrefix, setSolutionPrefix] = useState<GomokuPoint[] | null>([]);
   const [hintLevel, setHintLevel] = useState(0);
+  const [attempts, setAttempts] = useState(1);
   const [responding, setResponding] = useState(false);
-  const [complete, setComplete] = useState(false);
+  const [outcome, setOutcome] = useState<PuzzleOutcome>("playing");
+  const [earnedStars, setEarnedStars] = useState<number>();
   const [notice, setNotice] = useState<string>();
   const [progress, setProgress] = useState<GomokuLocalProgress>(() => loadGomokuProgress());
+  const workerRef = useRef<Worker | undefined>(undefined);
+  const requestIdRef = useRef(0);
+  const stateRef = useRef(state);
+  const solutionPrefixRef = useRef<GomokuPoint[] | null>(solutionPrefix);
+  const applyAiMoveRef = useRef<
+    ((point: GomokuPoint, requestId: number) => void) | undefined
+  >(undefined);
+
+  stateRef.current = state;
+  solutionPrefixRef.current = solutionPrefix;
 
   const initialMoveCount = puzzle.black.length + puzzle.white.length;
-  const matchingLines = puzzle.solutionLines.filter((line) => prefixMatches(line, prefix));
-  const highlighted = hintLevel >= 3 ? matchingLines[0]?.[prefix.length] : undefined;
+  const highlighted =
+    hintLevel >= 3 &&
+    !responding &&
+    outcome === "playing" &&
+    state.currentPlayer === puzzle.toMove
+      ? nextGomokuPuzzleSolutionMove(puzzle, solutionPrefix)
+      : undefined;
   const forbiddenPoints = hintLevel >= 2 ? puzzle.forbiddenDecoys : [];
   const currentIndex = filtered.findIndex((candidate) => candidate.id === puzzle.id);
+  const movesPlayed = state.moves.length - initialMoveCount;
+  const referenceMoves = Math.min(
+    ...puzzle.solutionLines.map((line) => line.length)
+  );
 
-  const reset = () => {
-    setState(createGomokuPuzzleState(puzzle));
-    setPrefix([]);
-    setMistakes(0);
-    setHintLevel(0);
-    setResponding(false);
-    setComplete(false);
-    setNotice(undefined);
+  const updateSolutionPrefix = (next: GomokuPoint[] | null) => {
+    solutionPrefixRef.current = next;
+    setSolutionPrefix(next);
   };
 
-  const playAt = (point: GomokuPoint) => {
-    if (complete || responding) return;
-    const nextLines = matchingLines.filter((line) => samePoint(line[prefix.length], point));
-    if (nextLines.length === 0) {
-      const position = GomokuPosition.fromMoves(state.moves);
-      const analysis = position.analyzePlacement(point, state.currentPlayer, state.ruleSet);
-      setMistakes((value) => value + 1);
-      setNotice(
-        !analysis.legal && analysis.forbidden
-          ? forbiddenLabel(analysis.forbidden)
-          : puzzle.objective === "defend"
-            ? "这一步无法解除对手的直接威胁"
-            : "这一步不能保持题目的强制进攻"
-      );
-      return;
-    }
-    const result = playGomokuMove(state, point, state.currentPlayer);
-    if (!result.ok) {
-      setMistakes((value) => value + 1);
-      setNotice("该位置不能落子");
-      return;
-    }
-    const nextPrefix = [...prefix, point];
-    setState(result.state);
-    setPrefix(nextPrefix);
-    setNotice(undefined);
-    const proofComplete = puzzle.objective === "prove" && nextLines.some((line) => line.length === nextPrefix.length);
-    if (puzzle.objective === "defend" || result.state.result?.outcome === puzzle.toMove || proofComplete) {
-      finish(nextPrefix.length);
-      return;
-    }
-    const response = nextLines[0]?.[nextPrefix.length];
-    if (!response) return;
-    setResponding(true);
-    window.setTimeout(() => {
-      const responseResult = playGomokuMove(result.state, response, result.state.currentPlayer);
-      if (responseResult.ok) {
-        setState(responseResult.state);
-        setPrefix([...nextPrefix, response]);
-      }
-      setResponding(false);
-    }, 360);
-  };
-
-  const finish = (movesUsed: number) => {
-    setComplete(true);
-    const stars = Math.max(1, 3 - Math.min(2, hintLevel) - Math.min(1, mistakes));
+  const finish = (nextState: GomokuGameState) => {
+    const movesUsed = Math.max(1, nextState.moves.length - initialMoveCount);
+    const stars = Math.max(
+      1,
+      3 -
+        Math.min(2, hintLevel) -
+        Number(attempts > 1 || movesUsed > referenceMoves)
+    );
+    setEarnedStars(stars);
     setProgress((current) => {
       const previous = current.puzzles[puzzle.id];
       const next = {
@@ -186,6 +154,135 @@ function PuzzleWorkspace({
       }
       return next;
     });
+  };
+
+  const conclude = (nextState: GomokuGameState) => {
+    const result = nextState.result;
+    if (!result) return;
+    setResponding(false);
+    if (result.outcome === puzzle.toMove) {
+      setOutcome("won");
+      setNotice("你已经完成五连，残局挑战成功");
+      finish(nextState);
+      return;
+    }
+    if (result.outcome === "draw") {
+      setOutcome("draw");
+      setNotice("本题已经和棋，可以重来寻找获胜路线");
+      return;
+    }
+    setOutcome("lost");
+    setNotice("对手已经完成五连，可以重来本题再次尝试");
+  };
+
+  applyAiMoveRef.current = (point, requestId) => {
+    if (requestId !== requestIdRef.current) return;
+    const current = stateRef.current;
+    if (current.result || current.currentPlayer === puzzle.toMove) return;
+    const result = playGomokuMove(current, point, current.currentPlayer);
+    if (!result.ok) {
+      setResponding(false);
+      setOutcome("error");
+      setNotice("对手计算出了非法落点，请重来本题");
+      return;
+    }
+    const nextPrefix = advanceGomokuPuzzleSolution(
+      puzzle,
+      solutionPrefixRef.current,
+      point
+    );
+    stateRef.current = result.state;
+    updateSolutionPrefix(nextPrefix);
+    setState(result.state);
+    setResponding(false);
+    conclude(result.state);
+  };
+
+  useEffect(() => {
+    const worker = new Worker(new URL("./ai.worker.ts", import.meta.url), { type: "module" });
+    workerRef.current = worker;
+    worker.onmessage = (event: MessageEvent<AiWorkerResponse>) => {
+      const response = event.data;
+      if (response.requestId !== requestIdRef.current) return;
+      if (!response.decision) {
+        setResponding(false);
+        setOutcome("error");
+        setNotice(response.error ? `对手计算失败：${response.error}` : "对手计算失败，请重来本题");
+        return;
+      }
+      const delay = Math.max(120, 360 - response.decision.elapsedMs);
+      window.setTimeout(
+        () => applyAiMoveRef.current?.(response.decision?.point ?? { x: 7, y: 7 }, response.requestId),
+        delay
+      );
+    };
+    return () => {
+      requestIdRef.current += 1;
+      if (workerRef.current === worker) workerRef.current = undefined;
+      worker.terminate();
+    };
+  }, [puzzle.id]);
+
+  useEffect(() => {
+    if (
+      outcome !== "playing" ||
+      state.result ||
+      state.currentPlayer === puzzle.toMove
+    ) {
+      return undefined;
+    }
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+    setResponding(true);
+    const scriptedResponse = nextGomokuPuzzleSolutionMove(puzzle, solutionPrefix);
+    if (scriptedResponse) {
+      const timer = window.setTimeout(
+        () => applyAiMoveRef.current?.(scriptedResponse, requestId),
+        360
+      );
+      return () => window.clearTimeout(timer);
+    }
+    if (!workerRef.current) {
+      setResponding(false);
+      setOutcome("error");
+      setNotice("对手模块未就绪，请重来本题");
+      return undefined;
+    }
+    workerRef.current.postMessage({ requestId, state });
+    return undefined;
+  }, [outcome, puzzle, solutionPrefix, state]);
+
+  const reset = () => {
+    requestIdRef.current += 1;
+    const next = createGomokuPuzzleState(puzzle);
+    stateRef.current = next;
+    setState(next);
+    updateSolutionPrefix([]);
+    setHintLevel(0);
+    setAttempts((value) => value + 1);
+    setResponding(false);
+    setOutcome("playing");
+    setEarnedStars(undefined);
+    setNotice(undefined);
+  };
+
+  const playAt = (point: GomokuPoint) => {
+    if (outcome !== "playing" || responding || state.currentPlayer !== puzzle.toMove) return;
+    const result = playGomokuMove(state, point, state.currentPlayer);
+    if (!result.ok) {
+      setNotice(
+        result.failure.reason === "forbidden"
+          ? forbiddenLabel(result.failure.forbidden)
+          : "该位置不能落子"
+      );
+      return;
+    }
+    const nextPrefix = advanceGomokuPuzzleSolution(puzzle, solutionPrefix, point);
+    stateRef.current = result.state;
+    setState(result.state);
+    updateSolutionPrefix(nextPrefix);
+    setNotice(undefined);
+    conclude(result.state);
   };
 
   const moveSelection = (offset: number) => {
@@ -230,18 +327,28 @@ function PuzzleWorkspace({
             state={state}
             forbiddenPoints={forbiddenPoints}
             initialMoveCount={initialMoveCount}
-            disabled={responding || complete}
+            disabled={
+              responding ||
+              outcome !== "playing" ||
+              state.currentPlayer !== puzzle.toMove
+            }
             onPoint={playAt}
             {...(highlighted ? { pendingPoint: highlighted } : {})}
           />
         </div>
-        <div className="gomoku-puzzle-status" aria-live="polite">
-          {complete ? (
-            <><Check size={18} /><strong>完成</strong><span>{progress.puzzles[puzzle.id]?.stars ?? 1} 星</span></>
+        <div className={`gomoku-puzzle-status is-${outcome}`} aria-live="polite">
+          {outcome === "won" ? (
+            <><Check size={18} /><strong>挑战成功</strong><span>{earnedStars ?? progress.puzzles[puzzle.id]?.stars ?? 1} 星</span></>
+          ) : outcome === "lost" ? (
+            <><X size={18} /><strong>对手获胜</strong><span>重来本题</span></>
+          ) : outcome === "draw" ? (
+            <><RefreshCw size={18} /><strong>本题和棋</strong><span>重新尝试</span></>
+          ) : outcome === "error" ? (
+            <><BrainCircuit size={18} /><strong>对手计算中断</strong><span>请重来</span></>
           ) : responding ? (
-            <><BrainCircuit size={18} /><strong>对手应手</strong></>
+            <><BrainCircuit size={18} /><strong>对手正在计算应手</strong></>
           ) : (
-            <><span className={`gomoku-mini-stone is-${state.currentPlayer}`} /><strong>{puzzleStatusLabel(puzzle)}</strong><span>失误 {mistakes}</span></>
+            <><span className={`gomoku-mini-stone is-${puzzle.toMove}`} /><strong>轮到你，选择任意合法落点</strong><span>已下 {movesPlayed} 手</span></>
           )}
         </div>
         {notice ? <p className="gomoku-notice">{notice}</p> : null}
@@ -250,14 +357,13 @@ function PuzzleWorkspace({
       <aside className="gomoku-content-tools">
         <section>
           <span className="eyebrow">提示 {hintLevel}/3</span>
-          <p>{hintLevel === 0 ? "保持先手，先计算对手的唯一回应。" : puzzle.hints[hintLevel - 1]}</p>
-          <button className="secondary-button" type="button" disabled={hintLevel >= 3 || complete} onClick={() => setHintLevel((level) => Math.min(3, level + 1))}>
+          <p>{puzzleHintText(puzzle, hintLevel, solutionPrefix)}</p>
+          <button className="secondary-button" type="button" disabled={hintLevel >= 3 || outcome !== "playing"} onClick={() => setHintLevel((level) => Math.min(3, level + 1))}>
             <Lightbulb size={17} /> 下一条提示
           </button>
         </section>
         <section className="gomoku-tool-actions">
-          <button className="secondary-button" type="button" onClick={reset}><RefreshCw size={17} /> 重置</button>
-          <button className="secondary-button" type="button" onClick={() => onChallenge(createGomokuPuzzleState(puzzle))}><BrainCircuit size={17} /> 挑战 AI</button>
+          <button className="secondary-button" type="button" onClick={reset}><RefreshCw size={17} /> 重来本题</button>
         </section>
         <section className="gomoku-puzzle-nav">
           <button className="icon-button" type="button" disabled={currentIndex <= 0} onClick={() => moveSelection(-1)} aria-label="上一关" title="上一关"><ChevronLeft size={19} /></button>
@@ -273,14 +379,6 @@ function PuzzleWorkspace({
   );
 }
 
-function prefixMatches(line: readonly GomokuPoint[], prefix: readonly GomokuPoint[]): boolean {
-  return prefix.every((point, index) => samePoint(line[index], point));
-}
-
-function samePoint(left: GomokuPoint | undefined, right: GomokuPoint | undefined): boolean {
-  return Boolean(left && right && left.x === right.x && left.y === right.y);
-}
-
 function categoryLabel(category: GomokuPuzzle["category"]): string {
   if (category === "finish") return "一步取胜";
   if (category === "defense") return "关键防守";
@@ -289,12 +387,19 @@ function categoryLabel(category: GomokuPuzzle["category"]): string {
   return category.toUpperCase();
 }
 
-function puzzleStatusLabel(puzzle: GomokuPuzzle): string {
-  if (puzzle.objective === "defend") return "找到唯一防点";
-  if (puzzle.objective === "prove") {
-    return puzzle.category === "vcf" ? "找到连续冲四证明线" : "找到连续威胁证明线";
+function puzzleHintText(
+  puzzle: GomokuPuzzle,
+  hintLevel: number,
+  solutionPrefix: readonly GomokuPoint[] | null
+): string {
+  if (hintLevel === 0) return "自由选择合法落点，对手会实时应手，实际成五后才算完成。";
+  if (hintLevel < 3) return puzzle.hints[hintLevel - 1] ?? puzzle.hints[0];
+  if (solutionPrefix === null) {
+    return "你已走出标准解线，仍可继续对弈；重来后可以重新查看推荐落点。";
   }
-  return "找到强制获胜路线";
+  return nextGomokuPuzzleSolutionMove(puzzle, solutionPrefix)
+    ? "棋盘已标出当前标准解的推荐落点。"
+    : "标准证明线已经走完，继续对弈直到产生实际胜负。";
 }
 
 function forbiddenLabel(reason: "double-three" | "double-four" | "overline"): string {

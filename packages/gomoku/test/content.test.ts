@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   GomokuPosition,
+  advanceGomokuPuzzleSolution,
   createGomokuExerciseState,
   createGomokuPuzzleState,
   gomokuLessons,
   gomokuPuzzles,
+  nextGomokuPuzzleSolutionMove,
   playGomokuMove,
   restoreGomokuGame,
   rewindGomokuGame,
@@ -67,5 +69,36 @@ describe("gomoku content", () => {
     const rewound = rewindGomokuGame(played.state, 0);
     expect(rewound.moves).toHaveLength(state.moves.length);
     expect(rewound.currentPlayer).toBe(state.currentPlayer);
+  });
+
+  it("keeps solution lines as guidance without rejecting legal alternatives", () => {
+    const puzzle = gomokuPuzzles[0];
+    expect(puzzle).toBeDefined();
+    if (!puzzle) return;
+
+    const state = createGomokuPuzzleState(puzzle);
+    expect(state).toMatchObject({
+      mode: "ai",
+      aiDifficulty: "hard",
+      humanColor: puzzle.toMove
+    });
+
+    const expected = nextGomokuPuzzleSolutionMove(puzzle, []);
+    expect(expected).toEqual(puzzle.solutionLines[0]?.[0]);
+    if (!expected) return;
+    const guidedPrefix = advanceGomokuPuzzleSolution(puzzle, [], expected);
+    expect(guidedPrefix).toEqual([expected]);
+    expect(nextGomokuPuzzleSolutionMove(puzzle, guidedPrefix)).toEqual(
+      puzzle.solutionLines[0]?.[1]
+    );
+
+    const position = GomokuPosition.fromMoves(state.moves);
+    const alternative = position
+      .legalMoves(state.currentPlayer, state.ruleSet)
+      .find((point) => point.x !== expected.x || point.y !== expected.y);
+    expect(alternative).toBeDefined();
+    if (!alternative) return;
+    expect(playGomokuMove(state, alternative).ok).toBe(true);
+    expect(advanceGomokuPuzzleSolution(puzzle, [], alternative)).toBeNull();
   });
 });

@@ -124,13 +124,37 @@ export const gomokuLessons: readonly GomokuLesson[] = [
 ];
 
 export function createGomokuPuzzleState(puzzle: GomokuPuzzle): GomokuGameState {
-  return positionState(
+  const state = positionState(
     `puzzle:${puzzle.id}`,
     puzzle.ruleSet,
     puzzle.toMove,
     puzzle.black,
     puzzle.white
   );
+  return {
+    ...state,
+    mode: "ai",
+    aiDifficulty: "hard",
+    humanColor: puzzle.toMove
+  };
+}
+
+export function advanceGomokuPuzzleSolution(
+  puzzle: GomokuPuzzle,
+  prefix: readonly GomokuPoint[] | null,
+  point: GomokuPoint
+): GomokuPoint[] | null {
+  if (prefix === null) return null;
+  const next = [...prefix, point];
+  return puzzle.solutionLines.some((line) => solutionPrefixMatches(line, next)) ? next : null;
+}
+
+export function nextGomokuPuzzleSolutionMove(
+  puzzle: GomokuPuzzle,
+  prefix: readonly GomokuPoint[] | null
+): GomokuPoint | undefined {
+  if (prefix === null) return undefined;
+  return puzzle.solutionLines.find((line) => solutionPrefixMatches(line, prefix))?.[prefix.length];
 }
 
 export function createGomokuExerciseState(exercise: GomokuLessonExercise): GomokuGameState {
@@ -218,6 +242,15 @@ function parseNotationList(value: string): GomokuPoint[] {
     }
     return { x: column, y: row };
   });
+}
+
+function solutionPrefixMatches(
+  line: readonly GomokuPoint[],
+  prefix: readonly GomokuPoint[]
+): boolean {
+  return prefix.every(
+    (point, index) => line[index]?.x === point.x && line[index]?.y === point.y
+  );
 }
 
 function puzzleTitle(kind: GomokuPuzzleSeedKind, number: number): string {
