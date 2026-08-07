@@ -1023,7 +1023,25 @@
 }
 
 .mini-hand.is-revealed .playing-card {
+  width: 24px;
+  border-color: #d8b84d;
+  background: #fffdf6;
+  color: #111;
   box-shadow: 0 0 0 1px rgb(255 233 168 / 24%), 0 3px 9px rgb(0 0 0 / 55%);
+}
+
+.mini-hand.is-revealed .playing-card strong {
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.mini-hand.is-revealed .playing-card > span {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mini-hand.is-revealed .playing-card.is-red {
+  color: #b31324;
 }
 
 .poker-controls {
@@ -1169,8 +1187,12 @@
   font-weight: 700;
 }
 
-.poker-award-hand.is-primary .poker-award-hand__label {
+.poker-award-hand.is-hole .poker-award-hand__label {
   color: var(--pk-gold);
+}
+
+.poker-award-hand.is-community .poker-award-hand__label {
+  color: var(--pk-text-dim);
 }
 
 .poker-award-cards {
@@ -1197,12 +1219,19 @@
   color: #c0202c;
 }
 
-.poker-award-card.is-emphasized {
-  min-width: 38px;
-  height: 42px;
-  border-color: var(--pk-gold);
-  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 28%), 0 3px 8px rgb(0 0 0 / 40%);
-  font-size: 13px;
+.poker-award-card.is-hole {
+  border-width: 2px;
+}
+
+.poker-award-card.is-used {
+  border-color: var(--pk-gold-bright);
+  box-shadow: inset 0 0 0 1px rgb(212 175 55 / 34%), 0 0 8px rgb(255 215 106 / 28%);
+}
+
+.poker-award-card.is-unused {
+  border-color: rgb(212 175 55 / 28%);
+  filter: grayscale(0.65);
+  opacity: 0.42;
 }
 
 .poker-action-history {
@@ -1737,7 +1766,15 @@
   }
 
   .mini-hand.is-revealed .playing-card {
-    width: 18px;
+    width: 20px;
+  }
+
+  .mini-hand.is-revealed .playing-card strong {
+    font-size: 8px;
+  }
+
+  .mini-hand.is-revealed .playing-card > span {
+    font-size: 10px;
   }
 
   .poker-board {
