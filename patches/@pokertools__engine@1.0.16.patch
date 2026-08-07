@@ -36,3 +36,37 @@ diff --git a/dist/rules/action-order.js b/dist/rules/action-order.js
      }
      return activeCount > 0 && activeCount === actedCount;
  }
+diff --git a/dist/rules/side-pots.js b/dist/rules/side-pots.js
+--- a/dist/rules/side-pots.js
++++ b/dist/rules/side-pots.js
+@@ -61,12 +61,24 @@ function calculateSidePots(state) {
+                     })),
+                 });
+             }
+-            pots.push({
+-                amount: potAmount,
+-                eligibleSeats,
+-                type: i === 0 ? "MAIN" : "SIDE",
+-                capPerPlayer: current.amount,
+-            });
++            const previousPot = pots[pots.length - 1];
++            const hasSameEligibleSeats = previousPot &&
++                previousPot.eligibleSeats.length === eligibleSeats.length &&
++                previousPot.eligibleSeats.every((seat, index) => seat === eligibleSeats[index]);
++            if (hasSameEligibleSeats) {
++                // Folded players with smaller investments add dead money to the same pot.
++                // Only a changed eligibility set creates a real side pot.
++                previousPot.amount += potAmount;
++                previousPot.capPerPlayer = current.amount;
++            }
++            else {
++                pots.push({
++                    amount: potAmount,
++                    eligibleSeats,
++                    type: pots.length === 0 ? "MAIN" : "SIDE",
++                    capPerPlayer: current.amount,
++                });
++            }
+         }
+         prevAmount = current.amount;
+     }
