@@ -139,6 +139,29 @@ describe("@pokertools/engine compatibility", () => {
     expect(engine.state.pots[1]?.eligibleSeats).toEqual([1, 2]);
   });
 
+  it("keeps folded dead money in one pot when live players have matched bets", () => {
+    const engine = createPokerEngine({ smallBlind: 5, bigBlind: 10, maxPlayers: 6 }, TABLE_SEED);
+    seatPlayers(engine, [500, 500, 500, 500, 500, 500]);
+    dealNextHand(engine, TABLE_SEED, 450);
+
+    engine.act({
+      type: ActionType.RAISE,
+      playerId: "p3",
+      amount: 40,
+      timestamp: nextTimestamp(engine)
+    });
+    engine.act({ type: ActionType.CALL, playerId: "p4", timestamp: nextTimestamp(engine) });
+    engine.act({ type: ActionType.FOLD, playerId: "p5", timestamp: nextTimestamp(engine) });
+    engine.act({ type: ActionType.FOLD, playerId: "p0", timestamp: nextTimestamp(engine) });
+    engine.act({ type: ActionType.FOLD, playerId: "p1", timestamp: nextTimestamp(engine) });
+    engine.act({ type: ActionType.FOLD, playerId: "p2", timestamp: nextTimestamp(engine) });
+
+    expect(engine.state.street).toBe(Street.FLOP);
+    expect(engine.state.pots).toEqual([
+      { amount: 95, eligibleSeats: [3, 4], type: "MAIN", capPerPlayer: 40 }
+    ]);
+  });
+
   it("masks deck and opponent cards in player projections", () => {
     const engine = createPokerEngine({ smallBlind: 5, bigBlind: 10, maxPlayers: 3 }, TABLE_SEED);
     seatPlayers(engine, [500, 500, 500]);
