@@ -650,28 +650,34 @@ function PokerHandSummary({
                   </small>
                 </div>
 
-                {holeCards.length || winner.hand?.length ? (
+                {holeCards.length || (reachedShowdown && table.board.length) ? (
                   <div className="poker-award-hands">
                     {holeCards.length ? (
-                      <div className="poker-award-hand is-primary">
+                      <div className="poker-award-hand is-hole">
                         <span className="poker-award-hand__label">底牌</span>
                         <span className="poker-award-cards">
                           {holeCards.map((card, cardIndex) => (
                             <AwardCard
                               code={card}
-                              emphasized
+                              source="hole"
+                              used={winner.hand?.includes(card) ?? false}
                               key={`${card}-${cardIndex}`}
                             />
                           ))}
                         </span>
                       </div>
                     ) : null}
-                    {winner.hand?.length ? (
-                      <div className="poker-award-hand">
-                        <span className="poker-award-hand__label">最佳五张</span>
+                    {reachedShowdown && table.board.length ? (
+                      <div className="poker-award-hand is-community">
+                        <span className="poker-award-hand__label">公共牌</span>
                         <span className="poker-award-cards">
-                          {winner.hand.map((card, cardIndex) => (
-                            <AwardCard code={card} key={`${card}-${cardIndex}`} />
+                          {table.board.map((card, cardIndex) => (
+                            <AwardCard
+                              code={card}
+                              source="community"
+                              used={winner.hand?.includes(card) ?? false}
+                              key={`${card}-${cardIndex}`}
+                            />
                           ))}
                         </span>
                       </div>
@@ -1007,7 +1013,15 @@ function PlayingCard({
   );
 }
 
-function AwardCard({ code, emphasized = false }: { code: string; emphasized?: boolean }) {
+function AwardCard({
+  code,
+  source,
+  used
+}: {
+  code: string;
+  source: "hole" | "community";
+  used: boolean;
+}) {
   const suitCode = code.slice(-1).toLowerCase();
   const rank = code.slice(0, -1).replace("T", "10");
   const suit =
@@ -1015,7 +1029,7 @@ function AwardCard({ code, emphasized = false }: { code: string; emphasized?: bo
   const red = suitCode === "h" || suitCode === "d";
   return (
     <span
-      className={`poker-award-card ${emphasized ? "is-emphasized" : ""} ${red ? "is-red" : ""}`}
+      className={`poker-award-card is-${source} ${used ? "is-used" : "is-unused"} ${red ? "is-red" : ""}`}
     >
       {rank}
       {suit}
