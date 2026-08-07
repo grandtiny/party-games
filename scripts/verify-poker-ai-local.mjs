@@ -3,11 +3,15 @@ import { io } from "socket.io-client";
 const baseUrl = process.env.BASE_URL ?? "http://127.0.0.1:3000";
 const password = "poker-ai-local-verify";
 const minimumVisibleBotDelayMs = 400;
+let accountCookie = "";
 
 async function post(path, body) {
   const response = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(accountCookie ? { cookie: accountCookie } : {})
+    },
     body: JSON.stringify(body)
   });
   const data = await response.json();
@@ -18,13 +22,51 @@ async function post(path, body) {
 async function expectJoinRejected(roomCode) {
   const response = await fetch(`${baseUrl}/api/rooms/join`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      cookie: accountCookie
+    },
     body: JSON.stringify({ roomCode, nickname: "Unexpected Player", password })
   });
   const data = await response.json();
   if (response.ok || !String(data.error).includes("单人 AI 房间")) {
     throw new Error("Solo AI room accepted an additional human player");
   }
+}
+
+async function authenticateVerifyAccount() {
+  const status = await fetch(`${baseUrl}/api/account/status`).then((response) =>
+    response.json()
+  );
+  const username = process.env.VERIFY_ACCOUNT_USERNAME ?? "poker-verify";
+  const accountPassword =
+    process.env.VERIFY_ACCOUNT_PASSWORD ?? "poker-verify-password";
+  const path = status.initialized ? "/api/account/login" : "/api/account/bootstrap";
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(
+      status.initialized
+        ? { username, password: accountPassword }
+        : {
+            username,
+            displayName: "Poker AI Verify",
+            password: accountPassword,
+            ...(process.env.VERIFY_LEGACY_ADMIN_PASSWORD
+              ? { legacyAdminPassword: process.env.VERIFY_LEGACY_ADMIN_PASSWORD }
+              : {})
+          }
+    )
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? `${path} failed`);
+  return sessionCookie(response);
+}
+
+function sessionCookie(response) {
+  const value = response.headers.get("set-cookie");
+  if (!value) throw new Error("Account session cookie is missing");
+  return value.split(";", 1)[0];
 }
 
 function connect(session) {
@@ -70,6 +112,7 @@ const platform = await fetch(`${baseUrl}/api/platform`).then((response) => respo
 if (!platform.enabledGames?.includes("poker")) {
   throw new Error("Poker is disabled. Start the server with POKER_ENABLED=true.");
 }
+accountCookie = await authenticateVerifyAccount();
 
 const owner = await post("/api/rooms", {
   gameType: "poker",

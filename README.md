@@ -98,6 +98,8 @@ pnpm verify:poker-tournament-local
 
 `verify:poker-tournament-local` 创建两人自动盲注淘汰赛，验证房主暂停/恢复、计时状态投影、拒绝手动跳级，以及截止时间前不会提前提升盲注。
 
+`verify:poker-ai-local` 与 `verify:poker-tournament-local` 会在未初始化的验收数据库中创建本地账号；已初始化时可通过 `VERIFY_ACCOUNT_USERNAME`、`VERIFY_ACCOUNT_PASSWORD` 和可选的 `VERIFY_LEGACY_ADMIN_PASSWORD` 提供账号凭据。
+
 `/turtle-soup/lab` 是协作提示词测试页，会直接显示可编辑汤面、汤底和要点，并保留原 LABYRINTH 浏览器侧 Base URL、API Key、故事模型、裁判模型配置；该测试线只用于调提示词。猜谜判定优先返回 `achieved_point_ids`，旧版 `achieved_points` 文本仍兼容。正式多人房间只使用服务端平台级大模型配置，服务端持有汤底，玩家解出前不会广播汤底、未命中要点正文或 API Key。
 
 规则测试还会批量运行 5 到 15 人的多轮确定性对局，并检查特殊登记、恶魔传位和夜间 SQLite 恢复。

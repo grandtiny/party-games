@@ -2,16 +2,72 @@ import { io } from "socket.io-client";
 
 const baseUrl = process.env.BASE_URL ?? "http://127.0.0.1:3000";
 const password = "poker-tournament-local-verify";
+let ownerAccountCookie = "";
 
-async function post(path, body) {
+async function post(path, body, cookie = ownerAccountCookie) {
   const response = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(cookie ? { cookie } : {})
+    },
     body: JSON.stringify(body)
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? `${path} failed`);
   return data;
+}
+
+async function authenticateVerifyOwner() {
+  const status = await fetch(`${baseUrl}/api/account/status`).then((response) =>
+    response.json()
+  );
+  const username = process.env.VERIFY_ACCOUNT_USERNAME ?? "poker-verify";
+  const accountPassword =
+    process.env.VERIFY_ACCOUNT_PASSWORD ?? "poker-verify-password";
+  const path = status.initialized ? "/api/account/login" : "/api/account/bootstrap";
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(
+      status.initialized
+        ? { username, password: accountPassword }
+        : {
+            username,
+            displayName: "Poker Verify Owner",
+            password: accountPassword,
+            ...(process.env.VERIFY_LEGACY_ADMIN_PASSWORD
+              ? { legacyAdminPassword: process.env.VERIFY_LEGACY_ADMIN_PASSWORD }
+              : {})
+          }
+    )
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? `${path} failed`);
+  return sessionCookie(response);
+}
+
+async function createVerifyMember() {
+  const invite = await post("/api/account/invites", { expiresInDays: 1 });
+  const response = await fetch(`${baseUrl}/api/account/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      username: `poker-member-${Date.now().toString(36)}`,
+      displayName: "Poker Verify Member",
+      password: "poker-member-verify-password",
+      inviteCode: invite.code
+    })
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? "/api/account/register failed");
+  return sessionCookie(response);
+}
+
+function sessionCookie(response) {
+  const value = response.headers.get("set-cookie");
+  if (!value) throw new Error("Account session cookie is missing");
+  return value.split(";", 1)[0];
 }
 
 function connect(session) {
@@ -66,6 +122,8 @@ const platform = await fetch(`${baseUrl}/api/platform`).then((response) => respo
 if (!platform.enabledGames?.includes("poker")) {
   throw new Error("Poker is disabled. Start the server with POKER_ENABLED=true.");
 }
+ownerAccountCookie = await authenticateVerifyOwner();
+const memberAccountCookie = await createVerifyMember();
 
 const owner = await post("/api/rooms", {
   gameType: "poker",
@@ -88,7 +146,7 @@ const second = await post("/api/rooms/join", {
   roomCode: owner.roomCode,
   nickname: "Tournament Verify 2",
   password
-});
+}, memberAccountCookie);
 const sessions = [owner, second];
 const sockets = await Promise.all(sessions.map(connect));
 
