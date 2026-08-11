@@ -11,6 +11,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   POKER_ACTION_TIMEOUT_MS,
   POKER_BOT_ACTION_DELAY_MS,
+  POKER_RUNOUT_SETTLEMENT_DELAY_MS,
+  POKER_RUNOUT_SHOWDOWN_DELAY_MS,
+  POKER_RUNOUT_STREET_DELAY_MS,
   PokerGameModule
 } from "../src/games/poker.js";
 import { createGameRegistry } from "../src/games/index.js";
@@ -182,6 +185,7 @@ describe("poker server module", () => {
     await service.actPoker(owner.roomCode, actionPlayerId, "fold");
     const settledView = service.getView(owner.roomCode, owner.playerId);
     expect(settledView.room.pokerTable?.status).toBe("waiting-hand");
+    expect(settledView.room.pokerTable?.runout).toBeUndefined();
     expect(settledView.room.pokerTable?.totalPot).toBe(10);
     expect(settledView.room.pokerTable?.actionHistory).toEqual([
       expect.objectContaining({ action: "fold", playerId: actionPlayerId, potAfter: 15 }),
@@ -520,9 +524,193 @@ describe("poker server module", () => {
     });
   });
 
-  it("records tournament places and lets only the owner start a fresh match", async () => {
+  it("stages a runout when forced blinds leave no player decision", async () => {
     const { repository } = createRepository();
     const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const { owner } = await createStartedPokerRoom(service, {
+      mode: "tournament",
+      smallBlind: 500,
+      bigBlind: 1000,
+      blindStructure: [{ smallBlind: 500, bigBlind: 1000, ante: 0 }]
+    });
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    const view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.phase).toBe("playing");
+    expect(view.room.pokerTable).toMatchObject({
+      status: "complete",
+      board: [],
+      winners: [],
+      runout: { stage: "showdown", revealFrom: 0 }
+    });
+    expect(view.room.pokerTable?.actionPlayerId).toBeUndefined();
+  });
+
+  it("starts a postflop all-in runout from the turn instead of replaying the flop", async () => {
+    const { repository } = createRepository();
+    const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const { owner } = await createStartedPokerRoom(service, {
+      mode: "points",
+      smallBlind: 5,
+      bigBlind: 10
+    });
+
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+    let view = service.getView(owner.roomCode, owner.playerId);
+    const callerPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!callerPlayerId) throw new Error("翻牌后全下测试缺少首个行动玩家");
+    await service.actPoker(owner.roomCode, callerPlayerId, "call");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    const checkerPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!checkerPlayerId) throw new Error("翻牌后全下测试缺少过牌玩家");
+    expect(
+      service.getView(owner.roomCode, checkerPlayerId).self.poker?.legalActions?.actions
+    ).toContain("check");
+    await service.actPoker(owner.roomCode, checkerPlayerId, "check");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({ status: "in-hand", street: "FLOP" });
+    expect(view.room.pokerTable?.board).toHaveLength(3);
+    const bettorPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!bettorPlayerId) throw new Error("翻牌后全下测试缺少下注玩家");
+    const betActions = service.getView(owner.roomCode, bettorPlayerId).self.poker
+      ?.legalActions;
+    if (betActions?.aggressiveAction !== "bet" || betActions.maxAmount === undefined) {
+      throw new Error("翻牌后全下测试缺少全下注操作");
+    }
+    await service.actPoker(
+      owner.roomCode,
+      bettorPlayerId,
+      "bet",
+      betActions.maxAmount
+    );
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    const finalCallerPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!finalCallerPlayerId) throw new Error("翻牌后全下测试缺少最终跟注玩家");
+    expect(
+      service.getView(owner.roomCode, finalCallerPlayerId).self.poker?.legalActions?.actions
+    ).toContain("call");
+    await service.actPoker(owner.roomCode, finalCallerPlayerId, "call");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      status: "waiting-hand",
+      street: "SHOWDOWN",
+      winners: [],
+      runout: { stage: "showdown", revealFrom: 3 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(3);
+
+    let state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("翻牌后全下缺少转牌展示状态");
+    await service.tickActiveGames(state.poker.runout.nextStepAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      winners: [],
+      runout: { stage: "dealing", revealFrom: 3 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(4);
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("转牌展示后缺少河牌状态");
+    await service.tickActiveGames(state.poker.runout.nextStepAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      winners: [],
+      runout: { stage: "settling", revealFrom: 4 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(5);
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("河牌展示后缺少结算状态");
+    await service.tickActiveGames(state.poker.runout.nextStepAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable?.runout).toBeUndefined();
+    expect(view.room.pokerTable?.winners.length).toBeGreaterThan(0);
+  });
+
+  it("runs out the board when a fold leaves multiple all-in players", async () => {
+    const { repository } = createRepository();
+    const service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const owner = await service.createRoom({
+      gameType: "poker",
+      nickname: "Owner",
+      password: "secret",
+      poker: { mode: "points", smallBlind: 5, bigBlind: 10 }
+    }, testAccount("Owner"));
+    const second = await service.joinRoom({
+      roomCode: owner.roomCode,
+      nickname: "Player 2",
+      password: "secret"
+    }, testAccount("Player 2"));
+    const third = await service.joinRoom({
+      roomCode: owner.roomCode,
+      nickname: "Player 3",
+      password: "secret"
+    }, testAccount("Player 3"));
+    for (const [index, playerId] of [owner.playerId, second.playerId, third.playerId].entries()) {
+      await service.setSeat(owner.roomCode, playerId, index + 1);
+      await service.setReady(owner.roomCode, playerId, true);
+    }
+    await service.startRoom(owner.roomCode, owner.playerId);
+    await service.dealPokerHand(owner.roomCode, owner.playerId);
+
+    let view = service.getView(owner.roomCode, owner.playerId);
+    const raiserPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!raiserPlayerId) throw new Error("弃牌后全下测试缺少首个行动玩家");
+    const raiseActions = service.getView(owner.roomCode, raiserPlayerId).self.poker
+      ?.legalActions;
+    if (raiseActions?.aggressiveAction !== "raise" || raiseActions.maxAmount === undefined) {
+      throw new Error("弃牌后全下测试缺少全下加注操作");
+    }
+    await service.actPoker(
+      owner.roomCode,
+      raiserPlayerId,
+      "raise",
+      raiseActions.maxAmount
+    );
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    const callerPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!callerPlayerId) throw new Error("弃牌后全下测试缺少跟注玩家");
+    expect(
+      service.getView(owner.roomCode, callerPlayerId).self.poker?.legalActions?.actions
+    ).toContain("call");
+    await service.actPoker(owner.roomCode, callerPlayerId, "call");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    const foldingPlayerId = view.room.pokerTable?.actionPlayerId;
+    if (!foldingPlayerId) throw new Error("弃牌后全下测试缺少弃牌玩家");
+    expect(
+      service.getView(owner.roomCode, foldingPlayerId).self.poker?.legalActions?.actions
+    ).toContain("fold");
+    await service.actPoker(owner.roomCode, foldingPlayerId, "fold");
+
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      status: "waiting-hand",
+      board: [],
+      winners: [],
+      runout: { stage: "showdown", revealFrom: 0 }
+    });
+    expect(
+      view.room.pokerTable?.players.filter(
+        (player) =>
+          player.status !== "FOLDED" &&
+          player.hand?.length === 2 &&
+          player.hand.every((card) => typeof card === "string")
+      )
+    ).toHaveLength(2);
+  });
+
+  it("persists and stages a preflop all-in before publishing tournament results", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-21T12:00:00.000Z"));
+    const context = createRepository();
+    let repository = context.repository;
+    let service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
     const { owner, second } = await createStartedPokerRoom(service, {
       mode: "tournament",
       smallBlind: 250,
@@ -535,8 +723,90 @@ describe("poker server module", () => {
       ?.actionPlayerId;
     if (!actionPlayerId) throw new Error("淘汰赛测试缺少行动玩家");
     await service.actPoker(owner.roomCode, actionPlayerId, "call");
+
+    let view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.phase).toBe("playing");
+    expect(view.room.pokerTable).toMatchObject({
+      status: "complete",
+      board: [],
+      winners: [],
+      runout: { stage: "showdown", revealFrom: 0 }
+    });
+    expect(
+      view.room.pokerTable?.players.every(
+        (player) =>
+          player.finishPlace === undefined &&
+          player.hand?.length === 2 &&
+          player.hand.every((card) => typeof card === "string")
+      )
+    ).toBe(true);
+    await expect(service.dealPokerHand(owner.roomCode, owner.playerId)).rejects.toThrow(
+      "全下发牌展示尚未结束"
+    );
+
+    let state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("翻牌前全下缺少展示状态");
+    expect(
+      state.poker.runout.nextStepAt - Date.parse(state.updatedAt)
+    ).toBe(POKER_RUNOUT_SHOWDOWN_DELAY_MS);
+
+    closeRepository(repository);
+    ({ repository } = createRepository(context.databasePath));
+    service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    expect(service.getView(owner.roomCode, owner.playerId).room.pokerTable).toEqual(
+      view.room.pokerTable
+    );
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("恢复后缺少全下展示状态");
+    const flopAt = state.poker.runout.nextStepAt;
+    expect(await service.tickActiveGames(flopAt - 1)).toEqual([]);
+    expect(await service.tickActiveGames(flopAt)).toEqual([
+      owner.roomCode
+    ]);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      board: expect.any(Array),
+      winners: [],
+      runout: { stage: "dealing", revealFrom: 0 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(3);
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("翻牌后缺少全下展示状态");
+    expect(state.poker.runout.nextStepAt - flopAt).toBe(POKER_RUNOUT_STREET_DELAY_MS);
+    const turnAt = state.poker.runout.nextStepAt;
+    await service.tickActiveGames(turnAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      winners: [],
+      runout: { stage: "dealing", revealFrom: 3 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(4);
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("转牌后缺少全下展示状态");
+    expect(state.poker.runout.nextStepAt - turnAt).toBe(POKER_RUNOUT_STREET_DELAY_MS);
+    const riverAt = state.poker.runout.nextStepAt;
+    await service.tickActiveGames(riverAt);
+    view = service.getView(owner.roomCode, owner.playerId);
+    expect(view.room.pokerTable).toMatchObject({
+      winners: [],
+      runout: { stage: "settling", revealFrom: 4 }
+    });
+    expect(view.room.pokerTable?.board).toHaveLength(5);
+
+    state = repository.getRoom(owner.roomCode);
+    if (!state?.poker?.runout) throw new Error("河牌后缺少结算展示状态");
+    expect(state.poker.runout.nextStepAt - riverAt).toBe(
+      POKER_RUNOUT_SETTLEMENT_DELAY_MS
+    );
+    await service.tickActiveGames(state.poker.runout.nextStepAt);
+
     const completeView = service.getView(owner.roomCode, owner.playerId);
     expect(completeView.room.phase).toBe("game-over");
+    expect(completeView.room.pokerTable?.runout).toBeUndefined();
+    expect(completeView.room.pokerTable?.winners.length).toBeGreaterThan(0);
     expect(
       completeView.room.pokerTable?.players.map((player) => player.finishPlace).sort()
     ).toEqual([1, 2]);

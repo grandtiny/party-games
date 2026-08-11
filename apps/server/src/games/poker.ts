@@ -21,7 +21,8 @@ import {
   migrateInternalRoomState,
   type InternalRoomState,
   type PokerActionTimerState,
-  type PokerBlindTimerState
+  type PokerBlindTimerState,
+  type PokerRunoutState
 } from "../domain.js";
 import type {
   GameRoomCommand,
@@ -37,6 +38,9 @@ import { comparePlayersBySeat } from "../platform/players.js";
 
 export const POKER_BOT_ACTION_DELAY_MS = 900;
 export const POKER_ACTION_TIMEOUT_MS = 15_000;
+export const POKER_RUNOUT_SHOWDOWN_DELAY_MS = 700;
+export const POKER_RUNOUT_STREET_DELAY_MS = 900;
+export const POKER_RUNOUT_SETTLEMENT_DELAY_MS = 1_000;
 const MINUTE_MS = 60_000;
 
 export class PokerGameModule implements ServerGameModule {
@@ -73,6 +77,7 @@ export class PokerGameModule implements ServerGameModule {
     this.#assertPokerRoom(state);
     const poker = this.#requirePokerState(state);
     if (!poker.table) throw new Error("德扑牌桌尚未初始化");
+    if (poker.runout) throw new Error("全下发牌展示尚未结束");
     if (command.type === "poker:rematch") {
       if (state.ownerPlayerId !== command.actorPlayerId) {
         throw new Error("只有房主可以执行该操作");
@@ -111,7 +116,12 @@ export class PokerGameModule implements ServerGameModule {
     }
 
     let table = poker.table;
+    const tableBeforeCommand = table;
     let blindTimer = poker.blindTimer;
+    const boardCountBeforeCommand =
+      command.type === "poker:deal"
+        ? 0
+        : projectPokerTable(table).table.board.length;
     if (command.type === "poker:deal") {
       ({ table, blindTimer } = this.#prepareBlindTimerForDeal(
         state,
@@ -133,12 +143,21 @@ export class PokerGameModule implements ServerGameModule {
     ) {
       table = this.#rebuyBustedBots(state, table, context.now + 1);
     }
+    const runout =
+      command.type === "poker:deal" || command.type === "poker:act"
+        ? this.#createRunout(
+            tableBeforeCommand,
+            table,
+            boardCountBeforeCommand,
+            context.now
+          )
+        : undefined;
     blindTimer = this.#finishBlindTimer(table, blindTimer);
     const actionTimer = this.#createActionTimer(table, context.now);
     return {
       changes: {
-        phase: table.status === "complete" ? "game-over" : "playing",
-        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer)
+        phase: runout ? "playing" : table.status === "complete" ? "game-over" : "playing",
+        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer, runout)
       },
       eventPayload: {
         command: command.type,
@@ -167,7 +186,12 @@ export class PokerGameModule implements ServerGameModule {
     return {
       room: {
         pokerConfig: poker.config,
-        pokerTable: this.#tableView(projection, poker.blindTimer, poker.actionTimer)
+        pokerTable: this.#tableView(
+          projection,
+          poker.blindTimer,
+          poker.actionTimer,
+          poker.runout
+        )
       },
       self: projection.self ? { poker: projection.self } : {},
       playerStates: {}
@@ -181,6 +205,7 @@ export class PokerGameModule implements ServerGameModule {
     this.#assertPokerRoom(state);
     const poker = this.#requirePokerState(state);
     if (!poker.table) return undefined;
+    if (poker.runout) return this.#tickRunout(state, poker, context.now);
     const blindTimerUpdate = this.#tickBlindTimer(state, poker, context.now);
     if (blindTimerUpdate) return blindTimerUpdate;
     if (poker.table.status !== "in-hand") return undefined;
@@ -244,7 +269,13 @@ export class PokerGameModule implements ServerGameModule {
     return {
       ...state,
       poker: {
-        ...pokerStateWithTable(state.poker, table, blindTimer, actionTimer)
+        ...pokerStateWithTable(
+          state.poker,
+          table,
+          blindTimer,
+          actionTimer,
+          state.poker.runout
+        )
       }
     };
   }
@@ -265,12 +296,14 @@ export class PokerGameModule implements ServerGameModule {
       if (state.phase !== "lobby") throw new Error("非大厅阶段缺少德扑牌桌状态");
       if (poker.blindTimer) throw new Error("大厅阶段不能存在盲注计时器");
       if (poker.actionTimer) throw new Error("大厅阶段不能存在行动计时器");
+      if (poker.runout) throw new Error("大厅阶段不能存在全下发牌展示状态");
       return;
     }
 
     validatePokerTable(poker.table);
     this.#validateBlindTimer(poker.config, poker.table, poker.blindTimer);
     this.#validateActionTimer(poker.table, poker.actionTimer);
+    this.#validateRunout(poker.table, poker.runout);
     if (poker.table.mode !== poker.config.mode) throw new Error("德扑模式与房间配置不一致");
     const roomPlayers = new Map(state.players.map((player) => [player.id, player]));
     if (poker.table.players.length !== roomPlayers.size) {
@@ -282,7 +315,11 @@ export class PokerGameModule implements ServerGameModule {
         throw new Error("德扑牌桌玩家与房间座位不一致");
       }
     }
-    const expectedPhase = poker.table.status === "complete" ? "game-over" : "playing";
+    const expectedPhase = poker.runout
+      ? "playing"
+      : poker.table.status === "complete"
+        ? "game-over"
+        : "playing";
     if (state.phase !== expectedPhase) throw new Error("德扑牌桌状态与房间阶段不一致");
   }
 
@@ -323,7 +360,8 @@ export class PokerGameModule implements ServerGameModule {
   #tableView(
     projection: ReturnType<typeof projectPokerTable>,
     blindTimer: PokerBlindTimerState | undefined,
-    actionTimer: PokerActionTimerState | undefined
+    actionTimer: PokerActionTimerState | undefined,
+    runout: PokerRunoutState | undefined
   ): PublicPokerTableView {
     const table = projection.table;
     const playerIdAt = (seat: number | null): string | undefined =>
@@ -339,7 +377,7 @@ export class PokerGameModule implements ServerGameModule {
       status: projection.status,
       handNumber: table.handNumber,
       street: table.street,
-      board: table.board,
+      board: runout ? table.board.slice(0, runout.revealedBoardCount) : table.board,
       ...(buttonPlayerId ? { buttonPlayerId } : {}),
       ...(smallBlindPlayerId ? { smallBlindPlayerId } : {}),
       ...(bigBlindPlayerId ? { bigBlindPlayerId } : {}),
@@ -379,12 +417,15 @@ export class PokerGameModule implements ServerGameModule {
             totalInvestedThisHand: 0,
             buyIns: player.buyIns,
             ...(player.netPoints === undefined ? {} : { netPoints: player.netPoints }),
-            ...(player.finishPlace === undefined ? {} : { finishPlace: player.finishPlace })
+            ...(player.finishPlace === undefined || runout
+              ? {}
+              : { finishPlace: player.finishPlace })
           };
         }
         if (!enginePlayer || enginePlayer.id !== player.playerId) {
           throw new Error("德扑公开视图玩家与牌桌座位不一致");
         }
+        const showdownHand = runout?.showdownHands[player.playerId];
         return {
           playerId: player.playerId,
           nickname: player.nickname,
@@ -392,23 +433,36 @@ export class PokerGameModule implements ServerGameModule {
           atTable: true,
           stack: enginePlayer.stack,
           pendingAddOn: enginePlayer.pendingAddOn,
-          hand: enginePlayer.hand,
+          hand: showdownHand ?? enginePlayer.hand,
           status: enginePlayer.status as PokerPlayerStatusView,
           betThisStreet: enginePlayer.betThisStreet,
           totalInvestedThisHand: enginePlayer.totalInvestedThisHand,
           buyIns: player.buyIns,
           ...(player.netPoints === undefined ? {} : { netPoints: player.netPoints }),
-          ...(player.finishPlace === undefined ? {} : { finishPlace: player.finishPlace })
+          ...(player.finishPlace === undefined || runout
+            ? {}
+            : { finishPlace: player.finishPlace })
         };
       }),
-      winners: (table.winners ?? []).flatMap((winner) => {
+      winners: runout ? [] : (table.winners ?? []).flatMap((winner) => {
         const playerId = playerIdAt(winner.seat);
         return playerId
           ? [{ playerId, amount: winner.amount, hand: winner.hand, handRank: winner.handRank }]
           : [];
       }),
       actionHistory: projection.actionHistory,
-      ...(projection.winnerPlayerId ? { winnerPlayerId: projection.winnerPlayerId } : {})
+      ...(!runout && projection.winnerPlayerId
+        ? { winnerPlayerId: projection.winnerPlayerId }
+        : {}),
+      ...(runout
+        ? {
+            runout: {
+              stage: runout.stage,
+              revealFrom: runout.revealFrom,
+              nextStepAt: runout.nextStepAt
+            }
+          }
+        : {})
     };
   }
 
@@ -572,6 +626,125 @@ export class PokerGameModule implements ServerGameModule {
     return timer && table.status === "complete" ? { status: "finished" } : timer;
   }
 
+  #createRunout(
+    tableBeforeAction: ReturnType<typeof createPokerTable>,
+    table: ReturnType<typeof createPokerTable>,
+    revealedBoardCount: number,
+    now: number
+  ): PokerRunoutState | undefined {
+    if (table.status === "in-hand") return undefined;
+    const projection = projectPokerTable(table);
+    const finalBoardCount = projection.table.board.length;
+    if (revealedBoardCount >= finalBoardCount) return undefined;
+    const finalEngine = restorePokerEngine(table.engine);
+    const finalPlayers = new Map(
+      finalEngine.state.players.flatMap((player) =>
+        player ? [[player.id, player] as const] : []
+      )
+    );
+    const beforeState = restorePokerEngine(tableBeforeAction.engine).state;
+    const showdownSource =
+      beforeState.handNumber === finalEngine.state.handNumber
+        ? beforeState
+        : [...finalEngine.state.previousStates]
+            .reverse()
+            .find(
+              (candidate) =>
+                candidate.handId === finalEngine.state.handId &&
+                candidate.players.filter(
+                  (player) =>
+                    player?.status !== "FOLDED" && player?.hand?.length === 2
+                ).length >= 2
+            );
+    if (!showdownSource) return undefined;
+    const showdownHands = Object.fromEntries(
+      showdownSource.players.flatMap((player) => {
+        const finalPlayer = player ? finalPlayers.get(player.id) : undefined;
+        return player?.hand?.length === 2 &&
+          player.status !== "FOLDED" &&
+          finalPlayer?.status !== "FOLDED"
+          ? [[player.id, [player.hand[0], player.hand[1]] as [string, string]]]
+          : [];
+      })
+    );
+    if (Object.keys(showdownHands).length < 2) return undefined;
+    return {
+      handNumber: projection.table.handNumber,
+      stage: "showdown",
+      revealedBoardCount,
+      revealFrom: revealedBoardCount,
+      nextStepAt: now + POKER_RUNOUT_SHOWDOWN_DELAY_MS,
+      showdownHands
+    };
+  }
+
+  #tickRunout(
+    state: InternalRoomState,
+    poker: NonNullable<InternalRoomState["poker"]>,
+    now: number
+  ): GameRoomUpdate | undefined {
+    const table = poker.table as NonNullable<typeof poker.table>;
+    const runout = poker.runout as PokerRunoutState;
+    if (now < runout.nextStepAt) return undefined;
+
+    const finalBoardCount = projectPokerTable(table).table.board.length;
+    if (runout.revealedBoardCount < finalBoardCount) {
+      const revealedBoardCount =
+        runout.revealedBoardCount < 3
+          ? Math.min(3, finalBoardCount)
+          : Math.min(runout.revealedBoardCount + 1, finalBoardCount);
+      const settled = revealedBoardCount === finalBoardCount;
+      const nextRunout: PokerRunoutState = {
+        ...runout,
+        stage: settled ? "settling" : "dealing",
+        revealedBoardCount,
+        revealFrom: runout.revealedBoardCount,
+        nextStepAt:
+          now +
+          (settled
+            ? POKER_RUNOUT_SETTLEMENT_DELAY_MS
+            : POKER_RUNOUT_STREET_DELAY_MS)
+      };
+      return {
+        changes: {
+          phase: "playing",
+          poker: pokerStateWithTable(
+            poker,
+            table,
+            poker.blindTimer,
+            undefined,
+            nextRunout
+          )
+        },
+        event: {
+          type: "POKER_RUNOUT_ADVANCED",
+          actorPlayerId: state.ownerPlayerId,
+          payload: {
+            handNumber: runout.handNumber,
+            stage: nextRunout.stage,
+            revealedBoardCount
+          }
+        }
+      };
+    }
+
+    return {
+      changes: {
+        phase: table.status === "complete" ? "game-over" : "playing",
+        poker: pokerStateWithTable(poker, table, poker.blindTimer)
+      },
+      event: {
+        type: "POKER_RUNOUT_ADVANCED",
+        actorPlayerId: state.ownerPlayerId,
+        payload: {
+          handNumber: runout.handNumber,
+          stage: "complete",
+          revealedBoardCount: finalBoardCount
+        }
+      }
+    };
+  }
+
   #requireAutomaticBlindTimer(
     poker: NonNullable<InternalRoomState["poker"]>
   ): PokerBlindTimerState {
@@ -663,6 +836,66 @@ export class PokerGameModule implements ServerGameModule {
     }
   }
 
+  #validateRunout(
+    table: ReturnType<typeof createPokerTable>,
+    runout: PokerRunoutState | undefined
+  ): void {
+    if (!runout) return;
+    if (table.status === "in-hand") {
+      throw new Error("进行中的牌局不能存在全下发牌展示状态");
+    }
+    const projection = projectPokerTable(table);
+    const finalBoardCount = projection.table.board.length;
+    if (projection.table.handNumber !== runout.handNumber) {
+      throw new Error("全下发牌展示手数与牌桌不一致");
+    }
+    if (
+      !Number.isInteger(runout.revealedBoardCount) ||
+      runout.revealedBoardCount < 0 ||
+      runout.revealedBoardCount > finalBoardCount ||
+      !Number.isInteger(runout.revealFrom) ||
+      runout.revealFrom < 0 ||
+      runout.revealFrom > runout.revealedBoardCount
+    ) {
+      throw new Error("全下发牌展示的公共牌进度无效");
+    }
+    if (!Number.isFinite(runout.nextStepAt) || runout.nextStepAt < 0) {
+      throw new Error("全下发牌展示的推进时间无效");
+    }
+    if (
+      runout.stage !== "showdown" &&
+      runout.stage !== "dealing" &&
+      runout.stage !== "settling"
+    ) {
+      throw new Error("全下发牌展示阶段无效");
+    }
+    if (
+      (runout.stage === "settling") !==
+        (runout.revealedBoardCount === finalBoardCount) ||
+      (runout.stage === "showdown"
+        ? runout.revealFrom !== runout.revealedBoardCount
+        : runout.revealFrom >= runout.revealedBoardCount)
+    ) {
+      throw new Error("全下发牌展示阶段与公共牌进度不一致");
+    }
+    if (!runout.showdownHands || typeof runout.showdownHands !== "object") {
+      throw new Error("全下发牌展示缺少摊牌底牌");
+    }
+    const tablePlayerIds = new Set(table.players.map((player) => player.playerId));
+    const showdownHands = Object.entries(runout.showdownHands);
+    if (
+      showdownHands.length < 2 ||
+      showdownHands.some(
+        ([playerId, hand]) =>
+          !tablePlayerIds.has(playerId) ||
+          hand.length !== 2 ||
+          hand.some((card) => typeof card !== "string")
+      )
+    ) {
+      throw new Error("全下发牌展示缺少可摊牌玩家");
+    }
+  }
+
   #actionPlayerId(table: ReturnType<typeof createPokerTable>): string {
     const publicTable = projectPokerTable(table).table;
     const playerId =
@@ -691,6 +924,8 @@ export class PokerGameModule implements ServerGameModule {
     now: number,
     eventType: "POKER_BOT_ACTION" | "POKER_ACTION_TIMEOUT"
   ): GameRoomUpdate {
+    const tableBeforeAction = poker.table as NonNullable<typeof poker.table>;
+    const boardCountBeforeAction = projectPokerTable(tableBeforeAction).table.board.length;
     let table = handlePokerTableCommand(
       poker.table as NonNullable<typeof poker.table>,
       {
@@ -703,12 +938,18 @@ export class PokerGameModule implements ServerGameModule {
     if (table.status !== "in-hand") {
       table = this.#rebuyBustedBots(state, table, now + 1);
     }
+    const runout = this.#createRunout(
+      tableBeforeAction,
+      table,
+      boardCountBeforeAction,
+      now
+    );
     const blindTimer = this.#finishBlindTimer(table, poker.blindTimer);
     const actionTimer = this.#createActionTimer(table, now);
     return {
       changes: {
-        phase: table.status === "complete" ? "game-over" : "playing",
-        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer)
+        phase: runout ? "playing" : table.status === "complete" ? "game-over" : "playing",
+        poker: pokerStateWithTable(poker, table, blindTimer, actionTimer, runout)
       },
       event: {
         type: eventType,
@@ -753,19 +994,22 @@ function pokerStateWithTable(
   poker: NonNullable<InternalRoomState["poker"]>,
   table: NonNullable<NonNullable<InternalRoomState["poker"]>["table"]>,
   blindTimer?: PokerBlindTimerState,
-  actionTimer?: PokerActionTimerState
+  actionTimer?: PokerActionTimerState,
+  runout?: PokerRunoutState
 ): NonNullable<InternalRoomState["poker"]> {
   const {
     table: _table,
     blindTimer: _blindTimer,
     actionTimer: _actionTimer,
+    runout: _runout,
     ...configState
   } = poker;
   return {
     ...configState,
     table,
     ...(blindTimer ? { blindTimer } : {}),
-    ...(actionTimer ? { actionTimer } : {})
+    ...(actionTimer ? { actionTimer } : {}),
+    ...(runout ? { runout } : {})
   };
 }
 
