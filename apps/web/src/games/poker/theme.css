@@ -974,6 +974,11 @@
   white-space: nowrap;
 }
 
+.poker-board__runout {
+  justify-content: center;
+  min-width: 92px;
+}
+
 .poker-action-countdown {
   display: inline-flex;
   flex: none;
@@ -1501,6 +1506,26 @@
     animation: pk-fade-in 420ms ease both;
   }
 
+  .playing-card.is-dealt {
+    animation: pk-deal-card 420ms cubic-bezier(0.2, 0.72, 0.24, 1) both;
+  }
+
+  .playing-card.is-dealt.deal-order-1 {
+    animation-delay: 80ms;
+  }
+
+  .playing-card.is-dealt.deal-order-2 {
+    animation-delay: 160ms;
+  }
+
+  .mini-hand.is-revealed .playing-card {
+    animation: pk-reveal-card 360ms ease-out both;
+  }
+
+  .mini-hand.is-revealed .playing-card:nth-child(2) {
+    animation-delay: 80ms;
+  }
+
   @keyframes pk-action-glow {
     0%,
     100% {
@@ -1527,6 +1552,28 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes pk-deal-card {
+    from {
+      opacity: 0;
+      transform: translateY(-14px) rotate(-3deg) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotate(0) scale(1);
+    }
+  }
+
+  @keyframes pk-reveal-card {
+    from {
+      opacity: 0;
+      transform: rotateY(70deg) scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(0) scale(1);
     }
   }
 }

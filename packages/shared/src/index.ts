@@ -919,6 +919,13 @@ export interface PokerTableView {
   winners: PokerWinnerView[];
   actionHistory: PokerHandActionView[];
   winnerPlayerId?: string;
+  runout?: PokerRunoutView;
+}
+
+export interface PokerRunoutView {
+  stage: "showdown" | "dealing" | "settling";
+  revealFrom: number;
+  nextStepAt: number;
 }
 
 export interface PokerBlindTimerView {
