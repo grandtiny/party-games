@@ -144,7 +144,7 @@ export function PokerRoomPage() {
 
           <RoomRecoveryCode recoveryCode={session.recoveryCode} />
 
-          <PokerConfigBar view={view} />
+          <PokerConfigBar view={view} table={table} />
 
           {table ? (
             <PokerBlindClock
@@ -252,9 +252,17 @@ function ConnectionStatus({ connected }: { connected: boolean }) {
   );
 }
 
-function PokerConfigBar({ view }: { view: RoomView }) {
+function PokerConfigBar({
+  view,
+  table
+}: {
+  view: RoomView;
+  table: PokerTableView | undefined;
+}) {
   const config = view.room.pokerConfig;
   if (!config) return null;
+  const smallBlind = table?.smallBlind ?? config.smallBlind;
+  const bigBlind = table?.bigBlind ?? config.bigBlind;
   return (
     <section className="poker-config-bar">
       <span>
@@ -267,9 +275,9 @@ function PokerConfigBar({ view }: { view: RoomView }) {
       ) : null}
       <span>{config.mode === "tournament" ? "淘汰赛" : "积分桌"}</span>
       <strong>固定买入 500</strong>
-      <span>
-        盲注 {config.smallBlind}/{config.bigBlind}
-      </span>
+      <strong>
+        {table ? "当前" : "初始"}盲注 小盲 {smallBlind} / 大盲 {bigBlind}
+      </strong>
       {config.mode === "tournament" ? (
         <>
           <span>{config.blindStructure?.length ?? 0} 个级别</span>
@@ -304,6 +312,8 @@ function PokerBlindClock({
   const config = view.room.pokerConfig;
   const timer = table.blindTimer;
   const [now, setNow] = useState(Date.now());
+  const [showLevelNotice, setShowLevelNotice] = useState(false);
+  const previousBlindLevelRef = useRef(table.blindLevel);
 
   useEffect(() => {
     if (timer?.status !== "running") return;
@@ -312,53 +322,82 @@ function PokerBlindClock({
     return () => window.clearInterval(interval);
   }, [timer?.status, timer?.nextLevelAt]);
 
-  if (
-    table.mode !== "tournament" ||
-    (config?.blindAdvanceMode ?? "manual") !== "automatic" ||
-    !timer
-  ) {
-    return null;
-  }
+  useEffect(() => {
+    const previousLevel = previousBlindLevelRef.current;
+    previousBlindLevelRef.current = table.blindLevel;
+    if (table.mode !== "tournament" || table.blindLevel <= previousLevel) return;
+    setShowLevelNotice(true);
+    const timeout = window.setTimeout(() => setShowLevelNotice(false), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [table.blindLevel, table.mode]);
 
+  if (table.mode !== "tournament") return null;
+
+  const automatic = (config?.blindAdvanceMode ?? "manual") === "automatic";
   const configuredDurationMs = (config?.blindLevelDurationMinutes ?? 60) * 60_000;
-  const remainingMs = Math.min(
-    configuredDurationMs,
-    timer.status === "running"
-      ? Math.max(0, (timer.nextLevelAt ?? now) - now)
-      : timer.status === "paused"
-        ? (timer.remainingMs ?? 0)
-        : 0
-  );
-  const status =
-    timer.status === "pending"
-      ? "下一手提升"
-      : timer.status === "finished"
-        ? "最终级别"
-        : timer.status === "paused"
-          ? `已暂停 · ${formatCountdown(remainingMs)}`
-          : formatCountdown(remainingMs);
+  const remainingMs = timer
+    ? Math.min(
+        configuredDurationMs,
+        timer.status === "running"
+          ? Math.max(0, (timer.nextLevelAt ?? now) - now)
+          : timer.status === "paused"
+            ? (timer.remainingMs ?? 0)
+            : 0
+      )
+    : 0;
+  const status = !automatic
+    ? "房主手动提升"
+    : !timer
+      ? "计时同步中"
+      : timer.status === "pending"
+        ? "下一手提升"
+        : timer.status === "finished"
+          ? "最终级别"
+          : timer.status === "paused"
+            ? `已暂停 · ${formatCountdown(remainingMs)}`
+            : formatCountdown(remainingMs);
+  const statusClass = timer?.status ?? (automatic ? "syncing" : "manual");
+  const currentBlinds = `小盲 ${table.smallBlind} · 大盲 ${table.bigBlind}${table.ante > 0 ? ` · 前注 ${table.ante}` : ""}`;
 
   return (
-    <section className={`poker-blind-clock is-${timer.status}`} aria-label="淘汰赛盲注计时">
-      <Timer size={18} />
-      <div>
-        <span>盲注计时</span>
-        <strong>{status}</strong>
-      </div>
-      <span>
-        第 {table.blindLevel + 1}/{config?.blindStructure?.length ?? 1} 级
-      </span>
-      {view.self.isOwner && !table.runout && timer.status === "running" ? (
-        <button className="icon-button" type="button" onClick={onPause} title="暂停盲注计时" aria-label="暂停盲注计时">
-          <Pause size={17} />
-        </button>
+    <>
+      {showLevelNotice ? (
+        <div className="poker-blind-level-notice" role="status" aria-live="assertive">
+          <TrendingUp size={20} />
+          <div>
+            <span>盲注已提升至第 {table.blindLevel + 1} 级</span>
+            <strong>{currentBlinds}</strong>
+          </div>
+        </div>
       ) : null}
-      {view.self.isOwner && !table.runout && timer.status === "paused" ? (
-        <button className="icon-button" type="button" onClick={onResume} title="恢复盲注计时" aria-label="恢复盲注计时">
-          <Play size={17} />
-        </button>
-      ) : null}
-    </section>
+      <section
+        className={`poker-blind-clock is-${statusClass} ${showLevelNotice ? "is-just-advanced" : ""}`}
+        aria-label="淘汰赛当前盲注"
+      >
+        <TrendingUp size={18} />
+        <div className="poker-blind-clock__current">
+          <span>当前盲注</span>
+          <strong>{currentBlinds}</strong>
+        </div>
+        <div className="poker-blind-clock__timing">
+          <span>{automatic ? "下次升盲" : "升盲方式"}</span>
+          <strong>{status}</strong>
+        </div>
+        <span>
+          第 {table.blindLevel + 1}/{config?.blindStructure?.length ?? 1} 级
+        </span>
+        {view.self.isOwner && !table.runout && timer?.status === "running" ? (
+          <button className="icon-button" type="button" onClick={onPause} title="暂停盲注计时" aria-label="暂停盲注计时">
+            <Pause size={17} />
+          </button>
+        ) : null}
+        {view.self.isOwner && !table.runout && timer?.status === "paused" ? (
+          <button className="icon-button" type="button" onClick={onResume} title="恢复盲注计时" aria-label="恢复盲注计时">
+            <Play size={17} />
+          </button>
+        ) : null}
+      </section>
+    </>
   );
 }
 
