@@ -397,7 +397,7 @@ function FarmLand({
       </button>
       {plot.cropId ? (
         <img
-          className={`manor-land__crop manor-land__crop--stage-${stage}`}
+          className={`manor-land__crop manor-land__crop--${plot.cropId} manor-land__crop--stage-${stage}`}
           src={cropImage(plot.cropId, stage)}
           alt=""
         />

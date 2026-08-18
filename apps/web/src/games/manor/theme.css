@@ -238,7 +238,6 @@
 .manor-land:hover,
 .manor-land:has(.manor-land__hit:focus-visible),
 .manor-land.is-inspected {
-  z-index: 790 !important;
   filter: brightness(1.08) drop-shadow(0 0 5px rgba(255, 245, 142, 0.9));
   outline: 0;
 }
@@ -283,7 +282,10 @@
 .manor-land__crop--stage-0 { bottom: 37%; max-height: 56%; }
 .manor-land__crop--stage-1 { bottom: 33%; max-height: 92%; }
 .manor-land__crop--stage-2 { bottom: 29%; max-height: 145%; }
-.manor-land__crop--stage-3 { bottom: 22%; max-height: 215%; }
+.manor-land__crop--stage-3 { bottom: 22%; max-height: 155%; }
+
+/* The legacy radish frame is unusually tall (135 x 210) compared with the other mature crops. */
+.manor-land__crop--radish.manor-land__crop--stage-3 { max-height: 145%; }
 
 .manor-land__weed {
   position: absolute;
@@ -309,19 +311,20 @@
 .manor-land__harvest {
   position: absolute;
   z-index: 6;
-  top: -48%;
+  top: -72%;
   left: 50%;
-  width: 33%;
+  width: 24%;
   height: auto;
   pointer-events: none;
+  transform: translateX(-50%);
   animation: manor-harvest-bob 1.2s ease-in-out infinite;
 }
 
 .manor-land__tip {
   position: absolute;
   z-index: 8;
-  bottom: 91%;
-  left: 50%;
+  bottom: 145%;
+  left: 72%;
   display: none;
   width: max-content;
   max-width: 17cqw;
@@ -334,7 +337,6 @@
   border: 1px solid #8e6a2d;
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(50, 35, 12, 0.3);
-  transform: translateX(-50%);
 }
 
 .manor-land__tip strong,
@@ -347,8 +349,7 @@
 }
 
 .manor-land:hover .manor-land__tip,
-.manor-land:has(.manor-land__hit:focus-visible) .manor-land__tip,
-.manor-land.is-inspected .manor-land__tip { display: block; }
+.manor-land:has(.manor-land__hit:focus-visible) .manor-land__tip { display: block; }
 
 .manor-message {
   position: absolute;
@@ -582,8 +583,8 @@
 }
 
 @keyframes manor-harvest-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8%); }
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -8%); }
 }
 
 @media (max-width: 760px) {
