@@ -1,0 +1,116 @@
+/*
+ * room.css — 由 styles.css 按职责拆分而来。
+ * 多人房间共享词汇：connection-state、room-actions、room-summary、phase-label 等，
+// 由 clocktower / poker / turtle-soup 房间页共同使用。
+ * 拆分为纯搬运：每条规则与原文件逐字一致，未做改写。
+ */
+
+.reference-button {
+  display: inline-flex;
+  min-width: 68px;
+  height: 36px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #d2d7d0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 10px;
+  color: #333a35;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.eyebrow,
+.summary-label {
+  margin: 0;
+  color: #747c75;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.status-label,
+.phase-label {
+  width: max-content;
+  border-radius: 999px;
+  background: #e9ece7;
+  padding: 5px 8px;
+  color: #626a63;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.connection-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #737b74;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.connection-state > span,
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #aeb5ae;
+}
+
+.connection-state.is-online > span,
+.presence-dot.is-online {
+  background: #168653;
+}
+
+.room-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.room-summary > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.room-summary strong {
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+.summary-spacer {
+  flex: 1;
+}
+
+.player-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #626a63;
+  font-size: 13px;
+}
+
+.room-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.room-actions > :only-child {
+  grid-column: 1 / -1;
+}
+
+.rematch-button {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .room-actions {
+      grid-template-columns: 1fr;
+    }
+}

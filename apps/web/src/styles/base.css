@@ -1,0 +1,381 @@
+/*
+ * base.css — 由 styles.css 按职责拆分而来。
+ * 设计系统基础：令牌、reset、排版与全站共享组件（按钮/表单/面板/分段器等）。
+// 平台页与全部游戏共用；修改会影响所有主题，改动需谨慎。
+ * 拆分为纯搬运：每条规则与原文件逐字一致，未做改写。
+ */
+
+:root {
+  --action-background: #1f2421;
+  --action-border: #1f2421;
+  --action-focus: rgb(31 36 33 / 11%);
+  --game-accent: #1f2421;
+  color: #1f2421;
+  background: #f4f5f2;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(#e2e5df 1px, transparent 1px),
+    linear-gradient(90deg, #e2e5df 1px, transparent 1px),
+    #f4f5f2;
+  background-size: 32px 32px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.icon-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  place-items: center;
+  border: 1px solid #d2d7d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #333a35;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(30px, 7vw, 48px);
+  line-height: 1.1;
+}
+
+h2 {
+  margin: 3px 0 0;
+  font-size: 20px;
+}
+
+.entry-layout {
+  width: min(100%, 480px);
+  margin: 14px auto 0;
+}
+
+.entry-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  color: var(--game-accent);
+}
+
+.entry-heading h1 {
+  color: #1f2421;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  border: 1px solid #d4d9d2;
+  border-radius: 7px;
+  background: #e8ebe6;
+  padding: 4px;
+}
+
+.segmented button {
+  min-height: 38px;
+  cursor: pointer;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #5d655e;
+  font-weight: 680;
+}
+
+.segmented button.is-active {
+  background: #fff;
+  color: #1f2421;
+  box-shadow: 0 1px 4px rgb(31 36 33 / 10%);
+}
+
+.entry-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  border: 1px solid #d4d9d2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 20px;
+}
+
+.entry-form label {
+  display: grid;
+  gap: 7px;
+  color: #4b534d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.entry-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #bec5bd;
+  border-radius: 6px;
+  background: #fbfcfa;
+  padding: 9px 11px;
+  color: #1f2421;
+  outline: none;
+}
+
+.entry-form input:focus {
+  border-color: var(--action-background);
+  box-shadow: 0 0 0 3px var(--action-focus);
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-weight: 740;
+}
+
+.primary-button {
+  border: 1px solid var(--action-border);
+  background: var(--action-background);
+  color: #fff;
+}
+
+.primary-button--dark {
+  border-color: #1f2421;
+  background: #1f2421;
+}
+
+.secondary-button {
+  border: 1px solid #bbc2ba;
+  background: #fff;
+  color: #29302b;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.form-error,
+.notice--error {
+  color: #a31f29;
+  font-size: 13px;
+}
+
+.notice--success {
+  color: #17613b;
+}
+
+.settings-form {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-form--wide {
+  max-width: 680px;
+}
+
+.settings-form input:not([type="checkbox"]),
+.settings-form select,
+.settings-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cfd5ce;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2421;
+  font: inherit;
+  font-size: 15px;
+}
+
+.settings-form input:not([type="checkbox"]),
+.settings-form select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.settings-form select {
+  appearance: auto;
+}
+
+.settings-form textarea {
+  min-height: 180px;
+  resize: vertical;
+  padding: 11px 12px;
+  line-height: 1.55;
+}
+
+.settings-form input:not([type="checkbox"]):focus,
+.settings-form select:focus,
+.settings-form textarea:focus {
+  border-color: #7c8980;
+  outline: 2px solid rgb(124 137 128 / 18%);
+}
+
+.settings-section__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-section__heading > div {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-state {
+  flex: none;
+  border: 1px solid #d3d8d2;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #737b75;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.config-state.is-ready {
+  border-color: #a8cfb8;
+  background: #eff8f2;
+  color: #17613b;
+}
+
+.settings-field-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.45fr);
+  gap: 14px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.loading-block {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #687169;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.room-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e4df;
+  padding: 16px;
+}
+
+.seat-number {
+  display: grid;
+  width: 38px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #d0d5ce;
+  border-radius: 5px;
+  background: #f7f8f5;
+  text-align: center;
+  font-weight: 750;
+}
+
+.danger-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  border: 1px solid #9b2430;
+  border-radius: 6px;
+  background: #fff4f4;
+  padding: 8px 13px;
+  color: #92212b;
+  font-weight: 740;
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.notice {
+  margin-bottom: 12px;
+  border: 1px solid #dfb7ba;
+  border-radius: 6px;
+  background: #fff4f4;
+  padding: 10px 12px;
+}
+
+@media (max-width: 560px) {
+  .settings-field-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+  .settings-actions > button {
+      flex: 1;
+    }
+}
