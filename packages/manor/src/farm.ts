@@ -79,7 +79,7 @@ export interface ManorPlotState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   revision: number;
   coins: number;
   experience: number;
@@ -96,16 +96,22 @@ export interface ManorRuntimeOptions {
   legacyBackgroundUrl?: string;
 }
 
+export const MANOR_PLOT_COUNT = 18;
+
+type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
+  schemaVersion?: 1 | 2;
+};
+
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     revision: 0,
     coins: 120,
     experience: 0,
     randomState: hashSeed(seedSource),
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
-    plots: Array.from({ length: 6 }, (_, index) => ({ id: index + 1, cycle: 0 })),
+    plots: createEmptyPlots(),
     createdAt: now,
     updatedAt: now
   };
@@ -115,19 +121,25 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
 
 export function migrateManorFarm(value: unknown): ManorFarmState {
   if (!value || typeof value !== "object") throw new Error("庄园存档格式无效");
-  const candidate = value as Partial<ManorFarmState>;
-  if (candidate.schemaVersion !== 1) throw new Error("庄园存档版本不受支持");
+  const candidate = value as PersistedManorFarm;
+  if (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2) {
+    throw new Error("庄园存档版本不受支持");
+  }
+  const migratedPlots = Array.isArray(candidate.plots)
+    ? candidate.plots.map((plot) => migratePlot(plot))
+    : [];
+  const plots = candidate.schemaVersion === 1
+    ? migrateSixPlotFarm(migratedPlots)
+    : migratedPlots;
   const state: ManorFarmState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
     randomState: integer(candidate.randomState, "随机状态") >>> 0,
     seeds: migrateInventory(candidate.seeds, "种子"),
     produce: migrateInventory(candidate.produce, "仓库"),
-    plots: Array.isArray(candidate.plots)
-      ? candidate.plots.map((plot) => migratePlot(plot))
-      : [],
+    plots,
     createdAt: timestamp(candidate.createdAt, "创建时间"),
     updatedAt: timestamp(candidate.updatedAt, "更新时间")
   };
@@ -258,7 +270,7 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 1) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 2) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
@@ -268,10 +280,10 @@ export function validateManorFarm(state: ManorFarmState): void {
   ] as const) {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${label}无效`);
   }
-  if (state.plots.length !== 6) throw new Error("庄园土地数量无效");
+  if (state.plots.length !== MANOR_PLOT_COUNT) throw new Error("庄园土地数量无效");
   const ids = new Set<number>();
   for (const plot of state.plots) {
-    if (!Number.isInteger(plot.id) || plot.id < 1 || plot.id > 6 || ids.has(plot.id)) {
+    if (!Number.isInteger(plot.id) || plot.id < 1 || plot.id > MANOR_PLOT_COUNT || ids.has(plot.id)) {
       throw new Error("土地编号无效");
     }
     ids.add(plot.id);
@@ -378,6 +390,19 @@ function cropRecord(initial: Partial<Record<ManorCropId, number>> = {}): Record<
     corn: initial.corn ?? 0,
     tomato: initial.tomato ?? 0
   };
+}
+
+function createEmptyPlots(startId = 1, count = MANOR_PLOT_COUNT): ManorPlotState[] {
+  return Array.from({ length: count }, (_, index) => ({ id: startId + index, cycle: 0 }));
+}
+
+function migrateSixPlotFarm(plots: ManorPlotState[]): ManorPlotState[] {
+  if (plots.length !== 6) throw new Error("旧版庄园土地数量无效");
+  const ids = new Set(plots.map((plot) => plot.id));
+  if (ids.size !== 6 || plots.some((plot) => plot.id < 1 || plot.id > 6)) {
+    throw new Error("旧版庄园土地编号无效");
+  }
+  return [...plots, ...createEmptyPlots(7, MANOR_PLOT_COUNT - 6)];
 }
 
 function cloneState(state: ManorFarmState): ManorFarmState {

@@ -376,7 +376,7 @@ export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequest
 export const ManorCropIdSchema = z.enum(["radish", "carrot", "corn", "tomato"]);
 export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
 
-const ManorPlotIdSchema = z.number().int().min(1).max(6);
+const ManorPlotIdSchema = z.number().int().min(1).max(18);
 const ManorQuantitySchema = z.number().int().min(1).max(99);
 
 export const ManorActionRequestSchema = z.discriminatedUnion("type", [

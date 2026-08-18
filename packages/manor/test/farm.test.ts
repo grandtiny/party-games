@@ -10,6 +10,7 @@ describe("manor farm", () => {
   it("runs the seed, plant, care, harvest and sale loop", () => {
     const startedAt = 1_000_000;
     let farm = createManorFarm(startedAt, "account-1");
+    expect(farm.plots).toHaveLength(18);
     farm = applyManorAction(farm, { type: "plant", plotId: 1, cropId: "radish" }, startedAt);
     farm = applyManorAction(farm, { type: "water", plotId: 1 }, startedAt + 1_000);
 
@@ -70,5 +71,28 @@ describe("manor farm", () => {
     expect(view.catalog[0]?.growthSeconds).toBe(1);
     expect(view.plots[0]?.status).toBe("mature");
     expect(migrateManorFarm(JSON.parse(JSON.stringify(farm)))).toEqual(farm);
+  });
+
+  it("migrates the six-plot v1 save without losing existing progress", () => {
+    const startedAt = 20_000;
+    const current = applyManorAction(
+      createManorFarm(startedAt, "legacy-account"),
+      { type: "plant", plotId: 2, cropId: "radish" },
+      startedAt
+    );
+    const legacy = {
+      ...current,
+      schemaVersion: 1,
+      plots: current.plots.slice(0, 6)
+    };
+
+    const migrated = migrateManorFarm(legacy);
+
+    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.plots).toHaveLength(18);
+    expect(migrated.plots[1]).toMatchObject({ id: 2, cropId: "radish" });
+    expect(migrated.plots.slice(6)).toEqual(
+      Array.from({ length: 12 }, (_, index) => ({ id: index + 7, cycle: 0 }))
+    );
   });
 });

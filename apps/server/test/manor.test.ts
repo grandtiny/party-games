@@ -48,7 +48,7 @@ describe("manor account persistence", () => {
       expect(initial.json().plots).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: 1, status: "empty" })])
       );
-      expect(initial.json().plots).toHaveLength(6);
+      expect(initial.json().plots).toHaveLength(18);
 
       const planted = await first.app.inject({
         method: "POST",
