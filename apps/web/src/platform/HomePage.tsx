@@ -11,7 +11,8 @@ import {
   Spade,
   Sparkles,
   UserRound,
-  UsersRound
+  UsersRound,
+  Wheat
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -37,7 +38,7 @@ interface GameEntry {
 interface GameSection {
   description: string;
   icon: LucideIcon;
-  id: "social" | "solo";
+  id: "social" | "persistent" | "solo";
   kicker: string;
   title: string;
   games: GameEntry[];
@@ -100,6 +101,26 @@ export function HomePage() {
           icon: FlaskConical,
           accent: "#355f63",
           tint: "#f0f7f6"
+        }
+      ]
+    },
+    {
+      id: "persistent",
+      icon: Wheat,
+      kicker: "长期经营",
+      title: "回来收成",
+      description: "使用现有账号保存庄园进度，作物会按现实时间持续成长。",
+      games: [
+        {
+          id: "manor",
+          title: "怀旧庄园",
+          description: "种植经营 · 好友玩法逐步开放",
+          note: "农场已开放，牧场建设中",
+          tags: ["账号存档", "经营", "长期成长"],
+          to: "/manor",
+          icon: Wheat,
+          accent: "#3f7049",
+          tint: "#eef6e9"
         }
       ]
     },
@@ -171,6 +192,10 @@ export function HomePage() {
             单人 3
           </span>
           <span>
+            <Wheat size={16} />
+            经营 1
+          </span>
+          <span>
             <Sparkles size={16} />
             私人局
           </span>
@@ -207,13 +232,15 @@ export function HomePage() {
                   <p>{section.description}</p>
                 </div>
               </div>
-              <div className="game-section__body">
+              <div className={`game-section__body ${laneGames.length ? "" : "is-single"}`}>
                 {featuredGame ? <GameCard game={featuredGame} variant="featured" /> : null}
-                <div className="game-lane">
-                  {laneGames.map((game) => (
-                    <GameCard game={game} key={game.id} variant="compact" />
-                  ))}
-                </div>
+                {laneGames.length ? (
+                  <div className="game-lane">
+                    {laneGames.map((game) => (
+                      <GameCard game={game} key={game.id} variant="compact" />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </section>
           );

@@ -373,6 +373,35 @@ export const GomokuProgressSyncRequestSchema = z.object({
 });
 export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
 
+export const ManorCropIdSchema = z.enum(["radish", "carrot", "corn", "tomato"]);
+export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
+
+const ManorPlotIdSchema = z.number().int().min(1).max(6);
+const ManorQuantitySchema = z.number().int().min(1).max(99);
+
+export const ManorActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("buy-seeds"),
+    cropId: ManorCropIdSchema,
+    quantity: ManorQuantitySchema
+  }),
+  z.object({
+    type: z.literal("plant"),
+    plotId: ManorPlotIdSchema,
+    cropId: ManorCropIdSchema
+  }),
+  z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("sell"),
+    cropId: ManorCropIdSchema,
+    quantity: ManorQuantitySchema
+  })
+]);
+export type ManorActionRequest = z.infer<typeof ManorActionRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -546,6 +575,55 @@ export interface GomokuOverviewResponse {
   recentMatches: GomokuMatchView[];
   progress: GomokuProgressView[];
   save?: GomokuSaveView;
+}
+
+export interface ManorCropView {
+  id: ManorCropId;
+  name: string;
+  emoji: string;
+  levelRequired: number;
+  seedPrice: number;
+  salePrice: number;
+  growthSeconds: number;
+  baseYield: number;
+  experience: number;
+  unlocked: boolean;
+  seeds: number;
+  produce: number;
+}
+
+export interface ManorPlotView {
+  id: number;
+  status: "empty" | "growing" | "mature";
+  cropId?: ManorCropId;
+  cropName?: string;
+  cropEmoji?: string;
+  plantedAt?: number;
+  readyAt?: number;
+  progress: number;
+  watered: boolean;
+  weed: boolean;
+  pest: boolean;
+  estimatedYield?: number;
+}
+
+export interface ManorFarmView {
+  serverTime: number;
+  revision: number;
+  profile: {
+    displayName: string;
+    coins: number;
+    level: number;
+    experience: number;
+    currentLevelExperience: number;
+    nextLevelExperience: number;
+  };
+  catalog: ManorCropView[];
+  plots: ManorPlotView[];
+  art: {
+    source: "built-in" | "legacy";
+    backgroundUrl?: string;
+  };
 }
 
 export interface AdminLlmConfigView {

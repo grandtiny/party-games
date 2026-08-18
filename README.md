@@ -1,6 +1,6 @@
 # Party Games
 
-私人聚会游戏站。首页提供平级的血染钟楼、德州扑克、海龟汤、扫雷、数独和五子棋入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及扫雷、数独和支持标准禁手、离线 AI、残局、教学、存档与复盘的五子棋。
+私人聚会游戏站。首页提供血染钟楼、德州扑克、海龟汤、怀旧庄园、扫雷、数独和五子棋入口；当前已实现暗流涌动完整本地循环，复用同一服务端规则内核、按行动顺序逐步广播的德扑多人房间和三档确定性单人 AI 对局，服务端持有汤底的多人海龟汤，以及扫雷、数独和支持标准禁手、离线 AI、残局、教学、存档与复盘的五子棋。怀旧庄园当前开放按现实时间成长的农场基础循环，并直接复用平台账号保存长期进度。
 
 ## 本地开发
 
@@ -34,6 +34,22 @@ docker compose up --build
 
 浏览器打开 `http://localhost:18081`。SQLite 数据保存在 Docker 命名卷 `party-games-data`。
 Compose 默认拉取官方 `node:24-bookworm-slim` 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
+
+### 怀旧庄园
+
+庄园没有单独的账号或游客存档。玩家登录现有平台账号后，每个账号自动创建并持续复用一份农场存档；退出登录后不能读取或操作庄园。当前农场支持购买种子、种植、浇水、除草、除虫、收获、仓库出售、等级解锁和离线成长，牧场和好友交互尚未开放。
+
+默认按现实时间成长。开发联调时可设置正数倍率缩短等待时间，例如：
+
+```powershell
+$env:MANOR_TIME_SCALE = "120"
+$env:MANOR_LEGACY_ASSETS_PATH = "C:\path\to\qqfarm"
+pnpm start
+```
+
+`MANOR_LEGACY_ASSETS_PATH` 是可选的旧资源根目录。服务端只会从该目录查找并只读提供 `module/nc/farm/diy/26f.jpg`；没有配置或文件不存在时自动使用内置 CSS 场景。旧资源不会进入构建产物或仓库。
+
+Docker Compose 默认把宿主机 `./data/legacy-assets` 只读挂载到容器。可在 `.env` 中用 `MANOR_LEGACY_ASSETS_HOST_PATH` 改成旧资源根目录；不提供对应图片时仍会使用内置场景。
 
 德州扑克默认启用。如需临时关闭入口：
 
@@ -117,6 +133,7 @@ packages/game-core/              游戏模块契约与注册表
 packages/clocktower/             暗流涌动规则状态机与本地资料
 packages/poker/                  德扑规则内核、确定性快照与桌型领域层
 packages/gomoku/                 五子棋规则、禁手、三档 AI、残局和教学内容
+packages/manor/                  庄园经济、成长、随机事件与存档迁移领域层
 apps/server/src/platform/        房间平台接口
 apps/server/src/games/           服务端游戏适配器
 apps/web/src/platform/           大厅、设置和通用外壳
@@ -126,6 +143,7 @@ apps/web/src/games/turtle-soup/  海龟汤入口、多人房间和提示词测�
 apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
 apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
 apps/web/src/games/gomoku/       五子棋对局、残局、教学、账号同步和逐手复盘
+apps/web/src/games/manor/        账号庄园、农田操作、种子商店和仓库
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。

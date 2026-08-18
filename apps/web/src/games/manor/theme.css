@@ -1,0 +1,684 @@
+.app-shell--manor {
+  --manor-ink: #263126;
+  --manor-green: #2f6d42;
+  --manor-leaf: #6ea44e;
+  --manor-soil: #76502d;
+  min-height: 100vh;
+  background: #edf1e8;
+  color: var(--manor-ink);
+}
+
+.app-shell--manor .topbar {
+  border-bottom-color: #cbd5c5;
+  background: rgb(250 252 247 / 94%);
+}
+
+.app-shell--manor .page {
+  width: min(100%, 1180px);
+  padding: 22px 18px 64px;
+}
+
+.app-shell--manor .brand-mark,
+.app-shell--manor .icon-button.is-account-active {
+  background: #e7f0e2;
+  color: #285c39;
+}
+
+.manor-page {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
+.manor-profile {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #cbd4c6;
+  padding: 4px 2px 16px;
+}
+
+.manor-profile__identity,
+.manor-profile__resources,
+.manor-profile__resources > span,
+.manor-section-heading > span {
+  display: flex;
+  align-items: center;
+}
+
+.manor-profile__identity {
+  min-width: 0;
+  gap: 11px;
+}
+
+.manor-profile__identity > span:last-child,
+.manor-profile__resources > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.manor-profile__identity strong {
+  overflow: hidden;
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manor-profile small,
+.manor-section-heading small,
+.manor-seed small,
+.manor-stock-list small {
+  color: #667061;
+  font-size: 12px;
+}
+
+.manor-avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  place-items: center;
+  border: 1px solid #a9bca5;
+  border-radius: 7px;
+  background: #dfeeda;
+  color: #2f6d42;
+}
+
+.manor-profile__resources {
+  flex: none;
+  gap: 24px;
+}
+
+.manor-profile__resources > span:first-child {
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 5px;
+}
+
+.manor-profile__resources strong {
+  color: #8c5c0a;
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+
+.manor-experience {
+  width: 170px;
+}
+
+.manor-experience i {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #d7ded2;
+}
+
+.manor-experience b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #5e9147;
+}
+
+.manor-tabs {
+  display: grid;
+  width: min(100%, 360px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #bfc9bb;
+  border-radius: 7px;
+  background: #e3e8df;
+  padding: 3px;
+}
+
+.manor-tabs button {
+  display: inline-flex;
+  min-height: 38px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #596356;
+  font-weight: 720;
+}
+
+.manor-tabs button.is-active {
+  background: #fff;
+  color: #285c39;
+  box-shadow: 0 1px 3px rgb(42 62 42 / 14%);
+}
+
+.manor-tabs button:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.manor-alert {
+  border-left: 4px solid #b55d26;
+  background: #fff4e9;
+  padding: 10px 13px;
+  color: #813d17;
+  font-size: 13px;
+}
+
+.manor-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 530px;
+  overflow: hidden;
+  border: 1px solid #aebc9f;
+  border-radius: 8px;
+  background-color: #b8d98c;
+  background-position: center;
+  background-size: cover;
+}
+
+.manor-scene__sky {
+  position: absolute;
+  z-index: -2;
+  inset: 0 0 46%;
+  overflow: hidden;
+  background: #9bd6e8;
+}
+
+.manor-scene.has-legacy-art .manor-scene__sky {
+  display: none;
+}
+
+.manor-sun {
+  position: absolute;
+  top: 42px;
+  right: 10%;
+  width: 62px;
+  height: 62px;
+  border: 8px solid rgb(255 248 190 / 65%);
+  border-radius: 50%;
+  background: #ffe36b;
+}
+
+.manor-hills {
+  position: absolute;
+  right: -8%;
+  bottom: -92px;
+  width: 70%;
+  height: 180px;
+  border-radius: 50% 50% 0 0;
+  background: #65a555;
+  box-shadow: -360px 24px 0 14px #7bb65b;
+}
+
+.manor-field {
+  position: absolute;
+  z-index: 1;
+  right: 6%;
+  bottom: 5%;
+  left: 6%;
+  display: grid;
+  min-height: 315px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  transform: perspective(900px) rotateX(4deg);
+}
+
+.manor-field::before {
+  position: absolute;
+  z-index: -1;
+  inset: -18px;
+  border: 8px solid #8e6a3d;
+  border-radius: 26px;
+  background: #9c7244;
+  box-shadow: 0 14px 30px rgb(56 52 28 / 24%);
+  content: "";
+}
+
+.manor-plot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 145px;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  overflow: hidden;
+  border: 1px solid #6e4c2c;
+  border-radius: 7px;
+  background-color: #80562f;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 17px, rgb(47 27 14 / 16%) 18px 19px),
+    repeating-linear-gradient(90deg, transparent 0 29px, rgb(236 197 132 / 8%) 30px 31px);
+  padding: 10px;
+  box-shadow: inset 0 0 22px rgb(43 25 13 / 20%);
+  color: #fff8e8;
+}
+
+.manor-plot.is-mature {
+  border-color: #e0b645;
+  box-shadow: inset 0 0 22px rgb(43 25 13 / 16%), 0 0 0 3px rgb(255 220 95 / 36%);
+}
+
+.manor-plot__number {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(35 27 18 / 55%);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.manor-plot__plant {
+  display: grid;
+  min-width: 92px;
+  min-height: 82px;
+  cursor: pointer;
+  place-items: center;
+  gap: 5px;
+  border: 1px dashed rgb(255 245 214 / 58%);
+  border-radius: 7px;
+  background: rgb(50 31 18 / 16%);
+  padding: 9px;
+  color: #fff4d7;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.manor-plot__plant:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.manor-plant {
+  position: relative;
+  display: grid;
+  width: 56px;
+  height: 67px;
+  place-items: center;
+}
+
+.manor-plant::before,
+.manor-plant::after {
+  position: absolute;
+  top: 23px;
+  width: 28px;
+  height: 14px;
+  border-radius: 90% 10% 80% 20%;
+  background: #62a442;
+  content: "";
+}
+
+.manor-plant::before {
+  left: 3px;
+  transform: rotate(24deg);
+}
+
+.manor-plant::after {
+  right: 3px;
+  transform: scaleX(-1) rotate(24deg);
+}
+
+.manor-plant > span {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 3px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: #e9ecdd;
+  color: #29422c;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 4px 9px rgb(37 24 13 / 24%);
+}
+
+.manor-plant > i {
+  position: absolute;
+  bottom: 1px;
+  width: 5px;
+  height: 35px;
+  border-radius: 3px;
+  background: #397034;
+}
+
+.manor-plant--radish > span { background: #f4f0e8; }
+.manor-plant--carrot > span { background: #f3a24d; color: #633516; }
+.manor-plant--corn > span { background: #f2cc50; color: #564515; }
+.manor-plant--tomato > span { background: #d95a48; color: #fff; }
+
+.manor-plot__status {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+
+.manor-plot__status strong {
+  font-size: 13px;
+}
+
+.manor-plot__status small {
+  color: #f3e1c4;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.manor-plot__progress {
+  width: min(100%, 112px);
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(43 26 14 / 46%);
+}
+
+.manor-plot__progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #b8da65;
+}
+
+.manor-plot__actions {
+  display: flex;
+  min-height: 29px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.manor-plot__actions button {
+  display: inline-flex;
+  min-width: 30px;
+  height: 29px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 5px;
+  background: rgb(255 252 240 / 90%);
+  padding: 0 6px;
+  color: #36543c;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.manor-plot__actions button.has-problem {
+  border-color: #efc163;
+  background: #fff0bc;
+  color: #7a3e13;
+}
+
+.manor-plot__actions button.is-harvest {
+  background: #f7d069;
+  color: #5d3d0e;
+}
+
+.manor-plot__actions button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.manor-art-source {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  border-radius: 4px;
+  background: rgb(26 47 30 / 72%);
+  padding: 5px 7px;
+  color: #f6fbf2;
+  font-size: 10px;
+}
+
+.manor-seed-rack,
+.manor-warehouse {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid #cbd4c6;
+  padding-top: 18px;
+}
+
+.manor-section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manor-section-heading > span {
+  gap: 8px;
+}
+
+.manor-section-heading strong {
+  font-size: 17px;
+}
+
+.manor-crop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.manor-seed {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  border: 1px solid #c5cec0;
+  border-radius: 7px;
+  background: #fbfcf8;
+  padding: 10px;
+}
+
+.manor-seed.is-selected {
+  border-color: #548263;
+  box-shadow: inset 0 0 0 2px rgb(84 130 99 / 16%);
+}
+
+.manor-seed.is-locked {
+  background: #eef0eb;
+}
+
+.manor-seed__select {
+  display: flex;
+  min-width: 0;
+  cursor: pointer;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.manor-seed__select > span:last-child,
+.manor-stock-list > div > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.manor-crop-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgb(49 61 42 / 15%);
+  border-radius: 50%;
+  color: #324735;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.manor-crop-mark--radish { background: #efeee8; }
+.manor-crop-mark--carrot { background: #f1b26d; }
+.manor-crop-mark--corn { background: #efd56d; }
+.manor-crop-mark--tomato { background: #dc7465; color: #fff; }
+
+.manor-seed__count {
+  align-self: end;
+  color: #677061;
+  font-size: 11px;
+}
+
+.manor-seed__buy,
+.manor-stock-list button {
+  display: inline-flex;
+  min-height: 30px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #c8a44e;
+  border-radius: 5px;
+  background: #fff3c9;
+  padding: 0 8px;
+  color: #6d4c16;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.manor-seed__buy:disabled,
+.manor-stock-list button:disabled {
+  cursor: default;
+  filter: grayscale(0.6);
+  opacity: 0.5;
+}
+
+.manor-stock-list {
+  display: grid;
+  border-block: 1px solid #cbd4c6;
+}
+
+.manor-stock-list > div {
+  display: grid;
+  min-height: 62px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #dbe1d7;
+  padding: 8px 2px;
+  opacity: 0.62;
+}
+
+.manor-stock-list > div:last-child {
+  border-bottom: 0;
+}
+
+.manor-stock-list > div.has-stock {
+  opacity: 1;
+}
+
+.manor-loading {
+  display: grid;
+  min-height: 55vh;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: #53614e;
+}
+
+.manor-loading .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 820px) {
+  .manor-crop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .manor-scene {
+    min-height: 560px;
+  }
+
+  .manor-field {
+    right: 4%;
+    left: 4%;
+    min-height: 390px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .app-shell--manor .page {
+    padding: 14px 10px 48px;
+  }
+
+  .manor-profile {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manor-profile__resources {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .manor-experience {
+    width: min(48vw, 170px);
+  }
+
+  .manor-tabs {
+    width: 100%;
+  }
+
+  .manor-scene {
+    min-height: 620px;
+    border-radius: 6px;
+  }
+
+  .manor-field {
+    bottom: 3%;
+    min-height: 490px;
+    gap: 7px;
+    transform: none;
+  }
+
+  .manor-field::before {
+    inset: -10px;
+    border-width: 5px;
+    border-radius: 15px;
+  }
+
+  .manor-plot {
+    min-height: 154px;
+    padding: 8px 5px;
+  }
+
+  .manor-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .manor-crop-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manor-seed {
+    grid-template-columns: minmax(0, 1fr) 62px;
+  }
+
+  .manor-stock-list > div {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .manor-stock-list button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

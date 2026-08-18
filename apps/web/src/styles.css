@@ -325,6 +325,14 @@ h2 {
   align-items: stretch;
 }
 
+.game-section__body.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.game-section__body.is-single .game-card--featured {
+  min-height: 220px;
+}
+
 .game-section__body > * {
   min-width: 0;
 }

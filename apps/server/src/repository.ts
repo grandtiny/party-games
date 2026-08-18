@@ -222,6 +222,19 @@ const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `
+  },
+  {
+    version: 6,
+    sql: `
+      CREATE TABLE IF NOT EXISTS manor_farms (
+        user_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL,
+        state_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `
   }
 ];
 
@@ -1135,6 +1148,56 @@ export class SqliteRoomRepository {
           updatedAt: row.updated_at
         }
       : undefined;
+  }
+
+  getManorFarm(userId: string): unknown | undefined {
+    const row = this.#database
+      .prepare("SELECT state_json FROM manor_farms WHERE user_id = ?")
+      .get(userId) as { state_json: string } | undefined;
+    return row ? JSON.parse(row.state_json) : undefined;
+  }
+
+  ensureManorFarm(
+    userId: string,
+    state: { revision: number; createdAt: number; updatedAt: number }
+  ): unknown {
+    this.#database
+      .prepare(`
+        INSERT OR IGNORE INTO manor_farms (
+          user_id, revision, state_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `)
+      .run(
+        userId,
+        state.revision,
+        JSON.stringify(state),
+        new Date(state.createdAt).toISOString(),
+        new Date(state.updatedAt).toISOString()
+      );
+    const stored = this.getManorFarm(userId);
+    if (!stored) throw new Error("庄园存档创建失败");
+    return stored;
+  }
+
+  updateManorFarm(
+    userId: string,
+    expectedRevision: number,
+    state: { revision: number; updatedAt: number }
+  ): void {
+    const result = this.#database
+      .prepare(`
+        UPDATE manor_farms
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `)
+      .run(
+        state.revision,
+        JSON.stringify(state),
+        new Date(state.updatedAt).toISOString(),
+        userId,
+        expectedRevision
+      );
+    if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
   }
 
   hasAdminPassword(): boolean {

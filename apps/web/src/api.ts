@@ -28,6 +28,8 @@ import type {
   GomokuSaveUpdateRequest,
   GomokuSaveView,
   JoinRoomRequest,
+  ManorActionRequest,
+  ManorFarmView,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
   PuzzleResultView,
@@ -85,6 +87,14 @@ export async function changeAccountPassword(
 
 export async function getAccountOverview(): Promise<AccountOverviewResponse> {
   return request("/api/account/overview");
+}
+
+export async function getManorFarm(): Promise<ManorFarmView> {
+  return request("/api/manor");
+}
+
+export async function performManorAction(input: ManorActionRequest): Promise<ManorFarmView> {
+  return request("/api/manor/actions", { method: "POST", body: input });
 }
 
 export async function submitPuzzleResult(
