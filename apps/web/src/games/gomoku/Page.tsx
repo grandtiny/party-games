@@ -329,6 +329,11 @@ export function GomokuPage({ tab }: GomokuPageProps) {
     setThinking(false);
   };
 
+  const awaitingHuman =
+    !game.result &&
+    !thinking &&
+    (game.mode === "local" || game.currentPlayer === game.humanColor);
+
   return (
     <AppShell scope="gomoku" title="五子棋" backTo="/">
       <nav className="gomoku-tabs" aria-label="五子棋模式">
@@ -341,7 +346,9 @@ export function GomokuPage({ tab }: GomokuPageProps) {
         <div className="gomoku-play-layout">
           <section className="gomoku-match" aria-label="五子棋对局">
             <header className="gomoku-match__status">
-              <div className={`gomoku-turn is-${game.currentPlayer}`}>
+              <div
+                className={`gomoku-turn is-${game.currentPlayer}${awaitingHuman ? " is-waiting" : ""}`}
+              >
                 <span className="gomoku-turn__stone" />
                 <span>
                   <small>{game.result ? "本局结束" : thinking ? "AI 思考中" : "当前落子"}</small>
@@ -549,8 +556,10 @@ function playStoneSound(enabled: boolean, source: "human" | "ai"): void {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     oscillator.type = "sine";
-    oscillator.frequency.value = source === "human" ? 210 : 180;
-    gain.gain.setValueAtTime(0.06, context.currentTime);
+    const base = source === "human" ? 300 : 255;
+    oscillator.frequency.setValueAtTime(base, context.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(base * 0.58, context.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.08, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.09);
     oscillator.connect(gain).connect(context.destination);
     oscillator.start();
