@@ -11,4 +11,4 @@
 "cf3aed938dbe1870a69ba892dbf25445ccfb7f2d5dff013879013cea8e7bcae7","2","1911","tool","assets/manor/classic/tool-move-1_up.png;assets/manor/classic/tool-move-3_down.png","legacy-control-up-down-identical"
 "d8e0f6bf083d95f50680d838f1fe6400195a2710ef8defa23bce0cfc97fe18d7","2","6816","navigation","assets/manor/classic/nav-shop-1_up.png;assets/manor/classic/nav-shop-3_down.png","legacy-control-up-down-identical"
 "e4264dfb4d2fe59efe095d751ee62341fa45684015a34cefa0d4bcf7b4a515db","2","2345","tool","assets/manor/classic/tool-harvest-1_up.png;assets/manor/classic/tool-harvest-3_down.png","legacy-control-up-down-identical"
-"f8bacbc69c95a34f8d3d932c047a1acba431987b0c03d8ca0e50dc7231ee1689","2","2468","crop","assets/manor/classic/crop-carrot-1.png;assets/manor/classic/crop-radish-1.png","shared-early-growth-needs-visual-review"
+"f8bacbc69c95a34f8d3d932c047a1acba431987b0c03d8ca0e50dc7231ee1689","2","2468","crop","assets/manor/classic/crop-carrot-1.png;assets/manor/classic/crop-radish-1.png","verified-shared-source-sprite"

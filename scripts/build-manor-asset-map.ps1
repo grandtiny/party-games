@@ -296,6 +296,21 @@ $decorations = foreach ($match in $decorationMatches) {
   $previewPath = Join-Path $decorationDirectory "$itemId.jpg"
   $thumbnailPath = Join-Path $decorationDirectory "${itemId}b.jpg"
   $alternatePath = Join-Path $decorationDirectory "${itemId}f.jpg"
+  $swfExists = Test-Path -LiteralPath $swfPath
+  $alternateExists = Test-Path -LiteralPath $alternatePath
+  $sourceCompleteness = if ($swfExists) {
+    "complete-swf"
+  } elseif ($alternateExists) {
+    "full-image-fallback"
+  } else {
+    "preview-only-missing-runtime-art"
+  }
+  $knownIssue = switch ($itemId) {
+    21 { "missing-swf-and-full-image" }
+    95 { "source-files-reused-by-402" }
+    402 { "conflicts-with-config-name-duplicates-95" }
+    default { "" }
+  }
   [pscustomobject][ordered]@{
     source_id = $itemId
     name = Get-StringField $body "itemName"
@@ -308,12 +323,14 @@ $decorations = foreach ($match in $decorationMatches) {
     discounted_premium_price = Get-NumberField $body "YFBPrice"
     experience = Get-NumberField $body "exp"
     valid_seconds = Get-NumberField $body "itemValidTime"
-    swf_file = if (Test-Path -LiteralPath $swfPath) { "module/nc/farm/diy/$itemId.swf" } else { "" }
+    swf_file = if ($swfExists) { "module/nc/farm/diy/$itemId.swf" } else { "" }
     preview_file = if (Test-Path -LiteralPath $previewPath) { "module/nc/farm/diy/$itemId.jpg" } else { "" }
     thumbnail_file = if (Test-Path -LiteralPath $thumbnailPath) { "module/nc/farm/diy/${itemId}b.jpg" } else { "" }
-    alternate_file = if (Test-Path -LiteralPath $alternatePath) { "module/nc/farm/diy/${itemId}f.jpg" } else { "" }
+    alternate_file = if ($alternateExists) { "module/nc/farm/diy/${itemId}f.jpg" } else { "" }
     source_files_present = @(@($swfPath, $previewPath, $thumbnailPath, $alternatePath) |
       Where-Object { Test-Path -LiteralPath $_ }).Count
+    source_completeness = $sourceCompleteness
+    known_issue = $knownIssue
     processing_status = "mapped-not-extracted"
   }
 }
@@ -373,14 +390,22 @@ $duplicateAssets = $assetFiles |
   Where-Object Count -gt 1 |
   ForEach-Object {
     $files = @($_.Group | Sort-Object source_file)
+    $sourceFileList = (@($files.source_file) -join ";")
+    $reviewStatus = if ($sourceFileList -match 'module/nc/farm/diy/(?:95|402)') {
+      "conflicting-decoration-identities"
+    } elseif ([long]$files[0].bytes -eq 36 -and @($files.extension | Sort-Object -Unique) -join ";" -eq ".swf") {
+      "blank-placeholder-duplicate"
+    } else {
+      "exact-duplicate-needs-review"
+    }
     [pscustomobject][ordered]@{
       sha256 = $_.Name
       copy_count = $_.Count
       bytes_each = $files[0].bytes
       extensions = (@($files.extension | Sort-Object -Unique) -join ";")
       categories = (@($files.category | Sort-Object -Unique) -join ";")
-      source_files = (@($files.source_file) -join ";")
-      review_status = "exact-duplicate-needs-review"
+      source_files = $sourceFileList
+      review_status = $reviewStatus
     }
   }
 
@@ -447,7 +472,11 @@ $currentDuplicateAssets = $currentAssets |
     if (@($files | Where-Object { $_.category -ne "crop" -or $_.app_stage -ne "0" }).Count -eq 0) {
       $reviewStatus = "expected-shared-seed-art"
     } elseif (@($files | Where-Object { $_.category -ne "crop" -or $_.app_stage -ne "1" }).Count -eq 0) {
-      $reviewStatus = "shared-early-growth-needs-visual-review"
+      $reviewStatus = if (($fileNames -join ";") -eq "crop-carrot-1.png;crop-radish-1.png") {
+        "verified-shared-source-sprite"
+      } else {
+        "shared-early-growth-needs-visual-review"
+      }
     } elseif ($files.Count -eq 2) {
       $firstStem = $fileNames[0] -replace '-[13]_(?:up|down)\.png$', ''
       $secondStem = $fileNames[1] -replace '-[13]_(?:up|down)\.png$', ''
@@ -517,7 +546,7 @@ $readme = @"
 | --- | --- |
 | ``crops.csv`` | 86 种作物的原版经济数据、SWF、七个状态角色和当前接入状态 |
 | ``animals.csv`` | 35 种动物的原版经济数据、SWF SymbolClass 和接入状态 |
-| ``decorations.csv`` | 172 件装饰的套装、类型、价格和可用源文件 |
+| ``decorations.csv`` | 172 件装饰的套装、类型、价格、源完整性、已知冲突和可用源文件 |
 | ``files.csv`` | ``module`` 下 828 个素材文件的完整文件级台账 |
 | ``source-modules.csv`` | ``source`` 下 124 个 PHP 配置/业务模块及功能分类 |
 | ``duplicates.csv`` | ``module`` 内 SHA-256 完全相同的文件组，用于定位重复素材，不代表可以直接删除 |
@@ -541,9 +570,9 @@ $readme = @"
 
 ## 已知缺口与重复
 
-- 172 条装饰配置中，背景 ID 21 只有预览图和缩略图，原仓库没有对应 SWF；背景 ID 11 额外带一张 ``11f.jpg``。其余 170 条均有 SWF、预览图和缩略图。
-- 原版 ``module`` 有 4 组 SHA-256 完全重复文件。其中装饰 ID 95“浪漫栅栏”和 ID 402“新年围墙”的 SWF、预览图、缩略图三组文件分别完全相同；另有一组 36 字节牧场装饰 SWF 重复，疑似占位文件。这里只标记，不自动删除或合并。
-- 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组为白萝卜/胡萝卜共享早期生长图，10 组为原版按钮 normal/down 状态本身相同；当前没有未分类的重复组。
+- 172 条装饰配置中有 169 条带 SWF。背景 ID 26 和 31 虽然没有 SWF，但分别带 1034x806、1024x768 的 ``f.jpg`` 全尺寸图，可作为运行时回退；背景 ID 21 只有 60x60 预览和 120x120 缩略图，既缺 SWF 也缺全尺寸图，是唯一无法从当前仓库恢复的农场装饰。背景 ID 11 同时带 SWF 和 1028x789 全尺寸图。
+- 原版 ``module`` 有 4 组 SHA-256 完全重复文件。其中装饰 ID 95“浪漫栅栏”和 ID 402“新年围墙”的 SWF、预览图、缩略图三组文件分别完全相同，但业务身份和所属套装不同，应保留两个业务 ID、阻止 402 进入默认提取批次，不能静默合并。另有一组 36 字节牧场装饰 SWF 是可解析的空白占位文件，不作为可见素材处理。
+- 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组白萝卜/胡萝卜早期图已确认分别精确来自两个原 SWF 的同一角色 4，10 组为原版按钮 normal/down 状态本身相同；当前没有错误重复或未分类重复。
 - 当前 51 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：49 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
 - 当前 12 种作物的成熟 PNG 已确认是单一成熟精灵。其余 36 张种子/幼苗/生长 PNG 已对应到作物 SWF，但仍应在下一轮联系表中逐张确认具体七阶段角色，不能把对象级映射当成状态级验收。
 

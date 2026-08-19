@@ -50,12 +50,18 @@ foreach ($type in @("background", "house", "fence", "doghouse")) {
 Assert-Equal @($decorations | Where-Object source_files_present -eq "2").Count 1 "decorations with two files"
 Assert-Equal @($decorations | Where-Object source_files_present -eq "3").Count 170 "decorations with three files"
 Assert-Equal @($decorations | Where-Object source_files_present -eq "4").Count 1 "decorations with four files"
+Assert-Equal @($decorations | Where-Object source_completeness -eq "complete-swf").Count 169 "decorations with SWF sources"
+Assert-Equal @($decorations | Where-Object source_completeness -eq "full-image-fallback").Count 2 "decorations with full-image fallbacks"
+Assert-Equal @($decorations | Where-Object source_completeness -eq "preview-only-missing-runtime-art").Count 1 "decorations missing runtime artwork"
+Assert-Equal @($decorations | Where-Object known_issue -eq "conflicts-with-config-name-duplicates-95").Count 1 "conflicting decoration identities"
 
 Assert-Equal $files.Count 828 "module file rows"
 Assert-Equal @($files | Where-Object { -not $_.sha256 }).Count 0 "module files without SHA-256"
 Assert-Equal $sourceModules.Count 124 "source module rows"
 Assert-Equal @($sourceModules | Where-Object { -not $_.sha256 }).Count 0 "source modules without SHA-256"
 Assert-Equal $duplicates.Count 4 "legacy duplicate groups"
+Assert-Equal @($duplicates | Where-Object review_status -eq "conflicting-decoration-identities").Count 3 "conflicting decoration duplicate groups"
+Assert-Equal @($duplicates | Where-Object review_status -eq "blank-placeholder-duplicate").Count 1 "blank placeholder duplicate groups"
 
 $classicFiles = @(Get-ChildItem -LiteralPath $classicAssetDirectory -File)
 Assert-Equal $currentAssets.Count 99 "current asset rows"
@@ -66,6 +72,7 @@ Assert-Equal @($currentAssets | Where-Object mapping_status -eq "source-file-nee
 Assert-Equal @($currentAssets | Where-Object mapping_status -eq "verified-single-mature-sprite").Count 12 "verified mature crop assets"
 Assert-Equal $currentDuplicates.Count 13 "current duplicate groups"
 Assert-Equal @($currentDuplicates | Where-Object review_status -eq "needs-review").Count 0 "unclassified current duplicate groups"
+Assert-Equal @($currentDuplicates | Where-Object review_status -eq "verified-shared-source-sprite").Count 1 "verified shared crop sprite groups"
 
 $actualCurrentHashes = @{}
 foreach ($file in $classicFiles) {
