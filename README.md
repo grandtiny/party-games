@@ -143,7 +143,7 @@ apps/web/src/games/turtle-soup/  海龟汤入口、多人房间和提示词测�
 apps/web/src/games/minesweeper/  扫雷规则适配、棋盘和移动端操作
 apps/web/src/games/sudoku/       数独题目、状态模型、棋盘和输入工具
 apps/web/src/games/gomoku/       五子棋对局、残局、教学、账号同步和逐手复盘
-apps/web/src/games/manor/        账号庄园、农田操作、种子商店和仓库
+apps/web/src/games/manor/        经典农牧场、装扮、任务、好友访问与排行
 ```
 
 服务端游戏适配器统一实现 `create`、`handle`、`project`、`tick`、`migrate` 和 `validate`。血染钟楼前端改造约束见 [apps/web/src/games/clocktower/README.md](apps/web/src/games/clocktower/README.md)。

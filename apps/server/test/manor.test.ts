@@ -316,8 +316,15 @@ describe("manor account persistence", () => {
   it("lists platform accounts and persists atomic friend pasture interactions", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-social-test-"));
     const databasePath = join(directory, "test.sqlite");
-    const instance = await createApp({ databasePath, logger: false });
+    const instance = await createApp({
+      databasePath,
+      logger: false,
+      environment: { MANOR_TIME_SCALE: "3600" }
+    });
     try {
+      expect(
+        (await instance.app.inject({ method: "GET", url: "/api/manor/social" })).statusCode
+      ).toBe(401);
       const ownerSetup = await instance.app.inject({
         method: "POST",
         url: "/api/account/bootstrap",
@@ -329,6 +336,11 @@ describe("manor account persistence", () => {
       });
       const ownerCookie = sessionCookie(ownerSetup.headers["set-cookie"]);
       const ownerUserId = String(ownerSetup.json().user.id);
+      instance.manorService.handleAction(
+        ownerSetup.json().user,
+        { type: "plant", plotId: 1, cropId: "radish" },
+        Date.now() - 20_000
+      );
       const invite = await instance.app.inject({
         method: "POST",
         url: "/api/account/invites",
@@ -346,6 +358,15 @@ describe("manor account persistence", () => {
         }
       });
       const visitorCookie = sessionCookie(visitorSetup.headers["set-cookie"]);
+      const visitorUserId = String(visitorSetup.json().user.id);
+
+      const selfVisit = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/friends/${visitorUserId}/farm`,
+        headers: { cookie: visitorCookie }
+      });
+      expect(selfVisit.statusCode).toBe(400);
+      expect(selfVisit.json().error).toContain("其他好友");
 
       const overview = await instance.app.inject({
         method: "GET",
@@ -358,6 +379,7 @@ describe("manor account persistence", () => {
       ]);
       expect(overview.json().farmRanking).toHaveLength(2);
       expect(overview.json().pastureRanking).toHaveLength(2);
+      expect(overview.json().farmRanking[0]).toMatchObject({ displayName: "庄园主人" });
 
       const visited = await instance.app.inject({
         method: "GET",
@@ -421,6 +443,75 @@ describe("manor account persistence", () => {
       expect(visitorPasture.json().inventory).toEqual(
         expect.arrayContaining([expect.objectContaining({ animalId: 1002, byproductCount: 1 })])
       );
+
+      const friendFarm = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/friends/${ownerUserId}/farm`,
+        headers: { cookie: visitorCookie }
+      });
+      expect(friendFarm.statusCode).toBe(200);
+      expect(friendFarm.json().farm.plots).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 1, status: "mature" })])
+      );
+      const cropStolen = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/farm/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "steal-crop", plotId: 1 }
+      });
+      expect(cropStolen.statusCode).toBe(200);
+      expect(cropStolen.json().farm.plots).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 1, stolenYield: expect.any(Number) })])
+      );
+      const duplicateCropSteal = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/farm/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "steal-crop", plotId: 1 }
+      });
+      expect(duplicateCropSteal.statusCode).toBe(400);
+      expect(duplicateCropSteal.json().error).toContain("已经偷过");
+
+      const ranked = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/social",
+        headers: { cookie: visitorCookie }
+      });
+      expect(ranked.json().pastureRanking[0]).toMatchObject({ displayName: "来访好友" });
+
+      const visitorBeforeRollback = instance.repository.getManorFarm(visitorUserId) as {
+        revision: number;
+        updatedAt: number;
+        coins: number;
+      };
+      const ownerBeforeRollback = instance.repository.getManorFarm(ownerUserId) as {
+        revision: number;
+        updatedAt: number;
+      };
+      expect(() =>
+        instance.repository.updateManorFarmsAtomically([
+          {
+            userId: visitorUserId,
+            expectedRevision: visitorBeforeRollback.revision,
+            state: {
+              ...visitorBeforeRollback,
+              revision: visitorBeforeRollback.revision + 1,
+              updatedAt: visitorBeforeRollback.updatedAt + 1,
+              coins: visitorBeforeRollback.coins + 999
+            }
+          },
+          {
+            userId: ownerUserId,
+            expectedRevision: ownerBeforeRollback.revision + 999,
+            state: {
+              ...ownerBeforeRollback,
+              revision: ownerBeforeRollback.revision + 1,
+              updatedAt: ownerBeforeRollback.updatedAt + 1
+            }
+          }
+        ])
+      ).toThrow("庄园状态已更新");
+      expect(instance.repository.getManorFarm(visitorUserId)).toEqual(visitorBeforeRollback);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
