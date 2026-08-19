@@ -44,12 +44,13 @@ export interface ManorPlotState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 4;
+  schemaVersion: 5;
   revision: number;
   coins: number;
   experience: number;
   randomState: number;
   fertilizer: number;
+  unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
   produce: Record<ManorCropId, number>;
   plots: ManorPlotState[];
@@ -63,21 +64,44 @@ export interface ManorRuntimeOptions {
 }
 
 export const MANOR_PLOT_COUNT = 18;
+export const MANOR_INITIAL_PLOT_COUNT = 6;
 export const MANOR_FERTILIZER_PRICE = 400;
 export const MANOR_FERTILIZER_EFFECT_SECONDS = 3_600;
 
+export interface ManorLandUnlockRequirement {
+  plotId: number;
+  levelRequired: number;
+  coinCost: number;
+}
+
+export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
+  { plotId: 7, levelRequired: 5, coinCost: 10_000 },
+  { plotId: 8, levelRequired: 7, coinCost: 20_000 },
+  { plotId: 9, levelRequired: 9, coinCost: 30_000 },
+  { plotId: 10, levelRequired: 11, coinCost: 50_000 },
+  { plotId: 11, levelRequired: 13, coinCost: 70_000 },
+  { plotId: 12, levelRequired: 15, coinCost: 90_000 },
+  { plotId: 13, levelRequired: 17, coinCost: 120_000 },
+  { plotId: 14, levelRequired: 19, coinCost: 150_000 },
+  { plotId: 15, levelRequired: 21, coinCost: 180_000 },
+  { plotId: 16, levelRequired: 23, coinCost: 230_000 },
+  { plotId: 17, levelRequired: 25, coinCost: 300_000 },
+  { plotId: 18, levelRequired: 27, coinCost: 500_000 }
+];
+
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5;
 };
 
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     revision: 0,
     coins: 120,
     experience: 0,
     randomState: hashSeed(seedSource),
     fertilizer: 0,
+    unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
     plots: createEmptyPlots(),
@@ -91,7 +115,13 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
 export function migrateManorFarm(value: unknown): ManorFarmState {
   if (!value || typeof value !== "object") throw new Error("庄园存档格式无效");
   const candidate = value as PersistedManorFarm;
-  if (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2 && candidate.schemaVersion !== 3 && candidate.schemaVersion !== 4) {
+  if (
+    candidate.schemaVersion !== 1 &&
+    candidate.schemaVersion !== 2 &&
+    candidate.schemaVersion !== 3 &&
+    candidate.schemaVersion !== 4 &&
+    candidate.schemaVersion !== 5
+  ) {
     throw new Error("庄园存档版本不受支持");
   }
   const migratedPlots = Array.isArray(candidate.plots)
@@ -101,12 +131,15 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     ? migrateSixPlotFarm(migratedPlots)
     : migratedPlots;
   const state: ManorFarmState = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
     randomState: integer(candidate.randomState, "随机状态") >>> 0,
     fertilizer: integer(candidate.fertilizer ?? 0, "普通化肥库存"),
+    unlockedPlotCount: candidate.schemaVersion === 5
+      ? integer(candidate.unlockedPlotCount, "已开垦土地数量")
+      : MANOR_PLOT_COUNT,
     seeds: migrateInventory(candidate.seeds, "种子"),
     produce: migrateInventory(candidate.produce, "仓库"),
     plots,
@@ -128,6 +161,7 @@ export function applyManorAction(
   const crop = "cropId" in action ? cropById(action.cropId) : undefined;
   const plot = "plotId" in action ? plotById(state, action.plotId) : undefined;
   const level = levelForExperience(state.experience);
+  if (plot && action.type !== "reclaim-plot") ensurePlotUnlocked(state, plot);
 
   switch (action.type) {
     case "buy-seeds": {
@@ -208,6 +242,20 @@ export function applyManorAction(
       clearPlot(plot);
       break;
     }
+    case "reclaim-plot": {
+      if (!plot) throw new Error("土地不存在");
+      const expectedPlotId = state.unlockedPlotCount + 1;
+      if (plot.id <= state.unlockedPlotCount) throw new Error("这块土地已经开垦");
+      if (plot.id !== expectedPlotId) throw new Error(`请先开垦第 ${expectedPlotId} 块土地`);
+      const requirement = landUnlockRequirement(plot.id);
+      if (level < requirement.levelRequired) {
+        throw new Error(`达到 ${requirement.levelRequired} 级后才能开垦`);
+      }
+      if (state.coins < requirement.coinCost) throw new Error("金币不足");
+      state.coins -= requirement.coinCost;
+      state.unlockedPlotCount = plot.id;
+      break;
+    }
     case "buy-fertilizer": {
       const cost = MANOR_FERTILIZER_PRICE * action.quantity;
       if (state.coins < cost) throw new Error("金币不足");
@@ -251,7 +299,9 @@ export function toManorFarmView(
     seeds: state.seeds[crop.id],
     produce: state.produce[crop.id]
   }));
-  const plots: ManorPlotView[] = state.plots.map((plot) => toPlotView(plot, now, options.timeScale));
+  const plots: ManorPlotView[] = state.plots.map((plot) =>
+    toPlotView(plot, now, options.timeScale, state.unlockedPlotCount)
+  );
   return {
     serverTime: now,
     revision: state.revision,
@@ -280,17 +330,24 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 4) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 5) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
     ["经验", state.experience],
     ["随机状态", state.randomState],
     ["普通化肥库存", state.fertilizer],
+    ["已开垦土地数量", state.unlockedPlotCount],
     ["创建时间", state.createdAt],
     ["更新时间", state.updatedAt]
   ] as const) {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${label}无效`);
+  }
+  if (
+    state.unlockedPlotCount < MANOR_INITIAL_PLOT_COUNT ||
+    state.unlockedPlotCount > MANOR_PLOT_COUNT
+  ) {
+    throw new Error("已开垦土地数量无效");
   }
   if (state.plots.length !== MANOR_PLOT_COUNT) throw new Error("庄园土地数量无效");
   const ids = new Set<number>();
@@ -300,6 +357,9 @@ export function validateManorFarm(state: ManorFarmState): void {
     }
     ids.add(plot.id);
     if (!Number.isInteger(plot.cycle) || plot.cycle < 0) throw new Error("土地轮次无效");
+    if (plot.id > state.unlockedPlotCount && (plot.cropId || plot.cycle !== 0)) {
+      throw new Error("未开垦土地包含作物状态");
+    }
     const careValues = [
       plot.dryAt,
       plot.wateredAt,
@@ -372,9 +432,31 @@ export function experienceForLevel(level: number): number {
   return 100 * (level - 1) * level;
 }
 
-function toPlotView(plot: ManorPlotState, now: number, timeScale = 1): ManorPlotView {
+function toPlotView(
+  plot: ManorPlotState,
+  now: number,
+  timeScale = 1,
+  unlockedPlotCount = MANOR_PLOT_COUNT
+): ManorPlotView {
+  const unlocked = plot.id <= unlockedPlotCount;
+  const requirement = unlocked ? undefined : landUnlockRequirement(plot.id);
+  const landDetails = {
+    unlocked,
+    nextUnlock: !unlocked && plot.id === unlockedPlotCount + 1,
+    ...(requirement
+      ? { unlockLevel: requirement.levelRequired, unlockCost: requirement.coinCost }
+      : {})
+  };
   if (!plot.cropId) {
-    return { id: plot.id, status: "empty", progress: 0, watered: false, weed: false, pest: false };
+    return {
+      id: plot.id,
+      ...landDetails,
+      status: "empty",
+      progress: 0,
+      watered: false,
+      weed: false,
+      pest: false
+    };
   }
   const crop = cropById(plot.cropId);
   const cropDetails = {
@@ -388,6 +470,7 @@ function toPlotView(plot: ManorPlotState, now: number, timeScale = 1): ManorPlot
   if (plot.witheredAt) {
     return {
       id: plot.id,
+      ...landDetails,
       status: "withered",
       ...cropDetails,
       witheredAt: plot.witheredAt,
@@ -404,6 +487,7 @@ function toPlotView(plot: ManorPlotState, now: number, timeScale = 1): ManorPlot
   const growingThreshold = crop.growthStageSeconds[2] ?? crop.growthSeconds;
   return {
     id: plot.id,
+    ...landDetails,
     status: now >= plot.readyAt ? "mature" : "growing",
     ...cropDetails,
     plantedAt: plot.plantedAt,
@@ -449,6 +533,16 @@ function plotById(state: ManorFarmState, id: number): ManorPlotState {
   const plot = state.plots.find((candidate) => candidate.id === id);
   if (!plot) throw new Error("土地不存在");
   return plot;
+}
+
+function landUnlockRequirement(plotId: number): ManorLandUnlockRequirement {
+  const requirement = MANOR_LAND_UNLOCKS.find((candidate) => candidate.plotId === plotId);
+  if (!requirement) throw new Error("土地开垦配置不存在");
+  return requirement;
+}
+
+function ensurePlotUnlocked(state: ManorFarmState, plot: ManorPlotState): void {
+  if (plot.id > state.unlockedPlotCount) throw new Error("这块土地尚未开垦");
 }
 
 function ensurePlanted(plot: ManorPlotState | undefined): asserts plot is ManorPlotState & {
@@ -631,7 +725,7 @@ function migrateInventory(
   return result;
 }
 
-function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4): ManorPlotState {
+function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
   const cropId = plot.cropId === undefined ? undefined : validCropId(plot.cropId);
@@ -643,13 +737,13 @@ function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4): ManorPlotSta
     ...optionalTimestamp("plantedAt", plot.plantedAt),
     ...optionalTimestamp("readyAt", plot.readyAt),
     ...optionalTimestamp("witheredAt", plot.witheredAt),
-    ...(schemaVersion === 4 ? optionalTimestamp("dryAt", plot.dryAt) : {}),
-    ...(schemaVersion === 4 ? optionalTimestamp("wateredAt", plot.wateredAt) : {}),
+    ...(schemaVersion >= 4 ? optionalTimestamp("dryAt", plot.dryAt) : {}),
+    ...(schemaVersion >= 4 ? optionalTimestamp("wateredAt", plot.wateredAt) : {}),
     ...optionalTimestamp("weedAt", plot.weedAt),
     ...optionalTimestamp("weedClearedAt", plot.weedClearedAt),
     ...optionalTimestamp("pestAt", plot.pestAt),
     ...optionalTimestamp("pestClearedAt", plot.pestClearedAt),
-    ...(schemaVersion === 4 && plot.fertilizedStage !== undefined
+    ...(schemaVersion >= 4 && plot.fertilizedStage !== undefined
       ? { fertilizedStage: integer(plot.fertilizedStage, "施肥阶段") }
       : {})
   };

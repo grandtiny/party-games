@@ -34,6 +34,7 @@ export function ManorPage() {
   const [selectedCropId, setSelectedCropId] = useState<ManorCropId>("radish");
   const [selectedTool, setSelectedTool] = useState<ManorTool>("move");
   const [activeWindow, setActiveWindow] = useState<ManorWindow>();
+  const [reclaimPlotId, setReclaimPlotId] = useState<number>();
   const [inspectedPlotId, setInspectedPlotId] = useState<number>();
   const [loadedAt, setLoadedAt] = useState(Date.now());
   const [clock, setClock] = useState(Date.now());
@@ -81,7 +82,7 @@ export function ManorPage() {
     const viewport = stageViewportRef.current;
     if (!viewport || viewport.scrollWidth <= viewport.clientWidth) return;
 
-    if (activeWindow) {
+    if (activeWindow || reclaimPlotId !== undefined) {
       windowScrollLeftRef.current ??= viewport.scrollLeft;
       viewport.scrollLeft = Math.round((viewport.scrollWidth - viewport.clientWidth) / 2);
       return;
@@ -91,7 +92,7 @@ export function ManorPage() {
       viewport.scrollLeft = windowScrollLeftRef.current;
       windowScrollLeftRef.current = undefined;
     }
-  }, [activeWindow]);
+  }, [activeWindow, reclaimPlotId]);
 
   useEffect(() => {
     const onKeyUp = (event: KeyboardEvent) => {
@@ -105,7 +106,10 @@ export function ManorPage() {
       };
       const nextTool = keyTools[event.key.toLowerCase()];
       if (nextTool) setSelectedTool(nextTool);
-      if (event.key === "Escape") setActiveWindow(undefined);
+      if (event.key === "Escape") {
+        setActiveWindow(undefined);
+        setReclaimPlotId(undefined);
+      }
     };
     window.addEventListener("keyup", onKeyUp);
     return () => window.removeEventListener("keyup", onKeyUp);
@@ -136,6 +140,10 @@ export function ManorPage() {
   const selectedCrop = useMemo(
     () => farm?.catalog.find((crop) => crop.id === selectedCropId),
     [farm, selectedCropId]
+  );
+  const reclaimPlot = useMemo(
+    () => farm?.plots.find((plot) => plot.id === reclaimPlotId),
+    [farm, reclaimPlotId]
   );
   const levelProgress = farm
     ? progressBetween(
@@ -172,6 +180,10 @@ export function ManorPage() {
   const activatePlot = async (plot: ManorPlotView) => {
     setInspectedPlotId(plot.id);
     if (!farm || busyKey) return;
+    if (!plot.unlocked) {
+      setReclaimPlotId(plot.id);
+      return;
+    }
 
     switch (selectedTool) {
       case "move":
@@ -410,6 +422,25 @@ export function ManorPage() {
                   }
                 />
               ) : null}
+
+              {reclaimPlot && !reclaimPlot.unlocked ? (
+                <ReclaimDialog
+                  busy={Boolean(busyKey)}
+                  coins={farm.profile.coins}
+                  level={farm.profile.level}
+                  plot={reclaimPlot}
+                  onClose={() => setReclaimPlotId(undefined)}
+                  onConfirm={() => {
+                    void act(
+                      { type: "reclaim-plot", plotId: reclaimPlot.id },
+                      `reclaim:${reclaimPlot.id}`,
+                      `第 ${reclaimPlot.id} 块土地已开垦`
+                    ).then((succeeded) => {
+                      if (succeeded) setReclaimPlotId(undefined);
+                    });
+                  }}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -454,7 +485,11 @@ function FarmLand({
   const progress = plotProgress(plot, now);
   const stage = cropStage(plot, progress);
   const remaining = plot.readyAt ? Math.max(0, plot.readyAt - now) : 0;
-  const soil = plot.status !== "empty" && !plot.watered ? "land-arid.png" : "land-soil.png";
+  const soil = !plot.unlocked
+    ? "land-grass.png"
+    : plot.status !== "empty" && !plot.watered
+      ? "land-arid.png"
+      : "land-soil.png";
   const style = {
     left: `${position.left}%`,
     top: `${position.top}%`,
@@ -463,7 +498,7 @@ function FarmLand({
 
   return (
     <div
-      className={`manor-land manor-land--${plot.status} ${inspected ? "is-inspected" : ""}`}
+      className={`manor-land manor-land--${plot.status} ${!plot.unlocked ? "manor-land--locked" : ""} ${inspected ? "is-inspected" : ""}`}
       style={style}
     >
       <button
@@ -475,6 +510,9 @@ function FarmLand({
       >
         <img className="manor-land__soil" src={`${ASSET_ROOT}/${soil}`} alt="" />
       </button>
+      {!plot.unlocked ? (
+        <img className="manor-land__reclaim" src={`${ASSET_ROOT}/reclaim.png`} alt="" />
+      ) : null}
       {plot.cropId && plot.cropSourceId ? (
         <img
           className={`manor-land__crop manor-land__crop--${plot.cropId} manor-land__crop--stage-${stage}`}
@@ -488,9 +526,65 @@ function FarmLand({
         <img className="manor-land__harvest" src={`${ASSET_ROOT}/can-harvest.png`} alt="可摘" />
       ) : null}
       <span className="manor-land__tip">
-        <strong>{plot.status === "empty" ? `第 ${plot.id} 块土地` : plot.cropName}</strong>
+        <strong>{!plot.unlocked ? `第 ${plot.id} 块荒地` : plot.status === "empty" ? `第 ${plot.id} 块土地` : plot.cropName}</strong>
         <small>{plotDetail(plot, now)}</small>
       </span>
+    </div>
+  );
+}
+
+function ReclaimDialog({
+  plot,
+  level,
+  coins,
+  busy,
+  onClose,
+  onConfirm
+}: {
+  plot: ManorPlotView;
+  level: number;
+  coins: number;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const requiredLevel = plot.unlockLevel ?? 0;
+  const requiredCoins = plot.unlockCost ?? 0;
+  const levelReady = level >= requiredLevel;
+  const coinsReady = coins >= requiredCoins;
+  const canReclaim = plot.nextUnlock && levelReady && coinsReady;
+  const direction = !plot.nextUnlock
+    ? "需要按顺序开垦前面的土地"
+    : !levelReady
+      ? `达到 ${requiredLevel} 级后才能开垦`
+      : !coinsReady
+        ? `还缺 ${formatCoins(requiredCoins - coins)} 金币`
+        : "条件已满足，可以开垦";
+
+  return (
+    <div className="manor-window-layer" role="presentation" onMouseDown={onClose}>
+      <section
+        className="manor-window manor-reclaim-window"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`开垦第 ${plot.id} 块土地`}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <strong className="manor-window__title">扩建土地</strong>
+        <button className="manor-window__close" type="button" aria-label="关闭" onClick={onClose} />
+        <div className="manor-reclaim-window__body">
+          <img src={`${ASSET_ROOT}/reclaim.png`} alt="" />
+          <div className="manor-reclaim-window__copy">
+            <strong>第 {plot.id} 块土地</strong>
+            <span>需要等级 {requiredLevel}</span>
+            <span>需要金币 {formatCoins(requiredCoins)}</span>
+            <small className={canReclaim ? "is-ready" : ""}>{direction}</small>
+          </div>
+          <button type="button" disabled={busy || !canReclaim} onClick={onConfirm}>
+            开垦
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -700,6 +794,7 @@ function plotProgress(plot: ManorPlotView, now: number): number {
 }
 
 function plotSummary(plot: ManorPlotView, now: number): string {
+  if (!plot.unlocked) return `荒地，需要等级 ${plot.unlockLevel ?? 0} 和 ${formatCoins(plot.unlockCost ?? 0)} 金币开垦`;
   if (plot.status === "empty") return "空地，可以播种";
   if (plot.status === "withered") return `${plot.cropName ?? "作物"}已经枯萎，请用锄头清理`;
   if (plot.status === "mature" || plot.readyAt && plot.readyAt <= now) {
@@ -709,6 +804,11 @@ function plotSummary(plot: ManorPlotView, now: number): string {
 }
 
 function plotDetail(plot: ManorPlotView, now: number): string {
+  if (!plot.unlocked) {
+    return plot.nextUnlock
+      ? `${plot.unlockLevel ?? 0} 级 · ${formatCoins(plot.unlockCost ?? 0)} 金币`
+      : "请先开垦前面的土地";
+  }
   if (plot.status === "empty") return "请选择种子后播种";
   if (plot.status === "withered") return `已完成 ${plot.harvestCycles ?? 1} 季，请用锄头清理`;
   const cycle = `${(plot.harvestedCycles ?? 0) + 1}/${plot.harvestCycles ?? 1} 季`;
@@ -737,4 +837,8 @@ function formatDuration(milliseconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   return rest ? `${minutes} 分 ${rest} 秒` : `${minutes} 分钟`;
+}
+
+function formatCoins(value: number): string {
+  return Math.max(0, value).toLocaleString("zh-CN");
 }

@@ -46,9 +46,37 @@ describe("manor account persistence", () => {
         expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 3 })])
       );
       expect(initial.json().plots).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: 1, status: "empty" })])
+        expect.arrayContaining([
+          expect.objectContaining({ id: 1, status: "empty", unlocked: true }),
+          expect.objectContaining({
+            id: 7,
+            status: "empty",
+            unlocked: false,
+            nextUnlock: true,
+            unlockLevel: 5,
+            unlockCost: 10_000
+          })
+        ])
       );
       expect(initial.json().plots).toHaveLength(18);
+
+      const lockedPlot = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie },
+        payload: { type: "plant", plotId: 7, cropId: "radish" }
+      });
+      expect(lockedPlot.statusCode).toBe(400);
+      expect(lockedPlot.json().error).toContain("这块土地尚未开垦");
+
+      const reclaimAttempt = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie },
+        payload: { type: "reclaim-plot", plotId: 7 }
+      });
+      expect(reclaimAttempt.statusCode).toBe(400);
+      expect(reclaimAttempt.json().error).toContain("达到 5 级后才能开垦");
 
       const planted = await first.app.inject({
         method: "POST",

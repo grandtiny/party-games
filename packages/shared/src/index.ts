@@ -398,6 +398,7 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("fertilize"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-plot"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("reclaim-plot"), plotId: ManorPlotIdSchema }),
   z.object({
     type: z.literal("buy-fertilizer"),
     quantity: ManorPurchaseQuantitySchema
@@ -607,6 +608,10 @@ export interface ManorCropView {
 
 export interface ManorPlotView {
   id: number;
+  unlocked: boolean;
+  nextUnlock: boolean;
+  unlockLevel?: number;
+  unlockCost?: number;
   status: "empty" | "growing" | "mature" | "withered";
   cropId?: ManorCropId;
   cropSourceId?: number;

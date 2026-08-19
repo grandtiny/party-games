@@ -2,12 +2,70 @@ import { describe, expect, it } from "vitest";
 import {
   applyManorAction,
   createManorFarm,
+  experienceForLevel,
   MANOR_CROPS,
+  MANOR_LAND_UNLOCKS,
   migrateManorFarm,
   toManorFarmView
 } from "../src/index.js";
 
 describe("manor farm", () => {
+  it("starts with six plots and reclaims later plots using the original level and coin rules", () => {
+    const startedAt = 1_000;
+    let farm = createManorFarm(startedAt, "land-progression");
+    const initial = toManorFarmView(farm, "玩家", startedAt);
+
+    expect(farm.unlockedPlotCount).toBe(6);
+    expect(initial.plots[5]).toMatchObject({ id: 6, unlocked: true, nextUnlock: false });
+    expect(initial.plots[6]).toMatchObject({
+      id: 7,
+      unlocked: false,
+      nextUnlock: true,
+      unlockLevel: 5,
+      unlockCost: 10_000
+    });
+    expect(initial.plots[7]).toMatchObject({
+      id: 8,
+      unlocked: false,
+      nextUnlock: false,
+      unlockLevel: 7,
+      unlockCost: 20_000
+    });
+    expect(MANOR_LAND_UNLOCKS).toHaveLength(12);
+    expect(MANOR_LAND_UNLOCKS.at(-1)).toEqual({
+      plotId: 18,
+      levelRequired: 27,
+      coinCost: 500_000
+    });
+    expect(() =>
+      applyManorAction(farm, { type: "plant", plotId: 7, cropId: "radish" }, startedAt + 1)
+    ).toThrow("尚未开垦");
+    expect(() =>
+      applyManorAction(farm, { type: "reclaim-plot", plotId: 7 }, startedAt + 1)
+    ).toThrow("达到 5 级");
+
+    farm.experience = experienceForLevel(5);
+    farm.coins = 9_999;
+    expect(() =>
+      applyManorAction(farm, { type: "reclaim-plot", plotId: 7 }, startedAt + 2)
+    ).toThrow("金币不足");
+    farm.coins = 10_000;
+    expect(() =>
+      applyManorAction(farm, { type: "reclaim-plot", plotId: 8 }, startedAt + 2)
+    ).toThrow("请先开垦第 7 块土地");
+
+    farm = applyManorAction(farm, { type: "reclaim-plot", plotId: 7 }, startedAt + 2);
+    expect(farm).toMatchObject({ unlockedPlotCount: 7, coins: 0, revision: 1 });
+    expect(toManorFarmView(farm, "玩家", startedAt + 2).plots[6]).toMatchObject({
+      id: 7,
+      unlocked: true,
+      nextUnlock: false
+    });
+    expect(() =>
+      applyManorAction(farm, { type: "reclaim-plot", plotId: 7 }, startedAt + 3)
+    ).toThrow("已经开垦");
+  });
+
   it("runs the seed, plant, care, harvest and sale loop", () => {
     const startedAt = 1_000_000;
     let farm = createManorFarm(startedAt, "account-1");
@@ -169,6 +227,7 @@ describe("manor farm", () => {
     expect(farm.plots[0]?.readyAt).toBe(originalReadyAt - 2_000);
     expect(farm.plots[0]?.fertilizedStage).toBe(1);
     expect(farm.fertilizer).toBe(0);
+    expect(migrateManorFarm(JSON.parse(JSON.stringify(farm)))).toEqual(farm);
   });
 
   it("exposes the complete original crop catalog and hides event seeds from the shop", () => {
@@ -267,8 +326,9 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.schemaVersion).toBe(5);
     expect(migrated.fertilizer).toBe(0);
+    expect(migrated.unlockedPlotCount).toBe(18);
     expect(migrated.plots).toHaveLength(18);
     expect(migrated.plots[1]).toMatchObject({ id: 2, cropId: "radish", harvestedCycles: 0 });
     expect(migrated.seeds.potato).toBe(0);
@@ -276,5 +336,21 @@ describe("manor farm", () => {
     expect(migrated.plots.slice(6)).toEqual(
       Array.from({ length: 12 }, (_, index) => ({ id: index + 7, cycle: 0 }))
     );
+  });
+
+  it("keeps all plots available when migrating an existing v4 farm", () => {
+    const startedAt = 30_000;
+    let current = createManorFarm(startedAt, "v4-account");
+    current.unlockedPlotCount = 18;
+    current = applyManorAction(
+      current,
+      { type: "plant", plotId: 18, cropId: "radish" },
+      startedAt
+    );
+    const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
+    const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
+
+    expect(migrated).toMatchObject({ schemaVersion: 5, unlockedPlotCount: 18 });
+    expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 });

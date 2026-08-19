@@ -267,6 +267,20 @@
   pointer-events: none;
 }
 
+.manor-land__reclaim {
+  position: absolute;
+  z-index: 3;
+  bottom: 24%;
+  left: 50%;
+  width: 39%;
+  height: auto;
+  pointer-events: none;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 2px 2px rgba(50, 37, 12, 0.38));
+}
+
+.manor-land--locked .manor-land__hit { cursor: pointer; }
+
 .manor-land__crop {
   position: absolute;
   z-index: 2;
@@ -502,6 +516,71 @@
   margin: 3cqw 1cqw;
   color: #687b81;
   text-align: center;
+}
+
+.manor-reclaim-window {
+  width: 39%;
+  height: 30%;
+}
+
+.manor-reclaim-window__body {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 8cqw minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.1cqw;
+  padding: 0 1.2cqw 0.5cqw;
+}
+
+.manor-reclaim-window__body > img {
+  width: 7.4cqw;
+  max-width: 78px;
+  height: auto;
+  max-height: 9cqw;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(50, 37, 12, 0.28));
+}
+
+.manor-reclaim-window__copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.25cqw;
+  color: #4c5d5f;
+}
+
+.manor-reclaim-window__copy strong {
+  color: #284b52;
+  font-size: clamp(12px, 1.45cqw, 17px);
+}
+
+.manor-reclaim-window__copy small {
+  margin-top: 0.35cqw;
+  color: #a44024;
+  font-weight: 700;
+}
+
+.manor-reclaim-window__copy small.is-ready { color: #27713d; }
+
+.manor-reclaim-window__body > button {
+  min-width: 6.5cqw;
+  padding: 0.55cqw 0.85cqw;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(#69c845, #369928);
+  border: 1px solid #26751e;
+  border-radius: 4px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.manor-reclaim-window__body > button:hover:not(:disabled) { filter: brightness(1.08); }
+
+.manor-reclaim-window__body > button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.58;
 }
 
 .manor-seed-pack {
