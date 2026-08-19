@@ -3,9 +3,19 @@ import type {
   ManorCropId,
   ManorCropView,
   ManorFarmView,
-  ManorPlotView
+  ManorFertilizerId,
+  ManorPlotView,
+  ManorRewardItemView
 } from "@party-games/shared";
 import { MANOR_CROP_DATA } from "./crops.generated.js";
+import {
+  MANOR_FERTILIZERS,
+  MANOR_LEVEL_REWARDS,
+  MANOR_STARTER_GIFT,
+  manorFertilizerById,
+  manorLevelReward,
+  type ManorRewardItemDefinition
+} from "./rewards.js";
 
 export interface ManorCropDefinition {
   id: ManorCropId;
@@ -44,12 +54,16 @@ export interface ManorPlotState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 5;
+  schemaVersion: 6;
   revision: number;
   coins: number;
   experience: number;
   randomState: number;
-  fertilizer: number;
+  fertilizers: Record<ManorFertilizerId, number>;
+  starterGiftClaimed: boolean;
+  rewardedThroughOriginalLevel: number;
+  pendingLevelRewardLevels: number[];
+  decorationEntitlements: number[];
   unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
   produce: Record<ManorCropId, number>;
@@ -65,8 +79,7 @@ export interface ManorRuntimeOptions {
 
 export const MANOR_PLOT_COUNT = 18;
 export const MANOR_INITIAL_PLOT_COUNT = 6;
-export const MANOR_FERTILIZER_PRICE = 400;
-export const MANOR_FERTILIZER_EFFECT_SECONDS = 3_600;
+export const MANOR_MAX_LEVEL_REWARD = MANOR_LEVEL_REWARDS.length;
 
 export interface ManorLandUnlockRequirement {
   plotId: number;
@@ -90,17 +103,22 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6;
+  fertilizer?: unknown;
 };
 
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     revision: 0,
     coins: 120,
     experience: 0,
     randomState: hashSeed(seedSource),
-    fertilizer: 0,
+    fertilizers: fertilizerRecord(),
+    starterGiftClaimed: false,
+    rewardedThroughOriginalLevel: 0,
+    pendingLevelRewardLevels: [],
+    decorationEntitlements: [],
     unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
@@ -120,7 +138,8 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     candidate.schemaVersion !== 2 &&
     candidate.schemaVersion !== 3 &&
     candidate.schemaVersion !== 4 &&
-    candidate.schemaVersion !== 5
+    candidate.schemaVersion !== 5 &&
+    candidate.schemaVersion !== 6
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -131,13 +150,27 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     ? migrateSixPlotFarm(migratedPlots)
     : migratedPlots;
   const state: ManorFarmState = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
     randomState: integer(candidate.randomState, "随机状态") >>> 0,
-    fertilizer: integer(candidate.fertilizer ?? 0, "普通化肥库存"),
-    unlockedPlotCount: candidate.schemaVersion === 5
+    fertilizers: candidate.schemaVersion === 6
+      ? migrateFertilizers(candidate.fertilizers)
+      : fertilizerRecord({ ordinary: integer(candidate.fertilizer ?? 0, "普通化肥库存") }),
+    starterGiftClaimed: candidate.schemaVersion === 6
+      ? boolean(candidate.starterGiftClaimed, "新手礼包状态")
+      : true,
+    rewardedThroughOriginalLevel: candidate.schemaVersion === 6
+      ? integer(candidate.rewardedThroughOriginalLevel, "升级奖励进度")
+      : originalLevelForExperience(integer(candidate.experience, "经验")),
+    pendingLevelRewardLevels: candidate.schemaVersion === 6
+      ? integerArray(candidate.pendingLevelRewardLevels, "待确认升级奖励")
+      : [],
+    decorationEntitlements: candidate.schemaVersion === 6
+      ? integerArray(candidate.decorationEntitlements, "装扮权益")
+      : [],
+    unlockedPlotCount: candidate.schemaVersion >= 5
       ? integer(candidate.unlockedPlotCount, "已开垦土地数量")
       : MANOR_PLOT_COUNT,
     seeds: migrateInventory(candidate.seeds, "种子"),
@@ -212,9 +245,10 @@ export function applyManorAction(
     case "fertilize": {
       ensureGrowing(plot);
       if (!plot.readyAt || plot.readyAt <= now) throw new Error("成熟作物不需要施肥");
-      if (state.fertilizer < 1) throw new Error("普通化肥不足");
-      applyFertilizer(plot, cropById(plot.cropId), now, options.timeScale);
-      state.fertilizer -= 1;
+      const fertilizer = manorFertilizerById(action.fertilizerId);
+      if (state.fertilizers[fertilizer.id] < 1) throw new Error(`${fertilizer.name}不足`);
+      applyFertilizer(plot, cropById(plot.cropId), now, fertilizer.effectSeconds, options.timeScale);
+      state.fertilizers[fertilizer.id] -= 1;
       break;
     }
     case "harvest": {
@@ -257,10 +291,23 @@ export function applyManorAction(
       break;
     }
     case "buy-fertilizer": {
-      const cost = MANOR_FERTILIZER_PRICE * action.quantity;
+      const coinPrice = manorFertilizerById("ordinary").coinPrice;
+      if (coinPrice === undefined) throw new Error("普通化肥暂不可购买");
+      const cost = coinPrice * action.quantity;
       if (state.coins < cost) throw new Error("金币不足");
       state.coins -= cost;
-      state.fertilizer += action.quantity;
+      state.fertilizers.ordinary += action.quantity;
+      break;
+    }
+    case "claim-starter-gift": {
+      if (state.starterGiftClaimed) throw new Error("新手礼包已经领取");
+      for (const item of MANOR_STARTER_GIFT) awardRewardItem(state, item);
+      state.starterGiftClaimed = true;
+      break;
+    }
+    case "acknowledge-level-rewards": {
+      if (state.pendingLevelRewardLevels.length === 0) throw new Error("没有待确认的升级奖励");
+      state.pendingLevelRewardLevels = [];
       break;
     }
     case "sell": {
@@ -272,6 +319,7 @@ export function applyManorAction(
     }
   }
 
+  awardReachedLevelRewards(state);
   state.revision += 1;
   state.updatedAt = now;
   validateManorFarm(state);
@@ -314,13 +362,30 @@ export function toManorFarmView(
       nextLevelExperience
     },
     inventory: {
-      fertilizer: state.fertilizer,
-      fertilizerPrice: MANOR_FERTILIZER_PRICE,
-      fertilizerEffectSeconds: Math.max(
-        1,
-        Math.round(scaledDurationMs(MANOR_FERTILIZER_EFFECT_SECONDS, options.timeScale) / 1_000)
-      )
+      fertilizers: MANOR_FERTILIZERS.map((fertilizer) => ({
+        id: fertilizer.id,
+        sourceId: fertilizer.sourceId,
+        name: fertilizer.name,
+        amount: state.fertilizers[fertilizer.id],
+        effectSeconds: Math.max(
+          1,
+          Math.round(scaledDurationMs(fertilizer.effectSeconds, options.timeScale) / 1_000)
+        ),
+        ...(fertilizer.coinPrice === undefined ? {} : { coinPrice: fertilizer.coinPrice })
+      }))
     },
+    starterGift: {
+      claimed: state.starterGiftClaimed,
+      items: MANOR_STARTER_GIFT.map(toRewardItemView)
+    },
+    pendingLevelRewards: state.pendingLevelRewardLevels.map((originalLevel) => {
+      const reward = manorLevelReward(originalLevel);
+      return {
+        originalLevel,
+        displayLevel: reward.displayLevel,
+        items: [toRewardItemView(reward.item)]
+      };
+    }),
     catalog,
     plots,
     art: options.legacyBackgroundUrl
@@ -330,18 +395,44 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 5) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 6) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
     ["经验", state.experience],
     ["随机状态", state.randomState],
-    ["普通化肥库存", state.fertilizer],
+    ["升级奖励进度", state.rewardedThroughOriginalLevel],
     ["已开垦土地数量", state.unlockedPlotCount],
     ["创建时间", state.createdAt],
     ["更新时间", state.updatedAt]
   ] as const) {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${label}无效`);
+  }
+  if (typeof state.starterGiftClaimed !== "boolean") throw new Error("新手礼包状态无效");
+  for (const fertilizer of MANOR_FERTILIZERS) {
+    if (!Number.isInteger(state.fertilizers[fertilizer.id]) || state.fertilizers[fertilizer.id] < 0) {
+      throw new Error(`${fertilizer.name}库存无效`);
+    }
+  }
+  if (state.rewardedThroughOriginalLevel > MANOR_MAX_LEVEL_REWARD) {
+    throw new Error("升级奖励进度无效");
+  }
+  const pendingRewards = new Set(state.pendingLevelRewardLevels);
+  if (
+    pendingRewards.size !== state.pendingLevelRewardLevels.length ||
+    state.pendingLevelRewardLevels.some((level) =>
+      !Number.isInteger(level) || level < 1 || level > state.rewardedThroughOriginalLevel
+    )
+  ) {
+    throw new Error("待确认升级奖励无效");
+  }
+  const decorationEntitlements = new Set(state.decorationEntitlements);
+  const knownDecorationIds = new Set([253, 254, 255, 256]);
+  if (
+    decorationEntitlements.size !== state.decorationEntitlements.length ||
+    state.decorationEntitlements.some((id) => !Number.isInteger(id) || !knownDecorationIds.has(id))
+  ) {
+    throw new Error("装扮权益无效");
   }
   if (
     state.unlockedPlotCount < MANOR_INITIAL_PLOT_COUNT ||
@@ -430,6 +521,16 @@ export function levelForExperience(experience: number): number {
 export function experienceForLevel(level: number): number {
   if (level <= 1) return 0;
   return 100 * (level - 1) * level;
+}
+
+function toRewardItemView(item: ManorRewardItemDefinition): ManorRewardItemView {
+  return {
+    kind: item.kind,
+    sourceId: item.sourceId,
+    name: item.name,
+    quantity: item.quantity,
+    available: item.kind !== "decoration"
+  };
 }
 
 function toPlotView(
@@ -526,6 +627,12 @@ function estimatedYield(
 function cropById(id: ManorCropId): ManorCropDefinition {
   const crop = MANOR_CROPS.find((candidate) => candidate.id === id);
   if (!crop) throw new Error("作物不存在");
+  return crop;
+}
+
+function cropBySourceId(sourceId: number): ManorCropDefinition {
+  const crop = MANOR_CROPS.find((candidate) => candidate.sourceId === sourceId);
+  if (!crop) throw new Error("奖励作物配置不存在");
   return crop;
 }
 
@@ -631,6 +738,7 @@ function applyFertilizer(
   plot: ManorPlotState & { cropId: ManorCropId },
   crop: ManorCropDefinition,
   now: number,
+  effectSeconds: number,
   timeScale = 1
 ): void {
   if (!plot.plantedAt || !plot.readyAt) throw new Error("作物时间无效");
@@ -644,7 +752,7 @@ function applyFertilizer(
   const stageEnd = schedule[stage];
   if (stageEnd === undefined) throw new Error("作物生长阶段无效");
   const applied = Math.min(
-    scaledDurationMs(MANOR_FERTILIZER_EFFECT_SECONDS, timeScale),
+    scaledDurationMs(effectSeconds, timeScale),
     stageEnd - elapsed
   );
   if (applied <= 0) throw new Error("当前生长阶段无法继续施肥");
@@ -688,10 +796,58 @@ function awardHiddenSeed(state: ManorFarmState): void {
   state.seeds[crop.id] += quantityRoll.value < 0.5 ? 1 : 2;
 }
 
+function awardReachedLevelRewards(state: ManorFarmState): void {
+  const reachedOriginalLevel = originalLevelForExperience(state.experience);
+  for (
+    let originalLevel = state.rewardedThroughOriginalLevel + 1;
+    originalLevel <= reachedOriginalLevel;
+    originalLevel += 1
+  ) {
+    awardRewardItem(state, manorLevelReward(originalLevel).item);
+    state.pendingLevelRewardLevels.push(originalLevel);
+  }
+  state.rewardedThroughOriginalLevel = Math.max(
+    state.rewardedThroughOriginalLevel,
+    reachedOriginalLevel
+  );
+}
+
+function awardRewardItem(state: ManorFarmState, item: ManorRewardItemDefinition): void {
+  switch (item.kind) {
+    case "seed": {
+      const crop = cropBySourceId(item.sourceId);
+      state.seeds[crop.id] += item.quantity;
+      break;
+    }
+    case "fertilizer":
+      state.fertilizers[item.fertilizerId] += item.quantity;
+      break;
+    case "decoration":
+      if (!state.decorationEntitlements.includes(item.sourceId)) {
+        state.decorationEntitlements.push(item.sourceId);
+      }
+      break;
+  }
+}
+
+function originalLevelForExperience(experience: number): number {
+  return Math.min(MANOR_MAX_LEVEL_REWARD, Math.max(0, levelForExperience(experience) - 1));
+}
+
 function cropRecord(initial: Partial<Record<ManorCropId, number>> = {}): Record<ManorCropId, number> {
   return Object.fromEntries(
     MANOR_CROPS.map((crop) => [crop.id, initial[crop.id] ?? 0])
   ) as Record<ManorCropId, number>;
+}
+
+function fertilizerRecord(
+  initial: Partial<Record<ManorFertilizerId, number>> = {}
+): Record<ManorFertilizerId, number> {
+  return {
+    ordinary: initial.ordinary ?? 0,
+    fast: initial.fast ?? 0,
+    instant: initial.instant ?? 0
+  };
 }
 
 function createEmptyPlots(startId = 1, count = MANOR_PLOT_COUNT): ManorPlotState[] {
@@ -710,10 +866,23 @@ function migrateSixPlotFarm(plots: ManorPlotState[]): ManorPlotState[] {
 function cloneState(state: ManorFarmState): ManorFarmState {
   return {
     ...state,
+    fertilizers: { ...state.fertilizers },
+    pendingLevelRewardLevels: [...state.pendingLevelRewardLevels],
+    decorationEntitlements: [...state.decorationEntitlements],
     seeds: { ...state.seeds },
     produce: { ...state.produce },
     plots: state.plots.map((plot) => ({ ...plot }))
   };
+}
+
+function migrateFertilizers(
+  value: Partial<Record<ManorFertilizerId, number>> | undefined
+): Record<ManorFertilizerId, number> {
+  const result = fertilizerRecord(value);
+  for (const fertilizer of MANOR_FERTILIZERS) {
+    result[fertilizer.id] = integer(result[fertilizer.id], `${fertilizer.name}库存`);
+  }
+  return result;
 }
 
 function migrateInventory(
@@ -725,7 +894,7 @@ function migrateInventory(
   return result;
 }
 
-function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5): ManorPlotState {
+function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
   const cropId = plot.cropId === undefined ? undefined : validCropId(plot.cropId);
@@ -763,6 +932,16 @@ function validCropId(value: unknown): ManorCropId {
 function integer(value: unknown, label: string): number {
   if (!Number.isInteger(value) || Number(value) < 0) throw new Error(`${label}无效`);
   return Number(value);
+}
+
+function integerArray(value: unknown, label: string): number[] {
+  if (!Array.isArray(value)) throw new Error(`${label}无效`);
+  return value.map((item) => integer(item, label));
+}
+
+function boolean(value: unknown, label: string): boolean {
+  if (typeof value !== "boolean") throw new Error(`${label}无效`);
+  return value;
 }
 
 function timestamp(value: unknown, label: string): number {

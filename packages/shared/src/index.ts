@@ -376,6 +376,8 @@ export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequest
 
 export const ManorCropIdSchema = z.enum(MANOR_CROP_IDS);
 export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
+export const ManorFertilizerIdSchema = z.enum(["ordinary", "fast", "instant"]);
+export type ManorFertilizerId = z.infer<typeof ManorFertilizerIdSchema>;
 
 const ManorPlotIdSchema = z.number().int().min(1).max(18);
 const ManorPurchaseQuantitySchema = z.number().int().min(1).max(99);
@@ -395,10 +397,16 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
-  z.object({ type: z.literal("fertilize"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("fertilize"),
+    plotId: ManorPlotIdSchema,
+    fertilizerId: ManorFertilizerIdSchema.default("ordinary")
+  }),
   z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-plot"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("reclaim-plot"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("claim-starter-gift") }),
+  z.object({ type: z.literal("acknowledge-level-rewards") }),
   z.object({
     type: z.literal("buy-fertilizer"),
     quantity: ManorPurchaseQuantitySchema
@@ -631,6 +639,29 @@ export interface ManorPlotView {
   estimatedYield?: number;
 }
 
+export interface ManorFertilizerView {
+  id: ManorFertilizerId;
+  sourceId: number;
+  name: string;
+  amount: number;
+  effectSeconds: number;
+  coinPrice?: number;
+}
+
+export interface ManorRewardItemView {
+  kind: "seed" | "fertilizer" | "decoration";
+  sourceId: number;
+  name: string;
+  quantity: number;
+  available: boolean;
+}
+
+export interface ManorLevelRewardView {
+  originalLevel: number;
+  displayLevel: number;
+  items: ManorRewardItemView[];
+}
+
 export interface ManorFarmView {
   serverTime: number;
   revision: number;
@@ -643,10 +674,13 @@ export interface ManorFarmView {
     nextLevelExperience: number;
   };
   inventory: {
-    fertilizer: number;
-    fertilizerPrice: number;
-    fertilizerEffectSeconds: number;
+    fertilizers: ManorFertilizerView[];
   };
+  starterGift: {
+    claimed: boolean;
+    items: ManorRewardItemView[];
+  };
+  pendingLevelRewards: ManorLevelRewardView[];
   catalog: ManorCropView[];
   plots: ManorPlotView[];
   art: {

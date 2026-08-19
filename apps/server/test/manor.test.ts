@@ -40,8 +40,16 @@ describe("manor account persistence", () => {
       expect(initial.statusCode).toBe(200);
       expect(initial.json()).toMatchObject({
         profile: { displayName: "农场主", coins: 120, level: 1 },
+        starterGift: { claimed: false },
         art: { source: "legacy", backgroundUrl: "/api/manor/assets/background" }
       });
+      expect(initial.json().inventory.fertilizers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "ordinary", amount: 0, effectSeconds: 30 }),
+          expect.objectContaining({ id: "fast", amount: 0, effectSeconds: 75 }),
+          expect.objectContaining({ id: "instant", amount: 0, effectSeconds: 165 })
+        ])
+      );
       expect(initial.json().catalog).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 3 })])
       );
@@ -78,6 +86,30 @@ describe("manor account persistence", () => {
       expect(reclaimAttempt.statusCode).toBe(400);
       expect(reclaimAttempt.json().error).toContain("达到 5 级后才能开垦");
 
+      const starterGift = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie },
+        payload: { type: "claim-starter-gift" }
+      });
+      expect(starterGift.statusCode).toBe(200);
+      expect(starterGift.json()).toMatchObject({ revision: 1, starterGift: { claimed: true } });
+      expect(starterGift.json().inventory.fertilizers).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: "ordinary", amount: 4 })])
+      );
+      expect(starterGift.json().catalog).toEqual(
+        expect.arrayContaining([expect.objectContaining({ sourceId: 7, seeds: 2 })])
+      );
+
+      const duplicateGift = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie },
+        payload: { type: "claim-starter-gift" }
+      });
+      expect(duplicateGift.statusCode).toBe(400);
+      expect(duplicateGift.json().error).toContain("新手礼包已经领取");
+
       const planted = await first.app.inject({
         method: "POST",
         url: "/api/manor/actions",
@@ -85,7 +117,7 @@ describe("manor account persistence", () => {
         payload: { type: "plant", plotId: 1, cropId: "radish" }
       });
       expect(planted.statusCode).toBe(200);
-      expect(planted.json().revision).toBe(1);
+      expect(planted.json().revision).toBe(2);
       expect(planted.json().catalog).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 2 })])
       );
@@ -95,6 +127,18 @@ describe("manor account persistence", () => {
         ])
       );
 
+      const fertilized = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie },
+        payload: { type: "fertilize", plotId: 1 }
+      });
+      expect(fertilized.statusCode).toBe(200);
+      expect(fertilized.json().revision).toBe(3);
+      expect(fertilized.json().inventory.fertilizers).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: "ordinary", amount: 3 })])
+      );
+
       const secondPlot = await first.app.inject({
         method: "POST",
         url: "/api/manor/actions",
@@ -102,7 +146,7 @@ describe("manor account persistence", () => {
         payload: { type: "plant", plotId: 2, cropId: "radish" }
       });
       expect(secondPlot.statusCode).toBe(200);
-      expect(secondPlot.json().revision).toBe(2);
+      expect(secondPlot.json().revision).toBe(4);
       expect(secondPlot.json().catalog).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 1 })])
       );
@@ -129,7 +173,8 @@ describe("manor account persistence", () => {
           headers: { cookie }
         });
         expect(restored.statusCode).toBe(200);
-        expect(restored.json().revision).toBe(2);
+        expect(restored.json().revision).toBe(4);
+        expect(restored.json()).toMatchObject({ starterGift: { claimed: true } });
         expect(restored.json().catalog).toEqual(
           expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 1 })])
         );

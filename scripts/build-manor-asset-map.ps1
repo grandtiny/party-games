@@ -164,6 +164,8 @@ Add-CurrentAssetSource "close.png" $farmUi1 "306:CloseButton"
 Add-CurrentAssetSource "exp-bg.png" $farmUi1 "267:ExpBlueBg"
 Add-CurrentAssetSource "exp-fill.png" $farmUi1 "269:ExpBlue"
 Add-CurrentAssetSource "fertilizer.png" $farmUi1 "157:Fertilizer"
+Add-CurrentAssetSource "fertilizer-fast.png" $farmUi1 "164:FertilizerFast"
+Add-CurrentAssetSource "fertilizer-instant.png" $farmUi1 "170:FertilizerVeryFast"
 Add-CurrentAssetSource "head-bg.png" $farmUi1 "265:HeadBg"
 Add-CurrentAssetSource "insect.png" $farmUi1 "257:Insect"
 Add-CurrentAssetSource "item-bg.png" $farmUi1 "314:ItemBg"
@@ -585,7 +587,7 @@ $readme = @"
 | ``files.csv`` | ``module`` 下 828 个素材文件的完整文件级台账 |
 | ``source-modules.csv`` | ``source`` 下 124 个 PHP 配置/业务模块及功能分类 |
 | ``duplicates.csv`` | ``module`` 内 SHA-256 完全相同的文件组，用于定位重复素材，不代表可以直接删除 |
-| ``current-assets.csv`` | 当前项目 101 个 classic PNG 的尺寸、哈希、业务对象和源文件对应状态 |
+| ``current-assets.csv`` | 当前项目 103 个 classic PNG 的尺寸、哈希、业务对象和源文件对应状态 |
 | ``current-duplicates.csv`` | 当前 classic PNG 的完全重复组及初步复核分类 |
 | ``crop-state-assets.csv`` | 86 种作物七阶段的 602 行角色、导出 PNG、尺寸、哈希和当前素材比对结果 |
 | ``crop-current-assets.csv`` | 当前 48 张作物 PNG 到七阶段、实际源角色、导出文件和哈希的逐张映射 |
@@ -641,7 +643,7 @@ UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 Exp
 - 原版 ``module`` 有 4 组 SHA-256 完全重复文件。其中装饰 ID 95“浪漫栅栏”和 ID 402“新年围墙”的 SWF、预览图、缩略图三组文件分别完全相同，但业务身份和所属套装不同，应保留两个业务 ID、阻止 402 进入默认提取批次，不能静默合并。另有一组 36 字节牧场装饰 SWF 是可解析的空白占位文件，不作为可见素材处理。
 - ``decorations.csv`` 的 ``extraction_policy`` 控制如何提取，``integration_policy`` 控制能否接入：162 件为 ``default``，ID 14/54/66/76/89/93/213/409 为 ``deferred-validation``，ID 21/402 为 ``excluded``。被延后或排除的素材不得进入默认批次。
 - 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组白萝卜/胡萝卜早期图已确认分别精确来自两个原 SWF 的同一角色 4，10 组为原版按钮 normal/down 状态本身相同；当前没有错误重复或未分类重复。
-- 当前 52 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：50 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
+- 当前 54 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：52 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
 - 当前 12 种作物的 48 张 PNG 均已通过 SHA-256 反查到各自 SWF 的实际导出角色：47 张直接对应七阶段角色；水稻当前阶段 1 使用七阶段“幼苗”角色 15 内的纯植株子角色 14，以避免把原版水田底图重复叠到网页土地上。水稻和小麦当前阶段 2 均对应“成熟前”角色，而不是通用作物采用的“生长”角色。具体关系见 ``crop-current-assets.csv`` 和联系表蓝字。
 - 完整 86 种作物已按统一五阶段接入 430 张运行时 PNG；水稻纯植株子角色以及水稻、小麦成熟前角色的特殊映射继续保留，逐项来源见 ``crop-runtime-assets.csv``。
 - 35 种动物中有 8 种缺少一个或两个原版声音变体：乌龟、乌骨鸡、长颈鹿、美国短毛猫、穿山甲和貔貅只有变体 2，只允许接入现有变体；仓鼠和炫舞龟没有声音文件，声音保持 ``excluded``。动物视觉素材不受声音缺口影响。
@@ -649,7 +651,7 @@ UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 Exp
 
 ## 当前边界
 
-素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场已消费作物台账并接入 86 种作物、原版生长阶段、多季、枯萎、照料收益/减产、普通化肥和土地开垦规则；开垦木牌来自 ``farmui1_v_12.swf`` 的 ``261:Reclaim``。牧场、好友和装饰仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
+素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场已消费作物台账并接入 86 种作物、原版生长阶段、多季、枯萎、照料收益/减产、三档化肥、土地开垦、新手礼包和升级奖励规则；三档化肥分别来自 ``157:Fertilizer``、``164:FertilizerFast`` 和 ``170:FertilizerVeryFast``，开垦木牌来自 ``261:Reclaim``。升级奖励中的装扮目前只记录权益，摆放界面尚未开放；牧场和好友仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
 "@
 Set-Content -LiteralPath (Join-Path $OutputDirectory "README.md") -Value $readme -Encoding utf8
 

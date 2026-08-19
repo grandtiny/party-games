@@ -4,7 +4,9 @@ import {
   createManorFarm,
   experienceForLevel,
   MANOR_CROPS,
+  MANOR_FERTILIZERS,
   MANOR_LAND_UNLOCKS,
+  MANOR_LEVEL_REWARDS,
   migrateManorFarm,
   toManorFarmView
 } from "../src/index.js";
@@ -183,12 +185,99 @@ describe("manor farm", () => {
     });
   });
 
+  it("claims the original starter gift once", () => {
+    const startedAt = 400_000;
+    const initial = createManorFarm(startedAt, "starter-gift");
+    const tomato = MANOR_CROPS.find((crop) => crop.sourceId === 7);
+    if (!tomato) throw new Error("tomato missing");
+
+    expect(toManorFarmView(initial, "玩家", startedAt).starterGift).toMatchObject({
+      claimed: false,
+      items: [
+        { kind: "fertilizer", sourceId: 1, quantity: 4 },
+        { kind: "seed", sourceId: 7, quantity: 2 }
+      ]
+    });
+
+    const claimed = applyManorAction(initial, { type: "claim-starter-gift" }, startedAt + 1);
+    expect(claimed.starterGiftClaimed).toBe(true);
+    expect(claimed.fertilizers.ordinary).toBe(4);
+    expect(claimed.seeds[tomato.id]).toBe(2);
+    expect(() =>
+      applyManorAction(claimed, { type: "claim-starter-gift" }, startedAt + 2)
+    ).toThrow("已经领取");
+  });
+
+  it("awards every crossed original level threshold and acknowledges the popup once", () => {
+    const startedAt = 450_000;
+    let farm = createManorFarm(startedAt, "level-rewards");
+    const corn = MANOR_CROPS.find((crop) => crop.sourceId === 4);
+    if (!corn) throw new Error("corn missing");
+    farm.experience = 598;
+
+    farm = applyManorAction(
+      farm,
+      { type: "plant", plotId: 1, cropId: "radish" },
+      startedAt + 1
+    );
+
+    expect(farm.experience).toBe(600);
+    expect(farm.rewardedThroughOriginalLevel).toBe(2);
+    expect(farm.pendingLevelRewardLevels).toEqual([1, 2]);
+    expect(farm.seeds[corn.id]).toBe(2);
+    expect(farm.fertilizers.ordinary).toBe(2);
+    expect(toManorFarmView(farm, "玩家", startedAt + 1).pendingLevelRewards).toMatchObject([
+      { originalLevel: 1, displayLevel: 2 },
+      { originalLevel: 2, displayLevel: 3 }
+    ]);
+
+    const acknowledged = applyManorAction(
+      farm,
+      { type: "acknowledge-level-rewards" },
+      startedAt + 2
+    );
+    expect(acknowledged.pendingLevelRewardLevels).toEqual([]);
+    expect(acknowledged.seeds[corn.id]).toBe(2);
+    expect(acknowledged.fertilizers.ordinary).toBe(2);
+    expect(() =>
+      applyManorAction(
+        acknowledged,
+        { type: "acknowledge-level-rewards" },
+        startedAt + 3
+      )
+    ).toThrow("没有待确认");
+  });
+
+  it("applies the complete original thirty-level reward table", () => {
+    const startedAt = 475_000;
+    let farm = createManorFarm(startedAt, "all-level-rewards");
+    farm.experience = 92_998;
+
+    farm = applyManorAction(
+      farm,
+      { type: "plant", plotId: 1, cropId: "radish" },
+      startedAt + 1
+    );
+
+    expect(MANOR_LEVEL_REWARDS).toHaveLength(30);
+    expect(MANOR_LEVEL_REWARDS.at(-1)).toMatchObject({
+      originalLevel: 30,
+      displayLevel: 31,
+      requiredExperience: 93_000,
+      item: { kind: "seed", sourceId: 80, quantity: 2 }
+    });
+    expect(farm.rewardedThroughOriginalLevel).toBe(30);
+    expect(farm.pendingLevelRewardLevels).toHaveLength(30);
+    expect(farm.fertilizers).toEqual({ ordinary: 2, fast: 2, instant: 20 });
+    expect(farm.decorationEntitlements).toEqual([253, 255, 256, 254]);
+  });
+
   it("buys and applies original normal fertilizer once per growth stage", () => {
     const startedAt = 500_000;
     let farm = createManorFarm(startedAt, "fertilizer-rules");
     farm.coins = 800;
     farm = applyManorAction(farm, { type: "buy-fertilizer", quantity: 2 }, startedAt);
-    expect(farm).toMatchObject({ coins: 0, fertilizer: 2 });
+    expect(farm).toMatchObject({ coins: 0, fertilizers: { ordinary: 2, fast: 0, instant: 0 } });
     farm = applyManorAction(
       farm,
       { type: "plant", plotId: 1, cropId: "radish" },
@@ -200,7 +289,7 @@ describe("manor farm", () => {
 
     farm = applyManorAction(
       farm,
-      { type: "fertilize", plotId: 1 },
+      { type: "fertilize", plotId: 1, fertilizerId: "ordinary" },
       startedAt,
       { timeScale: 3_600 }
     );
@@ -208,11 +297,11 @@ describe("manor farm", () => {
       readyAt: originalReadyAt - 1_000,
       fertilizedStage: 0
     });
-    expect(farm.fertilizer).toBe(1);
+    expect(farm.fertilizers.ordinary).toBe(1);
     expect(() =>
       applyManorAction(
         farm,
-        { type: "fertilize", plotId: 1 },
+        { type: "fertilize", plotId: 1, fertilizerId: "ordinary" },
         startedAt,
         { timeScale: 3_600 }
       )
@@ -220,14 +309,52 @@ describe("manor farm", () => {
 
     farm = applyManorAction(
       farm,
-      { type: "fertilize", plotId: 1 },
+      { type: "fertilize", plotId: 1, fertilizerId: "ordinary" },
       startedAt + 1_000,
       { timeScale: 3_600 }
     );
     expect(farm.plots[0]?.readyAt).toBe(originalReadyAt - 2_000);
     expect(farm.plots[0]?.fertilizedStage).toBe(1);
-    expect(farm.fertilizer).toBe(0);
+    expect(farm.fertilizers.ordinary).toBe(0);
     expect(migrateManorFarm(JSON.parse(JSON.stringify(farm)))).toEqual(farm);
+  });
+
+  it("uses the original effects for all three fertilizer types", () => {
+    const crop = MANOR_CROPS.reduce((longest, candidate) =>
+      (candidate.growthStageSeconds[0] ?? 0) > (longest.growthStageSeconds[0] ?? 0)
+        ? candidate
+        : longest
+    );
+    const effects = Object.fromEntries(
+      MANOR_FERTILIZERS.map((fertilizer) => [fertilizer.id, fertilizer.effectSeconds])
+    );
+
+    for (const fertilizerId of ["ordinary", "fast", "instant"] as const) {
+      const startedAt = 600_000;
+      let farm = createManorFarm(startedAt, `fertilizer-${fertilizerId}`);
+      farm.seeds[crop.id] = 1;
+      farm.fertilizers[fertilizerId] = 1;
+      farm = applyManorAction(
+        farm,
+        { type: "plant", plotId: 1, cropId: crop.id },
+        startedAt
+      );
+      const originalReadyAt = farm.plots[0]?.readyAt;
+      if (!originalReadyAt) throw new Error("readyAt missing");
+
+      farm = applyManorAction(
+        farm,
+        { type: "fertilize", plotId: 1, fertilizerId },
+        startedAt
+      );
+
+      const expectedReduction = Math.min(
+        effects[fertilizerId] ?? 0,
+        crop.growthStageSeconds[0] ?? 0
+      ) * 1_000;
+      expect(originalReadyAt - (farm.plots[0]?.readyAt ?? 0)).toBe(expectedReduction);
+      expect(farm.fertilizers[fertilizerId]).toBe(0);
+    }
   });
 
   it("exposes the complete original crop catalog and hides event seeds from the shop", () => {
@@ -326,8 +453,9 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(5);
-    expect(migrated.fertilizer).toBe(0);
+    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
+    expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
     expect(migrated.plots).toHaveLength(18);
     expect(migrated.plots[1]).toMatchObject({ id: 2, cropId: "radish", harvestedCycles: 0 });
@@ -350,7 +478,40 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 5, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 6, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
+  });
+
+  it("migrates a v5 farm without replaying starter or level rewards", () => {
+    const startedAt = 40_000;
+    const current = createManorFarm(startedAt, "v5-account");
+    current.experience = experienceForLevel(8);
+    current.coins = 400;
+    const {
+      fertilizers: _fertilizers,
+      starterGiftClaimed: _starterGiftClaimed,
+      rewardedThroughOriginalLevel: _rewardedThroughOriginalLevel,
+      pendingLevelRewardLevels: _pendingLevelRewardLevels,
+      decorationEntitlements: _decorationEntitlements,
+      ...legacyFields
+    } = current;
+
+    const migrated = migrateManorFarm({
+      ...legacyFields,
+      schemaVersion: 5,
+      fertilizer: 3
+    });
+
+    expect(migrated).toMatchObject({
+      schemaVersion: 6,
+      starterGiftClaimed: true,
+      rewardedThroughOriginalLevel: 7,
+      pendingLevelRewardLevels: [],
+      fertilizers: { ordinary: 3, fast: 0, instant: 0 }
+    });
+    expect(
+      applyManorAction(migrated, { type: "buy-fertilizer", quantity: 1 }, startedAt + 1)
+        .pendingLevelRewardLevels
+    ).toEqual([]);
   });
 });

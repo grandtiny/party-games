@@ -583,6 +583,107 @@
   opacity: 0.58;
 }
 
+.manor-window--fertilizer-pack {
+  width: 43%;
+  height: 34%;
+}
+
+.manor-fertilizer-pack {
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.8cqw;
+  padding: 0.8cqw 1cqw;
+}
+
+.manor-fertilizer-pack > button {
+  display: grid;
+  min-width: 0;
+  padding: 0.75cqw 0.35cqw;
+  place-items: center;
+  color: #36413f;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.manor-fertilizer-pack > button:hover,
+.manor-fertilizer-pack > button.is-selected {
+  background: #fff9c7;
+  border-color: #eca934;
+}
+
+.manor-fertilizer-pack > button:disabled { cursor: wait; opacity: 0.58; }
+.manor-fertilizer-pack strong { margin-top: 0.3cqw; color: #294651; }
+.manor-fertilizer-pack small { margin-top: 0.2cqw; color: #687474; }
+.manor-fertilizer-pack em { margin-top: 0.2cqw; color: #dc5415; font-style: normal; font-weight: 700; }
+
+.manor-reward-layer { z-index: 1200; background: rgba(21, 45, 18, 0.42); }
+
+.manor-reward-window {
+  width: 44%;
+  height: 38%;
+}
+
+.manor-reward-window__body {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.7cqw;
+  padding: 0 1cqw 0.3cqw;
+}
+
+.manor-reward-window__body > p {
+  margin: 0;
+  color: #4c5d5f;
+  text-align: center;
+}
+
+.manor-reward-list {
+  display: grid;
+  min-height: 0;
+  gap: 0.45cqw;
+  align-content: start;
+  overflow: auto;
+  scrollbar-color: #57bddd #eff8fb;
+}
+
+.manor-reward-list > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7cqw;
+  padding: 0.3cqw 0.5cqw;
+  background: rgba(255, 249, 199, 0.74);
+  border-bottom: 1px solid #e4bd52;
+}
+
+.manor-reward-list > div > span:last-child { display: grid; gap: 0.2cqw; }
+.manor-reward-list strong { color: #294651; }
+.manor-reward-list small { color: #6f6260; }
+.manor-reward-list .manor-item-image { width: 4.7cqw; height: 4.7cqw; min-width: 36px; min-height: 36px; }
+.manor-reward-list .manor-item-image b { color: #795312; font-size: 1.35em; }
+
+.manor-reward-window__body > button {
+  justify-self: center;
+  min-width: 8cqw;
+  padding: 0.5cqw 1.2cqw;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  background: linear-gradient(#69c845, #369928);
+  border: 1px solid #26751e;
+  border-radius: 4px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.manor-reward-window__body > button:disabled { cursor: wait; opacity: 0.58; }
+
 .manor-seed-pack {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

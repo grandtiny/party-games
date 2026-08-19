@@ -124,8 +124,8 @@ Assert-Equal @($duplicates | Where-Object review_status -eq "conflicting-decorat
 Assert-Equal @($duplicates | Where-Object review_status -eq "blank-placeholder-duplicate").Count 1 "blank placeholder duplicate groups"
 
 $classicFiles = @(Get-ChildItem -LiteralPath $classicAssetDirectory -File)
-Assert-Equal $currentAssets.Count 101 "current asset rows"
-Assert-Equal $classicFiles.Count 101 "current classic files"
+Assert-Equal $currentAssets.Count 103 "current asset rows"
+Assert-Equal $classicFiles.Count 103 "current classic files"
 Assert-Equal @($currentAssets | Where-Object { [int]$_.width -le 0 -or [int]$_.height -le 0 }).Count 0 "current assets with invalid dimensions"
 Assert-Equal @($currentAssets | Where-Object { -not $_.source_reference }).Count 0 "current assets without source references"
 Assert-Equal @($currentAssets | Where-Object mapping_status -eq "source-file-needs-mapping").Count 0 "current assets awaiting source mapping"
