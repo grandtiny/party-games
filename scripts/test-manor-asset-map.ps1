@@ -10,6 +10,7 @@ if (-not $OutputDirectory) {
   $OutputDirectory = Join-Path $repositoryRoot "docs\manor-assets"
 }
 $classicAssetDirectory = Join-Path $repositoryRoot "apps\web\public\assets\manor\classic"
+$runtimeCropAssetDirectory = Join-Path $classicAssetDirectory "crops"
 
 function Assert-Equal($Actual, $Expected, [string]$Label) {
   if ($Actual -ne $Expected) {
@@ -42,6 +43,7 @@ $duplicates = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "duplicates.
 $currentAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "current-assets.csv"))
 $currentDuplicates = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "current-duplicates.csv"))
 $cropStateAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-state-assets.csv"))
+$cropRuntimeAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-runtime-assets.csv"))
 $cropCurrentAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-current-assets.csv"))
 $cropContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-contact-review.csv"))
 $cropVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-visual-review.csv"))
@@ -69,6 +71,23 @@ Assert-Equal @($crops | Select-Object -ExpandProperty source_id -Unique).Count 8
 Assert-Equal @($crops | Where-Object swf_parse_error).Count 0 "crop parse errors"
 Assert-Equal @($crops | Where-Object processing_status -eq "integrated-4-stage").Count 12 "integrated crops"
 Assert-Equal @($crops | Where-Object { @($_.state_character_ids -split "," | Where-Object { $_ }).Count -ne 7 }).Count 0 "crops without seven states"
+$runtimeCropAssets = @(Get-ChildItem -LiteralPath $runtimeCropAssetDirectory -Recurse -File -Filter "*.png")
+Assert-Equal $runtimeCropAssets.Count 430 "runtime crop assets"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimeCropAssetDirectory -Directory).Count 86 "runtime crop asset directories"
+Assert-Equal $cropRuntimeAssets.Count 430 "runtime crop asset mappings"
+Assert-Equal @($cropRuntimeAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 430 "unique runtime crop asset mappings"
+Assert-Equal @($cropRuntimeAssets | Group-Object source_id | Where-Object Count -ne 5).Count 0 "crops without five runtime mappings"
+Assert-Equal @($cropRuntimeAssets | Where-Object visual_review_status -ne "reviewed-ok").Count 0 "runtime crops without approved visual review"
+Assert-Equal @($cropRuntimeAssets | Where-Object processing_status -ne "ready").Count 0 "runtime crops not ready"
+foreach ($crop in $crops) {
+  $directory = Join-Path $runtimeCropAssetDirectory $crop.source_id
+  foreach ($stage in @("seed", "sprout", "growing", "mature", "withered")) {
+    $asset = Join-Path $directory "$stage.png"
+    Assert-True (Test-Path -LiteralPath $asset -PathType Leaf) "missing runtime crop asset: $($crop.source_id)/$stage.png"
+    $size = Get-PngSize $asset
+    Assert-True ($size.Width -gt 0 -and $size.Height -gt 0) "invalid runtime crop asset: $($crop.source_id)/$stage.png"
+  }
+}
 
 Assert-Equal $animals.Count 35 "animal rows"
 Assert-Equal @($animals | Select-Object -ExpandProperty source_id -Unique).Count 35 "unique animal IDs"
@@ -281,6 +300,15 @@ foreach ($asset in $cropCurrentAssets) {
   Assert-True ($actualCurrentHashes.ContainsKey($asset.current_asset)) "missing mapped crop file: $($asset.current_asset)"
   Assert-Equal $asset.current_sha256 $actualCurrentHashes[$asset.current_asset] "mapped crop SHA-256 for $($asset.current_asset)"
 }
+$actualRuntimeCropHashes = @{}
+foreach ($file in $runtimeCropAssets) {
+  $relativePath = [IO.Path]::GetRelativePath($repositoryRoot, $file.FullName).Replace("\", "/")
+  $actualRuntimeCropHashes[$relativePath] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+foreach ($asset in $cropRuntimeAssets) {
+  Assert-True ($actualRuntimeCropHashes.ContainsKey($asset.runtime_asset)) "missing runtime crop file: $($asset.runtime_asset)"
+  Assert-Equal $asset.runtime_sha256 $actualRuntimeCropHashes[$asset.runtime_asset] "runtime crop SHA-256 for $($asset.runtime_asset)"
+}
 
 [pscustomobject]@{
   Crops = $crops.Count
@@ -290,6 +318,7 @@ foreach ($asset in $cropCurrentAssets) {
   SourceFiles = $sourceModules.Count
   CurrentAssets = $currentAssets.Count
   CropStateAssets = $cropStateAssets.Count
+  RuntimeCropAssets = $runtimeCropAssets.Count
   CurrentCropAssetMappings = $cropCurrentAssets.Count
   CropContactSheets = $contactSheets.Count
   DecorationContactSheets = $decorationContactSheets.Count

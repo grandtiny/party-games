@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MANOR_CROP_IDS } from "./manor-crop-ids.generated.js";
 
 export const GameTypeSchema = z.enum(["clocktower", "poker", "turtle-soup"]);
 export type GameType = z.infer<typeof GameTypeSchema>;
@@ -373,30 +374,18 @@ export const GomokuProgressSyncRequestSchema = z.object({
 });
 export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
 
-export const ManorCropIdSchema = z.enum([
-  "radish",
-  "carrot",
-  "cabbage",
-  "wheat",
-  "rice",
-  "corn",
-  "potato",
-  "eggplant",
-  "tomato",
-  "pea",
-  "chili",
-  "pumpkin"
-]);
+export const ManorCropIdSchema = z.enum(MANOR_CROP_IDS);
 export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
 
 const ManorPlotIdSchema = z.number().int().min(1).max(18);
-const ManorQuantitySchema = z.number().int().min(1).max(99);
+const ManorPurchaseQuantitySchema = z.number().int().min(1).max(99);
+const ManorSaleQuantitySchema = z.number().int().min(1).max(999_999);
 
 export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("buy-seeds"),
     cropId: ManorCropIdSchema,
-    quantity: ManorQuantitySchema
+    quantity: ManorPurchaseQuantitySchema
   }),
   z.object({
     type: z.literal("plant"),
@@ -407,10 +396,11 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-plot"), plotId: ManorPlotIdSchema }),
   z.object({
     type: z.literal("sell"),
     cropId: ManorCropIdSchema,
-    quantity: ManorQuantitySchema
+    quantity: ManorSaleQuantitySchema
   })
 ]);
 export type ManorActionRequest = z.infer<typeof ManorActionRequestSchema>;
@@ -592,14 +582,18 @@ export interface GomokuOverviewResponse {
 
 export interface ManorCropView {
   id: ManorCropId;
+  sourceId: number;
   name: string;
   emoji: string;
   levelRequired: number;
   seedPrice: number;
   salePrice: number;
   growthSeconds: number;
+  regrowthSeconds: number;
   baseYield: number;
   experience: number;
+  harvestCycles: number;
+  purchasable: boolean;
   unlocked: boolean;
   seeds: number;
   produce: number;
@@ -607,12 +601,16 @@ export interface ManorCropView {
 
 export interface ManorPlotView {
   id: number;
-  status: "empty" | "growing" | "mature";
+  status: "empty" | "growing" | "mature" | "withered";
   cropId?: ManorCropId;
+  cropSourceId?: number;
   cropName?: string;
   cropEmoji?: string;
   plantedAt?: number;
   readyAt?: number;
+  witheredAt?: number;
+  harvestedCycles?: number;
+  harvestCycles?: number;
   progress: number;
   watered: boolean;
   weed: boolean;

@@ -5,160 +5,34 @@ import type {
   ManorFarmView,
   ManorPlotView
 } from "@party-games/shared";
+import { MANOR_CROP_DATA } from "./crops.generated.js";
 
 export interface ManorCropDefinition {
   id: ManorCropId;
+  sourceId: number;
   name: string;
   emoji: string;
   levelRequired: number;
   seedPrice: number;
   salePrice: number;
   growthSeconds: number;
+  regrowthSeconds: number;
   baseYield: number;
   experience: number;
+  harvestCycles: number;
+  purchasable: boolean;
 }
 
-export const MANOR_CROPS: readonly ManorCropDefinition[] = [
-  {
-    id: "radish",
-    name: "白萝卜",
-    emoji: "萝",
-    levelRequired: 1,
-    seedPrice: 125,
-    salePrice: 17,
-    growthSeconds: 36_000,
-    baseYield: 16,
-    experience: 15
-  },
-  {
-    id: "carrot",
-    name: "胡萝卜",
-    emoji: "胡",
-    levelRequired: 1,
-    seedPrice: 163,
-    salePrice: 21,
-    growthSeconds: 46_800,
-    baseYield: 17,
-    experience: 18
-  },
-  {
-    id: "cabbage",
-    name: "大白菜",
-    emoji: "白",
-    levelRequired: 2,
-    seedPrice: 168,
-    salePrice: 22,
-    growthSeconds: 50_400,
-    baseYield: 17,
-    experience: 19
-  },
-  {
-    id: "wheat",
-    name: "小麦",
-    emoji: "麦",
-    levelRequired: 3,
-    seedPrice: 168,
-    salePrice: 21,
-    growthSeconds: 50_400,
-    baseYield: 18,
-    experience: 19
-  },
-  {
-    id: "rice",
-    name: "水稻",
-    emoji: "稻",
-    levelRequired: 3,
-    seedPrice: 168,
-    salePrice: 21,
-    growthSeconds: 50_400,
-    baseYield: 18,
-    experience: 19
-  },
-  {
-    id: "corn",
-    name: "玉米",
-    emoji: "玉",
-    levelRequired: 4,
-    seedPrice: 175,
-    salePrice: 23,
-    growthSeconds: 50_400,
-    baseYield: 17,
-    experience: 19
-  },
-  {
-    id: "potato",
-    name: "土豆",
-    emoji: "薯",
-    levelRequired: 5,
-    seedPrice: 188,
-    salePrice: 24,
-    growthSeconds: 54_000,
-    baseYield: 18,
-    experience: 20
-  },
-  {
-    id: "eggplant",
-    name: "茄子",
-    emoji: "茄",
-    levelRequired: 6,
-    seedPrice: 237,
-    salePrice: 25,
-    growthSeconds: 57_600,
-    baseYield: 20,
-    experience: 21
-  },
-  {
-    id: "tomato",
-    name: "番茄",
-    emoji: "番",
-    levelRequired: 7,
-    seedPrice: 251,
-    salePrice: 26,
-    growthSeconds: 61_200,
-    baseYield: 21,
-    experience: 22
-  },
-  {
-    id: "pea",
-    name: "豌豆",
-    emoji: "豌",
-    levelRequired: 8,
-    seedPrice: 266,
-    salePrice: 27,
-    growthSeconds: 64_800,
-    baseYield: 22,
-    experience: 23
-  },
-  {
-    id: "chili",
-    name: "辣椒",
-    emoji: "辣",
-    levelRequired: 9,
-    seedPrice: 296,
-    salePrice: 28,
-    growthSeconds: 72_000,
-    baseYield: 24,
-    experience: 25
-  },
-  {
-    id: "pumpkin",
-    name: "南瓜",
-    emoji: "南",
-    levelRequired: 10,
-    seedPrice: 325,
-    salePrice: 30,
-    growthSeconds: 79_200,
-    baseYield: 25,
-    experience: 27
-  }
-];
+export const MANOR_CROPS: readonly ManorCropDefinition[] = MANOR_CROP_DATA;
 
 export interface ManorPlotState {
   id: number;
   cycle: number;
   cropId?: ManorCropId;
+  harvestedCycles?: number;
   plantedAt?: number;
   readyAt?: number;
+  witheredAt?: number;
   wateredAt?: number;
   weedAt?: number;
   weedClearedAt?: number;
@@ -167,7 +41,7 @@ export interface ManorPlotState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   revision: number;
   coins: number;
   experience: number;
@@ -187,12 +61,12 @@ export interface ManorRuntimeOptions {
 export const MANOR_PLOT_COUNT = 18;
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2;
+  schemaVersion?: 1 | 2 | 3;
 };
 
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -210,7 +84,7 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
 export function migrateManorFarm(value: unknown): ManorFarmState {
   if (!value || typeof value !== "object") throw new Error("庄园存档格式无效");
   const candidate = value as PersistedManorFarm;
-  if (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2) {
+  if (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2 && candidate.schemaVersion !== 3) {
     throw new Error("庄园存档版本不受支持");
   }
   const migratedPlots = Array.isArray(candidate.plots)
@@ -220,7 +94,7 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     ? migrateSixPlotFarm(migratedPlots)
     : migratedPlots;
   const state: ManorFarmState = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
@@ -250,6 +124,7 @@ export function applyManorAction(
   switch (action.type) {
     case "buy-seeds": {
       if (!crop) throw new Error("作物不存在");
+      if (!crop.purchasable) throw new Error("特殊种子无法在商店购买");
       if (level < crop.levelRequired) throw new Error(`达到 ${crop.levelRequired} 级后解锁`);
       const cost = crop.seedPrice * action.quantity;
       if (state.coins < cost) throw new Error("金币不足");
@@ -260,36 +135,30 @@ export function applyManorAction(
     case "plant": {
       if (!crop || !plot) throw new Error("土地或作物不存在");
       if (plot.cropId) throw new Error("这块土地已有作物");
-      if (level < crop.levelRequired) throw new Error(`达到 ${crop.levelRequired} 级后解锁`);
       if (state.seeds[crop.id] < 1) throw new Error("种子不足");
       state.seeds[crop.id] -= 1;
-      const duration = growthDurationMs(crop, options.timeScale);
-      const weed = nextRandom(state.randomState);
-      const pest = nextRandom(weed.state);
-      state.randomState = pest.state;
       plot.cropId = crop.id;
-      plot.plantedAt = now;
-      plot.readyAt = now + duration;
+      plot.harvestedCycles = 0;
       plot.cycle += 1;
-      if (weed.value < 0.6) plot.weedAt = now + Math.round(duration * (0.28 + weed.value * 0.35));
-      if (pest.value < 0.5) plot.pestAt = now + Math.round(duration * (0.5 + pest.value * 0.4));
+      state.experience += 2;
+      startGrowthCycle(state, plot, now, crop.growthSeconds, options.timeScale);
       break;
     }
     case "water": {
-      ensurePlanted(plot);
+      ensureGrowing(plot);
       if (plot.wateredAt) throw new Error("这块土地已经浇过水");
       plot.wateredAt = now;
       break;
     }
     case "clear-weed": {
-      ensurePlanted(plot);
+      ensureGrowing(plot);
       if (!plot.weedAt || plot.weedAt > now) throw new Error("当前没有杂草");
       if (plot.weedClearedAt) throw new Error("杂草已经清除");
       plot.weedClearedAt = now;
       break;
     }
     case "clear-pest": {
-      ensurePlanted(plot);
+      ensureGrowing(plot);
       if (!plot.pestAt || plot.pestAt > now) throw new Error("当前没有害虫");
       if (plot.pestClearedAt) throw new Error("害虫已经清除");
       plot.pestClearedAt = now;
@@ -297,11 +166,26 @@ export function applyManorAction(
     }
     case "harvest": {
       ensurePlanted(plot);
+      if (plot.witheredAt) throw new Error("作物已经枯萎，请用锄头清理");
       if (!plot.readyAt || plot.readyAt > now) throw new Error("作物尚未成熟");
       const plantedCrop = cropById(plot.cropId);
       const yieldCount = estimatedYield(plot, plantedCrop, now);
       state.produce[plantedCrop.id] += yieldCount;
       state.experience += plantedCrop.experience;
+      const harvestedCycles = (plot.harvestedCycles ?? 0) + 1;
+      plot.harvestedCycles = harvestedCycles;
+      if (harvestedCycles < plantedCrop.harvestCycles) {
+        startGrowthCycle(state, plot, now, plantedCrop.regrowthSeconds, options.timeScale);
+      } else {
+        markWithered(plot, now);
+      }
+      break;
+    }
+    case "clear-plot": {
+      ensurePlanted(plot);
+      if (!plot.witheredAt) throw new Error("只有枯萎作物需要锄地清理");
+      state.experience += 3;
+      awardHiddenSeed(state);
       clearPlot(plot);
       break;
     }
@@ -333,6 +217,7 @@ export function toManorFarmView(
   const catalog: ManorCropView[] = MANOR_CROPS.map((crop) => ({
     ...crop,
     growthSeconds: Math.max(1, Math.round(growthDurationMs(crop, options.timeScale) / 1_000)),
+    regrowthSeconds: Math.max(1, Math.round(scaledDurationMs(crop.regrowthSeconds, options.timeScale) / 1_000)),
     unlocked: level >= crop.levelRequired,
     seeds: state.seeds[crop.id],
     produce: state.produce[crop.id]
@@ -358,11 +243,12 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 2) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 3) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
     ["经验", state.experience],
+    ["随机状态", state.randomState],
     ["创建时间", state.createdAt],
     ["更新时间", state.updatedAt]
   ] as const) {
@@ -377,11 +263,19 @@ export function validateManorFarm(state: ManorFarmState): void {
     ids.add(plot.id);
     if (!Number.isInteger(plot.cycle) || plot.cycle < 0) throw new Error("土地轮次无效");
     if (plot.cropId) {
-      cropById(plot.cropId);
-      if (!plot.plantedAt || !plot.readyAt || plot.readyAt <= plot.plantedAt) {
+      const crop = cropById(plot.cropId);
+      const harvestedCycles = plot.harvestedCycles;
+      if (harvestedCycles === undefined || !Number.isInteger(harvestedCycles) || harvestedCycles < 0 || harvestedCycles > crop.harvestCycles) {
+        throw new Error("作物收获季数无效");
+      }
+      if (plot.witheredAt) {
+        if (harvestedCycles !== crop.harvestCycles || plot.plantedAt || plot.readyAt) {
+          throw new Error("枯萎作物状态无效");
+        }
+      } else if (!plot.plantedAt || !plot.readyAt || plot.readyAt <= plot.plantedAt) {
         throw new Error("作物时间无效");
       }
-    } else if (plot.plantedAt || plot.readyAt) {
+    } else if (plot.harvestedCycles !== undefined || plot.plantedAt || plot.readyAt || plot.witheredAt) {
       throw new Error("空地包含作物状态");
     }
   }
@@ -407,18 +301,37 @@ export function experienceForLevel(level: number): number {
 }
 
 function toPlotView(plot: ManorPlotState, now: number): ManorPlotView {
-  if (!plot.cropId || !plot.plantedAt || !plot.readyAt) {
+  if (!plot.cropId) {
     return { id: plot.id, status: "empty", progress: 0, watered: false, weed: false, pest: false };
   }
   const crop = cropById(plot.cropId);
+  const cropDetails = {
+    cropId: crop.id,
+    cropSourceId: crop.sourceId,
+    cropName: crop.name,
+    cropEmoji: crop.emoji,
+    harvestedCycles: plot.harvestedCycles ?? 0,
+    harvestCycles: crop.harvestCycles
+  };
+  if (plot.witheredAt) {
+    return {
+      id: plot.id,
+      status: "withered",
+      ...cropDetails,
+      witheredAt: plot.witheredAt,
+      progress: 1,
+      watered: false,
+      weed: false,
+      pest: false
+    };
+  }
+  if (!plot.plantedAt || !plot.readyAt) throw new Error("作物时间无效");
   const duration = plot.readyAt - plot.plantedAt;
   const progress = Math.max(0, Math.min(1, (now - plot.plantedAt) / duration));
   return {
     id: plot.id,
     status: now >= plot.readyAt ? "mature" : "growing",
-    cropId: crop.id,
-    cropName: crop.name,
-    cropEmoji: crop.emoji,
+    ...cropDetails,
     plantedAt: plot.plantedAt,
     readyAt: plot.readyAt,
     progress,
@@ -455,10 +368,23 @@ function ensurePlanted(plot: ManorPlotState | undefined): asserts plot is ManorP
   if (!plot?.cropId) throw new Error("这块土地还没有作物");
 }
 
+function ensureGrowing(plot: ManorPlotState | undefined): asserts plot is ManorPlotState & {
+  cropId: ManorCropId;
+} {
+  ensurePlanted(plot);
+  if (plot.witheredAt) throw new Error("作物已经枯萎，请用锄头清理");
+}
+
 function clearPlot(plot: ManorPlotState): void {
   delete plot.cropId;
+  delete plot.harvestedCycles;
   delete plot.plantedAt;
   delete plot.readyAt;
+  delete plot.witheredAt;
+  clearCareState(plot);
+}
+
+function clearCareState(plot: ManorPlotState): void {
   delete plot.wateredAt;
   delete plot.weedAt;
   delete plot.weedClearedAt;
@@ -467,8 +393,52 @@ function clearPlot(plot: ManorPlotState): void {
 }
 
 function growthDurationMs(crop: ManorCropDefinition, timeScale = 1): number {
+  return scaledDurationMs(crop.growthSeconds, timeScale);
+}
+
+function scaledDurationMs(seconds: number, timeScale = 1): number {
   const scale = Number.isFinite(timeScale) ? Math.max(1, Math.min(3_600, timeScale)) : 1;
-  return Math.max(1_000, Math.round((crop.growthSeconds * 1_000) / scale));
+  return Math.max(1_000, Math.round((seconds * 1_000) / scale));
+}
+
+function startGrowthCycle(
+  state: ManorFarmState,
+  plot: ManorPlotState,
+  now: number,
+  durationSeconds: number,
+  timeScale = 1
+): void {
+  const duration = scaledDurationMs(durationSeconds, timeScale);
+  const weed = nextRandom(state.randomState);
+  const pest = nextRandom(weed.state);
+  state.randomState = pest.state;
+  delete plot.witheredAt;
+  clearCareState(plot);
+  plot.plantedAt = now;
+  plot.readyAt = now + duration;
+  if (weed.value < 0.6) plot.weedAt = now + Math.round(duration * (0.28 + weed.value * 0.35));
+  if (pest.value < 0.5) plot.pestAt = now + Math.round(duration * (0.5 + pest.value * 0.4));
+}
+
+function markWithered(plot: ManorPlotState, now: number): void {
+  delete plot.plantedAt;
+  delete plot.readyAt;
+  clearCareState(plot);
+  plot.witheredAt = now;
+}
+
+function awardHiddenSeed(state: ManorFarmState): void {
+  const rewardRoll = nextRandom(state.randomState);
+  state.randomState = rewardRoll.state;
+  if (rewardRoll.value >= 0.1) return;
+
+  const hiddenCrops = MANOR_CROPS.filter((crop) => !crop.purchasable);
+  const cropRoll = nextRandom(state.randomState);
+  const quantityRoll = nextRandom(cropRoll.state);
+  state.randomState = quantityRoll.state;
+  const crop = hiddenCrops[Math.floor(cropRoll.value * hiddenCrops.length)];
+  if (!crop) throw new Error("隐藏种子目录为空");
+  state.seeds[crop.id] += quantityRoll.value < 0.5 ? 1 : 2;
 }
 
 function cropRecord(initial: Partial<Record<ManorCropId, number>> = {}): Record<ManorCropId, number> {
@@ -516,8 +486,10 @@ function migratePlot(value: unknown): ManorPlotState {
     id: integer(plot.id, "土地编号"),
     cycle: integer(plot.cycle, "土地轮次"),
     ...(cropId ? { cropId } : {}),
+    ...(cropId ? { harvestedCycles: integer(plot.harvestedCycles ?? 0, "作物收获季数") } : {}),
     ...optionalTimestamp("plantedAt", plot.plantedAt),
     ...optionalTimestamp("readyAt", plot.readyAt),
+    ...optionalTimestamp("witheredAt", plot.witheredAt),
     ...optionalTimestamp("wateredAt", plot.wateredAt),
     ...optionalTimestamp("weedAt", plot.weedAt),
     ...optionalTimestamp("weedClearedAt", plot.weedClearedAt),

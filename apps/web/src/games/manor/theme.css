@@ -283,6 +283,7 @@
 .manor-land__crop--stage-1 { bottom: 33%; max-height: 92%; }
 .manor-land__crop--stage-2 { bottom: 29%; max-height: 145%; }
 .manor-land__crop--stage-3 { bottom: 22%; max-height: 155%; }
+.manor-land__crop--stage-4 { bottom: 28%; max-height: 135%; }
 
 /* The legacy radish frame is unusually tall (135 x 210) compared with the other mature crops. */
 .manor-land__crop--radish.manor-land__crop--stage-3 { max-height: 145%; }
@@ -412,21 +413,26 @@
   position: absolute;
   z-index: 1000;
   inset: 0;
-  display: grid;
-  place-items: center;
   background: rgba(25, 55, 22, 0.24);
 }
 
 .manor-window {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 50.2%;
   height: 40.8%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
   padding: 4.2cqw 1.3cqw 1.2cqw;
+  overflow: hidden;
   color: #313d45;
   font-family: Arial, "Microsoft YaHei", sans-serif;
   font-size: clamp(10px, 1.2cqw, 14px);
   background: url("/assets/manor/classic/window-bg.png") center / 100% 100% no-repeat;
   filter: drop-shadow(0 6px 13px rgba(15, 37, 48, 0.4));
+  transform: translate(-50%, -50%);
 }
 
 .manor-window__title {
@@ -456,8 +462,45 @@
 
 .manor-window__body {
   height: 100%;
+  min-height: 0;
   overflow: auto;
   scrollbar-color: #57bddd #eff8fb;
+}
+
+.manor-window__search {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55cqw;
+  margin: 0 0.7cqw 0.45cqw;
+  padding: 0.45cqw 0.7cqw;
+  color: #53717a;
+  background: rgba(239, 250, 251, 0.96);
+  border: 1px solid #a8d4df;
+  border-radius: 4px;
+}
+
+.manor-window__search input {
+  min-width: 0;
+  padding: 0.25cqw 0.4cqw;
+  color: #294651;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #bad7dd;
+  border-radius: 3px;
+  outline: 0;
+}
+
+.manor-window__search input:focus { border-color: #2a9bc2; }
+.manor-window__search span { white-space: nowrap; font-size: 0.86em; }
+
+.manor-window__empty {
+  margin: 3cqw 1cqw;
+  color: #687b81;
+  text-align: center;
 }
 
 .manor-seed-pack {

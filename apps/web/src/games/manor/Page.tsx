@@ -5,13 +5,13 @@ import type {
   ManorFarmView,
   ManorPlotView
 } from "@party-games/shared";
-import { RefreshCw, Wheat } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { RefreshCw, Search, Wheat } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { getManorFarm, performManorAction } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 
 const ASSET_ROOT = "/assets/manor/classic";
-const CROP_ASSET_VERSION = "classic-crops-v2";
+const CROP_ASSET_VERSION = "classic-crops-v3";
 
 type ManorTool = "move" | "hoe" | "seed" | "water" | "weed" | "pest" | "harvest";
 type ManorWindow = "seed-pack" | "shop" | "warehouse";
@@ -26,22 +26,9 @@ const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> 
   { id: "harvest", label: "收获", shortcut: "R" }
 ];
 
-const CROP_IMAGES: Record<ManorCropId, readonly [string, string, string, string]> = {
-  radish: ["crop-radish-0.png", "crop-radish-1.png", "crop-radish-2.png", "crop-radish-3.png"],
-  carrot: ["crop-carrot-0.png", "crop-carrot-1.png", "crop-carrot-2.png", "crop-carrot-3.png"],
-  cabbage: ["crop-cabbage-0.png", "crop-cabbage-1.png", "crop-cabbage-2.png", "crop-cabbage-3.png"],
-  wheat: ["crop-wheat-0.png", "crop-wheat-1.png", "crop-wheat-2.png", "crop-wheat-3.png"],
-  rice: ["crop-rice-0.png", "crop-rice-1.png", "crop-rice-2.png", "crop-rice-3.png"],
-  corn: ["crop-corn-0.png", "crop-corn-1.png", "crop-corn-2.png", "crop-corn-3.png"],
-  potato: ["crop-potato-0.png", "crop-potato-1.png", "crop-potato-2.png", "crop-potato-3.png"],
-  eggplant: ["crop-eggplant-0.png", "crop-eggplant-1.png", "crop-eggplant-2.png", "crop-eggplant-3.png"],
-  tomato: ["crop-tomato-0.png", "crop-tomato-1.png", "crop-tomato-2.png", "crop-tomato-3.png"],
-  pea: ["crop-pea-0.png", "crop-pea-1.png", "crop-pea-2.png", "crop-pea-3.png"],
-  chili: ["crop-chili-0.png", "crop-chili-1.png", "crop-chili-2.png", "crop-chili-3.png"],
-  pumpkin: ["crop-pumpkin-0.png", "crop-pumpkin-1.png", "crop-pumpkin-2.png", "crop-pumpkin-3.png"]
-};
-
 export function ManorPage() {
+  const stageViewportRef = useRef<HTMLDivElement>(null);
+  const windowScrollLeftRef = useRef<number | undefined>(undefined);
   const [farm, setFarm] = useState<ManorFarmView>();
   const [selectedCropId, setSelectedCropId] = useState<ManorCropId>("radish");
   const [selectedTool, setSelectedTool] = useState<ManorTool>("move");
@@ -90,6 +77,22 @@ export function ManorPage() {
   }, [notice]);
 
   useEffect(() => {
+    const viewport = stageViewportRef.current;
+    if (!viewport || viewport.scrollWidth <= viewport.clientWidth) return;
+
+    if (activeWindow) {
+      windowScrollLeftRef.current ??= viewport.scrollLeft;
+      viewport.scrollLeft = Math.round((viewport.scrollWidth - viewport.clientWidth) / 2);
+      return;
+    }
+
+    if (windowScrollLeftRef.current !== undefined) {
+      viewport.scrollLeft = windowScrollLeftRef.current;
+      windowScrollLeftRef.current = undefined;
+    }
+  }, [activeWindow]);
+
+  useEffect(() => {
     const onKeyUp = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       const keyTools: Partial<Record<string, ManorTool>> = {
@@ -106,13 +109,18 @@ export function ManorPage() {
     return () => window.removeEventListener("keyup", onKeyUp);
   }, []);
 
-  const act = useCallback(async (action: ManorActionRequest, key: string, success: string) => {
+  const act = useCallback(async (
+    action: ManorActionRequest,
+    key: string,
+    success: string | ((next: ManorFarmView) => string)
+  ) => {
     if (busyKey) return false;
     setBusyKey(key);
     setError(undefined);
     try {
-      acceptFarm(await performManorAction(action));
-      setNotice(success);
+      const next = await performManorAction(action);
+      acceptFarm(next);
+      setNotice(typeof success === "function" ? success(next) : success);
       return true;
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "操作失败");
@@ -144,10 +152,6 @@ export function ManorPage() {
   };
 
   const selectSeed = (crop: ManorCropView) => {
-    if (!crop.unlocked) {
-      setNotice(`${crop.levelRequired} 级后可使用${crop.name}`);
-      return;
-    }
     if (crop.seeds < 1) {
       setNotice(`${crop.name}种子不足，请先到商店购买`);
       return;
@@ -167,7 +171,27 @@ export function ManorPage() {
         setNotice(plotSummary(plot, serverNow));
         return;
       case "hoe":
-        setNotice(plot.status === "empty" ? "土地已经翻好，可以播种" : "作物生长中，暂时不能翻地");
+        if (plot.status === "empty") {
+          setNotice("土地已经翻好，可以播种");
+          return;
+        }
+        if (plot.status !== "withered") {
+          setNotice("作物尚未枯萎，暂时不能翻地");
+          return;
+        }
+        await act(
+          { type: "clear-plot", plotId: plot.id },
+          `clear:${plot.id}`,
+          (next) => {
+            const reward = next.catalog.find((crop) => {
+              const previous = farm.catalog.find((candidate) => candidate.id === crop.id);
+              return crop.seeds > (previous?.seeds ?? 0);
+            });
+            if (!reward) return "枯萎作物已清理，获得 3 点经验";
+            const previous = farm.catalog.find((crop) => crop.id === reward.id)?.seeds ?? 0;
+            return `清理完成，获得 ${reward.seeds - previous} 包${reward.name}种子`;
+          }
+        );
         return;
       case "seed":
         if (plot.status !== "empty") {
@@ -185,8 +209,8 @@ export function ManorPage() {
         );
         return;
       case "water":
-        if (plot.status === "empty") {
-          setNotice("空地不需要浇水");
+        if (plot.status === "empty" || plot.status === "withered") {
+          setNotice(plot.status === "empty" ? "空地不需要浇水" : "作物已经枯萎，请用锄头清理");
           return;
         }
         if (plot.watered) {
@@ -210,11 +234,23 @@ export function ManorPage() {
         await act({ type: "clear-pest", plotId: plot.id }, `pest:${plot.id}`, "害虫已清除");
         return;
       case "harvest":
+        if (plot.status === "withered") {
+          setNotice("作物已经枯萎，请用锄头清理");
+          return;
+        }
         if (plot.status !== "mature" && (!plot.readyAt || plot.readyAt > serverNow)) {
           setNotice(plot.status === "empty" ? "这块土地还没有作物" : "作物尚未成熟");
           return;
         }
-        await act({ type: "harvest", plotId: plot.id }, `harvest:${plot.id}`, "果实已收入仓库");
+        await act(
+          { type: "harvest", plotId: plot.id },
+          `harvest:${plot.id}`,
+          (next) => {
+            const nextPlot = next.plots.find((candidate) => candidate.id === plot.id);
+            if (nextPlot?.status === "withered") return "最后一季已收获，作物进入枯萎状态";
+            return `本季已收获，进入第 ${(nextPlot?.harvestedCycles ?? 0) + 1} 季`;
+          }
+        );
     }
   };
 
@@ -258,7 +294,7 @@ export function ManorPage() {
       }
     >
       <div className="manor-page">
-        <div className="manor-stage-viewport">
+        <div className="manor-stage-viewport" ref={stageViewportRef}>
           <div className="manor-stage-shell">
             <section
               className={`manor-stage manor-stage--tool-${selectedTool}`}
@@ -404,10 +440,10 @@ function FarmLand({
       >
         <img className="manor-land__soil" src={`${ASSET_ROOT}/${soil}`} alt="" />
       </button>
-      {plot.cropId ? (
+      {plot.cropId && plot.cropSourceId ? (
         <img
           className={`manor-land__crop manor-land__crop--${plot.cropId} manor-land__crop--stage-${stage}`}
-          src={cropImage(plot.cropId, stage)}
+          src={cropImage(plot.cropSourceId ?? 0, stage)}
           alt=""
         />
       ) : null}
@@ -468,7 +504,18 @@ function ClassicWindow({
   onBuy: (crop: ManorCropView) => void;
   onSell: (crop: ManorCropView) => void;
 }) {
+  const [query, setQuery] = useState("");
   const title = kind === "seed-pack" ? "种子包" : kind === "shop" ? "农场商店" : "仓库";
+  const visibleCrops = useMemo(() => {
+    const available = crops.filter((crop) => {
+      if (kind === "shop") return crop.purchasable;
+      if (kind === "seed-pack") return crop.seeds > 0;
+      return crop.produce > 0;
+    });
+    const keyword = query.trim();
+    if (!keyword) return available;
+    return available.filter((crop) => crop.name.includes(keyword) || String(crop.sourceId) === keyword);
+  }, [crops, kind, query]);
   return (
     <div className="manor-window-layer" role="presentation" onMouseDown={onClose}>
       <section
@@ -481,21 +528,33 @@ function ClassicWindow({
         <strong className="manor-window__title">{title}</strong>
         <button className="manor-window__close" type="button" aria-label="关闭" onClick={onClose} />
         <div className="manor-window__body">
+          <label className="manor-window__search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              placeholder="查找作物"
+              aria-label="按名称或原始编号查找作物"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <span>{visibleCrops.length} 种</span>
+          </label>
+          {visibleCrops.length === 0 ? <p className="manor-window__empty">暂无符合条件的作物</p> : null}
           {kind === "seed-pack" ? (
             <div className="manor-seed-pack">
-              {crops.map((crop) => (
+              {visibleCrops.map((crop) => (
                 <button
-                  className={`${crop.id === selectedCropId ? "is-selected" : ""} ${crop.seeds < 1 || !crop.unlocked ? "is-disabled" : ""}`}
+                  className={crop.id === selectedCropId ? "is-selected" : ""}
                   key={crop.id}
                   type="button"
                   disabled={busy}
                   onClick={() => onSelectSeed(crop)}
                 >
                   <span className="manor-item-image">
-                    <img src={cropImage(crop.id, 0)} alt="" />
+                    <img src={cropImage(crop.sourceId, 0)} alt="" />
                   </span>
                   <strong>{crop.name}</strong>
-                  <small>{crop.unlocked ? `剩余 ${crop.seeds} 包` : `${crop.levelRequired} 级解锁`}</small>
+                  <small>剩余 {crop.seeds} 包</small>
                 </button>
               ))}
             </div>
@@ -503,16 +562,16 @@ function ClassicWindow({
 
           {kind === "shop" ? (
             <div className="manor-shop-list">
-              {crops.map((crop) => (
+              {visibleCrops.map((crop) => (
                 <div className={!crop.unlocked ? "is-locked" : ""} key={crop.id}>
                   <span className="manor-item-image">
-                    <img src={cropImage(crop.id, 3)} alt="" />
+                    <img src={cropImage(crop.sourceId, 3)} alt="" />
                   </span>
                   <span className="manor-item-copy">
                     <strong>{crop.name}</strong>
                     <small>
                       {crop.unlocked
-                        ? `${formatDuration(crop.growthSeconds * 1_000)}成熟 · 预计收获 ${crop.baseYield}`
+                        ? `${formatDuration(crop.growthSeconds * 1_000)}成熟 · ${crop.harvestCycles} 季 · 每季约 ${crop.baseYield}`
                         : `${crop.levelRequired} 级解锁`}
                     </small>
                     <em>种子金币 {crop.seedPrice}</em>
@@ -527,10 +586,10 @@ function ClassicWindow({
 
           {kind === "warehouse" ? (
             <div className="manor-warehouse-list">
-              {crops.map((crop) => (
+              {visibleCrops.map((crop) => (
                 <div className={crop.produce > 0 ? "has-stock" : ""} key={crop.id}>
                   <span className="manor-item-image">
-                    <img src={cropImage(crop.id, 3)} alt="" />
+                    <img src={cropImage(crop.sourceId, 3)} alt="" />
                   </span>
                   <span className="manor-item-copy">
                     <strong>{crop.name}</strong>
@@ -558,12 +617,14 @@ function landPosition(index: number): { left: number; top: number; zIndex: numbe
   return { left: x / 10, top: y / 7.68, zIndex: 10 + Math.round(y) };
 }
 
-function cropImage(cropId: ManorCropId, stage: number): string {
-  const images = CROP_IMAGES[cropId];
-  return `${ASSET_ROOT}/${images[Math.max(0, Math.min(3, stage))]}?v=${CROP_ASSET_VERSION}`;
+function cropImage(sourceId: number, stage: number): string {
+  const stageNames = ["seed", "sprout", "growing", "mature", "withered"] as const;
+  const stageName = stageNames[Math.max(0, Math.min(4, stage))] ?? "seed";
+  return `${ASSET_ROOT}/crops/${sourceId}/${stageName}.png?v=${CROP_ASSET_VERSION}`;
 }
 
 function cropStage(plot: ManorPlotView, progress: number): number {
+  if (plot.status === "withered") return 4;
   if (plot.status === "mature") return 3;
   if (progress < 0.22) return 0;
   if (progress < 0.55) return 1;
@@ -577,6 +638,7 @@ function plotProgress(plot: ManorPlotView, now: number): number {
 
 function plotSummary(plot: ManorPlotView, now: number): string {
   if (plot.status === "empty") return "空地，可以播种";
+  if (plot.status === "withered") return `${plot.cropName ?? "作物"}已经枯萎，请用锄头清理`;
   if (plot.status === "mature" || plot.readyAt && plot.readyAt <= now) {
     return `${plot.cropName ?? "作物"}已成熟，可以收获`;
   }
@@ -585,10 +647,13 @@ function plotSummary(plot: ManorPlotView, now: number): string {
 
 function plotDetail(plot: ManorPlotView, now: number): string {
   if (plot.status === "empty") return "请选择种子后播种";
+  if (plot.status === "withered") return `已完成 ${plot.harvestCycles ?? 1} 季，请用锄头清理`;
+  const cycle = `${(plot.harvestedCycles ?? 0) + 1}/${plot.harvestCycles ?? 1} 季`;
   if (plot.status === "mature" || plot.readyAt && plot.readyAt <= now) {
-    return `预计收获 ${plot.estimatedYield ?? 0}`;
+    return `${cycle} · 预计收获 ${plot.estimatedYield ?? 0}`;
   }
   const states = [
+    cycle,
     plot.readyAt ? formatDuration(Math.max(0, plot.readyAt - now)) : "生长中",
     plot.watered ? "已浇水" : "缺水",
     plot.weed ? "有杂草" : "",

@@ -552,14 +552,16 @@ $readme = @"
 - 原仓库：``Boldcc/qqfarm``
 - 原仓库提交：``$legacyCommit``
 - 游戏根目录：``upload/home/qqfarm``
-- 生成命令：``pwsh -File scripts/build-manor-asset-map.ps1``
+- 源台账生成：``pwsh -File scripts/build-manor-asset-map.ps1``
+- 作物目录生成：``pwsh -File scripts/generate-manor-crop-catalog.ps1``
+- 运行时作物导出：``pwsh -File scripts/export-manor-runtime-crops.ps1``
 - SWF 解析：JPEXS ``ffdec.jar``，由 ``scripts/ManorSwfInventory.java`` 在单个 JVM 内批量读取。
 
 ## 当前统计
 
 | 范围 | 数量 | 当前状态 |
 | --- | ---: | --- |
-| 原版作物配置/SWF | $($crops.Count) | 602 个七阶段角色已导出并人工复核；$integratedCropCount 种已接入四阶段 PNG；结构解析错误 $cropParseErrors |
+| 原版作物配置/SWF | $($crops.Count) | 602 个七阶段角色已导出并人工复核；430 张五阶段运行时 PNG 已接入；结构解析错误 $cropParseErrors |
 | 原版动物配置/SWF | $($animals.Count) | 210 个六状态角色和 78 个内部辅助类已分离登记并人工复核；结构解析错误 $animalParseErrors |
 | 原版装饰配置 | $($decorations.Count) | 162 件允许默认接入，8 件延后到场景验收，ID 21/402 不接入 |
 | UI、动作及辅助素材 | 130 个源文件 | 830 个可见映射已复核；28 个空轮廓和 2 个二进制类已分类 |
@@ -567,7 +569,8 @@ $readme = @"
 | 原版 module 素材文件 | $($assetFiles.Count) | 已逐文件登记 SHA-256、分类和处理状态 |
 | 原版 source 源码文件 | $($sourceModules.Count) | 已按功能域登记，用于后续规则对应 |
 | 原版 module 完全重复文件组 | $(@($duplicateAssets).Count) | 仅表示二进制完全相同，删除或合并前仍需人工判断用途 |
-| 当前 classic PNG | $($currentAssets.Count) | 当前项目已使用的场景、控件和作物素材 |
+| 当前 classic 基础 PNG | $($currentAssets.Count) | 当前项目已使用的场景、控件和首批兼容作物素材 |
+| 作物运行时 PNG | 430 | 86 种作物各含种子、发芽、生长、成熟、枯萎五阶段 |
 | 当前 classic PNG 完全重复组 | $(@($currentDuplicateAssets).Count) | 已区分共享作物阶段、按钮状态复用和待复核项 |
 
 ## 文件说明
@@ -584,6 +587,7 @@ $readme = @"
 | ``current-duplicates.csv`` | 当前 classic PNG 的完全重复组及初步复核分类 |
 | ``crop-state-assets.csv`` | 86 种作物七阶段的 602 行角色、导出 PNG、尺寸、哈希和当前素材比对结果 |
 | ``crop-current-assets.csv`` | 当前 48 张作物 PNG 到七阶段、实际源角色、导出文件和哈希的逐张映射 |
+| ``crop-runtime-assets.csv`` | 86 种作物的 430 张运行时 PNG、源角色、阶段、哈希和视觉复核状态 |
 | ``crop-contact-review.csv`` | 每种作物的联系表、角色复用数量和自动校验结果 |
 | ``crop-visual-review.csv`` | 86 种作物联系表的人工视觉复核结论和专项备注，生成器只读取、不覆盖 |
 | ``decoration-assets.csv`` | 172 件装饰的实际选源、导出图、可见范围、哈希和视觉复核状态 |
@@ -605,7 +609,7 @@ $readme = @"
 
 | 状态 | 含义 |
 | --- | --- |
-| ``integrated-4-stage`` | 已提取到当前项目并接入播种、生长、成熟显示 |
+| ``integrated-4-stage`` | 首批 12 种兼容素材已提取到 classic 根目录；完整运行时状态以 ``crop-runtime-assets.csv`` 为准 |
 | ``integrated-source`` | 该源 SWF 已有当前项目目标素材，但仍需保留来源核验 |
 | ``mapped-not-extracted`` | 已确定原版业务对象和源文件，尚未批量导出/视觉验收 |
 | ``inventoried`` | 已登记文件，仍需在对应 UI、声音或装饰批次中细分用途 |
@@ -637,12 +641,13 @@ UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 Exp
 - 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组白萝卜/胡萝卜早期图已确认分别精确来自两个原 SWF 的同一角色 4，10 组为原版按钮 normal/down 状态本身相同；当前没有错误重复或未分类重复。
 - 当前 51 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：49 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
 - 当前 12 种作物的 48 张 PNG 均已通过 SHA-256 反查到各自 SWF 的实际导出角色：47 张直接对应七阶段角色；水稻当前阶段 1 使用七阶段“幼苗”角色 15 内的纯植株子角色 14，以避免把原版水田底图重复叠到网页土地上。水稻和小麦当前阶段 2 均对应“成熟前”角色，而不是通用作物采用的“生长”角色。具体关系见 ``crop-current-assets.csv`` 和联系表蓝字。
+- 完整 86 种作物已按统一五阶段接入 430 张运行时 PNG；水稻纯植株子角色以及水稻、小麦成熟前角色的特殊映射继续保留，逐项来源见 ``crop-runtime-assets.csv``。
 - 35 种动物中有 8 种缺少一个或两个原版声音变体：乌龟、乌骨鸡、长颈鹿、美国短毛猫、穿山甲和貔貅只有变体 2，只允许接入现有变体；仓鼠和炫舞龟没有声音文件，声音保持 ``excluded``。动物视觉素材不受声音缺口影响。
 - 装饰的阻断项、黑/白耕地占位、远端同帧元素和声音缺口统一维护在 ``asset-review-issues.csv``；正文不再复制易过期的分散待办。
 
 ## 当前边界
 
-本轮只建立素材与源码对应关系，不新增庄园玩法。作物、装饰、动物、UI/动作和声音批次均已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”；后续接入必须消费这些表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
+素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场第一批已消费作物台账并接入 86 种作物、多季与枯萎规则；牧场、好友和装饰仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
 "@
 Set-Content -LiteralPath (Join-Path $OutputDirectory "README.md") -Value $readme -Encoding utf8
 
