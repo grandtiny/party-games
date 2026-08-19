@@ -28,8 +28,16 @@ const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> 
 const CROP_IMAGES: Record<ManorCropId, readonly [string, string, string, string]> = {
   radish: ["crop-radish-0.png", "crop-radish-1.png", "crop-radish-2.png", "crop-radish-3.png"],
   carrot: ["crop-carrot-0.png", "crop-carrot-1.png", "crop-carrot-2.png", "crop-carrot-3.png"],
+  cabbage: ["crop-cabbage-0.png", "crop-cabbage-1.png", "crop-cabbage-2.png", "crop-cabbage-3.png"],
+  wheat: ["crop-wheat-0.png", "crop-wheat-1.png", "crop-wheat-2.png", "crop-wheat-3.png"],
+  rice: ["crop-rice-0.png", "crop-rice-1.png", "crop-rice-2.png", "crop-rice-3.png"],
   corn: ["crop-corn-0.png", "crop-corn-1.png", "crop-corn-2.png", "crop-corn-3.png"],
-  tomato: ["crop-tomato-0.png", "crop-tomato-1.png", "crop-tomato-2.png", "crop-tomato-3.png"]
+  potato: ["crop-potato-0.png", "crop-potato-1.png", "crop-potato-2.png", "crop-potato-3.png"],
+  eggplant: ["crop-eggplant-0.png", "crop-eggplant-1.png", "crop-eggplant-2.png", "crop-eggplant-3.png"],
+  tomato: ["crop-tomato-0.png", "crop-tomato-1.png", "crop-tomato-2.png", "crop-tomato-3.png"],
+  pea: ["crop-pea-0.png", "crop-pea-1.png", "crop-pea-2.png", "crop-pea-3.png"],
+  chili: ["crop-chili-0.png", "crop-chili-1.png", "crop-chili-2.png", "crop-chili-3.png"],
+  pumpkin: ["crop-pumpkin-0.png", "crop-pumpkin-1.png", "crop-pumpkin-2.png", "crop-pumpkin-3.png"]
 };
 
 export function ManorPage() {

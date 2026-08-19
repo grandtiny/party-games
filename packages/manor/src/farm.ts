@@ -24,44 +24,132 @@ export const MANOR_CROPS: readonly ManorCropDefinition[] = [
     name: "白萝卜",
     emoji: "萝",
     levelRequired: 1,
-    seedPrice: 10,
-    salePrice: 6,
-    growthSeconds: 120,
-    baseYield: 4,
-    experience: 4
+    seedPrice: 125,
+    salePrice: 17,
+    growthSeconds: 36_000,
+    baseYield: 16,
+    experience: 15
   },
   {
     id: "carrot",
     name: "胡萝卜",
     emoji: "胡",
+    levelRequired: 1,
+    seedPrice: 163,
+    salePrice: 21,
+    growthSeconds: 46_800,
+    baseYield: 17,
+    experience: 18
+  },
+  {
+    id: "cabbage",
+    name: "大白菜",
+    emoji: "白",
     levelRequired: 2,
-    seedPrice: 20,
-    salePrice: 8,
-    growthSeconds: 300,
-    baseYield: 5,
-    experience: 7
+    seedPrice: 168,
+    salePrice: 22,
+    growthSeconds: 50_400,
+    baseYield: 17,
+    experience: 19
+  },
+  {
+    id: "wheat",
+    name: "小麦",
+    emoji: "麦",
+    levelRequired: 3,
+    seedPrice: 168,
+    salePrice: 21,
+    growthSeconds: 50_400,
+    baseYield: 18,
+    experience: 19
+  },
+  {
+    id: "rice",
+    name: "水稻",
+    emoji: "稻",
+    levelRequired: 3,
+    seedPrice: 168,
+    salePrice: 21,
+    growthSeconds: 50_400,
+    baseYield: 18,
+    experience: 19
   },
   {
     id: "corn",
     name: "玉米",
     emoji: "玉",
-    levelRequired: 3,
-    seedPrice: 35,
-    salePrice: 10,
-    growthSeconds: 600,
-    baseYield: 6,
-    experience: 11
+    levelRequired: 4,
+    seedPrice: 175,
+    salePrice: 23,
+    growthSeconds: 50_400,
+    baseYield: 17,
+    experience: 19
+  },
+  {
+    id: "potato",
+    name: "土豆",
+    emoji: "薯",
+    levelRequired: 5,
+    seedPrice: 188,
+    salePrice: 24,
+    growthSeconds: 54_000,
+    baseYield: 18,
+    experience: 20
+  },
+  {
+    id: "eggplant",
+    name: "茄子",
+    emoji: "茄",
+    levelRequired: 6,
+    seedPrice: 237,
+    salePrice: 25,
+    growthSeconds: 57_600,
+    baseYield: 20,
+    experience: 21
   },
   {
     id: "tomato",
     name: "番茄",
     emoji: "番",
-    levelRequired: 4,
-    seedPrice: 60,
-    salePrice: 12,
-    growthSeconds: 1_200,
-    baseYield: 8,
-    experience: 16
+    levelRequired: 7,
+    seedPrice: 251,
+    salePrice: 26,
+    growthSeconds: 61_200,
+    baseYield: 21,
+    experience: 22
+  },
+  {
+    id: "pea",
+    name: "豌豆",
+    emoji: "豌",
+    levelRequired: 8,
+    seedPrice: 266,
+    salePrice: 27,
+    growthSeconds: 64_800,
+    baseYield: 22,
+    experience: 23
+  },
+  {
+    id: "chili",
+    name: "辣椒",
+    emoji: "辣",
+    levelRequired: 9,
+    seedPrice: 296,
+    salePrice: 28,
+    growthSeconds: 72_000,
+    baseYield: 24,
+    experience: 25
+  },
+  {
+    id: "pumpkin",
+    name: "南瓜",
+    emoji: "南",
+    levelRequired: 10,
+    seedPrice: 325,
+    salePrice: 30,
+    growthSeconds: 79_200,
+    baseYield: 25,
+    experience: 27
   }
 ];
 
@@ -315,7 +403,7 @@ export function levelForExperience(experience: number): number {
 
 export function experienceForLevel(level: number): number {
   if (level <= 1) return 0;
-  return 18 * (level - 1) * level;
+  return 100 * (level - 1) * level;
 }
 
 function toPlotView(plot: ManorPlotState, now: number): ManorPlotView {
@@ -384,12 +472,9 @@ function growthDurationMs(crop: ManorCropDefinition, timeScale = 1): number {
 }
 
 function cropRecord(initial: Partial<Record<ManorCropId, number>> = {}): Record<ManorCropId, number> {
-  return {
-    radish: initial.radish ?? 0,
-    carrot: initial.carrot ?? 0,
-    corn: initial.corn ?? 0,
-    tomato: initial.tomato ?? 0
-  };
+  return Object.fromEntries(
+    MANOR_CROPS.map((crop) => [crop.id, initial[crop.id] ?? 0])
+  ) as Record<ManorCropId, number>;
 }
 
 function createEmptyPlots(startId = 1, count = MANOR_PLOT_COUNT): ManorPlotState[] {

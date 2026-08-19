@@ -373,7 +373,20 @@ export const GomokuProgressSyncRequestSchema = z.object({
 });
 export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
 
-export const ManorCropIdSchema = z.enum(["radish", "carrot", "corn", "tomato"]);
+export const ManorCropIdSchema = z.enum([
+  "radish",
+  "carrot",
+  "cabbage",
+  "wheat",
+  "rice",
+  "corn",
+  "potato",
+  "eggplant",
+  "tomato",
+  "pea",
+  "chili",
+  "pumpkin"
+]);
 export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
 
 const ManorPlotIdSchema = z.number().int().min(1).max(18);

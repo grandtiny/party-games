@@ -30,21 +30,21 @@ describe("manor farm", () => {
     const harvested = toManorFarmView(farm, "玩家", readyAt + 1);
     const radish = harvested.catalog.find((crop) => crop.id === "radish");
     expect(harvested.plots[0]?.status).toBe("empty");
-    expect(radish?.produce).toBe(4);
+    expect(radish?.produce).toBe(16);
 
     farm = applyManorAction(
       farm,
-      { type: "sell", cropId: "radish", quantity: 4 },
+      { type: "sell", cropId: "radish", quantity: 16 },
       readyAt + 2
     );
-    expect(farm.coins).toBe(144);
+    expect(farm.coins).toBe(392);
     expect(farm.produce.radish).toBe(0);
   });
 
   it("enforces unlocks, balances and maturity", () => {
     const farm = createManorFarm(1_000, "account-2");
     expect(() =>
-      applyManorAction(farm, { type: "buy-seeds", cropId: "carrot", quantity: 1 }, 2_000)
+      applyManorAction(farm, { type: "buy-seeds", cropId: "cabbage", quantity: 1 }, 2_000)
     ).toThrow("2 级");
     expect(() =>
       applyManorAction(farm, { type: "sell", cropId: "radish", quantity: 1 }, 2_000)
@@ -65,10 +65,10 @@ describe("manor farm", () => {
       createManorFarm(startedAt, "account-3"),
       { type: "plant", plotId: 1, cropId: "radish" },
       startedAt,
-      { timeScale: 120 }
+      { timeScale: 3_600 }
     );
-    const view = toManorFarmView(farm, "玩家", startedAt + 1_000, { timeScale: 120 });
-    expect(view.catalog[0]?.growthSeconds).toBe(1);
+    const view = toManorFarmView(farm, "玩家", startedAt + 10_000, { timeScale: 3_600 });
+    expect(view.catalog[0]?.growthSeconds).toBe(10);
     expect(view.plots[0]?.status).toBe("mature");
     expect(migrateManorFarm(JSON.parse(JSON.stringify(farm)))).toEqual(farm);
   });
@@ -83,6 +83,18 @@ describe("manor farm", () => {
     const legacy = {
       ...current,
       schemaVersion: 1,
+      seeds: {
+        radish: current.seeds.radish,
+        carrot: current.seeds.carrot,
+        corn: current.seeds.corn,
+        tomato: current.seeds.tomato
+      },
+      produce: {
+        radish: current.produce.radish,
+        carrot: current.produce.carrot,
+        corn: current.produce.corn,
+        tomato: current.produce.tomato
+      },
       plots: current.plots.slice(0, 6)
     };
 
@@ -91,6 +103,8 @@ describe("manor farm", () => {
     expect(migrated.schemaVersion).toBe(2);
     expect(migrated.plots).toHaveLength(18);
     expect(migrated.plots[1]).toMatchObject({ id: 2, cropId: "radish" });
+    expect(migrated.seeds.potato).toBe(0);
+    expect(migrated.produce.cabbage).toBe(0);
     expect(migrated.plots.slice(6)).toEqual(
       Array.from({ length: 12 }, (_, index) => ({ id: index + 7, cycle: 0 }))
     );
