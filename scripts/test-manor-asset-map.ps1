@@ -23,6 +23,16 @@ function Assert-True([bool]$Condition, [string]$Label) {
   }
 }
 
+function Get-PngSize([string]$Path) {
+  $bytes = [IO.File]::ReadAllBytes($Path)
+  if ($bytes.Length -lt 24 -or $bytes[0] -ne 137 -or $bytes[1] -ne 80 -or $bytes[2] -ne 78 -or $bytes[3] -ne 71) {
+    throw "Invalid PNG: $Path"
+  }
+  $width = (([int]$bytes[16]) -shl 24) -bor (([int]$bytes[17]) -shl 16) -bor (([int]$bytes[18]) -shl 8) -bor ([int]$bytes[19])
+  $height = (([int]$bytes[20]) -shl 24) -bor (([int]$bytes[21]) -shl 16) -bor (([int]$bytes[22]) -shl 8) -bor ([int]$bytes[23])
+  return [pscustomobject]@{ Width = $width; Height = $height }
+}
+
 $crops = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crops.csv"))
 $animals = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animals.csv"))
 $decorations = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decorations.csv"))
@@ -31,6 +41,10 @@ $sourceModules = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "source-m
 $duplicates = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "duplicates.csv"))
 $currentAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "current-assets.csv"))
 $currentDuplicates = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "current-duplicates.csv"))
+$cropStateAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-state-assets.csv"))
+$cropCurrentAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-current-assets.csv"))
+$cropContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-contact-review.csv"))
+$cropContactDirectory = Join-Path $OutputDirectory "contact-sheets\crops"
 
 Assert-Equal $crops.Count 86 "crop rows"
 Assert-Equal @($crops | Select-Object -ExpandProperty source_id -Unique).Count 86 "unique crop IDs"
@@ -54,6 +68,11 @@ Assert-Equal @($decorations | Where-Object source_completeness -eq "complete-swf
 Assert-Equal @($decorations | Where-Object source_completeness -eq "full-image-fallback").Count 2 "decorations with full-image fallbacks"
 Assert-Equal @($decorations | Where-Object source_completeness -eq "preview-only-missing-runtime-art").Count 1 "decorations missing runtime artwork"
 Assert-Equal @($decorations | Where-Object known_issue -eq "conflicts-with-config-name-duplicates-95").Count 1 "conflicting decoration identities"
+Assert-Equal @($decorations | Where-Object extraction_policy -eq "extract-swf").Count 168 "decorations eligible for SWF extraction"
+Assert-Equal @($decorations | Where-Object extraction_policy -eq "use-full-image").Count 2 "decorations using full-image fallbacks"
+Assert-Equal @($decorations | Where-Object extraction_policy -eq "blocked-missing-source").Count 1 "decorations blocked by missing sources"
+Assert-Equal @($decorations | Where-Object extraction_policy -eq "blocked-conflicting-source").Count 1 "decorations blocked by conflicting sources"
+Assert-Equal @($decorations | Where-Object { $_.extraction_policy -like "blocked-*" -and $_.preferred_runtime_source }).Count 0 "blocked decorations with runtime sources"
 
 Assert-Equal $files.Count 828 "module file rows"
 Assert-Equal @($files | Where-Object { -not $_.sha256 }).Count 0 "module files without SHA-256"
@@ -74,6 +93,47 @@ Assert-Equal $currentDuplicates.Count 13 "current duplicate groups"
 Assert-Equal @($currentDuplicates | Where-Object review_status -eq "needs-review").Count 0 "unclassified current duplicate groups"
 Assert-Equal @($currentDuplicates | Where-Object review_status -eq "verified-shared-source-sprite").Count 1 "verified shared crop sprite groups"
 
+Assert-Equal $cropStateAssets.Count 602 "crop state asset rows"
+Assert-Equal @($cropStateAssets | Group-Object source_id | Where-Object Count -ne 7).Count 0 "crops without seven state asset rows"
+Assert-Equal @($cropStateAssets | Where-Object { [int]$_.width -le 0 -or [int]$_.height -le 0 }).Count 0 "crop state assets with invalid dimensions"
+Assert-Equal @($cropStateAssets | Where-Object { -not $_.source_sha256 -or -not $_.source_export_file }).Count 0 "crop state assets without source evidence"
+Assert-Equal @($cropStateAssets | Where-Object current_asset).Count 48 "linked current crop assets"
+Assert-Equal @($cropStateAssets | Where-Object current_match_status -eq "mismatch").Count 0 "mismatched current crop state links"
+
+Assert-Equal $cropCurrentAssets.Count 48 "current crop asset mappings"
+Assert-Equal @($cropCurrentAssets | Select-Object -ExpandProperty current_asset -Unique).Count 48 "unique current crop asset mappings"
+Assert-Equal @($cropCurrentAssets | Where-Object match_status -eq "exact").Count 48 "exact current crop asset mappings"
+Assert-Equal @($cropCurrentAssets | Where-Object { [int]$_.source_hash_match_count -lt 1 }).Count 0 "current crop assets without source hash matches"
+Assert-Equal @($cropCurrentAssets | Where-Object source_relationship -eq "state-character").Count 47 "current crop state-character mappings"
+Assert-Equal @($cropCurrentAssets | Where-Object source_relationship -eq "nested-character-of-state").Count 1 "current crop nested-character mappings"
+$riceNested = @($cropCurrentAssets | Where-Object { $_.source_id -eq "60" -and $_.current_stage -eq "1" })
+Assert-Equal $riceNested.Count 1 "rice nested early-growth mapping"
+Assert-Equal $riceNested[0].linked_state_index "2" "rice nested linked state"
+Assert-Equal $riceNested[0].source_character_id "14" "rice nested source character"
+foreach ($mapping in @(
+  @{ SourceId = "60"; CurrentStage = "2"; LinkedState = "4"; Character = "44" },
+  @{ SourceId = "61"; CurrentStage = "2"; LinkedState = "4"; Character = "22" }
+)) {
+  $match = @($cropCurrentAssets | Where-Object { $_.source_id -eq $mapping.SourceId -and $_.current_stage -eq $mapping.CurrentStage })
+  Assert-Equal $match.Count 1 "special late-growth mapping $($mapping.SourceId)"
+  Assert-Equal $match[0].linked_state_index $mapping.LinkedState "special late-growth linked state $($mapping.SourceId)"
+  Assert-Equal $match[0].source_character_id $mapping.Character "special late-growth source character $($mapping.SourceId)"
+}
+
+Assert-Equal $cropContactReview.Count 86 "crop contact review rows"
+Assert-Equal @($cropContactReview | Where-Object state_rows -ne "7").Count 0 "crop contact reviews without seven states"
+Assert-Equal ($cropContactReview | Measure-Object current_assets_checked -Sum).Sum 48 "crop contact current assets checked"
+Assert-Equal ($cropContactReview | Measure-Object current_assets_exact -Sum).Sum 48 "crop contact current assets exact"
+Assert-Equal ($cropContactReview | Measure-Object current_assets_mismatch -Sum).Sum 0 "crop contact current assets mismatched"
+$contactSheets = @(Get-ChildItem -LiteralPath $cropContactDirectory -File -Filter "crop-*.png")
+Assert-Equal $contactSheets.Count 86 "crop contact sheet PNGs"
+Assert-True (Test-Path -LiteralPath (Join-Path $cropContactDirectory "index.html") -PathType Leaf) "missing crop contact sheet index"
+foreach ($sheet in $contactSheets) {
+  $size = Get-PngSize $sheet.FullName
+  Assert-Equal $size.Width 1264 "contact sheet width for $($sheet.Name)"
+  Assert-Equal $size.Height 346 "contact sheet height for $($sheet.Name)"
+}
+
 $actualCurrentHashes = @{}
 foreach ($file in $classicFiles) {
   $actualCurrentHashes["assets/manor/classic/$($file.Name)"] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -81,6 +141,10 @@ foreach ($file in $classicFiles) {
 foreach ($asset in $currentAssets) {
   Assert-True ($actualCurrentHashes.ContainsKey($asset.current_file)) "missing current file: $($asset.current_file)"
   Assert-Equal $asset.sha256 $actualCurrentHashes[$asset.current_file] "SHA-256 for $($asset.current_file)"
+}
+foreach ($asset in $cropCurrentAssets) {
+  Assert-True ($actualCurrentHashes.ContainsKey($asset.current_asset)) "missing mapped crop file: $($asset.current_asset)"
+  Assert-Equal $asset.current_sha256 $actualCurrentHashes[$asset.current_asset] "mapped crop SHA-256 for $($asset.current_asset)"
 }
 
 [pscustomobject]@{
@@ -90,6 +154,9 @@ foreach ($asset in $currentAssets) {
   ModuleFiles = $files.Count
   SourceFiles = $sourceModules.Count
   CurrentAssets = $currentAssets.Count
+  CropStateAssets = $cropStateAssets.Count
+  CurrentCropAssetMappings = $cropCurrentAssets.Count
+  CropContactSheets = $contactSheets.Count
   LegacyDuplicateGroups = $duplicates.Count
   CurrentDuplicateGroups = $currentDuplicates.Count
   Status = "ok"

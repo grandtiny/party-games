@@ -311,6 +311,24 @@ $decorations = foreach ($match in $decorationMatches) {
     402 { "conflicts-with-config-name-duplicates-95" }
     default { "" }
   }
+  $extractionPolicy = if ($itemId -eq 21) {
+    "blocked-missing-source"
+  } elseif ($itemId -eq 402) {
+    "blocked-conflicting-source"
+  } elseif ($swfExists) {
+    "extract-swf"
+  } elseif ($alternateExists) {
+    "use-full-image"
+  } else {
+    "blocked-missing-source"
+  }
+  $preferredRuntimeSource = if ($extractionPolicy -eq "extract-swf") {
+    "module/nc/farm/diy/$itemId.swf"
+  } elseif ($extractionPolicy -eq "use-full-image") {
+    "module/nc/farm/diy/${itemId}f.jpg"
+  } else {
+    ""
+  }
   [pscustomobject][ordered]@{
     source_id = $itemId
     name = Get-StringField $body "itemName"
@@ -331,6 +349,8 @@ $decorations = foreach ($match in $decorationMatches) {
       Where-Object { Test-Path -LiteralPath $_ }).Count
     source_completeness = $sourceCompleteness
     known_issue = $knownIssue
+    extraction_policy = $extractionPolicy
+    preferred_runtime_source = $preferredRuntimeSource
     processing_status = "mapped-not-extracted"
   }
 }
@@ -546,12 +566,16 @@ $readme = @"
 | --- | --- |
 | ``crops.csv`` | 86 种作物的原版经济数据、SWF、七个状态角色和当前接入状态 |
 | ``animals.csv`` | 35 种动物的原版经济数据、SWF SymbolClass 和接入状态 |
-| ``decorations.csv`` | 172 件装饰的套装、类型、价格、源完整性、已知冲突和可用源文件 |
+| ``decorations.csv`` | 172 件装饰的套装、类型、价格、源完整性、提取策略、已知冲突和可用源文件 |
 | ``files.csv`` | ``module`` 下 828 个素材文件的完整文件级台账 |
 | ``source-modules.csv`` | ``source`` 下 124 个 PHP 配置/业务模块及功能分类 |
 | ``duplicates.csv`` | ``module`` 内 SHA-256 完全相同的文件组，用于定位重复素材，不代表可以直接删除 |
 | ``current-assets.csv`` | 当前项目 99 个 classic PNG 的尺寸、哈希、业务对象和源文件对应状态 |
 | ``current-duplicates.csv`` | 当前 classic PNG 的完全重复组及初步复核分类 |
+| ``crop-state-assets.csv`` | 86 种作物七阶段的 602 行角色、导出 PNG、尺寸、哈希和当前素材比对结果 |
+| ``crop-current-assets.csv`` | 当前 48 张作物 PNG 到七阶段、实际源角色、导出文件和哈希的逐张映射 |
+| ``crop-contact-review.csv`` | 每种作物的联系表、角色复用数量和自动校验结果 |
+| ``contact-sheets/crops/index.html`` | 86 份作物七阶段视觉联系表入口 |
 
 ## 状态定义
 
@@ -572,9 +596,10 @@ $readme = @"
 
 - 172 条装饰配置中有 169 条带 SWF。背景 ID 26 和 31 虽然没有 SWF，但分别带 1034x806、1024x768 的 ``f.jpg`` 全尺寸图，可作为运行时回退；背景 ID 21 只有 60x60 预览和 120x120 缩略图，既缺 SWF 也缺全尺寸图，是唯一无法从当前仓库恢复的农场装饰。背景 ID 11 同时带 SWF 和 1028x789 全尺寸图。
 - 原版 ``module`` 有 4 组 SHA-256 完全重复文件。其中装饰 ID 95“浪漫栅栏”和 ID 402“新年围墙”的 SWF、预览图、缩略图三组文件分别完全相同，但业务身份和所属套装不同，应保留两个业务 ID、阻止 402 进入默认提取批次，不能静默合并。另有一组 36 字节牧场装饰 SWF 是可解析的空白占位文件，不作为可见素材处理。
+- ``decorations.csv`` 的 ``extraction_policy`` 是后续处理边界：168 件使用 ``extract-swf``，ID 26/31 使用 ``use-full-image``，ID 21 使用 ``blocked-missing-source``，ID 402 使用 ``blocked-conflicting-source``。被阻止项没有 ``preferred_runtime_source``，不得由批处理静默替代。
 - 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组白萝卜/胡萝卜早期图已确认分别精确来自两个原 SWF 的同一角色 4，10 组为原版按钮 normal/down 状态本身相同；当前没有错误重复或未分类重复。
 - 当前 51 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：49 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
-- 当前 12 种作物的成熟 PNG 已确认是单一成熟精灵。其余 36 张种子/幼苗/生长 PNG 已对应到作物 SWF，但仍应在下一轮联系表中逐张确认具体七阶段角色，不能把对象级映射当成状态级验收。
+- 当前 12 种作物的 48 张 PNG 均已通过 SHA-256 反查到各自 SWF 的实际导出角色：47 张直接对应七阶段角色；水稻当前阶段 1 使用七阶段“幼苗”角色 15 内的纯植株子角色 14，以避免把原版水田底图重复叠到网页土地上。水稻和小麦当前阶段 2 均对应“成熟前”角色，而不是通用作物采用的“生长”角色。具体关系见 ``crop-current-assets.csv`` 和联系表蓝字。
 
 ## 当前边界
 
