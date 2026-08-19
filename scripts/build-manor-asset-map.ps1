@@ -550,10 +550,11 @@ $readme = @"
 
 | 范围 | 数量 | 当前状态 |
 | --- | ---: | --- |
-| 原版作物配置 | $($crops.Count) | $integratedCropCount 种已接入四阶段 PNG，其余已映射未提取 |
-| 原版作物 SWF | $(@($cropStructures | Where-Object source_file -Like 'Crop_*.swf').Count) | 结构解析错误 $cropParseErrors |
-| 原版动物配置/SWF | $($animals.Count) | 均已映射，结构解析错误 $animalParseErrors，尚未接入玩法 |
-| 原版装饰配置 | $($decorations.Count) | 背景、房屋、围栏、狗窝各 43 件，尚未接入切换玩法 |
+| 原版作物配置/SWF | $($crops.Count) | 602 个七阶段角色已导出并人工复核；$integratedCropCount 种已接入四阶段 PNG；结构解析错误 $cropParseErrors |
+| 原版动物配置/SWF | $($animals.Count) | 210 个六状态角色和 78 个内部辅助类已分离登记并人工复核；结构解析错误 $animalParseErrors |
+| 原版装饰配置 | $($decorations.Count) | 170 件可用成品已提取并人工复核；ID 21/402 保持阻止 |
+| UI、动作及辅助素材 | 130 个源文件 | 830 个可见映射已复核；28 个空轮廓和 2 个二进制类已分类 |
+| 原版牧场声音 | 60 个容器/60 条音轨 | 按真实 DefineSound 登记，总时长 75.121 秒；8 种动物存在原版变体缺口 |
 | 原版 module 素材文件 | $($assetFiles.Count) | 已逐文件登记 SHA-256、分类和处理状态 |
 | 原版 source 源码文件 | $($sourceModules.Count) | 已按功能域登记，用于后续规则对应 |
 | 原版 module 完全重复文件组 | $(@($duplicateAssets).Count) | 仅表示二进制完全相同，删除或合并前仍需人工判断用途 |
@@ -575,7 +576,20 @@ $readme = @"
 | ``crop-state-assets.csv`` | 86 种作物七阶段的 602 行角色、导出 PNG、尺寸、哈希和当前素材比对结果 |
 | ``crop-current-assets.csv`` | 当前 48 张作物 PNG 到七阶段、实际源角色、导出文件和哈希的逐张映射 |
 | ``crop-contact-review.csv`` | 每种作物的联系表、角色复用数量和自动校验结果 |
+| ``crop-visual-review.csv`` | 86 种作物联系表的人工视觉复核结论和专项备注，生成器只读取、不覆盖 |
+| ``decoration-assets.csv`` | 172 件装饰的实际选源、导出图、可见范围、哈希和视觉复核状态 |
+| ``decoration-contact-review.csv`` / ``decoration-visual-review.csv`` | 装饰自动检查与人工视觉结论 |
+| ``animal-state-assets.csv`` | 35 种动物六个运行时状态的 210 行角色、导出图、尺寸和哈希 |
+| ``animal-symbol-classes.csv`` | 288 个动物 SymbolClass，明确区分 210 个运行时状态和 78 个内部辅助类 |
+| ``animal-contact-review.csv`` / ``animal-visual-review.csv`` | 动物联系表自动检查与人工视觉结论 |
+| ``interface-media-assets.csv`` | UI、动作、花束、留言板、入口和声音等 130 个源文件的分类汇总 |
+| ``interface-symbol-assets.csv`` | 860 个根舞台、SymbolClass 和 ExportAssets 映射及 830 个渲染结果 |
+| ``sound-assets.csv`` | 60 个真实 DefineSound 音轨的格式、采样率、声道、样本数和时长 |
+| ``asset-review-issues.csv`` | 当前全部阻断项、接入前复核项和原版声音缺口的统一问题清单 |
 | ``contact-sheets/crops/index.html`` | 86 份作物七阶段视觉联系表入口 |
+| ``contact-sheets/decorations/index.html`` | 172 件装饰视觉联系表入口 |
+| ``contact-sheets/animals/index.html`` | 35 种动物六状态视觉联系表入口 |
+| ``contact-sheets/interface-media/index.html`` | 38 份 UI、动作和辅助素材联系表入口 |
 
 ## 状态定义
 
@@ -590,7 +604,11 @@ $readme = @"
 
 作物根精灵通常按深度放置七个状态角色。``crops.csv`` 将它们记录为 seed、sprout、young、growing、pre-mature、mature、withered。当前只把这套顺序作为提取索引；每种作物仍需生成联系表并肉眼确认，不能仅按“倒数第二个精灵”批量认定成熟图。
 
-动物 SWF 通常导出多个 ``Animal_<id>_<state>`` SymbolClass，不适合套用作物的七阶段规则。``animals.csv`` 保存完整 SymbolClass 映射，后续按幼年、成长、生产、饥饿等原版状态单独验收。
+动物 SWF 每种都有 ``Animal_<id>_1`` 至 ``Animal_<id>_6`` 六个运行时状态，依次对应幼年、成长、成熟待生产、生产阶段一、生产阶段二、生命周期结束。该语义来自原 PHP 的状态跳转；联系表仍保留数字状态作为运行时契约。兔子、羊、袋鼠等额外内部类只登记在 ``animal-symbol-classes.csv``，不混入六状态。
+
+UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 ExportAssets 上。联系表同时记录空根舞台、运行时容器和不可视二进制配置，不把它们误报为丢图。``action-effect-candidate`` 仅是类名启发式分类，接入时仍应根据联系表和业务调用点确认。
+
+牧场声音按 SWF 内真实 ``DefineSound`` 标签清点，而不是按容器文件数推测。当前 60 个容器各含 1 条音轨；采样率使用 JPEXS 解析后的 Hz 值计算时长。
 
 ## 已知缺口与重复
 
@@ -600,10 +618,12 @@ $readme = @"
 - 当前 classic PNG 有 13 组完全重复：2 组为多种作物共享种子图，1 组白萝卜/胡萝卜早期图已确认分别精确来自两个原 SWF 的同一角色 4，10 组为原版按钮 normal/down 状态本身相同；当前没有错误重复或未分类重复。
 - 当前 51 张场景/UI PNG 已全部追溯到 ``farmui1_v_12.swf`` 或 ``farmui2_v_4.swf``：49 张与 JPEXS 导出文件哈希一致，``can-harvest.png`` 对应 ``138:canPickIcon`` 且只有 1 个像素差异，背景对应 ``1:DefaultBg`` 内嵌图。
 - 当前 12 种作物的 48 张 PNG 均已通过 SHA-256 反查到各自 SWF 的实际导出角色：47 张直接对应七阶段角色；水稻当前阶段 1 使用七阶段“幼苗”角色 15 内的纯植株子角色 14，以避免把原版水田底图重复叠到网页土地上。水稻和小麦当前阶段 2 均对应“成熟前”角色，而不是通用作物采用的“生长”角色。具体关系见 ``crop-current-assets.csv`` 和联系表蓝字。
+- 35 种动物中有 8 种缺少一个或两个原版声音变体：乌龟、乌骨鸡、长颈鹿、美国短毛猫、穿山甲和貔貅只有变体 2，仓鼠和炫舞龟没有声音文件。接入时只能明确回退或保持静音，不能伪造原版映射。
+- 装饰的阻断项、黑/白耕地占位、远端同帧元素和声音缺口统一维护在 ``asset-review-issues.csv``；正文不再复制易过期的分散待办。
 
 ## 当前边界
 
-本轮只建立素材与源码对应关系，不新增庄园玩法。后续素材处理应按“批量导出 -> 联系表 -> 人工验收 -> 写入目标清单”的顺序进行，原 PHP/Flash 不直接进入运行时，平台账号继续作为唯一账号体系。
+本轮只建立素材与源码对应关系，不新增庄园玩法。作物、装饰、动物、UI/动作和声音批次均已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”；后续接入必须消费这些表，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
 "@
 Set-Content -LiteralPath (Join-Path $OutputDirectory "README.md") -Value $readme -Encoding utf8
 

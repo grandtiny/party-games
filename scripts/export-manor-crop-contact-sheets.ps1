@@ -27,6 +27,7 @@ $cropTablePath = Join-Path $repositoryRoot "docs\manor-assets\crops.csv"
 $stateTablePath = Join-Path $repositoryRoot "docs\manor-assets\crop-state-assets.csv"
 $currentTablePath = Join-Path $repositoryRoot "docs\manor-assets\crop-current-assets.csv"
 $reviewTablePath = Join-Path $repositoryRoot "docs\manor-assets\crop-contact-review.csv"
+$visualReviewTablePath = Join-Path $repositoryRoot "docs\manor-assets\crop-visual-review.csv"
 $currentAssetDirectory = Join-Path $repositoryRoot "apps\web\public\assets\manor\classic"
 
 if (-not (Test-Path -LiteralPath $JpexsJar -PathType Leaf)) {
@@ -199,12 +200,21 @@ function New-CropContactSheet($Crop, [array]$States, [string]$Path) {
 }
 
 $crops = @(Import-Csv -LiteralPath $cropTablePath | Sort-Object original_level, source_id)
+$visualReviews = @{}
+if (Test-Path -LiteralPath $visualReviewTablePath -PathType Leaf) {
+  foreach ($review in @(Import-Csv -LiteralPath $visualReviewTablePath)) {
+    $visualReviews[$review.source_id] = $review
+  }
+}
 $stateRows = [Collections.Generic.List[object]]::new()
 $currentRows = [Collections.Generic.List[object]]::new()
 $reviewRows = [Collections.Generic.List[object]]::new()
 $galleryRows = [Collections.Generic.List[object]]::new()
 
 foreach ($crop in $crops) {
+  $visualReview = if ($visualReviews.ContainsKey($crop.source_id)) { $visualReviews[$crop.source_id] } else { $null }
+  $visualReviewStatus = if ($visualReview) { $visualReview.review_status } else { "pending-contact-sheet-review" }
+  $visualReviewNote = if ($visualReview) { $visualReview.review_note } else { "" }
   $cropExportDirectory = Join-Path $InventoryDirectory "Crop_$($crop.source_id).swf"
   if (-not (Test-Path -LiteralPath $cropExportDirectory -PathType Container)) {
     throw "Missing JPEXS export directory: $cropExportDirectory"
@@ -266,7 +276,7 @@ foreach ($crop in $crops) {
         current_asset = "assets/manor/classic/$currentAssetName"
         current_sha256 = $currentHash
         match_status = $matchStatus
-        visual_review_status = "pending-contact-sheet-review"
+        visual_review_status = $visualReviewStatus
         _source_image_path = $sourceImagePath
       }
       if ($currentMappingsByStateIndex.ContainsKey($stateIndex)) {
@@ -313,7 +323,7 @@ foreach ($crop in $crops) {
       current_source_relationship = if ($currentMapping) { $currentMapping.source_relationship } else { "" }
       current_sha256 = if ($currentMapping) { $currentMapping.current_sha256 } else { "" }
       current_match_status = if ($currentMapping) { $currentMapping.match_status } else { "not-current" }
-      visual_review_status = "pending-contact-sheet-review"
+      visual_review_status = $visualReviewStatus
       _image_path = $imagePath
     }
     $states.Add($state)
@@ -337,6 +347,8 @@ foreach ($crop in $crops) {
     current_assets_exact = @($currentStates | Where-Object current_match_status -eq "exact").Count
     current_assets_mismatch = $mismatches.Count
     automated_status = if ($mismatches.Count -eq 0) { "ready-for-visual-review" } else { "current-asset-mismatch" }
+    visual_review_status = $visualReviewStatus
+    visual_review_note = $visualReviewNote
   })
   $galleryRows.Add([pscustomobject]@{
     FileName = $fileName
@@ -413,5 +425,6 @@ if ($mismatchCount -gt 0) {
   ContactSheets = $galleryRows.Count
   CurrentAssetsExact = @($currentRows | Where-Object match_status -eq "exact").Count
   CurrentAssetsMismatch = $mismatchCount
+  VisualReviews = @($visualReviews.Values | Where-Object review_status -eq "reviewed-ok").Count
   OutputDirectory = $OutputDirectory
 }

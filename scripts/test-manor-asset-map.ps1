@@ -44,7 +44,24 @@ $currentDuplicates = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "curr
 $cropStateAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-state-assets.csv"))
 $cropCurrentAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-current-assets.csv"))
 $cropContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-contact-review.csv"))
+$cropVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-visual-review.csv"))
 $cropContactDirectory = Join-Path $OutputDirectory "contact-sheets\crops"
+$decorationAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-assets.csv"))
+$decorationContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-contact-review.csv"))
+$decorationVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-visual-review.csv"))
+$decorationContactDirectory = Join-Path $OutputDirectory "contact-sheets\decorations"
+$animalStateAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-state-assets.csv"))
+$animalSymbolClasses = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-symbol-classes.csv"))
+$animalContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-contact-review.csv"))
+$animalVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-visual-review.csv"))
+$animalContactDirectory = Join-Path $OutputDirectory "contact-sheets\animals"
+$interfaceMediaAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-assets.csv"))
+$interfaceSymbolAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-symbol-assets.csv"))
+$soundAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "sound-assets.csv"))
+$interfaceMediaContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-contact-review.csv"))
+$interfaceMediaVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-visual-review.csv"))
+$interfaceMediaContactDirectory = Join-Path $OutputDirectory "contact-sheets\interface-media"
+$assetReviewIssues = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "asset-review-issues.csv"))
 
 Assert-Equal $crops.Count 86 "crop rows"
 Assert-Equal @($crops | Select-Object -ExpandProperty source_id -Unique).Count 86 "unique crop IDs"
@@ -99,6 +116,7 @@ Assert-Equal @($cropStateAssets | Where-Object { [int]$_.width -le 0 -or [int]$_
 Assert-Equal @($cropStateAssets | Where-Object { -not $_.source_sha256 -or -not $_.source_export_file }).Count 0 "crop state assets without source evidence"
 Assert-Equal @($cropStateAssets | Where-Object current_asset).Count 48 "linked current crop assets"
 Assert-Equal @($cropStateAssets | Where-Object current_match_status -eq "mismatch").Count 0 "mismatched current crop state links"
+Assert-Equal @($cropStateAssets | Where-Object visual_review_status -ne "reviewed-ok").Count 0 "crop state assets awaiting visual review"
 
 Assert-Equal $cropCurrentAssets.Count 48 "current crop asset mappings"
 Assert-Equal @($cropCurrentAssets | Select-Object -ExpandProperty current_asset -Unique).Count 48 "unique current crop asset mappings"
@@ -106,6 +124,7 @@ Assert-Equal @($cropCurrentAssets | Where-Object match_status -eq "exact").Count
 Assert-Equal @($cropCurrentAssets | Where-Object { [int]$_.source_hash_match_count -lt 1 }).Count 0 "current crop assets without source hash matches"
 Assert-Equal @($cropCurrentAssets | Where-Object source_relationship -eq "state-character").Count 47 "current crop state-character mappings"
 Assert-Equal @($cropCurrentAssets | Where-Object source_relationship -eq "nested-character-of-state").Count 1 "current crop nested-character mappings"
+Assert-Equal @($cropCurrentAssets | Where-Object visual_review_status -ne "reviewed-ok").Count 0 "current crop assets awaiting visual review"
 $riceNested = @($cropCurrentAssets | Where-Object { $_.source_id -eq "60" -and $_.current_stage -eq "1" })
 Assert-Equal $riceNested.Count 1 "rice nested early-growth mapping"
 Assert-Equal $riceNested[0].linked_state_index "2" "rice nested linked state"
@@ -121,7 +140,10 @@ foreach ($mapping in @(
 }
 
 Assert-Equal $cropContactReview.Count 86 "crop contact review rows"
+Assert-Equal $cropVisualReview.Count 86 "crop visual review rows"
+Assert-Equal @($cropVisualReview | Where-Object review_status -ne "reviewed-ok").Count 0 "crop visual reviews not approved"
 Assert-Equal @($cropContactReview | Where-Object state_rows -ne "7").Count 0 "crop contact reviews without seven states"
+Assert-Equal @($cropContactReview | Where-Object visual_review_status -ne "reviewed-ok").Count 0 "crop contact sheets awaiting visual review"
 Assert-Equal ($cropContactReview | Measure-Object current_assets_checked -Sum).Sum 48 "crop contact current assets checked"
 Assert-Equal ($cropContactReview | Measure-Object current_assets_exact -Sum).Sum 48 "crop contact current assets exact"
 Assert-Equal ($cropContactReview | Measure-Object current_assets_mismatch -Sum).Sum 0 "crop contact current assets mismatched"
@@ -133,6 +155,99 @@ foreach ($sheet in $contactSheets) {
   Assert-Equal $size.Width 1264 "contact sheet width for $($sheet.Name)"
   Assert-Equal $size.Height 346 "contact sheet height for $($sheet.Name)"
 }
+
+Assert-Equal $decorationAssets.Count 172 "decoration asset rows"
+Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "swf-stage-frame").Count 40 "decoration stage-frame assets"
+Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "swf-content-frame").Count 128 "decoration content-frame assets"
+Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "full-image").Count 2 "decoration full-image assets"
+Assert-Equal @($decorationAssets | Where-Object selected_source_kind -like "blocked-*").Count 2 "blocked decoration assets"
+Assert-Equal @($decorationAssets | Where-Object automated_status -eq "ready-for-visual-review").Count 170 "decoration assets ready for review"
+Assert-Equal @($decorationAssets | Where-Object { $_.selected_source_kind -notlike "blocked-*" -and [int]$_.visible_pixels -le 0 }).Count 0 "empty usable decoration assets"
+Assert-Equal $decorationContactReview.Count 172 "decoration contact review rows"
+Assert-Equal $decorationVisualReview.Count 172 "decoration visual review rows"
+Assert-Equal @($decorationVisualReview | Where-Object review_status -eq "reviewed-ok").Count 162 "approved decoration reviews"
+Assert-Equal @($decorationVisualReview | Where-Object review_status -eq "reviewed-with-note").Count 8 "noted decoration reviews"
+Assert-Equal @($decorationVisualReview | Where-Object review_status -like "blocked-*").Count 2 "blocked decoration reviews"
+$decorationContactSheets = @(Get-ChildItem -LiteralPath $decorationContactDirectory -File -Filter "decoration-*.png")
+Assert-Equal $decorationContactSheets.Count 172 "decoration contact sheet PNGs"
+Assert-True (Test-Path -LiteralPath (Join-Path $decorationContactDirectory "index.html") -PathType Leaf) "missing decoration contact sheet index"
+foreach ($sheet in $decorationContactSheets) {
+  $size = Get-PngSize $sheet.FullName
+  Assert-Equal $size.Width 1000 "decoration contact sheet width for $($sheet.Name)"
+  Assert-Equal $size.Height 390 "decoration contact sheet height for $($sheet.Name)"
+}
+
+Assert-Equal $animalStateAssets.Count 210 "animal state asset rows"
+Assert-Equal @($animalStateAssets | Group-Object source_id | Where-Object Count -ne 6).Count 0 "animals without six runtime states"
+Assert-Equal @($animalStateAssets | Where-Object { [int]$_.visible_pixels -le 0 }).Count 0 "empty animal state assets"
+Assert-Equal @($animalStateAssets | Where-Object { -not $_.source_sha256 -or -not $_.source_export_file }).Count 0 "animal states without source evidence"
+Assert-Equal @($animalStateAssets | Where-Object visual_review_status -notlike "reviewed-*").Count 0 "animal states awaiting visual review"
+Assert-Equal $animalSymbolClasses.Count 288 "animal SymbolClass rows"
+Assert-Equal @($animalSymbolClasses | Where-Object role_kind -eq "runtime-state").Count 210 "animal runtime-state SymbolClasses"
+Assert-Equal @($animalSymbolClasses | Where-Object role_kind -eq "internal-helper").Count 78 "animal internal helper SymbolClasses"
+Assert-Equal $animalContactReview.Count 35 "animal contact review rows"
+Assert-Equal @($animalContactReview | Where-Object runtime_state_rows -ne "6").Count 0 "animal contacts without six states"
+Assert-Equal @($animalContactReview | Where-Object empty_state_frames -ne "0").Count 0 "animal contacts with empty states"
+Assert-Equal @($animalContactReview | Where-Object visual_review_status -notlike "reviewed-*").Count 0 "animal contacts awaiting visual review"
+Assert-Equal $animalVisualReview.Count 35 "animal visual review rows"
+Assert-Equal @($animalVisualReview | Where-Object review_status -eq "reviewed-ok").Count 34 "approved animal reviews"
+Assert-Equal @($animalVisualReview | Where-Object review_status -eq "reviewed-with-note").Count 1 "noted animal reviews"
+$animalContactSheets = @(Get-ChildItem -LiteralPath $animalContactDirectory -File -Filter "animal-*.png")
+Assert-Equal $animalContactSheets.Count 35 "animal contact sheet PNGs"
+Assert-True (Test-Path -LiteralPath (Join-Path $animalContactDirectory "index.html") -PathType Leaf) "missing animal contact sheet index"
+foreach ($sheet in $animalContactSheets) {
+  $size = Get-PngSize $sheet.FullName
+  Assert-Equal $size.Width 1136 "animal contact sheet width for $($sheet.Name)"
+  Assert-Equal $size.Height 358 "animal contact sheet height for $($sheet.Name)"
+}
+
+Assert-Equal $interfaceMediaAssets.Count 130 "interface/media source rows"
+foreach ($categoryCount in @(
+  @{ Category = "farm-crop-support"; Count = 4 },
+  @{ Category = "farm-decoration-board"; Count = 16 },
+  @{ Category = "farm-flower"; Count = 28 },
+  @{ Category = "farm-ui"; Count = 6 },
+  @{ Category = "other"; Count = 7 },
+  @{ Category = "pasture-sound"; Count = 60 },
+  @{ Category = "pasture-ui"; Count = 9 }
+)) {
+  Assert-Equal @($interfaceMediaAssets | Where-Object category -eq $categoryCount.Category).Count $categoryCount.Count "$($categoryCount.Category) source rows"
+}
+Assert-Equal @($interfaceMediaAssets | Where-Object processing_status -eq "parse-error").Count 0 "interface/media parse errors"
+Assert-Equal @($interfaceMediaAssets | Where-Object processing_status -eq "no-define-sound").Count 0 "sound containers without DefineSound"
+Assert-Equal @($interfaceMediaAssets | Where-Object { $_.inventory_kind -eq "sound-swf" -and $_.define_sound_count -ne "1" }).Count 0 "sound containers without exactly one track"
+Assert-Equal $interfaceSymbolAssets.Count 860 "interface symbol asset rows"
+Assert-Equal @($interfaceSymbolAssets | Where-Object render_status -eq "rendered").Count 830 "rendered interface symbol assets"
+Assert-Equal @($interfaceSymbolAssets | Where-Object render_status -eq "empty-outline").Count 28 "empty interface symbol outlines"
+Assert-Equal @($interfaceSymbolAssets | Where-Object render_status -eq "not-drawable").Count 2 "non-drawable interface symbols"
+Assert-Equal @($interfaceSymbolAssets | Where-Object visual_role -eq "action-effect-candidate").Count 20 "action effect candidates"
+Assert-Equal @($interfaceSymbolAssets | Where-Object { $_.render_status -notin @("rendered", "empty-outline", "not-drawable") }).Count 0 "unclassified interface render failures"
+Assert-Equal $soundAssets.Count 60 "DefineSound rows"
+Assert-Equal @($soundAssets | Select-Object -ExpandProperty source_file -Unique).Count 60 "unique sound containers"
+Assert-Equal @($soundAssets | Where-Object sound_format -eq "WAV").Count 55 "WAV sound rows"
+Assert-Equal @($soundAssets | Where-Object sound_format -eq "MP3").Count 5 "MP3 sound rows"
+Assert-Equal @($soundAssets | Where-Object { [int]$_.sound_rate -notin @(5512, 11025, 22050, 44100) }).Count 0 "invalid decoded sound rates"
+Assert-Equal ([Math]::Round([double](($soundAssets | Measure-Object sound_duration_seconds -Sum).Sum), 3)) 75.121 "total sound duration"
+Assert-Equal $interfaceMediaContactReview.Count 38 "interface/media contact review rows"
+Assert-Equal @($interfaceMediaContactReview | Where-Object visual_review_status -notlike "reviewed-*").Count 0 "interface/media contacts awaiting visual review"
+Assert-Equal @($interfaceMediaContactReview | Where-Object render_errors -ne "0").Count 0 "interface/media contact render errors"
+Assert-Equal $interfaceMediaVisualReview.Count 38 "interface/media visual review rows"
+Assert-Equal @($interfaceMediaVisualReview | Where-Object review_status -eq "reviewed-ok").Count 30 "approved interface/media reviews"
+Assert-Equal @($interfaceMediaVisualReview | Where-Object review_status -eq "reviewed-with-note").Count 8 "noted interface/media reviews"
+$interfaceMediaContactSheets = @(Get-ChildItem -LiteralPath $interfaceMediaContactDirectory -File -Filter "media-*.png")
+Assert-Equal $interfaceMediaContactSheets.Count 38 "interface/media contact sheet PNGs"
+Assert-True (Test-Path -LiteralPath (Join-Path $interfaceMediaContactDirectory "index.html") -PathType Leaf) "missing interface/media contact sheet index"
+foreach ($sheet in $interfaceMediaContactSheets) {
+  $size = Get-PngSize $sheet.FullName
+  Assert-Equal $size.Width 1128 "interface/media contact sheet width for $($sheet.Name)"
+  Assert-True ($size.Height -gt 0) "invalid interface/media contact sheet height for $($sheet.Name)"
+}
+
+Assert-Equal $assetReviewIssues.Count 18 "asset review issue rows"
+Assert-Equal @($assetReviewIssues | Where-Object severity -eq "blocking").Count 2 "blocking asset issues"
+Assert-Equal @($assetReviewIssues | Where-Object severity -eq "warning").Count 16 "warning asset issues"
+Assert-Equal @($assetReviewIssues | Where-Object status -eq "integration-check-required").Count 8 "decoration integration checks"
+Assert-Equal @($assetReviewIssues | Where-Object status -eq "source-gap").Count 8 "pasture sound source gaps"
 
 $actualCurrentHashes = @{}
 foreach ($file in $classicFiles) {
@@ -157,6 +272,13 @@ foreach ($asset in $cropCurrentAssets) {
   CropStateAssets = $cropStateAssets.Count
   CurrentCropAssetMappings = $cropCurrentAssets.Count
   CropContactSheets = $contactSheets.Count
+  DecorationContactSheets = $decorationContactSheets.Count
+  AnimalStateAssets = $animalStateAssets.Count
+  AnimalContactSheets = $animalContactSheets.Count
+  InterfaceSymbolAssets = $interfaceSymbolAssets.Count
+  DefineSounds = $soundAssets.Count
+  InterfaceMediaContactSheets = $interfaceMediaContactSheets.Count
+  AssetReviewIssues = $assetReviewIssues.Count
   LegacyDuplicateGroups = $duplicates.Count
   CurrentDuplicateGroups = $currentDuplicates.Count
   Status = "ok"

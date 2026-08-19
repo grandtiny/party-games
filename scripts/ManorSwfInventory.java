@@ -1,9 +1,15 @@
 import com.jpexs.decompiler.flash.SWF;
 import com.jpexs.decompiler.flash.tags.DefineSpriteTag;
+import com.jpexs.decompiler.flash.tags.ExportAssetsTag;
 import com.jpexs.decompiler.flash.tags.SymbolClassTag;
 import com.jpexs.decompiler.flash.tags.Tag;
 import com.jpexs.decompiler.flash.tags.base.CharacterTag;
 import com.jpexs.decompiler.flash.tags.base.PlaceObjectTypeTag;
+import com.jpexs.decompiler.flash.tags.base.RenderContext;
+import com.jpexs.decompiler.flash.exporters.commonshape.Matrix;
+import com.jpexs.decompiler.flash.types.RECT;
+import java.awt.Shape;
+import java.awt.geom.Rectangle2D;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +47,10 @@ public final class ManorSwfInventory {
       "state_depths",
       "all_sprite_ids",
       "symbol_classes",
+      "export_assets",
+      "display_rect",
+      "content_rect",
+      "outline_rect",
       "error"
     ));
 
@@ -54,6 +64,7 @@ public final class ManorSwfInventory {
     try (InputStream input = Files.newInputStream(path)) {
       SWF swf = new SWF(input, true);
       Map<Integer, String> classes = new LinkedHashMap<>();
+      Map<Integer, String> exportAssets = new LinkedHashMap<>();
       List<Integer> spriteIds = new ArrayList<>();
 
       for (Tag tag : swf.getTags()) {
@@ -62,6 +73,13 @@ public final class ManorSwfInventory {
             int characterId = symbolClass.tags.get(index);
             String className = symbolClass.names.get(index);
             if (characterId > 0) classes.put(characterId, className);
+          }
+        }
+        if (tag instanceof ExportAssetsTag exportAssetsTag) {
+          for (int index = 0; index < exportAssetsTag.tags.size(); index += 1) {
+            int characterId = exportAssetsTag.tags.get(index);
+            String exportName = exportAssetsTag.names.get(index);
+            if (characterId > 0) exportAssets.put(characterId, exportName);
           }
         }
         if (tag instanceof DefineSpriteTag sprite) spriteIds.add(sprite.spriteId);
@@ -90,10 +108,14 @@ public final class ManorSwfInventory {
         join(stateDepths),
         join(spriteIds),
         joinClasses(classes),
+        joinClasses(exportAssets),
+        formatRect(swf.displayRect),
+        formatRect(swf.getRectWithStrokes()),
+        getOutlineRect(swf),
         ""
       );
     } catch (Exception error) {
-      printRow(sourceFile, "", "", "", "", "", "", error.getClass().getSimpleName() + ": " + error.getMessage());
+      printRow(sourceFile, "", "", "", "", "", "", "", "", "", "", error.getClass().getSimpleName() + ": " + error.getMessage());
     }
   }
 
@@ -118,6 +140,22 @@ public final class ManorSwfInventory {
       .map(entry -> entry.getKey() + ":" + entry.getValue())
       .reduce((left, right) -> left + "," + right)
       .orElse("");
+  }
+
+  private static String formatRect(RECT rectangle) {
+    if (rectangle == null) return "";
+    return rectangle.Xmin + "," + rectangle.Ymin + "," + rectangle.Xmax + "," + rectangle.Ymax;
+  }
+
+  private static String getOutlineRect(SWF swf) {
+    try {
+      Shape outline = swf.getTimeline().getOutline(false, 0, 0, new RenderContext(), new Matrix(), false, null, 1.0);
+      if (outline == null) return "";
+      Rectangle2D bounds = outline.getBounds2D();
+      return bounds.getX() + "," + bounds.getY() + "," + bounds.getWidth() + "," + bounds.getHeight();
+    } catch (Exception error) {
+      return "";
+    }
   }
 
   private static void printRow(String... values) {
