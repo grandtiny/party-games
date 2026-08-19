@@ -163,6 +163,7 @@ Add-CurrentAssetSource "can-harvest.png" $farmUi1 "138:canPickIcon" "verified-so
 Add-CurrentAssetSource "close.png" $farmUi1 "306:CloseButton"
 Add-CurrentAssetSource "exp-bg.png" $farmUi1 "267:ExpBlueBg"
 Add-CurrentAssetSource "exp-fill.png" $farmUi1 "269:ExpBlue"
+Add-CurrentAssetSource "fertilizer.png" $farmUi1 "157:Fertilizer"
 Add-CurrentAssetSource "head-bg.png" $farmUi1 "265:HeadBg"
 Add-CurrentAssetSource "insect.png" $farmUi1 "257:Insect"
 Add-CurrentAssetSource "item-bg.png" $farmUi1 "314:ItemBg"
@@ -583,7 +584,7 @@ $readme = @"
 | ``files.csv`` | ``module`` 下 828 个素材文件的完整文件级台账 |
 | ``source-modules.csv`` | ``source`` 下 124 个 PHP 配置/业务模块及功能分类 |
 | ``duplicates.csv`` | ``module`` 内 SHA-256 完全相同的文件组，用于定位重复素材，不代表可以直接删除 |
-| ``current-assets.csv`` | 当前项目 99 个 classic PNG 的尺寸、哈希、业务对象和源文件对应状态 |
+| ``current-assets.csv`` | 当前项目 100 个 classic PNG 的尺寸、哈希、业务对象和源文件对应状态 |
 | ``current-duplicates.csv`` | 当前 classic PNG 的完全重复组及初步复核分类 |
 | ``crop-state-assets.csv`` | 86 种作物七阶段的 602 行角色、导出 PNG、尺寸、哈希和当前素材比对结果 |
 | ``crop-current-assets.csv`` | 当前 48 张作物 PNG 到七阶段、实际源角色、导出文件和哈希的逐张映射 |
@@ -647,7 +648,7 @@ UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 Exp
 
 ## 当前边界
 
-素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场第一批已消费作物台账并接入 86 种作物、多季与枯萎规则；牧场、好友和装饰仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
+素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场已消费作物台账并接入 86 种作物、原版生长阶段、多季、枯萎、照料收益/减产和普通化肥规则；普通化肥图标直接来自 ``farmui1_v_12.swf`` 的 ``157:Fertilizer``。牧场、好友和装饰仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
 "@
 Set-Content -LiteralPath (Join-Path $OutputDirectory "README.md") -Value $readme -Encoding utf8
 

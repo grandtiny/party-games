@@ -10,6 +10,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 17,
     "growthSeconds": 36000,
     "regrowthSeconds": 10800,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      36000
+    ],
     "baseYield": 16,
     "experience": 15,
     "harvestCycles": 1,
@@ -25,6 +32,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 21,
     "growthSeconds": 46800,
     "regrowthSeconds": 14400,
+    "growthStageSeconds": [
+      7200,
+      18000,
+      32400,
+      46800,
+      46800
+    ],
     "baseYield": 17,
     "experience": 18,
     "harvestCycles": 1,
@@ -40,6 +54,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 6,
     "growthSeconds": 28800,
     "regrowthSeconds": 7200,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      21600,
+      28800,
+      28800
+    ],
     "baseYield": 25,
     "experience": 10,
     "harvestCycles": 1,
@@ -55,6 +76,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 21,
     "growthSeconds": 46800,
     "regrowthSeconds": 21600,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      46800
+    ],
     "baseYield": 17,
     "experience": 18,
     "harvestCycles": 1,
@@ -70,6 +98,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 22,
     "growthSeconds": 50400,
     "regrowthSeconds": 25200,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      50400
+    ],
     "baseYield": 17,
     "experience": 19,
     "harvestCycles": 1,
@@ -85,6 +120,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 21,
     "growthSeconds": 50400,
     "regrowthSeconds": 25200,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      50400
+    ],
     "baseYield": 18,
     "experience": 19,
     "harvestCycles": 1,
@@ -100,6 +142,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 21,
     "growthSeconds": 50400,
     "regrowthSeconds": 25200,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      50400
+    ],
     "baseYield": 18,
     "experience": 19,
     "harvestCycles": 1,
@@ -115,6 +164,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 23,
     "growthSeconds": 50400,
     "regrowthSeconds": 25200,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      50400
+    ],
     "baseYield": 17,
     "experience": 19,
     "harvestCycles": 1,
@@ -130,6 +186,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 24,
     "growthSeconds": 54000,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      7200,
+      14400,
+      25200,
+      39600,
+      54000
+    ],
     "baseYield": 18,
     "experience": 20,
     "harvestCycles": 1,
@@ -145,6 +208,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 25,
     "growthSeconds": 57600,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      7200,
+      18000,
+      28800,
+      43200,
+      57600
+    ],
     "baseYield": 20,
     "experience": 21,
     "harvestCycles": 1,
@@ -160,6 +230,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 25,
     "growthSeconds": 57600,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      7200,
+      18000,
+      28800,
+      43200,
+      57600
+    ],
     "baseYield": 20,
     "experience": 21,
     "harvestCycles": 1,
@@ -175,6 +252,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 26,
     "growthSeconds": 61200,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      7200,
+      18000,
+      32400,
+      46800,
+      61200
+    ],
     "baseYield": 21,
     "experience": 22,
     "harvestCycles": 1,
@@ -190,6 +274,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 26,
     "growthSeconds": 61200,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      7200,
+      18000,
+      32400,
+      46800,
+      61200
+    ],
     "baseYield": 21,
     "experience": 22,
     "harvestCycles": 1,
@@ -205,6 +296,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 27,
     "growthSeconds": 64800,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      10800,
+      21600,
+      32400,
+      46800,
+      64800
+    ],
     "baseYield": 22,
     "experience": 23,
     "harvestCycles": 1,
@@ -220,6 +318,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 27,
     "growthSeconds": 64800,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      10800,
+      21600,
+      32400,
+      46800,
+      64800
+    ],
     "baseYield": 22,
     "experience": 23,
     "harvestCycles": 1,
@@ -235,6 +340,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 28,
     "growthSeconds": 72000,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      10800,
+      25200,
+      39600,
+      54000,
+      72000
+    ],
     "baseYield": 24,
     "experience": 25,
     "harvestCycles": 1,
@@ -250,6 +362,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 28,
     "growthSeconds": 72000,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      10800,
+      25200,
+      39600,
+      54000,
+      72000
+    ],
     "baseYield": 24,
     "experience": 25,
     "harvestCycles": 1,
@@ -265,6 +384,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 30,
     "growthSeconds": 79200,
     "regrowthSeconds": 36000,
+    "growthStageSeconds": [
+      10800,
+      25200,
+      43200,
+      61200,
+      79200
+    ],
     "baseYield": 25,
     "experience": 27,
     "harvestCycles": 1,
@@ -280,6 +406,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 27,
     "growthSeconds": 86400,
     "regrowthSeconds": 39600,
+    "growthStageSeconds": [
+      14400,
+      28800,
+      46800,
+      64800,
+      86400
+    ],
     "baseYield": 24,
     "experience": 20,
     "harvestCycles": 2,
@@ -295,6 +428,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 24,
     "growthSeconds": 75600,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ],
     "baseYield": 23,
     "experience": 18,
     "harvestCycles": 2,
@@ -310,6 +450,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 27,
     "growthSeconds": 82800,
     "regrowthSeconds": 36000,
+    "growthStageSeconds": [
+      14400,
+      28800,
+      46800,
+      64800,
+      82800
+    ],
     "baseYield": 24,
     "experience": 20,
     "harvestCycles": 2,
@@ -325,6 +472,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 24,
     "growthSeconds": 75600,
     "regrowthSeconds": 32400,
+    "growthStageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ],
     "baseYield": 23,
     "experience": 18,
     "harvestCycles": 2,
@@ -340,6 +494,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 29,
     "growthSeconds": 100800,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ],
     "baseYield": 27,
     "experience": 23,
     "harvestCycles": 2,
@@ -355,6 +516,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 29,
     "growthSeconds": 100800,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ],
     "baseYield": 27,
     "experience": 23,
     "harvestCycles": 2,
@@ -370,6 +538,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 29,
     "growthSeconds": 100800,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ],
     "baseYield": 27,
     "experience": 23,
     "harvestCycles": 2,
@@ -385,6 +560,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 32,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 29,
     "experience": 25,
     "harvestCycles": 2,
@@ -400,6 +582,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 32,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 29,
     "experience": 25,
     "harvestCycles": 2,
@@ -415,6 +604,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 32,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 29,
     "experience": 25,
     "harvestCycles": 2,
@@ -430,6 +626,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 40,
     "growthSeconds": 151200,
     "regrowthSeconds": 64800,
+    "growthStageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
+    ],
     "baseYield": 32,
     "experience": 33,
     "harvestCycles": 2,
@@ -445,6 +648,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 42,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 25,
     "harvestCycles": 2,
@@ -460,6 +670,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 62,
     "growthSeconds": 230400,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ],
     "baseYield": 35,
     "experience": 40,
     "harvestCycles": 3,
@@ -475,6 +692,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 41,
     "growthSeconds": 133200,
     "regrowthSeconds": 57600,
+    "growthStageSeconds": [
+      25200,
+      50400,
+      75600,
+      104400,
+      133200
+    ],
     "baseYield": 26,
     "experience": 25,
     "harvestCycles": 3,
@@ -490,6 +714,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 40,
     "growthSeconds": 126000,
     "regrowthSeconds": 54000,
+    "growthStageSeconds": [
+      18000,
+      43200,
+      72000,
+      97200,
+      126000
+    ],
     "baseYield": 26,
     "experience": 25,
     "harvestCycles": 3,
@@ -505,6 +736,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 40,
     "growthSeconds": 126000,
     "regrowthSeconds": 57600,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      68400,
+      97200,
+      126000
+    ],
     "baseYield": 26,
     "experience": 25,
     "harvestCycles": 4,
@@ -520,6 +758,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 41,
     "growthSeconds": 133200,
     "regrowthSeconds": 57600,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      75600,
+      104400,
+      133200
+    ],
     "baseYield": 26,
     "experience": 25,
     "harvestCycles": 3,
@@ -535,6 +780,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 41,
     "growthSeconds": 133200,
     "regrowthSeconds": 57600,
+    "growthStageSeconds": [
+      25200,
+      50400,
+      75600,
+      104400,
+      133200
+    ],
     "baseYield": 26,
     "experience": 25,
     "harvestCycles": 3,
@@ -550,6 +802,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 47,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 29,
     "experience": 30,
     "harvestCycles": 3,
@@ -565,6 +824,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 50,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 24,
     "experience": 20,
     "harvestCycles": 3,
@@ -580,6 +846,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 50,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 24,
     "experience": 20,
     "harvestCycles": 3,
@@ -595,6 +868,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 47,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 29,
     "experience": 30,
     "harvestCycles": 3,
@@ -610,6 +890,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 54,
     "growthSeconds": 187200,
     "regrowthSeconds": 79200,
+    "growthStageSeconds": [
+      36000,
+      72000,
+      108000,
+      147600,
+      187200
+    ],
     "baseYield": 30,
     "experience": 34,
     "harvestCycles": 3,
@@ -625,6 +912,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 54,
     "growthSeconds": 187200,
     "regrowthSeconds": 79200,
+    "growthStageSeconds": [
+      36000,
+      72000,
+      108000,
+      147600,
+      187200
+    ],
     "baseYield": 30,
     "experience": 34,
     "harvestCycles": 3,
@@ -640,6 +934,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 58,
     "growthSeconds": 219600,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      39600,
+      82800,
+      126000,
+      172800,
+      219600
+    ],
     "baseYield": 33,
     "experience": 39,
     "harvestCycles": 3,
@@ -655,6 +956,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 55,
     "growthSeconds": 108000,
     "regrowthSeconds": 28800,
+    "growthStageSeconds": [
+      25200,
+      50400,
+      79200,
+      108000,
+      108000
+    ],
     "baseYield": 27,
     "experience": 16,
     "harvestCycles": 3,
@@ -670,6 +978,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 62,
     "growthSeconds": 230400,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ],
     "baseYield": 35,
     "experience": 40,
     "harvestCycles": 3,
@@ -685,6 +1000,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 62,
     "growthSeconds": 230400,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ],
     "baseYield": 35,
     "experience": 40,
     "harvestCycles": 3,
@@ -700,6 +1022,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 65,
     "growthSeconds": 198000,
     "regrowthSeconds": 82800,
+    "growthStageSeconds": [
+      36000,
+      75600,
+      115200,
+      154800,
+      198000
+    ],
     "baseYield": 27,
     "experience": 32,
     "harvestCycles": 4,
@@ -715,6 +1044,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 38,
     "growthSeconds": 151200,
     "regrowthSeconds": 64800,
+    "growthStageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
+    ],
     "baseYield": 25,
     "experience": 25,
     "harvestCycles": 4,
@@ -730,6 +1066,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 65,
     "growthSeconds": 198000,
     "regrowthSeconds": 82800,
+    "growthStageSeconds": [
+      36000,
+      75600,
+      115200,
+      154800,
+      198000
+    ],
     "baseYield": 27,
     "experience": 32,
     "harvestCycles": 4,
@@ -745,6 +1088,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 38,
     "growthSeconds": 151200,
     "regrowthSeconds": 64800,
+    "growthStageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
+    ],
     "baseYield": 25,
     "experience": 25,
     "harvestCycles": 4,
@@ -760,6 +1110,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 71,
     "growthSeconds": 219600,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      39600,
+      82800,
+      126000,
+      172800,
+      219600
+    ],
     "baseYield": 30,
     "experience": 36,
     "harvestCycles": 4,
@@ -775,6 +1132,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 75,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 27,
     "experience": 27,
     "harvestCycles": 4,
@@ -790,6 +1154,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 35,
     "growthSeconds": 115200,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ],
     "baseYield": 24,
     "experience": 19,
     "harvestCycles": 4,
@@ -805,6 +1176,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 71,
     "growthSeconds": 219600,
     "regrowthSeconds": 93600,
+    "growthStageSeconds": [
+      39600,
+      82800,
+      126000,
+      172800,
+      219600
+    ],
     "baseYield": 30,
     "experience": 36,
     "harvestCycles": 3,
@@ -820,6 +1198,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 77,
     "growthSeconds": 252000,
     "regrowthSeconds": 104400,
+    "growthStageSeconds": [
+      46800,
+      97200,
+      147600,
+      198000,
+      252000
+    ],
     "baseYield": 32,
     "experience": 41,
     "harvestCycles": 4,
@@ -835,6 +1220,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 77,
     "growthSeconds": 151200,
     "regrowthSeconds": 64800,
+    "growthStageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
+    ],
     "baseYield": 27,
     "experience": 25,
     "harvestCycles": 4,
@@ -850,6 +1242,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 35,
     "growthSeconds": 115200,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ],
     "baseYield": 24,
     "experience": 19,
     "harvestCycles": 4,
@@ -865,6 +1264,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 78,
     "growthSeconds": 259200,
     "regrowthSeconds": 108000,
+    "growthStageSeconds": [
+      50400,
+      100800,
+      151200,
+      205200,
+      259200
+    ],
     "baseYield": 33,
     "experience": 42,
     "harvestCycles": 4,
@@ -880,6 +1286,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 35,
     "growthSeconds": 115200,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ],
     "baseYield": 24,
     "experience": 19,
     "harvestCycles": 4,
@@ -895,6 +1308,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 86,
     "growthSeconds": 277200,
     "regrowthSeconds": 111600,
+    "growthStageSeconds": [
+      54000,
+      108000,
+      165600,
+      219600,
+      277200
+    ],
     "baseYield": 34,
     "experience": 44,
     "harvestCycles": 4,
@@ -910,6 +1330,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 80,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 28,
     "experience": 26,
     "harvestCycles": 5,
@@ -925,6 +1352,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 38,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 27,
     "experience": 18,
     "harvestCycles": 5,
@@ -940,6 +1374,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 82,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 29,
     "experience": 27,
     "harvestCycles": 5,
@@ -955,6 +1396,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 82,
     "growthSeconds": 165600,
     "regrowthSeconds": 72000,
+    "growthStageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ],
     "baseYield": 29,
     "experience": 27,
     "harvestCycles": 4,
@@ -970,6 +1418,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 50,
     "growthSeconds": 90000,
     "regrowthSeconds": 36000,
+    "growthStageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 4,
@@ -985,6 +1440,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 105,
     "growthSeconds": 90000,
     "regrowthSeconds": 36000,
+    "growthStageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ],
     "baseYield": 26,
     "experience": 20,
     "harvestCycles": 4,
@@ -1000,6 +1462,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 83,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 26,
     "experience": 18,
     "harvestCycles": 5,
@@ -1015,6 +1484,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 40,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 27,
     "experience": 18,
     "harvestCycles": 5,
@@ -1030,6 +1506,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 83,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 26,
     "experience": 18,
     "harvestCycles": 5,
@@ -1045,6 +1528,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 84,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 27,
     "experience": 18,
     "harvestCycles": 5,
@@ -1060,6 +1550,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 41,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 27,
     "experience": 18,
     "harvestCycles": 5,
@@ -1075,6 +1572,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 42,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 3,
@@ -1090,6 +1594,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 42,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1105,6 +1616,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 43,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1120,6 +1638,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 43,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1135,6 +1660,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 44,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1150,6 +1682,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 44,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1165,6 +1704,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 45,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1180,6 +1726,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 46,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 28,
     "experience": 18,
     "harvestCycles": 5,
@@ -1195,6 +1748,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 45,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 29,
     "experience": 18,
     "harvestCycles": 5,
@@ -1210,6 +1770,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 46,
     "growthSeconds": 111600,
     "regrowthSeconds": 50400,
+    "growthStageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ],
     "baseYield": 29,
     "experience": 18,
     "harvestCycles": 5,
@@ -1225,6 +1792,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 47,
     "growthSeconds": 118800,
     "regrowthSeconds": 54000,
+    "growthStageSeconds": [
+      21600,
+      46800,
+      64800,
+      90000,
+      118800
+    ],
     "baseYield": 30,
     "experience": 19,
     "harvestCycles": 5,
@@ -1240,6 +1814,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 48,
     "growthSeconds": 104400,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ],
     "baseYield": 28,
     "experience": 16,
     "harvestCycles": 5,
@@ -1255,6 +1836,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 49,
     "growthSeconds": 111600,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      18000,
+      43200,
+      64800,
+      93600,
+      111600
+    ],
     "baseYield": 26,
     "experience": 16,
     "harvestCycles": 6,
@@ -1270,6 +1858,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 50,
     "growthSeconds": 108000,
     "regrowthSeconds": 46800,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      61200,
+      82800,
+      108000
+    ],
     "baseYield": 26,
     "experience": 16,
     "harvestCycles": 6,
@@ -1285,6 +1880,13 @@ export const MANOR_CROP_DATA = [
     "salePrice": 50,
     "growthSeconds": 108000,
     "regrowthSeconds": 43200,
+    "growthStageSeconds": [
+      21600,
+      43200,
+      64800,
+      86400,
+      108000
+    ],
     "baseYield": 26,
     "experience": 15,
     "harvestCycles": 6,

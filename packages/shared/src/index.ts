@@ -395,8 +395,13 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("fertilize"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("clear-plot"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("buy-fertilizer"),
+    quantity: ManorPurchaseQuantitySchema
+  }),
   z.object({
     type: z.literal("sell"),
     cropId: ManorCropIdSchema,
@@ -590,6 +595,7 @@ export interface ManorCropView {
   salePrice: number;
   growthSeconds: number;
   regrowthSeconds: number;
+  growthStageSeconds: readonly number[];
   baseYield: number;
   experience: number;
   harvestCycles: number;
@@ -615,6 +621,8 @@ export interface ManorPlotView {
   watered: boolean;
   weed: boolean;
   pest: boolean;
+  fertilizedStage?: number;
+  visualStageThresholds?: readonly [number, number];
   estimatedYield?: number;
 }
 
@@ -628,6 +636,11 @@ export interface ManorFarmView {
     experience: number;
     currentLevelExperience: number;
     nextLevelExperience: number;
+  };
+  inventory: {
+    fertilizer: number;
+    fertilizerPrice: number;
+    fertilizerEffectSeconds: number;
   };
   catalog: ManorCropView[];
   plots: ManorPlotView[];

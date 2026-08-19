@@ -63,20 +63,25 @@ describe("manor account persistence", () => {
       );
       expect(planted.json().plots).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ id: 1, status: "growing", cropId: "radish" })
+          expect.objectContaining({ id: 1, status: "growing", cropId: "radish", watered: true })
         ])
       );
 
-      const watered = await first.app.inject({
+      const secondPlot = await first.app.inject({
         method: "POST",
         url: "/api/manor/actions",
         headers: { cookie },
-        payload: { type: "water", plotId: 1 }
+        payload: { type: "plant", plotId: 2, cropId: "radish" }
       });
-      expect(watered.statusCode).toBe(200);
-      expect(watered.json().revision).toBe(2);
-      expect(watered.json().plots).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: 1, watered: true })])
+      expect(secondPlot.statusCode).toBe(200);
+      expect(secondPlot.json().revision).toBe(2);
+      expect(secondPlot.json().catalog).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 1 })])
+      );
+      expect(secondPlot.json().plots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 2, cropId: "radish", watered: true })
+        ])
       );
 
       const background = await first.app.inject({
@@ -98,11 +103,12 @@ describe("manor account persistence", () => {
         expect(restored.statusCode).toBe(200);
         expect(restored.json().revision).toBe(2);
         expect(restored.json().catalog).toEqual(
-          expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 2 })])
+          expect.arrayContaining([expect.objectContaining({ id: "radish", seeds: 1 })])
         );
         expect(restored.json().plots).toEqual(
           expect.arrayContaining([
-            expect.objectContaining({ id: 1, cropId: "radish", watered: true })
+            expect.objectContaining({ id: 1, cropId: "radish", watered: true }),
+            expect.objectContaining({ id: 2, cropId: "radish", watered: true })
           ])
         );
       } finally {

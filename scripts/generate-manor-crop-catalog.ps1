@@ -81,6 +81,7 @@ $runtimeCrops = foreach ($crop in $crops) {
     salePrice = [int]$crop.sale_price
     growthSeconds = $growthSeconds
     regrowthSeconds = $regrowthSeconds
+    growthStageSeconds = @($cropTimes[$sourceId][0..4])
     baseYield = [int]$crop.base_yield
     experience = [int]$crop.experience
     harvestCycles = [int]$crop.harvest_cycles

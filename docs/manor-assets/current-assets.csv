@@ -52,6 +52,7 @@
 "assets/manor/classic/exp-bg.png","ui","","","","","122","14","500","18919b9bb15e0fae5b7c825fbb91ed033d1b65e7548e6138c10c4740b3d2f19a","module/nc/main/farmui1_v_12.swf","267:ExpBlueBg","verified-jpexs-export"
 "assets/manor/classic/exp-fill.png","ui","","","","","92","12","163","abb2d4f506bd3e0148c911368c4791ff39508bb85270348ac51e8cb2f69ab44f","module/nc/main/farmui1_v_12.swf","269:ExpBlue","verified-jpexs-export"
 "assets/manor/classic/farm-background.png","scene","","","","","1024","800","319454","f0335fb9fb3ad815e561177ca3d5ea13963db4b1bc9f6dbdeefab4a6742f26f1","module/nc/main/farmui1_v_12.swf","1:DefaultBg","verified-embedded-image-source"
+"assets/manor/classic/fertilizer.png","ui","","","","","45","53","3249","8d01f2eb7eef671506fcb99ad7a13ffa1c52ae509e77a90f7561a79aa8b8c39a","module/nc/main/farmui1_v_12.swf","157:Fertilizer","verified-jpexs-export"
 "assets/manor/classic/head-bg.png","ui","","","","","870","68","17973","d8101d12ef265d4536c25cf79c94a47a6f1f4e5a00b2ebfeb7700c3eb41558cf","module/nc/main/farmui1_v_12.swf","265:HeadBg","verified-jpexs-export"
 "assets/manor/classic/insect.png","farm-status","","","","","24","13","725","a03ab74771984d4ddcaf282b681509b6705bb3c504ad0141ba4b1fe56a126205","module/nc/main/farmui1_v_12.swf","257:Insect","verified-jpexs-export"
 "assets/manor/classic/item-bg.png","ui","","","","","61","61","495","a533af8b145044cf144a9254a353de0e9d4c17731f8d83dcfa03f7a851ad48d4","module/nc/main/farmui1_v_12.swf","314:ItemBg","verified-jpexs-export"

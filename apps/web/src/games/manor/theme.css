@@ -222,6 +222,7 @@
 .manor-classic-button--tool-move { --manor-button-up: url("/assets/manor/classic/tool-move-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-move-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-move-3_down.png"); }
 .manor-classic-button--tool-hoe { --manor-button-up: url("/assets/manor/classic/tool-hoe-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-hoe-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-hoe-3_down.png"); }
 .manor-classic-button--tool-seed { --manor-button-up: url("/assets/manor/classic/tool-seed-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-seed-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-seed-3_down.png"); }
+.manor-classic-button--tool-fertilizer { --manor-button-up: url("/assets/manor/classic/fertilizer.png"); --manor-button-over: url("/assets/manor/classic/fertilizer.png"); --manor-button-down: url("/assets/manor/classic/fertilizer.png"); }
 .manor-classic-button--tool-water { --manor-button-up: url("/assets/manor/classic/tool-water-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-water-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-water-3_down.png"); }
 .manor-classic-button--tool-weed { --manor-button-up: url("/assets/manor/classic/tool-weed-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-weed-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-weed-3_down.png"); }
 .manor-classic-button--tool-pesticide { --manor-button-up: url("/assets/manor/classic/tool-pesticide-1_up.png"); --manor-button-over: url("/assets/manor/classic/tool-pesticide-2_over.png"); --manor-button-down: url("/assets/manor/classic/tool-pesticide-3_down.png"); }
@@ -383,9 +384,9 @@
   bottom: 0;
   left: 50%;
   display: grid;
-  width: 38.2%;
+  width: 43.5%;
   height: 7.3%;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   align-items: center;
   padding: 0.45% 1.1%;
   background: url("/assets/manor/classic/toolbar-bg.png") center / 100% 100% no-repeat;
@@ -558,7 +559,10 @@
   padding: 0.45cqw 0.7cqw 0.7cqw;
 }
 
+.manor-shop-content { display: grid; }
+
 .manor-shop-list > div,
+.manor-shop-tool,
 .manor-warehouse-list > div {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -572,6 +576,13 @@
 
 .manor-shop-list > div.is-locked { opacity: 0.52; }
 
+.manor-shop-tool {
+  margin: 0.45cqw 0.7cqw 0;
+  background: rgba(255, 249, 199, 0.8);
+  border: 1px solid #e4bd52;
+  border-radius: 4px;
+}
+
 .manor-item-copy {
   display: grid;
   min-width: 0;
@@ -583,6 +594,7 @@
 .manor-item-copy em { color: #e24a0b; font-size: 0.9em; font-style: normal; font-weight: 700; }
 
 .manor-shop-list button,
+.manor-shop-tool button,
 .manor-warehouse-list button {
   min-width: 5.8cqw;
   padding: 0.45cqw 0.75cqw;
@@ -598,9 +610,11 @@
 }
 
 .manor-shop-list button:hover:not(:disabled),
+.manor-shop-tool button:hover:not(:disabled),
 .manor-warehouse-list button:hover:not(:disabled) { filter: brightness(1.08); }
 
 .manor-shop-list button:disabled,
+.manor-shop-tool button:disabled,
 .manor-warehouse-list button:disabled {
   color: #ecf0f0;
   text-shadow: none;
