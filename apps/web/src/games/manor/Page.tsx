@@ -11,6 +11,7 @@ import { RefreshCw, Search, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { getManorFarm, performManorAction } from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { ManorPasturePage } from "./PasturePage";
 
 const ASSET_ROOT = "/assets/manor/classic";
 const CROP_ASSET_VERSION = "classic-crops-v3";
@@ -30,6 +31,16 @@ const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> 
 ];
 
 export function ManorPage() {
+  const [mode, setMode] = useState<"farm" | "pasture">("farm");
+
+  if (mode === "pasture") {
+    return <ManorPasturePage onSwitchFarm={() => setMode("farm")} />;
+  }
+
+  return <ManorFarmPage onSwitchPasture={() => setMode("pasture")} />;
+}
+
+function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
   const stageViewportRef = useRef<HTMLDivElement>(null);
   const windowScrollLeftRef = useRef<number | undefined>(undefined);
   const [farm, setFarm] = useState<ManorFarmView>();
@@ -379,7 +390,7 @@ export function ManorPage() {
                 <ClassicButton
                   asset="nav-pasture"
                   label="我的牧场"
-                  onClick={() => setNotice("牧场入口已保留，牧场玩法正在按原版重构")}
+                  onClick={onSwitchPasture}
                 />
                 <ClassicButton
                   asset="nav-warehouse"

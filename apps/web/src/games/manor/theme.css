@@ -840,3 +840,548 @@
     animation: none;
   }
 }
+
+/* The pasture keeps the original 1038 x 805 stage and sprite proportions. */
+.manor-stage-shell--pasture {
+  width: min(100%, 1038px);
+  min-width: 760px;
+}
+
+.manor-stage--pasture {
+  aspect-ratio: 1038 / 805;
+  color: #334126;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  background-color: #76bc31;
+  background-image: url("/assets/manor/classic/pasture/ui/background.png");
+  background-size: 100% 100%;
+  border-color: #b2db68;
+}
+
+.pasture-head-bg {
+  position: absolute;
+  z-index: 800;
+  top: 0;
+  left: 0;
+  width: 84.01%;
+  height: 8.7%;
+  pointer-events: none;
+  background: url("/assets/manor/classic/pasture/ui/head-bg.png") left top / 100% 100% no-repeat;
+}
+
+.pasture-player-hud {
+  position: absolute;
+  z-index: 830;
+  top: 0.6cqw;
+  left: 1.5cqw;
+  width: 24cqw;
+  height: 6.4cqw;
+  font-size: clamp(9px, 1.15cqw, 13px);
+}
+
+.pasture-player-hud__avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 5cqw;
+  height: 5cqw;
+  place-items: center;
+  color: #fffde9;
+  font-size: clamp(18px, 2.3cqw, 25px);
+  font-weight: 800;
+  text-shadow: 0 1px 1px #4c6c2d;
+  background: linear-gradient(#a1db64, #4f9f40);
+  border: 2px solid #f7ffe7;
+  border-radius: 8%;
+  box-shadow: 0 1px 4px rgba(29, 61, 18, 0.55);
+}
+
+.pasture-player-hud__name {
+  position: absolute;
+  top: 0.2cqw;
+  left: 6.2cqw;
+  width: 12cqw;
+  overflow: hidden;
+  color: #293a23;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pasture-player-hud__experience {
+  position: absolute;
+  top: 2.25cqw;
+  left: 6.2cqw;
+  width: 12.4cqw;
+  height: 1.35cqw;
+  min-height: 9px;
+  overflow: hidden;
+  background: url("/assets/manor/classic/exp-bg.png") center / 100% 100% no-repeat;
+}
+
+.pasture-player-hud__experience i {
+  display: block;
+  height: 86%;
+  margin-top: 4%;
+  background: url("/assets/manor/classic/exp-fill.png") left center / 100% 100% no-repeat;
+}
+
+.pasture-player-hud__level {
+  position: absolute;
+  top: 1.15cqw;
+  left: 19cqw;
+  display: grid;
+  width: 3.2cqw;
+  height: 3.2cqw;
+  min-width: 24px;
+  min-height: 24px;
+  place-items: center;
+  color: #fff;
+  font-size: clamp(11px, 1.35cqw, 15px);
+  font-weight: 800;
+  text-shadow: 0 1px 2px #25537f;
+  background: url("/assets/manor/classic/level-blue.png") center / contain no-repeat;
+}
+
+.pasture-player-hud__coins,
+.pasture-player-hud__exp {
+  position: absolute;
+  top: 4.15cqw;
+  color: #4d5b3e;
+  font-size: clamp(8px, 1cqw, 11px);
+  font-weight: 700;
+}
+
+.pasture-player-hud__coins { left: 6.2cqw; }
+.pasture-player-hud__exp { left: 13cqw; }
+
+.pasture-head-tools {
+  position: absolute;
+  z-index: 840;
+  top: 0.9cqw;
+  right: 1.2cqw;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65cqw;
+}
+
+.pasture-image-button {
+  position: relative;
+  display: grid;
+  width: 5.2cqw;
+  height: 5.2cqw;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pasture-image-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.pasture-image-button:hover:not(:disabled) img { filter: brightness(1.12); }
+.pasture-image-button:active:not(:disabled) img { transform: translateY(1px); }
+.pasture-image-button.is-active img { filter: drop-shadow(0 0 4px #fff59a) drop-shadow(0 0 3px #b47200); }
+.pasture-image-button:disabled { cursor: wait; opacity: 0.55; }
+.pasture-image-button:focus-visible { outline: 2px solid #fff49a; outline-offset: 1px; }
+
+.pasture-house-strip {
+  position: absolute;
+  z-index: 360;
+  top: 9.2%;
+  right: 1.5%;
+  display: grid;
+  gap: 0.45cqw;
+}
+
+.pasture-house-strip button {
+  display: grid;
+  min-width: 8.8cqw;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.35cqw;
+  padding: 0.35cqw 0.5cqw;
+  color: #fffce5;
+  font: inherit;
+  font-size: clamp(9px, 1.05cqw, 12px);
+  text-shadow: 0 1px 1px #31551e;
+  background: rgba(53, 111, 31, 0.83);
+  border: 1px solid rgba(245, 255, 213, 0.8);
+  border-radius: 4px;
+  box-shadow: 0 2px 3px rgba(25, 62, 18, 0.25);
+  cursor: pointer;
+}
+
+.pasture-house-strip button:hover { background: rgba(78, 137, 39, 0.94); }
+.pasture-house-strip span { color: #fff6a3; font-weight: 700; }
+
+.pasture-animal {
+  position: absolute;
+  width: 13.5%;
+  height: 18%;
+  pointer-events: none;
+}
+
+.pasture-animal > button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pasture-animal > button:disabled { cursor: wait; }
+
+.pasture-animal > button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(34, 62, 20, 0.22));
+  transition: filter 120ms ease, transform 120ms ease;
+}
+
+.pasture-animal:hover > button img,
+.pasture-animal.is-selected > button img {
+  filter: brightness(1.06) drop-shadow(0 0 5px #fff68c) drop-shadow(0 2px 2px rgba(34, 62, 20, 0.3));
+  transform: translateY(-2%);
+}
+
+.pasture-animal > span {
+  position: absolute;
+  z-index: 3;
+  bottom: -1.4cqw;
+  left: 50%;
+  display: none;
+  min-width: 9.5cqw;
+  padding: 0.22cqw 0.42cqw;
+  pointer-events: none;
+  color: #fff;
+  font-size: clamp(8px, 0.92cqw, 11px);
+  text-align: center;
+  text-shadow: 0 1px 1px #263717;
+  background: rgba(35, 69, 24, 0.88);
+  border: 1px solid rgba(241, 255, 205, 0.72);
+  border-radius: 3px;
+  transform: translateX(-50%);
+}
+
+.pasture-animal:hover > span,
+.pasture-animal.is-selected > span { display: grid; }
+.pasture-animal > span strong,
+.pasture-animal > span small { white-space: nowrap; }
+
+.pasture-animal > b,
+.pasture-animal > em {
+  position: absolute;
+  z-index: 4;
+  top: 0.2cqw;
+  right: -0.6cqw;
+  padding: 0.2cqw 0.38cqw;
+  pointer-events: none;
+  color: #522b05;
+  font-size: clamp(8px, 0.92cqw, 11px);
+  font-style: normal;
+  white-space: nowrap;
+  background: #fff2a0;
+  border: 1px solid #ba7b18;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(61, 41, 11, 0.28);
+}
+
+.pasture-animal > em {
+  top: auto;
+  right: 0;
+  bottom: 0.35cqw;
+  color: #fff;
+  background: #aa3d25;
+  border-color: #7c2717;
+}
+
+.pasture-animal.is-hungry > button img { filter: saturate(0.72) brightness(0.9); }
+
+.pasture-trough {
+  position: absolute;
+  z-index: 260;
+  right: 1.5%;
+  bottom: 4.5%;
+  width: 27.55%;
+  height: 13.17%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pasture-trough img { width: 100%; height: 100%; object-fit: contain; }
+
+.pasture-trough > span {
+  position: absolute;
+  right: 18%;
+  bottom: 7%;
+  min-width: 30%;
+  padding: 0.25cqw 0.4cqw;
+  color: #fff7bb;
+  font-size: clamp(9px, 1.1cqw, 13px);
+  font-weight: 800;
+  text-shadow: 0 1px 2px #344b13;
+  background: rgba(49, 91, 25, 0.74);
+  border-radius: 3px;
+}
+
+.pasture-trough:hover img { filter: brightness(1.08); }
+
+.pasture-toolbar {
+  position: absolute;
+  z-index: 500;
+  bottom: 0.5%;
+  left: 50%;
+  display: flex;
+  width: 41.33%;
+  height: 12.17%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.95cqw;
+  padding: 3.1cqw 5.5cqw 1.1cqw;
+  background: url("/assets/manor/classic/pasture/ui/toolbar-bg.png") center / 100% 100% no-repeat;
+  transform: translateX(-50%);
+}
+
+.pasture-toolbar .pasture-image-button {
+  width: 4.6cqw;
+  height: 4.6cqw;
+  min-width: 34px;
+  min-height: 34px;
+}
+
+.pasture-animal-actions {
+  position: absolute;
+  z-index: 520;
+  bottom: 12.6%;
+  left: 50%;
+  display: grid;
+  width: 29%;
+  min-height: 6.5cqw;
+  grid-template-columns: 5.4cqw minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55cqw;
+  padding: 0.45cqw 0.65cqw;
+  color: #f8ffe9;
+  background: rgba(50, 94, 31, 0.92);
+  border: 1px solid #e7f7b3;
+  border-radius: 5px;
+  box-shadow: 0 3px 9px rgba(31, 66, 20, 0.32);
+  transform: translateX(-50%);
+}
+
+.pasture-animal-actions > img { width: 5.4cqw; height: 5.4cqw; object-fit: contain; }
+.pasture-animal-actions > span { display: grid; min-width: 0; gap: 0.2cqw; }
+.pasture-animal-actions strong,
+.pasture-animal-actions small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pasture-animal-actions > button,
+.pasture-window button {
+  padding: 0.48cqw 0.72cqw;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(#72cb48, #3a982a);
+  border: 1px solid #2e751f;
+  border-radius: 4px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.pasture-animal-actions > button:disabled,
+.pasture-window button:disabled { cursor: not-allowed; filter: grayscale(0.65); opacity: 0.58; }
+
+.pasture-window {
+  position: relative;
+  width: 61%;
+  height: 66%;
+  padding: 4.5cqw 2.2cqw 2.1cqw;
+  color: #3e4b45;
+  font-size: clamp(10px, 1.15cqw, 14px);
+  background: #e6f4df url("/assets/manor/classic/pasture/ui/window-bg.png") center / 100% 100% repeat;
+  border: 2px solid #d5ebba;
+  border-radius: 6px;
+  box-shadow: 0 9px 26px rgba(24, 61, 20, 0.5), inset 0 0 0 1px rgba(71, 126, 55, 0.42);
+}
+
+.pasture-window--compact { width: 43%; height: 36%; }
+
+.pasture-window__title {
+  position: absolute;
+  top: 1.25cqw;
+  left: 2cqw;
+  color: #264e2e;
+  font-size: clamp(14px, 1.75cqw, 20px);
+  text-shadow: 0 1px #fff;
+}
+
+.pasture-window__close {
+  position: absolute;
+  top: 1.15cqw;
+  right: 1.4cqw;
+  width: 2.1cqw;
+  height: 2.1cqw;
+  min-width: 21px;
+  min-height: 21px;
+  padding: 0;
+  background: url("/assets/manor/classic/pasture/ui/close.png") center / contain no-repeat;
+  border: 0;
+  box-shadow: none;
+}
+
+.pasture-window__body { height: 100%; min-height: 0; }
+
+.pasture-window-controls {
+  display: flex;
+  min-height: 3.3cqw;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8cqw;
+  margin-bottom: 0.8cqw;
+}
+
+.pasture-window-controls > label {
+  display: flex;
+  width: 45%;
+  align-items: center;
+  gap: 0.4cqw;
+  padding: 0.35cqw 0.55cqw;
+  background: #fff;
+  border: 1px solid #9db993;
+  border-radius: 4px;
+}
+
+.pasture-window-controls input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.pasture-segments { display: flex; }
+.pasture-segments button { border-radius: 0; }
+.pasture-segments button:first-child { border-radius: 4px 0 0 4px; }
+.pasture-segments button:last-child { border-radius: 0 4px 4px 0; }
+.pasture-segments button.is-active { color: #3d4d13; background: #f4dc65; border-color: #b28b1c; }
+
+.pasture-shop-list,
+.pasture-warehouse-list {
+  display: grid;
+  max-height: calc(100% - 4.1cqw);
+  overflow-y: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65cqw;
+  padding-right: 0.4cqw;
+  scrollbar-color: #72a953 #e2efd9;
+}
+
+.pasture-shop-list > div,
+.pasture-warehouse-list > div {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 6.6cqw minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55cqw;
+  padding: 0.5cqw;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid #b4cda8;
+  border-radius: 4px;
+}
+
+.pasture-shop-list > div.is-locked { filter: saturate(0.42); }
+
+.pasture-item-image {
+  display: grid;
+  width: 6.4cqw;
+  height: 6.4cqw;
+  place-items: center;
+  background: url("/assets/manor/classic/pasture/ui/item-bg.png") center / contain no-repeat;
+}
+
+.pasture-item-image img { width: 85%; height: 85%; object-fit: contain; }
+.pasture-shop-list > div > span:nth-child(2),
+.pasture-warehouse-list > div > span:nth-child(2) { display: grid; min-width: 0; gap: 0.18cqw; }
+.pasture-shop-list strong,
+.pasture-warehouse-list strong { color: #315231; }
+.pasture-shop-list small,
+.pasture-shop-list em,
+.pasture-warehouse-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pasture-shop-list em { color: #aa542c; font-style: normal; font-weight: 700; }
+
+.pasture-window-empty {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  align-content: center;
+  gap: 0.65cqw;
+  color: #63745e;
+}
+
+.pasture-feed-window {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 10cqw minmax(0, 1fr) auto;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  gap: 0.6cqw 1cqw;
+}
+
+.pasture-feed-window > img { width: 10cqw; height: 6.2cqw; object-fit: contain; }
+.pasture-feed-window > span { display: grid; gap: 0.35cqw; }
+.pasture-feed-window > span strong { color: #315231; font-size: clamp(14px, 1.7cqw, 19px); }
+.pasture-feed-window > label { display: grid; gap: 0.25cqw; }
+.pasture-feed-window input { width: 6cqw; padding: 0.35cqw; font: inherit; border: 1px solid #9db993; border-radius: 3px; }
+.pasture-feed-window > button { grid-column: 2 / 4; }
+
+.pasture-house-window {
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.8cqw;
+}
+
+.pasture-house-window > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55cqw;
+  padding: 0.65cqw;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid #b4cda8;
+  border-radius: 4px;
+}
+
+.pasture-house-window > div > span { display: grid; min-width: 0; gap: 0.22cqw; }
+.pasture-house-window em { color: #aa542c; font-style: normal; }
+.pasture-house-window button { grid-column: 1 / 3; }
+
+@media (max-width: 760px) {
+  .manor-stage-shell--pasture {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pasture-animal > button img { transition: none; }
+}

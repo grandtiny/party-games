@@ -30,6 +30,8 @@ import type {
   JoinRoomRequest,
   ManorActionRequest,
   ManorFarmView,
+  ManorPastureActionRequest,
+  ManorPastureView,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
   PuzzleResultView,
@@ -95,6 +97,16 @@ export async function getManorFarm(): Promise<ManorFarmView> {
 
 export async function performManorAction(input: ManorActionRequest): Promise<ManorFarmView> {
   return request("/api/manor/actions", { method: "POST", body: input });
+}
+
+export async function getManorPasture(): Promise<ManorPastureView> {
+  return request("/api/manor/pasture");
+}
+
+export async function performManorPastureAction(
+  input: ManorPastureActionRequest
+): Promise<ManorPastureView> {
+  return request("/api/manor/pasture/actions", { method: "POST", body: input });
 }
 
 export async function submitPuzzleResult(
