@@ -11,6 +11,10 @@ if (-not $OutputDirectory) {
 }
 $classicAssetDirectory = Join-Path $repositoryRoot "apps\web\public\assets\manor\classic"
 $runtimeCropAssetDirectory = Join-Path $classicAssetDirectory "crops"
+$runtimePastureAssetDirectory = Join-Path $classicAssetDirectory "pasture"
+$runtimeAnimalAssetDirectory = Join-Path $runtimePastureAssetDirectory "animals"
+$runtimePastureUiAssetDirectory = Join-Path $runtimePastureAssetDirectory "ui"
+$runtimePastureAudioAssetDirectory = Join-Path $runtimePastureAssetDirectory "audio"
 
 function Assert-Equal($Actual, $Expected, [string]$Label) {
   if ($Actual -ne $Expected) {
@@ -53,6 +57,7 @@ $decorationContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory
 $decorationVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-visual-review.csv"))
 $decorationContactDirectory = Join-Path $OutputDirectory "contact-sheets\decorations"
 $animalStateAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-state-assets.csv"))
+$animalRuntimeAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-runtime-assets.csv"))
 $animalSymbolClasses = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-symbol-classes.csv"))
 $animalContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-contact-review.csv"))
 $animalVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-visual-review.csv"))
@@ -61,6 +66,8 @@ $interfaceMediaAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "i
 $interfaceSymbolAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-symbol-assets.csv"))
 $soundAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "sound-assets.csv"))
 $animalAudioPolicies = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-audio-policy.csv"))
+$pastureRuntimeUiAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "pasture-runtime-ui-assets.csv"))
+$pastureRuntimeAudioAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "pasture-runtime-audio-assets.csv"))
 $interfaceMediaContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-contact-review.csv"))
 $interfaceMediaVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-visual-review.csv"))
 $interfaceMediaContactDirectory = Join-Path $OutputDirectory "contact-sheets\interface-media"
@@ -219,6 +226,42 @@ Assert-Equal @($animalContactReview | Where-Object visual_review_status -notlike
 Assert-Equal $animalVisualReview.Count 35 "animal visual review rows"
 Assert-Equal @($animalVisualReview | Where-Object review_status -eq "reviewed-ok").Count 34 "approved animal reviews"
 Assert-Equal @($animalVisualReview | Where-Object review_status -eq "reviewed-with-note").Count 1 "noted animal reviews"
+$runtimeAnimalFiles = @(Get-ChildItem -LiteralPath $runtimeAnimalAssetDirectory -Recurse -File -Filter "*.png")
+Assert-Equal $runtimeAnimalFiles.Count 210 "runtime animal assets"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimeAnimalAssetDirectory -Directory).Count 35 "runtime animal asset directories"
+Assert-Equal $animalRuntimeAssets.Count 210 "runtime animal asset mappings"
+Assert-Equal @($animalRuntimeAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 210 "unique runtime animal asset mappings"
+Assert-Equal @($animalRuntimeAssets | Group-Object source_id | Where-Object Count -ne 6).Count 0 "animals without six runtime asset mappings"
+Assert-Equal @($animalRuntimeAssets | Where-Object visual_review_status -notlike "reviewed-*").Count 0 "runtime animals without approved visual review"
+Assert-Equal @($animalRuntimeAssets | Where-Object processing_status -ne "ready").Count 0 "runtime animals not ready"
+foreach ($animal in $animals) {
+  $directory = Join-Path $runtimeAnimalAssetDirectory $animal.source_id
+  foreach ($state in @("cub", "growing", "ready_to_produce", "production_early", "production_late", "lifecycle_complete")) {
+    $asset = Join-Path $directory "$state.png"
+    Assert-True (Test-Path -LiteralPath $asset -PathType Leaf) "missing runtime animal asset: $($animal.source_id)/$state.png"
+    $size = Get-PngSize $asset
+    Assert-True ($size.Width -gt 0 -and $size.Height -gt 0) "invalid runtime animal asset: $($animal.source_id)/$state.png"
+  }
+}
+$runtimePastureUiFiles = @(Get-ChildItem -LiteralPath $runtimePastureUiAssetDirectory -File -Filter "*.png")
+Assert-Equal $runtimePastureUiFiles.Count 24 "runtime pasture UI assets"
+Assert-Equal $pastureRuntimeUiAssets.Count 24 "runtime pasture UI mappings"
+Assert-Equal @($pastureRuntimeUiAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 24 "unique runtime pasture UI mappings"
+Assert-Equal @($pastureRuntimeUiAssets | Where-Object processing_status -ne "ready").Count 0 "runtime pasture UI assets not ready"
+foreach ($asset in $runtimePastureUiFiles) {
+  $size = Get-PngSize $asset.FullName
+  Assert-True ($size.Width -gt 0 -and $size.Height -gt 0) "invalid runtime pasture UI asset: $($asset.Name)"
+}
+$runtimePastureAudioFiles = @(Get-ChildItem -LiteralPath $runtimePastureAudioAssetDirectory -Recurse -File -Filter "*.mp3")
+Assert-Equal $runtimePastureAudioFiles.Count 60 "runtime pasture audio assets"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimePastureAudioAssetDirectory -Directory).Count 33 "runtime pasture audio animal directories"
+Assert-Equal $pastureRuntimeAudioAssets.Count 60 "runtime pasture audio mappings"
+Assert-Equal @($pastureRuntimeAudioAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 60 "unique runtime pasture audio mappings"
+Assert-Equal @($pastureRuntimeAudioAssets | Where-Object processing_method -eq "copied").Count 59 "copied runtime pasture sounds"
+Assert-Equal @($pastureRuntimeAudioAssets | Where-Object processing_method -eq "transcoded-flv-to-mp3").Count 1 "transcoded runtime pasture sounds"
+Assert-Equal @($pastureRuntimeAudioAssets | Where-Object processing_status -ne "ready").Count 0 "runtime pasture audio assets not ready"
+Assert-Equal @($pastureRuntimeAudioAssets | Select-Object -ExpandProperty animal_id -Unique).Count 33 "animals with runtime pasture audio"
+Assert-Equal @($pastureRuntimeAudioAssets | Where-Object animal_id -in @("1010", "1017")).Count 0 "excluded animals with runtime pasture audio"
 $animalContactSheets = @(Get-ChildItem -LiteralPath $animalContactDirectory -File -Filter "animal-*.png")
 Assert-Equal $animalContactSheets.Count 35 "animal contact sheet PNGs"
 Assert-True (Test-Path -LiteralPath (Join-Path $animalContactDirectory "index.html") -PathType Leaf) "missing animal contact sheet index"
@@ -309,6 +352,27 @@ foreach ($asset in $cropRuntimeAssets) {
   Assert-True ($actualRuntimeCropHashes.ContainsKey($asset.runtime_asset)) "missing runtime crop file: $($asset.runtime_asset)"
   Assert-Equal $asset.runtime_sha256 $actualRuntimeCropHashes[$asset.runtime_asset] "runtime crop SHA-256 for $($asset.runtime_asset)"
 }
+$actualRuntimePastureHashes = @{}
+foreach ($file in @($runtimeAnimalFiles) + @($runtimePastureUiFiles)) {
+  $relativePath = [IO.Path]::GetRelativePath($repositoryRoot, $file.FullName).Replace("\", "/")
+  $actualRuntimePastureHashes[$relativePath] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+foreach ($asset in @($animalRuntimeAssets) + @($pastureRuntimeUiAssets)) {
+  Assert-True ($actualRuntimePastureHashes.ContainsKey($asset.runtime_asset)) "missing runtime pasture file: $($asset.runtime_asset)"
+  Assert-Equal $asset.runtime_sha256 $actualRuntimePastureHashes[$asset.runtime_asset] "runtime pasture SHA-256 for $($asset.runtime_asset)"
+}
+$actualRuntimePastureAudioHashes = @{}
+foreach ($file in $runtimePastureAudioFiles) {
+  $relativePath = [IO.Path]::GetRelativePath($repositoryRoot, $file.FullName).Replace("\", "/")
+  $actualRuntimePastureAudioHashes[$relativePath] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+foreach ($asset in $pastureRuntimeAudioAssets) {
+  Assert-True ($actualRuntimePastureAudioHashes.ContainsKey($asset.runtime_asset)) "missing runtime pasture audio file: $($asset.runtime_asset)"
+  Assert-Equal $asset.runtime_sha256 $actualRuntimePastureAudioHashes[$asset.runtime_asset] "runtime pasture audio SHA-256 for $($asset.runtime_asset)"
+  $policy = @($animalAudioPolicies | Where-Object animal_id -eq $asset.animal_id)
+  Assert-Equal $policy.Count 1 "audio policy for runtime animal $($asset.animal_id)"
+  Assert-True ($asset.variant -in @($policy[0].available_variants -split ";")) "disallowed runtime sound variant for animal $($asset.animal_id)"
+}
 
 [pscustomobject]@{
   Crops = $crops.Count
@@ -323,6 +387,9 @@ foreach ($asset in $cropRuntimeAssets) {
   CropContactSheets = $contactSheets.Count
   DecorationContactSheets = $decorationContactSheets.Count
   AnimalStateAssets = $animalStateAssets.Count
+  RuntimeAnimalAssets = $runtimeAnimalFiles.Count
+  RuntimePastureUiAssets = $runtimePastureUiFiles.Count
+  RuntimePastureAudioAssets = $runtimePastureAudioFiles.Count
   AnimalContactSheets = $animalContactSheets.Count
   InterfaceSymbolAssets = $interfaceSymbolAssets.Count
   DefineSounds = $soundAssets.Count
