@@ -27,6 +27,7 @@ $animalTablePath = Join-Path $repositoryRoot "docs\manor-assets\animals.csv"
 $assetTablePath = Join-Path $repositoryRoot "docs\manor-assets\interface-media-assets.csv"
 $symbolTablePath = Join-Path $repositoryRoot "docs\manor-assets\interface-symbol-assets.csv"
 $soundTablePath = Join-Path $repositoryRoot "docs\manor-assets\sound-assets.csv"
+$audioPolicyTablePath = Join-Path $repositoryRoot "docs\manor-assets\animal-audio-policy.csv"
 $reviewTablePath = Join-Path $repositoryRoot "docs\manor-assets\interface-media-contact-review.csv"
 $visualReviewTablePath = Join-Path $repositoryRoot "docs\manor-assets\interface-media-visual-review.csv"
 $mediaExporter = Join-Path $PSScriptRoot "ManorSwfMediaExporter.java"
@@ -395,9 +396,31 @@ $assetRows = foreach ($target in $targetFiles) {
   }
 }
 
+$audioPolicyRows = foreach ($animal in @(Import-Csv -LiteralPath $animalTablePath | Sort-Object { [int]$_.source_id })) {
+  $animalSounds = @($soundRows | Where-Object animal_id -eq $animal.source_id)
+  $availableVariants = @($animalSounds | Select-Object -ExpandProperty variant -Unique | Sort-Object)
+  $integrationPolicy = if ($availableVariants.Count -eq 2) {
+    "default"
+  } elseif ($availableVariants.Count -eq 1) {
+    "available-only"
+  } else {
+    "excluded"
+  }
+  [pscustomobject][ordered]@{
+    animal_id = [int]$animal.source_id
+    animal_name = $animal.name
+    available_variants = ($availableVariants -join ";")
+    available_variant_count = $availableVariants.Count
+    source_files = (@($animalSounds | Select-Object -ExpandProperty source_file | Sort-Object) -join ";")
+    integration_policy = $integrationPolicy
+    runtime_behavior = if ($integrationPolicy -eq "default") { "randomize-listed-variants" } elseif ($integrationPolicy -eq "available-only") { "use-listed-variants-only" } else { "no-sound" }
+  }
+}
+
 $assetRows | Export-Csv -LiteralPath $assetTablePath -NoTypeInformation -Encoding utf8
 $symbolRows | Export-Csv -LiteralPath $symbolTablePath -NoTypeInformation -Encoding utf8
 $soundRows | Export-Csv -LiteralPath $soundTablePath -NoTypeInformation -Encoding utf8
+$audioPolicyRows | Export-Csv -LiteralPath $audioPolicyTablePath -NoTypeInformation -Encoding utf8
 $reviewRows | Export-Csv -LiteralPath $reviewTablePath -NoTypeInformation -Encoding utf8
 
 $htmlRows = foreach ($item in $galleryRows) {
@@ -446,6 +469,7 @@ Set-Content -LiteralPath (Join-Path $OutputDirectory "index.html") -Value $html 
   RenderedVisualRows = @($symbolRows | Where-Object render_status -eq "rendered").Count
   ActionEffectCandidates = @($symbolRows | Where-Object visual_role -eq "action-effect-candidate").Count
   DefineSounds = $soundRows.Count
+  AudioPolicies = $audioPolicyRows.Count
   SoundContainers = @($assetRows | Where-Object inventory_kind -eq "sound-swf").Count
   ContactSheets = $reviewRows.Count
   VisualReviews = @($visualReviews.Values | Where-Object review_status -like "reviewed-*").Count

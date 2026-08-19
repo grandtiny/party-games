@@ -58,6 +58,7 @@ $animalContactDirectory = Join-Path $OutputDirectory "contact-sheets\animals"
 $interfaceMediaAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-assets.csv"))
 $interfaceSymbolAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-symbol-assets.csv"))
 $soundAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "sound-assets.csv"))
+$animalAudioPolicies = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "animal-audio-policy.csv"))
 $interfaceMediaContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-contact-review.csv"))
 $interfaceMediaVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-visual-review.csv"))
 $interfaceMediaContactDirectory = Join-Path $OutputDirectory "contact-sheets\interface-media"
@@ -90,6 +91,10 @@ Assert-Equal @($decorations | Where-Object extraction_policy -eq "use-full-image
 Assert-Equal @($decorations | Where-Object extraction_policy -eq "blocked-missing-source").Count 1 "decorations blocked by missing sources"
 Assert-Equal @($decorations | Where-Object extraction_policy -eq "blocked-conflicting-source").Count 1 "decorations blocked by conflicting sources"
 Assert-Equal @($decorations | Where-Object { $_.extraction_policy -like "blocked-*" -and $_.preferred_runtime_source }).Count 0 "blocked decorations with runtime sources"
+Assert-Equal @($decorations | Where-Object integration_policy -eq "default").Count 162 "decorations eligible for default integration"
+Assert-Equal @($decorations | Where-Object integration_policy -eq "deferred-validation").Count 8 "decorations deferred for scene validation"
+Assert-Equal @($decorations | Where-Object integration_policy -eq "excluded").Count 2 "decorations excluded from runtime integration"
+Assert-Equal (@($decorations | Where-Object integration_policy -eq "deferred-validation" | Sort-Object { [int]$_.source_id }).source_id -join ",") "14,54,66,76,89,93,213,409" "deferred decoration IDs"
 
 Assert-Equal $files.Count 828 "module file rows"
 Assert-Equal @($files | Where-Object { -not $_.sha256 }).Count 0 "module files without SHA-256"
@@ -161,6 +166,9 @@ Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "swf-st
 Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "swf-content-frame").Count 128 "decoration content-frame assets"
 Assert-Equal @($decorationAssets | Where-Object selected_source_kind -eq "full-image").Count 2 "decoration full-image assets"
 Assert-Equal @($decorationAssets | Where-Object selected_source_kind -like "blocked-*").Count 2 "blocked decoration assets"
+Assert-Equal @($decorationAssets | Where-Object integration_policy -eq "default").Count 162 "default decoration asset integrations"
+Assert-Equal @($decorationAssets | Where-Object integration_policy -eq "deferred-validation").Count 8 "deferred decoration asset integrations"
+Assert-Equal @($decorationAssets | Where-Object integration_policy -eq "excluded").Count 2 "excluded decoration asset integrations"
 Assert-Equal @($decorationAssets | Where-Object automated_status -eq "ready-for-visual-review").Count 170 "decoration assets ready for review"
 Assert-Equal @($decorationAssets | Where-Object { $_.selected_source_kind -notlike "blocked-*" -and [int]$_.visible_pixels -le 0 }).Count 0 "empty usable decoration assets"
 Assert-Equal $decorationContactReview.Count 172 "decoration contact review rows"
@@ -228,6 +236,15 @@ Assert-Equal @($soundAssets | Where-Object sound_format -eq "WAV").Count 55 "WAV
 Assert-Equal @($soundAssets | Where-Object sound_format -eq "MP3").Count 5 "MP3 sound rows"
 Assert-Equal @($soundAssets | Where-Object { [int]$_.sound_rate -notin @(5512, 11025, 22050, 44100) }).Count 0 "invalid decoded sound rates"
 Assert-Equal ([Math]::Round([double](($soundAssets | Measure-Object sound_duration_seconds -Sum).Sum), 3)) 75.121 "total sound duration"
+Assert-Equal $animalAudioPolicies.Count 35 "animal audio policy rows"
+Assert-Equal @($animalAudioPolicies | Where-Object integration_policy -eq "default").Count 27 "animals with complete audio variants"
+Assert-Equal @($animalAudioPolicies | Where-Object integration_policy -eq "available-only").Count 6 "animals using available audio only"
+Assert-Equal @($animalAudioPolicies | Where-Object integration_policy -eq "excluded").Count 2 "animals with audio excluded"
+Assert-Equal (@($animalAudioPolicies | Where-Object integration_policy -eq "available-only" | Sort-Object animal_id).animal_id -join ",") "1007,1015,1016,1018,1510,1512" "available-only animal audio IDs"
+Assert-Equal (@($animalAudioPolicies | Where-Object integration_policy -eq "excluded" | Sort-Object animal_id).animal_id -join ",") "1010,1017" "excluded animal audio IDs"
+foreach ($policy in $animalAudioPolicies) {
+  Assert-Equal @($soundAssets | Where-Object animal_id -eq $policy.animal_id).Count ([int]$policy.available_variant_count) "audio source count for animal $($policy.animal_id)"
+}
 Assert-Equal $interfaceMediaContactReview.Count 38 "interface/media contact review rows"
 Assert-Equal @($interfaceMediaContactReview | Where-Object visual_review_status -notlike "reviewed-*").Count 0 "interface/media contacts awaiting visual review"
 Assert-Equal @($interfaceMediaContactReview | Where-Object render_errors -ne "0").Count 0 "interface/media contact render errors"
@@ -248,6 +265,9 @@ Assert-Equal @($assetReviewIssues | Where-Object severity -eq "blocking").Count 
 Assert-Equal @($assetReviewIssues | Where-Object severity -eq "warning").Count 16 "warning asset issues"
 Assert-Equal @($assetReviewIssues | Where-Object status -eq "integration-check-required").Count 8 "decoration integration checks"
 Assert-Equal @($assetReviewIssues | Where-Object status -eq "source-gap").Count 8 "pasture sound source gaps"
+Assert-Equal @($assetReviewIssues | Where-Object integration_policy -eq "excluded").Count 4 "issues excluded from integration"
+Assert-Equal @($assetReviewIssues | Where-Object integration_policy -eq "deferred-validation").Count 8 "issues deferred for validation"
+Assert-Equal @($assetReviewIssues | Where-Object integration_policy -eq "available-only").Count 6 "issues limited to available variants"
 
 $actualCurrentHashes = @{}
 foreach ($file in $classicFiles) {

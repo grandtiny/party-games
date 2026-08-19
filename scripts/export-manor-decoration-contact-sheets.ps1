@@ -264,6 +264,7 @@ foreach ($item in $items) {
     item_type = [int]$item.item_type
     item_type_name = $item.item_type_name
     extraction_policy = $item.extraction_policy
+    integration_policy = $item.integration_policy
     selected_source_kind = $selectedSourceKind
     source_origin_file = $item.preferred_runtime_source
     source_origin_sha256 = if ($item.preferred_runtime_source) { Get-ManorAssetHash (Get-SourcePath $item.preferred_runtime_source) } else { "" }
@@ -317,7 +318,7 @@ foreach ($item in $items) {
 }
 
 $assetRows |
-  Select-Object source_id,name,set_name,item_type,item_type_name,extraction_policy,selected_source_kind,source_origin_file,source_origin_sha256,source_export_file,source_export_sha256,width,height,visible_pixels,visible_x,visible_y,visible_width,visible_height,swf_display_rect,swf_content_outline_rect,preview_file,preview_sha256,thumbnail_file,thumbnail_sha256,known_issue,automated_status,visual_review_status |
+  Select-Object source_id,name,set_name,item_type,item_type_name,extraction_policy,integration_policy,selected_source_kind,source_origin_file,source_origin_sha256,source_export_file,source_export_sha256,width,height,visible_pixels,visible_x,visible_y,visible_width,visible_height,swf_display_rect,swf_content_outline_rect,preview_file,preview_sha256,thumbnail_file,thumbnail_sha256,known_issue,automated_status,visual_review_status |
   Export-Csv -LiteralPath $assetTablePath -NoTypeInformation -Encoding utf8
 $reviewRows | Export-Csv -LiteralPath $reviewTablePath -NoTypeInformation -Encoding utf8
 
