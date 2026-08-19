@@ -453,7 +453,7 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
     expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
@@ -461,6 +461,7 @@ describe("manor farm", () => {
     expect(migrated.plots[1]).toMatchObject({ id: 2, cropId: "radish", harvestedCycles: 0 });
     expect(migrated.seeds.potato).toBe(0);
     expect(migrated.produce.cabbage).toBe(0);
+    expect(migrated.pasture).toMatchObject({ grass: 20, hutchLevel: 1, shedLevel: 0 });
     expect(migrated.plots.slice(6)).toEqual(
       Array.from({ length: 12 }, (_, index) => ({ id: index + 7, cycle: 0 }))
     );
@@ -478,7 +479,7 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 6, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 7, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 
@@ -503,7 +504,7 @@ describe("manor farm", () => {
     });
 
     expect(migrated).toMatchObject({
-      schemaVersion: 6,
+      schemaVersion: 7,
       starterGiftClaimed: true,
       rewardedThroughOriginalLevel: 7,
       pendingLevelRewardLevels: [],

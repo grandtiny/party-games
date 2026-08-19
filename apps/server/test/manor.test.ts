@@ -193,6 +193,126 @@ describe("manor account persistence", () => {
     }
   });
 
+  it("persists pasture actions in the same account manor save", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-pasture-test-"));
+    const databasePath = join(directory, "test.sqlite");
+    const first = await createApp({ databasePath, logger: false });
+    let firstClosed = false;
+    try {
+      expect((await first.app.inject({ method: "GET", url: "/api/manor/pasture" })).statusCode).toBe(401);
+      const setup = await first.app.inject({
+        method: "POST",
+        url: "/api/account/bootstrap",
+        payload: {
+          username: "rancher",
+          displayName: "牧场主",
+          password: "rancher-password"
+        }
+      });
+      const cookie = sessionCookie(setup.headers["set-cookie"]);
+      const initial = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/pasture",
+        headers: { cookie }
+      });
+      expect(initial.statusCode).toBe(200);
+      expect(initial.json()).toMatchObject({
+        revision: 0,
+        profile: { displayName: "牧场主", coins: 120, level: 1, experience: 0 },
+        grass: 20,
+        grassCapacity: 400,
+        grassPrice: 60,
+        houses: {
+          hutch: { level: 1, capacity: 2, occupied: 2 },
+          shed: { level: 0, capacity: 0, occupied: 0 }
+        }
+      });
+      expect(initial.json().animals).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ serial: 1, sourceId: 1002, visualState: "lifecycle_complete" }),
+          expect.objectContaining({ serial: 2, sourceId: 1002, visualState: "ready_to_produce" })
+        ])
+      );
+      expect(initial.json().catalog).toHaveLength(35);
+
+      const invalidAnimal = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/pasture/actions",
+        headers: { cookie },
+        payload: { type: "buy-animal", animalId: 1000, quantity: 1 }
+      });
+      expect(invalidAnimal.statusCode).toBe(400);
+
+      const produced = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/pasture/actions",
+        headers: { cookie },
+        payload: { type: "start-animal-production", animalSerial: 2 }
+      });
+      expect(produced.statusCode).toBe(200);
+      expect(produced.json()).toMatchObject({
+        revision: 1,
+        profile: { coins: 120, experience: 5 }
+      });
+      expect(produced.json().animals).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ serial: 2, pendingProduct: 12, canHarvestProduct: true })
+        ])
+      );
+
+      const harvested = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/pasture/actions",
+        headers: { cookie },
+        payload: { type: "harvest-animal", animalSerial: 1 }
+      });
+      expect(harvested.statusCode).toBe(200);
+      expect(harvested.json()).toMatchObject({ revision: 2, profile: { experience: 33 } });
+      expect(harvested.json().inventory).toEqual(
+        expect.arrayContaining([expect.objectContaining({ animalId: 1002, animalCount: 1 })])
+      );
+
+      const sold = await first.app.inject({
+        method: "POST",
+        url: "/api/manor/pasture/actions",
+        headers: { cookie },
+        payload: { type: "sell-pasture-item", animalId: 1002, itemType: "animal", quantity: 1 }
+      });
+      expect(sold.statusCode).toBe(200);
+      expect(sold.json()).toMatchObject({ revision: 3, profile: { coins: 1_580 } });
+
+      const farm = await first.app.inject({
+        method: "GET",
+        url: "/api/manor",
+        headers: { cookie }
+      });
+      expect(farm.json()).toMatchObject({ revision: 3, profile: { coins: 1_580 } });
+
+      await first.app.close();
+      firstClosed = true;
+      const second = await createApp({ databasePath, logger: false });
+      try {
+        const restored = await second.app.inject({
+          method: "GET",
+          url: "/api/manor/pasture",
+          headers: { cookie }
+        });
+        expect(restored.statusCode).toBe(200);
+        expect(restored.json()).toMatchObject({
+          revision: 3,
+          profile: { coins: 1_580, experience: 33 }
+        });
+        expect(restored.json().animals).toHaveLength(1);
+        expect(restored.json().inventory).toEqual([]);
+      } finally {
+        await second.app.close();
+      }
+    } finally {
+      if (!firstClosed) await first.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("revalidates classic manor assets while retaining immutable hashed assets", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-static-test-"));
     const databasePath = join(directory, "test.sqlite");

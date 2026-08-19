@@ -254,9 +254,21 @@ $arrayPattern = '"(?<key>\d+)"\s*=>\s*array\((?<body>[^\)]*)\)'
 $animalMatches = [regex]::Matches($animalConfig, $arrayPattern) | Where-Object {
   $_.Groups["body"].Value.Contains('"byproductprice"')
 }
+$animalNameRows = @{}
+foreach ($match in [regex]::Matches($animalConfig, $arrayPattern)) {
+  $body = $match.Groups["body"].Value
+  if ($body.Contains('"name"') -and -not $body.Contains('"byproductprice"')) {
+    $animalNameRows[[int]$match.Groups["key"].Value] = $body
+  }
+}
 $animals = foreach ($match in $animalMatches) {
   $body = $match.Groups["body"].Value
   $animalId = [int](Get-NumberField $body "cId")
+  $byproductBody = $animalNameRows[$animalId]
+  $animalProductBody = $animalNameRows[$animalId + 10000]
+  if (-not $byproductBody -or -not $animalProductBody) {
+    throw "Animal $animalId is missing package sale metadata"
+  }
   $swfName = "a$animalId.swf"
   $swfPath = Join-Path $animalDirectory $swfName
   $structure = $animalStructureByFile[$swfName]
@@ -267,11 +279,22 @@ $animals = foreach ($match in $animalMatches) {
     purchase_price = Get-NumberField $body "price"
     product_price = Get-NumberField $body "productprice"
     byproduct_price = Get-NumberField $body "byproductprice"
+    byproduct_name = Get-StringField $byproductBody "name"
+    byproduct_sale_price = Get-NumberField $byproductBody "price"
+    byproduct_harvest_experience = Get-NumberField $byproductBody "exp"
+    byproduct_unit = Get-StringField $byproductBody "liangci"
+    animal_sale_price = Get-NumberField $animalProductBody "price"
+    animal_harvest_experience = Get-NumberField $animalProductBody "exp"
+    animal_unit = Get-StringField $animalProductBody "liangci"
+    production_action = Get-StringField $animalProductBody "act"
     base_yield = Get-NumberField $body "output"
     consume = Get-NumberField $body "consum"
     cub_seconds = Get-NumberField $body "cub"
     maturity_seconds = Get-NumberField $body "maturingTime"
     production_seconds = Get-NumberField $body "procreation"
+    production_cycle_seconds = Get-NumberField $body "cycle"
+    production_action_seconds = Get-NumberField $body "productime"
+    description = Get-StringField $body "sinfo"
     source_swf = "module/mc/main/animal/$swfName"
     source_bytes = if (Test-Path -LiteralPath $swfPath) { (Get-Item -LiteralPath $swfPath).Length } else { 0 }
     source_sha256 = Get-Hash $swfPath
@@ -558,7 +581,10 @@ $readme = @"
 - 游戏根目录：``upload/home/qqfarm``
 - 源台账生成：``pwsh -File scripts/build-manor-asset-map.ps1``
 - 作物目录生成：``pwsh -File scripts/generate-manor-crop-catalog.ps1``
+- 动物目录生成：``pwsh -File scripts/generate-manor-animal-catalog.ps1``
 - 运行时作物导出：``pwsh -File scripts/export-manor-runtime-crops.ps1``
+- 运行时牧场图像导出：``pwsh -File scripts/export-manor-runtime-pasture.ps1``
+- 运行时牧场声音导出：``pwsh -File scripts/export-manor-runtime-pasture-audio.ps1``
 - SWF 解析：JPEXS ``ffdec.jar``，由 ``scripts/ManorSwfInventory.java`` 在单个 JVM 内批量读取。
 
 ## 当前统计
@@ -566,7 +592,7 @@ $readme = @"
 | 范围 | 数量 | 当前状态 |
 | --- | ---: | --- |
 | 原版作物配置/SWF | $($crops.Count) | 602 个七阶段角色已导出并人工复核；430 张五阶段运行时 PNG 已接入；结构解析错误 $cropParseErrors |
-| 原版动物配置/SWF | $($animals.Count) | 210 个六状态角色和 78 个内部辅助类已分离登记并人工复核；结构解析错误 $animalParseErrors |
+| 原版动物配置/SWF | $($animals.Count) | 210 个六状态角色和 78 个内部辅助类已分离登记并人工复核；210 张运行时 PNG 已接入；结构解析错误 $animalParseErrors |
 | 原版装饰配置 | $($decorations.Count) | 162 件允许默认接入，8 件延后到场景验收，ID 21/402 不接入 |
 | UI、动作及辅助素材 | 130 个源文件 | 830 个可见映射已复核；28 个空轮廓和 2 个二进制类已分类 |
 | 原版牧场声音 | 60 个容器/60 条音轨 | 按真实 DefineSound 登记，总时长 75.121 秒；8 种动物存在原版变体缺口 |
@@ -575,6 +601,9 @@ $readme = @"
 | 原版 module 完全重复文件组 | $(@($duplicateAssets).Count) | 仅表示二进制完全相同，删除或合并前仍需人工判断用途 |
 | 当前 classic 基础 PNG | $($currentAssets.Count) | 当前项目已使用的场景、控件和首批兼容作物素材 |
 | 作物运行时 PNG | 430 | 86 种作物各含种子、发芽、生长、成熟、枯萎五阶段 |
+| 动物运行时 PNG | 210 | 35 种动物各含幼年、成长、成熟待生产、生产阶段一、生产阶段二、生命周期结束六状态 |
+| 牧场运行时 UI PNG | 24 | 原版牧场背景、顶部栏、工具栏、导航、饲料槽和核心工具控件 |
+| 牧场运行时音频 | 60 | 33 种动物的真实可用变体均接入 MP3；59 条直接复制，1 条由 FLV 音频容器转码 |
 | 当前 classic PNG 完全重复组 | $(@($currentDuplicateAssets).Count) | 已区分共享作物阶段、按钮状态复用和待复核项 |
 
 ## 文件说明
@@ -582,7 +611,7 @@ $readme = @"
 | 文件 | 用途 |
 | --- | --- |
 | ``crops.csv`` | 86 种作物的原版经济数据、SWF、七个状态角色和当前接入状态 |
-| ``animals.csv`` | 35 种动物的原版经济数据、SWF SymbolClass 和接入状态 |
+| ``animals.csv`` | 35 种动物的原版配置值、实际 CGI 结算售价/经验、周期、产品名称、SWF SymbolClass 和接入状态 |
 | ``decorations.csv`` | 172 件装饰的套装、类型、价格、源完整性、提取策略、接入策略和可用源文件 |
 | ``files.csv`` | ``module`` 下 828 个素材文件的完整文件级台账 |
 | ``source-modules.csv`` | ``source`` 下 124 个 PHP 配置/业务模块及功能分类 |
@@ -597,12 +626,15 @@ $readme = @"
 | ``decoration-assets.csv`` | 172 件装饰的实际选源、导出图、可见范围、哈希和视觉复核状态 |
 | ``decoration-contact-review.csv`` / ``decoration-visual-review.csv`` | 装饰自动检查与人工视觉结论 |
 | ``animal-state-assets.csv`` | 35 种动物六个运行时状态的 210 行角色、导出图、尺寸和哈希 |
+| ``animal-runtime-assets.csv`` | 210 张动物运行时 PNG 到原角色、源哈希和人工复核结论的逐张映射 |
 | ``animal-symbol-classes.csv`` | 288 个动物 SymbolClass，明确区分 210 个运行时状态和 78 个内部辅助类 |
 | ``animal-contact-review.csv`` / ``animal-visual-review.csv`` | 动物联系表自动检查与人工视觉结论 |
 | ``interface-media-assets.csv`` | UI、动作、花束、留言板、入口和声音等 130 个源文件的分类汇总 |
 | ``interface-symbol-assets.csv`` | 860 个根舞台、SymbolClass 和 ExportAssets 映射及 830 个渲染结果 |
+| ``pasture-runtime-ui-assets.csv`` | 24 张牧场运行时背景和控件 PNG 到原 UI 角色及源哈希的逐张映射 |
 | ``sound-assets.csv`` | 60 个真实 DefineSound 音轨的格式、采样率、声道、样本数和时长 |
 | ``animal-audio-policy.csv`` | 35 种动物的可用声音变体和运行时接入策略 |
+| ``pasture-runtime-audio-assets.csv`` | 60 条牧场运行时 MP3 到原 SWF、DefineSound、变体策略、时长及源/运行时哈希的映射 |
 | ``asset-review-issues.csv`` | 当前全部阻断项、接入前复核项和原版声音缺口的统一问题清单 |
 | ``contact-sheets/crops/index.html`` | 86 份作物七阶段视觉联系表入口 |
 | ``contact-sheets/decorations/index.html`` | 172 件装饰视觉联系表入口 |
@@ -651,7 +683,7 @@ UI 素材库的根舞台常为空，实际可见资源挂在 SymbolClass 或 Exp
 
 ## 当前边界
 
-素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场已消费作物台账并接入 86 种作物、原版生长阶段、多季、枯萎、照料收益/减产、三档化肥、土地开垦、新手礼包和升级奖励规则；三档化肥分别来自 ``157:Fertilizer``、``164:FertilizerFast`` 和 ``170:FertilizerVeryFast``，开垦木牌来自 ``261:Reclaim``。升级奖励中的装扮目前只记录权益，摆放界面尚未开放；牧场和好友仍不在当前功能边界。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
+素材准备阶段已完成“批量导出 -> 联系表 -> 人工验收 -> 问题清单”。农场已消费作物台账并接入 86 种作物、原版生长阶段、多季、枯萎、照料收益/减产、三档化肥、土地开垦、新手礼包和升级奖励规则；三档化肥分别来自 ``157:Fertilizer``、``164:FertilizerFast`` 和 ``170:FertilizerVeryFast``，开垦木牌来自 ``261:Reclaim``。牧场已接入 35 种动物的 210 张六状态运行时 PNG、24 张原版场景和核心控件 PNG、60 条原版可用音频，并生成包含实际 CGI 结算值的类型化动物目录；购买、喂养、生产、收获、出售和窝棚升级状态机及账号 API 已接入。升级奖励中的装扮目前只记录权益，摆放界面尚未开放；牧场页面和好友互动仍未接入。后续接入必须继续消费对应表并按 ``integration_policy`` 过滤，不直接把原 PHP/Flash 放进运行时，平台账号继续作为唯一账号体系。
 "@
 Set-Content -LiteralPath (Join-Path $OutputDirectory "README.md") -Value $readme -Encoding utf8
 

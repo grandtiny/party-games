@@ -22,6 +22,7 @@ import {
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   ManorActionRequestSchema,
+  ManorPastureActionRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -318,6 +319,30 @@ export async function createApp(options: AppOptions) {
     try {
       const input = ManorActionRequestSchema.parse(request.body);
       return manorService.handleAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/pasture", async (request, reply) => {
+    try {
+      return manorService.getPasture(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/pasture/actions", async (request, reply) => {
+    try {
+      const input = ManorPastureActionRequestSchema.parse(request.body);
+      return manorService.handlePastureAction(
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
         input
       );

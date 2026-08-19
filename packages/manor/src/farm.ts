@@ -9,6 +9,12 @@ import type {
 } from "@party-games/shared";
 import { MANOR_CROP_DATA } from "./crops.generated.js";
 import {
+  createManorPasture,
+  migrateManorPasture,
+  validateManorPasture,
+  type ManorPastureState
+} from "./pasture.js";
+import {
   MANOR_FERTILIZERS,
   MANOR_LEVEL_REWARDS,
   MANOR_STARTER_GIFT,
@@ -54,7 +60,7 @@ export interface ManorPlotState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 6;
+  schemaVersion: 7;
   revision: number;
   coins: number;
   experience: number;
@@ -68,6 +74,7 @@ export interface ManorFarmState {
   seeds: Record<ManorCropId, number>;
   produce: Record<ManorCropId, number>;
   plots: ManorPlotState[];
+  pasture: ManorPastureState;
   createdAt: number;
   updatedAt: number;
 }
@@ -103,13 +110,13 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   fertilizer?: unknown;
 };
 
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -123,6 +130,7 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
     plots: createEmptyPlots(),
+    pasture: createManorPasture(now),
     createdAt: now,
     updatedAt: now
   };
@@ -130,7 +138,7 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
   return state;
 }
 
-export function migrateManorFarm(value: unknown): ManorFarmState {
+export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFarmState {
   if (!value || typeof value !== "object") throw new Error("庄园存档格式无效");
   const candidate = value as PersistedManorFarm;
   if (
@@ -139,7 +147,8 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     candidate.schemaVersion !== 3 &&
     candidate.schemaVersion !== 4 &&
     candidate.schemaVersion !== 5 &&
-    candidate.schemaVersion !== 6
+    candidate.schemaVersion !== 6 &&
+    candidate.schemaVersion !== 7
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -149,25 +158,27 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
   const plots = candidate.schemaVersion === 1
     ? migrateSixPlotFarm(migratedPlots)
     : migratedPlots;
+  const createdAt = timestamp(candidate.createdAt, "创建时间");
+  const updatedAt = timestamp(candidate.updatedAt, "更新时间");
   const state: ManorFarmState = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
     randomState: integer(candidate.randomState, "随机状态") >>> 0,
-    fertilizers: candidate.schemaVersion === 6
+    fertilizers: candidate.schemaVersion >= 6
       ? migrateFertilizers(candidate.fertilizers)
       : fertilizerRecord({ ordinary: integer(candidate.fertilizer ?? 0, "普通化肥库存") }),
-    starterGiftClaimed: candidate.schemaVersion === 6
+    starterGiftClaimed: candidate.schemaVersion >= 6
       ? boolean(candidate.starterGiftClaimed, "新手礼包状态")
       : true,
-    rewardedThroughOriginalLevel: candidate.schemaVersion === 6
+    rewardedThroughOriginalLevel: candidate.schemaVersion >= 6
       ? integer(candidate.rewardedThroughOriginalLevel, "升级奖励进度")
       : originalLevelForExperience(integer(candidate.experience, "经验")),
-    pendingLevelRewardLevels: candidate.schemaVersion === 6
+    pendingLevelRewardLevels: candidate.schemaVersion >= 6
       ? integerArray(candidate.pendingLevelRewardLevels, "待确认升级奖励")
       : [],
-    decorationEntitlements: candidate.schemaVersion === 6
+    decorationEntitlements: candidate.schemaVersion >= 6
       ? integerArray(candidate.decorationEntitlements, "装扮权益")
       : [],
     unlockedPlotCount: candidate.schemaVersion >= 5
@@ -176,8 +187,12 @@ export function migrateManorFarm(value: unknown): ManorFarmState {
     seeds: migrateInventory(candidate.seeds, "种子"),
     produce: migrateInventory(candidate.produce, "仓库"),
     plots,
-    createdAt: timestamp(candidate.createdAt, "创建时间"),
-    updatedAt: timestamp(candidate.updatedAt, "更新时间")
+    pasture: migrateManorPasture(
+      candidate.schemaVersion === 7 ? candidate.pasture : undefined,
+      fallbackNow ?? updatedAt
+    ),
+    createdAt,
+    updatedAt
   };
   validateManorFarm(state);
   return state;
@@ -395,7 +410,7 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 6) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 7) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
@@ -510,6 +525,7 @@ export function validateManorFarm(state: ManorFarmState): void {
       throw new Error("仓库库存无效");
     }
   }
+  validateManorPasture(state.pasture);
 }
 
 export function levelForExperience(experience: number): number {
@@ -871,7 +887,8 @@ function cloneState(state: ManorFarmState): ManorFarmState {
     decorationEntitlements: [...state.decorationEntitlements],
     seeds: { ...state.seeds },
     produce: { ...state.produce },
-    plots: state.plots.map((plot) => ({ ...plot }))
+    plots: state.plots.map((plot) => ({ ...plot })),
+    pasture: migrateManorPasture(state.pasture, state.updatedAt)
   };
 }
 
@@ -894,7 +911,7 @@ function migrateInventory(
   return result;
 }
 
-function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6): ManorPlotState {
+function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
   const cropId = plot.cropId === undefined ? undefined : validCropId(plot.cropId);
