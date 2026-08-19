@@ -22,6 +22,8 @@ import {
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   ManorActionRequestSchema,
+  ManorFriendFarmActionRequestSchema,
+  ManorFriendPastureActionRequestSchema,
   ManorPastureActionRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
@@ -345,6 +347,71 @@ export async function createApp(options: AppOptions) {
       return manorService.handlePastureAction(
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
         input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/social", async (request, reply) => {
+    try {
+      return manorService.getSocialOverview(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/farm", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getFriendFarm(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/farm/actions", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.handleFriendFarmAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorFriendFarmActionRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/pasture", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getFriendPasture(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/pasture/actions", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.handleFriendPastureAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorFriendPastureActionRequestSchema.parse(request.body)
       );
     } catch (error) {
       const message = messageOf(error);

@@ -9,11 +9,22 @@ import type {
   ManorPlotView,
   ManorRewardItemView
 } from "@party-games/shared";
-import { RefreshCw, Search, Wheat } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { getManorFarm, performManorAction } from "../../api";
+import { ListChecks, RefreshCw, Search, UsersRound, Wheat } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  getManorFarm,
+  getManorFriendFarm,
+  performManorAction,
+  performManorFriendFarmAction
+} from "../../api";
 import { AppShell } from "../../platform/AppShell";
 import { ManorPasturePage } from "./PasturePage";
+import {
+  ManorSocialWindow,
+  ManorTaskWindow,
+  ManorVisitBanner,
+  type ManorVisitTarget
+} from "./SocialWindow";
 
 const ASSET_ROOT = "/assets/manor/classic";
 const CROP_ASSET_VERSION = "classic-crops-v3";
@@ -34,15 +45,59 @@ const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> 
 
 export function ManorPage() {
   const [mode, setMode] = useState<"farm" | "pasture">("farm");
+  const [visit, setVisit] = useState<ManorVisitTarget>();
+  const [socialOpen, setSocialOpen] = useState(false);
+
+  const visitFriend = (friend: ManorVisitTarget, nextMode: "farm" | "pasture") => {
+    setVisit(friend);
+    setMode(nextMode);
+    setSocialOpen(false);
+  };
+
+  const social = (
+    <ManorSocialWindow
+      open={socialOpen}
+      onClose={() => setSocialOpen(false)}
+      onVisit={visitFriend}
+    />
+  );
 
   if (mode === "pasture") {
-    return <ManorPasturePage onSwitchFarm={() => setMode("farm")} />;
+    return (
+      <ManorPasturePage
+        visit={visit}
+        socialWindow={social}
+        onOpenSocial={() => setSocialOpen(true)}
+        onReturnHome={() => setVisit(undefined)}
+        onSwitchFarm={() => setMode("farm")}
+      />
+    );
   }
 
-  return <ManorFarmPage onSwitchPasture={() => setMode("pasture")} />;
+  return (
+    <ManorFarmPage
+      visit={visit}
+      socialWindow={social}
+      onOpenSocial={() => setSocialOpen(true)}
+      onReturnHome={() => setVisit(undefined)}
+      onSwitchPasture={() => setMode("pasture")}
+    />
+  );
 }
 
-function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
+function ManorFarmPage({
+  visit,
+  socialWindow,
+  onOpenSocial,
+  onReturnHome,
+  onSwitchPasture
+}: {
+  visit: ManorVisitTarget | undefined;
+  socialWindow: ReactNode;
+  onOpenSocial: () => void;
+  onReturnHome: () => void;
+  onSwitchPasture: () => void;
+}) {
   const stageViewportRef = useRef<HTMLDivElement>(null);
   const windowScrollLeftRef = useRef<number | undefined>(undefined);
   const [farm, setFarm] = useState<ManorFarmView>();
@@ -57,6 +112,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
   const [busyKey, setBusyKey] = useState<string>();
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
+  const [taskOpen, setTaskOpen] = useState(false);
 
   const acceptFarm = useCallback((next: ManorFarmView) => {
     setFarm(next);
@@ -67,7 +123,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setBusyKey("refresh");
     try {
-      acceptFarm(await getManorFarm());
+      acceptFarm(visit ? (await getManorFriendFarm(visit.userId)).farm : await getManorFarm());
     } catch (requestError) {
       if (!silent) {
         setError(requestError instanceof Error ? requestError.message : "庄园读取失败");
@@ -75,7 +131,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
     } finally {
       if (!silent) setBusyKey(undefined);
     }
-  }, [acceptFarm]);
+  }, [acceptFarm, visit]);
 
   useEffect(() => {
     void refresh();
@@ -156,6 +212,33 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
     }
   }, [acceptFarm, busyKey]);
 
+  const actForFriend = useCallback(async (
+    action: Parameters<typeof performManorFriendFarmAction>[1],
+    key: string
+  ) => {
+    if (busyKey || !visit) return false;
+    setBusyKey(key);
+    setError(undefined);
+    try {
+      const result = await performManorFriendFarmAction(visit.userId, action);
+      acceptFarm(result.farm);
+      setNotice(result.message ?? "好友互动完成");
+      return true;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "好友互动失败");
+      return false;
+    } finally {
+      setBusyKey(undefined);
+    }
+  }, [acceptFarm, busyKey, visit]);
+
+  useEffect(() => {
+    setActiveWindow(undefined);
+    setReclaimPlotId(undefined);
+    setTaskOpen(false);
+    setSelectedTool("move");
+  }, [visit?.userId]);
+
   const serverNow = farm ? farm.serverTime + (clock - loadedAt) : clock;
   const selectedCrop = useMemo(
     () => farm?.catalog.find((crop) => crop.id === selectedCropId),
@@ -216,6 +299,38 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
   const activatePlot = async (plot: ManorPlotView) => {
     setInspectedPlotId(plot.id);
     if (!farm || busyKey) return;
+    if (visit) {
+      if (!plot.unlocked) {
+        setNotice("好友还没有开垦这块土地");
+        return;
+      }
+      if (selectedTool === "move") {
+        setNotice(plotSummary(plot, serverNow));
+        return;
+      }
+      if (selectedTool === "water") {
+        if (plot.watered) setNotice("这块土地当前水分正常");
+        else await actForFriend({ type: "water", plotId: plot.id }, `friend-water:${plot.id}`);
+        return;
+      }
+      if (selectedTool === "weed") {
+        if (!plot.weed) setNotice("这块土地当前没有杂草");
+        else await actForFriend({ type: "clear-weed", plotId: plot.id }, `friend-weed:${plot.id}`);
+        return;
+      }
+      if (selectedTool === "pest") {
+        if (!plot.pest) setNotice("这块土地当前没有害虫");
+        else await actForFriend({ type: "clear-pest", plotId: plot.id }, `friend-pest:${plot.id}`);
+        return;
+      }
+      if (selectedTool === "harvest") {
+        if (plot.status !== "mature") setNotice("这块作物还不能偷取");
+        else await actForFriend({ type: "steal-crop", plotId: plot.id }, `friend-steal:${plot.id}`);
+        return;
+      }
+      setNotice("访问好友时只能查看、照料或偷取成熟作物");
+      return;
+    }
     if (!plot.unlocked) {
       setReclaimPlotId(plot.id);
       return;
@@ -358,6 +473,9 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
     (total, fertilizer) => total + fertilizer.amount,
     0
   );
+  const visibleTools = visit
+    ? TOOLS.filter((tool) => ["move", "water", "weed", "pest", "harvest"].includes(tool.id))
+    : TOOLS;
 
   return (
     <AppShell
@@ -365,19 +483,31 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
       title="怀旧庄园"
       backTo="/"
       actions={
-        <button
-          className="icon-button"
-          type="button"
-          aria-label="刷新庄园"
-          title="刷新庄园"
-          disabled={busyKey === "refresh"}
-          onClick={() => void refresh()}
-        >
-          <RefreshCw size={18} />
-        </button>
+        <>
+          {!visit ? (
+            <button className="icon-button" type="button" aria-label="新手任务" title="新手任务" onClick={() => setTaskOpen(true)}>
+              <ListChecks size={18} />
+            </button>
+          ) : null}
+          <button className="icon-button" type="button" aria-label="好友与排行" title="好友与排行" onClick={onOpenSocial}>
+            <UsersRound size={18} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="刷新庄园"
+            title="刷新庄园"
+            disabled={busyKey === "refresh"}
+            onClick={() => void refresh()}
+          >
+            <RefreshCw size={18} />
+          </button>
+        </>
       }
     >
       <div className="manor-page">
+        {socialWindow}
+        {taskOpen && !visit ? <ManorTaskWindow tasks={farm.tasks} onClose={() => setTaskOpen(false)} /> : null}
         <div className="manor-stage-viewport" ref={stageViewportRef}>
           <div className="manor-stage-shell">
             <section
@@ -388,26 +518,23 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
               <div className="manor-head-bg" aria-hidden="true" />
               <FarmDecorations active={farm.decorations.active} />
               <PlayerHud farm={farm} levelProgress={levelProgress} />
+              {visit ? <ManorVisitBanner target={visit} onHome={onReturnHome} /> : null}
               <img className="manor-weather" src={`${ASSET_ROOT}/sunny.png`} alt="晴天" />
 
               <nav className="manor-head-tools" aria-label="庄园功能">
-                <ClassicButton asset="nav-farm" label="我的农场" active />
+                <ClassicButton asset="nav-farm" label="我的农场" active={!visit} {...(visit ? { onClick: onReturnHome } : {})} />
                 <ClassicButton
                   asset="nav-pasture"
                   label="我的牧场"
                   onClick={onSwitchPasture}
                 />
-                <ClassicButton
-                  asset="nav-warehouse"
-                  label="仓库"
-                  onClick={() => setActiveWindow("warehouse")}
-                />
-                <ClassicButton
-                  asset="nav-shop"
-                  label="农场商店"
-                  onClick={() => setActiveWindow("shop")}
-                />
-                <DecorationNavButton onClick={() => setActiveWindow("decorate")} />
+                {!visit ? (
+                  <>
+                    <ClassicButton asset="nav-warehouse" label="仓库" onClick={() => setActiveWindow("warehouse")} />
+                    <ClassicButton asset="nav-shop" label="农场商店" onClick={() => setActiveWindow("shop")} />
+                    <DecorationNavButton onClick={() => setActiveWindow("decorate")} />
+                  </>
+                ) : null}
               </nav>
 
               {farm.plots.map((plot, index) => (
@@ -426,18 +553,18 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
               {!error && notice ? <div className="manor-message">{notice}</div> : null}
 
               <div className="manor-toolbar" role="toolbar" aria-label="农场工具">
-                {TOOLS.map((tool) => (
+                {visibleTools.map((tool) => (
                   <ClassicButton
                     active={selectedTool === tool.id}
                     asset={`tool-${tool.id === "pest" ? "pesticide" : tool.id}`}
                     key={tool.id}
-                    label={`${tool.label}${tool.id === "fertilizer" ? ` ×${fertilizerCount}` : ""}${tool.shortcut ? ` (${tool.shortcut})` : ""}`}
+                    label={`${visit && tool.id === "harvest" ? "偷取" : tool.label}${tool.id === "fertilizer" ? ` ×${fertilizerCount}` : ""}${tool.shortcut ? ` (${tool.shortcut})` : ""}`}
                     onClick={() => selectTool(tool.id)}
                   />
                 ))}
               </div>
 
-              {activeWindow === "decorate" ? (
+              {!visit && activeWindow === "decorate" ? (
                 <DecorationWindow
                   busy={Boolean(busyKey)}
                   coins={farm.profile.coins}
@@ -466,7 +593,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                     )
                   }
                 />
-              ) : activeWindow ? (
+              ) : !visit && activeWindow ? (
                 <ClassicWindow
                   busy={Boolean(busyKey)}
                   coins={farm.profile.coins}
@@ -502,7 +629,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                 />
               ) : null}
 
-              {reclaimPlot && !reclaimPlot.unlocked ? (
+              {!visit && reclaimPlot && !reclaimPlot.unlocked ? (
                 <ReclaimDialog
                   busy={Boolean(busyKey)}
                   coins={farm.profile.coins}
@@ -521,7 +648,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                 />
               ) : null}
 
-              {!farm.starterGift.claimed ? (
+              {!visit && !farm.starterGift.claimed ? (
                 <RewardDialog
                   busy={Boolean(busyKey)}
                   items={farm.starterGift.items}
@@ -536,7 +663,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                     );
                   }}
                 />
-              ) : farm.pendingLevelRewards.length > 0 ? (
+              ) : !visit && farm.pendingLevelRewards.length > 0 ? (
                 <RewardDialog
                   busy={Boolean(busyKey)}
                   items={farm.pendingLevelRewards.flatMap((reward) => reward.items)}

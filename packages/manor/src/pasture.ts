@@ -43,11 +43,13 @@ export interface ManorPastureAnimalState {
   sourceId: ManorAnimalSourceId;
   growthSeconds: number;
   pendingProduct: number;
+  productThiefUserIds: string[];
+  stolenProduct: number;
   productionStartedAtGrowth?: number;
 }
 
 export interface ManorPastureState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   experience: number;
   grass: number;
   hutchLevel: number;
@@ -106,7 +108,7 @@ export const MANOR_SHED_UPGRADES: readonly ManorPastureHouseUpgrade[] = [
 export function createManorPasture(now: number): ManorPastureState {
   const rabbit = manorAnimalById(1002);
   const state: ManorPastureState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     experience: 0,
     grass: 20,
     hutchLevel: 1,
@@ -117,13 +119,17 @@ export function createManorPasture(now: number): ManorPastureState {
         serial: 1,
         sourceId: rabbit.sourceId,
         growthSeconds: rabbit.lifecycleSeconds,
-        pendingProduct: 0
+        pendingProduct: 0,
+        productThiefUserIds: [],
+        stolenProduct: 0
       },
       {
         serial: 2,
         sourceId: rabbit.sourceId,
         growthSeconds: rabbit.maturitySeconds + 1,
-        pendingProduct: 0
+        pendingProduct: 0,
+        productThiefUserIds: [],
+        stolenProduct: 0
       }
     ],
     byproducts: {},
@@ -137,11 +143,25 @@ export function createManorPasture(now: number): ManorPastureState {
 export function migrateManorPasture(value: unknown, fallbackNow: number): ManorPastureState {
   if (value === undefined) return createManorPasture(fallbackNow);
   if (!value || typeof value !== "object") throw new Error("牧场存档格式无效");
-  const state = value as ManorPastureState;
-  if (state.schemaVersion !== 1) throw new Error("牧场存档版本不受支持");
+  const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
+  if (schemaVersion !== 1 && schemaVersion !== 2) {
+    throw new Error("牧场存档版本不受支持");
+  }
+  const state = value as Omit<ManorPastureState, "schemaVersion" | "animals"> & {
+    schemaVersion: 1 | 2;
+    animals: Array<
+      Omit<ManorPastureAnimalState, "productThiefUserIds" | "stolenProduct"> &
+      Partial<Pick<ManorPastureAnimalState, "productThiefUserIds" | "stolenProduct">>
+    >;
+  };
   const migrated: ManorPastureState = {
     ...state,
-    animals: state.animals.map((animal) => ({ ...animal })),
+    schemaVersion: 2,
+    animals: state.animals.map((animal) => ({
+      ...animal,
+      productThiefUserIds: schemaVersion === 2 ? [...(animal.productThiefUserIds ?? [])] : [],
+      stolenProduct: schemaVersion === 2 ? animal.stolenProduct ?? 0 : 0
+    })),
     byproducts: { ...state.byproducts },
     harvestedAnimals: { ...state.harvestedAnimals }
   };
@@ -232,7 +252,9 @@ export function applyManorPastureAction(
           serial: pasture.nextAnimalSerial,
           sourceId: definition.sourceId,
           growthSeconds: 0,
-          pendingProduct: 0
+          pendingProduct: 0,
+          productThiefUserIds: [],
+          stolenProduct: 0
         });
         pasture.nextAnimalSerial += 1;
       }
@@ -262,6 +284,8 @@ export function applyManorPastureAction(
       }
       animal.productionStartedAtGrowth = animal.growthSeconds;
       animal.pendingProduct += definition.baseYield;
+      animal.productThiefUserIds = [];
+      animal.stolenProduct = 0;
       pasture.experience += 5;
       break;
     }
@@ -272,6 +296,8 @@ export function applyManorPastureAction(
       pasture.byproducts[definition.sourceId] =
         (pasture.byproducts[definition.sourceId] ?? 0) + animal.pendingProduct;
       animal.pendingProduct = 0;
+      animal.productThiefUserIds = [];
+      animal.stolenProduct = 0;
       pasture.experience += definition.byproductHarvestExperience;
       break;
     }
@@ -362,7 +388,7 @@ export function toManorPastureView(
 }
 
 export function validateManorPasture(state: ManorPastureState): void {
-  if (state.schemaVersion !== 1) throw new Error("牧场存档版本无效");
+  if (state.schemaVersion !== 2) throw new Error("牧场存档版本无效");
   if (!Number.isInteger(state.experience) || state.experience < 0) throw new Error("牧场经验无效");
   if (!Number.isFinite(state.grass) || state.grass < 0 || state.grass > MANOR_GRASS_CAPACITY) {
     throw new Error("牧草数量无效");
@@ -393,6 +419,15 @@ export function validateManorPasture(state: ManorPastureState): void {
     }
     if (!Number.isInteger(animal.pendingProduct) || animal.pendingProduct < 0) {
       throw new Error("动物待收产品无效");
+    }
+    if (!Number.isInteger(animal.stolenProduct) || animal.stolenProduct < 0) {
+      throw new Error("动物被偷产品无效");
+    }
+    if (
+      new Set(animal.productThiefUserIds).size !== animal.productThiefUserIds.length ||
+      animal.productThiefUserIds.some((userId) => typeof userId !== "string" || userId.length === 0)
+    ) {
+      throw new Error("动物产品偷取记录无效");
     }
     if (
       animal.productionStartedAtGrowth !== undefined &&
@@ -440,7 +475,10 @@ function pastureAnimalBySerial(
 function clonePasture(state: ManorPastureState): ManorPastureState {
   return {
     ...state,
-    animals: state.animals.map((animal) => ({ ...animal })),
+    animals: state.animals.map((animal) => ({
+      ...animal,
+      productThiefUserIds: [...animal.productThiefUserIds]
+    })),
     byproducts: { ...state.byproducts },
     harvestedAnimals: { ...state.harvestedAnimals }
   };
@@ -549,6 +587,8 @@ function toAnimalView(
       ? { nextStateAt: now + ((nextGrowthSeconds - animal.growthSeconds) / timeScale) * 1_000 }
       : {}),
     pendingProduct: animal.pendingProduct,
+    minimumProduct: Math.ceil((animal.pendingProduct + animal.stolenProduct) / 2),
+    stolenProduct: animal.stolenProduct,
     byproductName: definition.byproductName,
     productionAction: definition.productionAction,
     canStartProduction,

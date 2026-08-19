@@ -310,6 +310,11 @@ export interface StoredGomokuSave {
   updatedAt: string;
 }
 
+export interface StoredManorAccount {
+  id: string;
+  displayName: string;
+}
+
 export class SqliteRoomRepository {
   readonly #database: DatabaseSync;
 
@@ -1157,6 +1162,20 @@ export class SqliteRoomRepository {
     return row ? JSON.parse(row.state_json) : undefined;
   }
 
+  listManorAccounts(): StoredManorAccount[] {
+    const rows = this.#database
+      .prepare("SELECT id, display_name FROM users ORDER BY display_name COLLATE NOCASE, id")
+      .all() as Array<{ id: string; display_name: string }>;
+    return rows.map((row) => ({ id: row.id, displayName: row.display_name }));
+  }
+
+  findManorAccount(userId: string): StoredManorAccount | undefined {
+    const row = this.#database
+      .prepare("SELECT id, display_name FROM users WHERE id = ?")
+      .get(userId) as { id: string; display_name: string } | undefined;
+    return row ? { id: row.id, displayName: row.display_name } : undefined;
+  }
+
   ensureManorFarm(
     userId: string,
     state: { revision: number; createdAt: number; updatedAt: number }
@@ -1198,6 +1217,40 @@ export class SqliteRoomRepository {
         expectedRevision
       );
     if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
+  }
+
+  updateManorFarmsAtomically(
+    updates: Array<{
+      userId: string;
+      expectedRevision: number;
+      state: { revision: number; updatedAt: number };
+    }>
+  ): void {
+    if (new Set(updates.map((update) => update.userId)).size !== updates.length) {
+      throw new Error("庄园事务包含重复账号");
+    }
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const statement = this.#database.prepare(`
+        UPDATE manor_farms
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `);
+      for (const update of updates) {
+        const result = statement.run(
+          update.state.revision,
+          JSON.stringify(update.state),
+          new Date(update.state.updatedAt).toISOString(),
+          update.userId,
+          update.expectedRevision
+        );
+        if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
+      }
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   hasAdminPassword(): boolean {

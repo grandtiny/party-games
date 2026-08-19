@@ -5,16 +5,34 @@ import type {
   ManorPastureActionRequest,
   ManorPastureView
 } from "@party-games/shared";
-import { Home, PackageOpen, RefreshCw, Search, ShoppingBasket, Wheat } from "lucide-react";
+import { Home, PackageOpen, RefreshCw, Search, ShoppingBasket, UsersRound, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { getManorPasture, performManorPastureAction } from "../../api";
+import {
+  getManorFriendPasture,
+  getManorPasture,
+  performManorFriendPastureAction,
+  performManorPastureAction
+} from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { ManorVisitBanner, type ManorVisitTarget } from "./SocialWindow";
 
 const PASTURE_ASSET_ROOT = "/assets/manor/classic/pasture";
 
 type PastureWindow = "shop" | "warehouse" | "feed" | "houses";
 
-export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void }) {
+export function ManorPasturePage({
+  visit,
+  socialWindow,
+  onOpenSocial,
+  onReturnHome,
+  onSwitchFarm
+}: {
+  visit: ManorVisitTarget | undefined;
+  socialWindow: ReactNode;
+  onOpenSocial: () => void;
+  onReturnHome: () => void;
+  onSwitchFarm: () => void;
+}) {
   const [pasture, setPasture] = useState<ManorPastureView>();
   const [activeWindow, setActiveWindow] = useState<PastureWindow>();
   const [selectedAnimalSerial, setSelectedAnimalSerial] = useState<number>();
@@ -36,7 +54,11 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setBusyKey("refresh");
     try {
-      acceptPasture(await getManorPasture());
+      acceptPasture(
+        visit
+          ? (await getManorFriendPasture(visit.userId)).pasture
+          : await getManorPasture()
+      );
     } catch (requestError) {
       if (!silent) {
         setError(requestError instanceof Error ? requestError.message : "牧场读取失败");
@@ -44,7 +66,7 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
     } finally {
       if (!silent) setBusyKey(undefined);
     }
-  }, [acceptPasture]);
+  }, [acceptPasture, visit]);
 
   useEffect(() => {
     void refresh();
@@ -84,6 +106,31 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
     }
   }, [acceptPasture, busyKey]);
 
+  const actForFriend = useCallback(async (
+    action: Parameters<typeof performManorFriendPastureAction>[1],
+    key: string
+  ) => {
+    if (busyKey || !visit) return false;
+    setBusyKey(key);
+    setError(undefined);
+    try {
+      const result = await performManorFriendPastureAction(visit.userId, action);
+      acceptPasture(result.pasture);
+      setNotice(result.message ?? "好友互动完成");
+      return true;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "好友互动失败");
+      return false;
+    } finally {
+      setBusyKey(undefined);
+    }
+  }, [acceptPasture, busyKey, visit]);
+
+  useEffect(() => {
+    setActiveWindow(undefined);
+    setSelectedAnimalSerial(undefined);
+  }, [visit?.userId]);
+
   if (!pasture) {
     return (
       <AppShell scope="manor" title="怀旧庄园" backTo="/">
@@ -117,6 +164,30 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
   };
 
   const performPrimaryAnimalAction = (animal: ManorAnimalView) => {
+    if (visit) {
+      if (animal.pendingProduct > animal.minimumProduct) {
+        void actForFriend(
+          { type: "steal-product", animalSerial: animal.serial },
+          `friend-steal-product:${animal.serial}`
+        );
+        return;
+      }
+      if (animal.canStartProduction) {
+        void actForFriend(
+          { type: "help-production", animalSerial: animal.serial },
+          `friend-help-production:${animal.serial}`
+        ).then((succeeded) => {
+          if (succeeded) playAnimalSound(animal.audioUrls);
+        });
+        return;
+      }
+      setNotice(
+        animal.pendingProduct > 0
+          ? "副产品已经达到最低保留数量"
+          : animalStatusText(animal, serverNow)
+      );
+      return;
+    }
     if (animal.canHarvestProduct) {
       void act(
         { type: "harvest-animal-product", animalSerial: animal.serial },
@@ -152,50 +223,53 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
       title="怀旧庄园"
       backTo="/"
       actions={
-        <button
-          className="icon-button"
-          type="button"
-          aria-label="刷新牧场"
-          title="刷新牧场"
-          disabled={busyKey === "refresh"}
-          onClick={() => void refresh()}
-        >
-          <RefreshCw size={18} />
-        </button>
+        <>
+          <button className="icon-button" type="button" aria-label="好友与排行" title="好友与排行" onClick={onOpenSocial}>
+            <UsersRound size={18} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="刷新牧场"
+            title="刷新牧场"
+            disabled={busyKey === "refresh"}
+            onClick={() => void refresh()}
+          >
+            <RefreshCw size={18} />
+          </button>
+        </>
       }
     >
       <div className="manor-page">
+        {socialWindow}
         <div className="manor-stage-viewport">
           <div className="manor-stage-shell manor-stage-shell--pasture">
             <section className="manor-stage manor-stage--pasture" aria-label="QQ 牧场经典场景">
               <div className="pasture-head-bg" aria-hidden="true" />
               <PastureHud pasture={pasture} levelProgress={levelProgress} />
+              {visit ? <ManorVisitBanner target={visit} onHome={onReturnHome} /> : null}
 
               <nav className="pasture-head-tools" aria-label="庄园功能">
                 <PastureImageButton asset="nav-farm" label="我的农场" onClick={onSwitchFarm} />
-                <PastureImageButton asset="nav-pasture" label="我的牧场" active />
-                <PastureImageButton
-                  asset="nav-warehouse"
-                  label="牧场仓库"
-                  onClick={() => setActiveWindow("warehouse")}
-                />
-                <PastureImageButton
-                  asset="nav-shop"
-                  label="牧场商店"
-                  onClick={() => setActiveWindow("shop")}
-                />
+                <PastureImageButton asset="nav-pasture" label="我的牧场" active={!visit} {...(visit ? { onClick: onReturnHome } : {})} />
+                {!visit ? (
+                  <>
+                    <PastureImageButton asset="nav-warehouse" label="牧场仓库" onClick={() => setActiveWindow("warehouse")} />
+                    <PastureImageButton asset="nav-shop" label="牧场商店" onClick={() => setActiveWindow("shop")} />
+                  </>
+                ) : null}
               </nav>
 
               <div className="pasture-house-strip">
                 <HouseStatus
                   label="窝"
                   status={pasture.houses.hutch}
-                  onOpen={() => setActiveWindow("houses")}
+                  onOpen={() => visit ? setNotice("好友的动物窝") : setActiveWindow("houses")}
                 />
                 <HouseStatus
                   label="棚"
                   status={pasture.houses.shed}
-                  onOpen={() => setActiveWindow("houses")}
+                  onOpen={() => visit ? setNotice("好友的动物棚") : setActiveWindow("houses")}
                 />
               </div>
 
@@ -232,14 +306,10 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
                   active={Boolean(selectedAnimal)}
                   onClick={() => setNotice(selectedAnimal ? animalStatusText(selectedAnimal, serverNow) : "请先选择一只动物")}
                 />
-                <PastureImageButton
-                  asset="tool-animal"
-                  label="购买动物"
-                  onClick={() => setActiveWindow("shop")}
-                />
+                {!visit ? <PastureImageButton asset="tool-animal" label="购买动物" onClick={() => setActiveWindow("shop")} /> : null}
                 <PastureImageButton
                   asset="tool-produce"
-                  label="执行动物操作"
+                  label={visit ? "帮产或偷取" : "执行动物操作"}
                   onClick={() => selectedAnimal ? performPrimaryAnimalAction(selectedAnimal) : setNotice("请先选择一只动物")}
                 />
                 <PastureImageButton
@@ -253,12 +323,13 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
                 <AnimalActionStrip
                   animal={selectedAnimal}
                   busy={Boolean(busyKey)}
+                  friendMode={Boolean(visit)}
                   now={serverNow}
                   onAction={() => performPrimaryAnimalAction(selectedAnimal)}
                 />
               ) : null}
 
-              {activeWindow === "shop" ? (
+              {!visit && activeWindow === "shop" ? (
                 <PastureShopWindow
                   busy={Boolean(busyKey)}
                   pasture={pasture}
@@ -273,7 +344,7 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
                 />
               ) : null}
 
-              {activeWindow === "warehouse" ? (
+              {!visit && activeWindow === "warehouse" ? (
                 <PastureWarehouseWindow
                   busy={Boolean(busyKey)}
                   pasture={pasture}
@@ -291,19 +362,20 @@ export function ManorPasturePage({ onSwitchFarm }: { onSwitchFarm: () => void })
               {activeWindow === "feed" ? (
                 <PastureFeedWindow
                   busy={Boolean(busyKey)}
+                  friendMode={Boolean(visit)}
                   pasture={pasture}
                   onClose={() => setActiveWindow(undefined)}
-                  onBuy={(quantity) =>
-                    void act(
-                      { type: "buy-grass", quantity },
-                      "buy-grass",
-                      `已向饲料机添加 ${quantity} 份牧草`
-                    )
-                  }
+                  onBuy={(quantity) => visit
+                    ? void actForFriend({ type: "feed-grass", quantity }, "friend-feed-grass")
+                    : void act(
+                        { type: "buy-grass", quantity },
+                        "buy-grass",
+                        `已向饲料机添加 ${quantity} 份牧草`
+                      )}
                 />
               ) : null}
 
-              {activeWindow === "houses" ? (
+              {!visit && activeWindow === "houses" ? (
                 <PastureHouseWindow
                   busy={Boolean(busyKey)}
                   pasture={pasture}
@@ -427,22 +499,32 @@ function PastureAnimal({
 function AnimalActionStrip({
   animal,
   busy,
+  friendMode,
   now,
   onAction
 }: {
   animal: ManorAnimalView;
   busy: boolean;
+  friendMode: boolean;
   now: number;
   onAction: () => void;
 }) {
-  const actionLabel = animal.canHarvestProduct
-    ? `收取${animal.byproductName} ×${animal.pendingProduct}`
+  const actionLabel = friendMode
+    ? animal.pendingProduct > animal.minimumProduct
+      ? `偷取 1 ${animal.byproductName}`
+      : animal.canStartProduction
+        ? `帮忙${animal.productionAction}`
+        : "暂不可操作"
+    : animal.canHarvestProduct
+      ? `收取${animal.byproductName} ×${animal.pendingProduct}`
     : animal.canHarvestAnimal
       ? `收获${animal.name}`
       : animal.canStartProduction
         ? `开始${animal.productionAction}`
         : "暂不可操作";
-  const enabled = animal.canHarvestProduct || animal.canHarvestAnimal || animal.canStartProduction;
+  const enabled = friendMode
+    ? animal.pendingProduct > animal.minimumProduct || animal.canStartProduction
+    : animal.canHarvestProduct || animal.canHarvestAnimal || animal.canStartProduction;
   return (
     <div className="pasture-animal-actions">
       <img src={animalImageUrl(animal)} alt="" />
@@ -574,16 +656,18 @@ function PastureWarehouseWindow({
 function PastureFeedWindow({
   pasture,
   busy,
+  friendMode,
   onBuy,
   onClose
 }: {
   pasture: ManorPastureView;
   busy: boolean;
+  friendMode: boolean;
   onBuy: (quantity: number) => void;
   onClose: () => void;
 }) {
   const available = Math.max(0, Math.floor(pasture.grassCapacity - pasture.grass));
-  const affordable = Math.floor(pasture.profile.coins / pasture.grassPrice);
+  const affordable = friendMode ? 400 : Math.floor(pasture.profile.coins / pasture.grassPrice);
   const maximum = Math.max(1, Math.min(400, available, affordable));
   const [quantity, setQuantity] = useState(Math.min(10, maximum));
   const canBuy = available > 0 && affordable > 0;
@@ -593,7 +677,7 @@ function PastureFeedWindow({
         <img src={`${PASTURE_ASSET_ROOT}/ui/trough-buy.png`} alt="饲料机" />
         <span>
           <strong>{formatGrass(pasture.grass)} / {pasture.grassCapacity}</strong>
-          <small>每份牧草 {pasture.grassPrice} 金币</small>
+          <small>每份牧草 {pasture.grassPrice} 金币{friendMode ? "，从我的金币扣除" : ""}</small>
         </span>
         <label>
           数量
@@ -608,7 +692,7 @@ function PastureFeedWindow({
           />
         </label>
         <button type="button" disabled={busy || !canBuy} onClick={() => onBuy(quantity)}>
-          {available <= 0 ? "饲料机已满" : affordable <= 0 ? "金币不足" : `购买 · ${quantity * pasture.grassPrice} 金币`}
+          {available <= 0 ? "饲料机已满" : affordable <= 0 ? "金币不足" : `${friendMode ? "代喂" : "购买"} · ${quantity * pasture.grassPrice} 金币`}
         </button>
       </div>
     </PastureWindow>

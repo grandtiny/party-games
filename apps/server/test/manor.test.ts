@@ -313,6 +313,120 @@ describe("manor account persistence", () => {
     }
   });
 
+  it("lists platform accounts and persists atomic friend pasture interactions", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-social-test-"));
+    const databasePath = join(directory, "test.sqlite");
+    const instance = await createApp({ databasePath, logger: false });
+    try {
+      const ownerSetup = await instance.app.inject({
+        method: "POST",
+        url: "/api/account/bootstrap",
+        payload: {
+          username: "social-owner",
+          displayName: "庄园主人",
+          password: "owner-password"
+        }
+      });
+      const ownerCookie = sessionCookie(ownerSetup.headers["set-cookie"]);
+      const ownerUserId = String(ownerSetup.json().user.id);
+      const invite = await instance.app.inject({
+        method: "POST",
+        url: "/api/account/invites",
+        headers: { cookie: ownerCookie },
+        payload: { expiresInDays: 1 }
+      });
+      const visitorSetup = await instance.app.inject({
+        method: "POST",
+        url: "/api/account/register",
+        payload: {
+          username: "social-visitor",
+          displayName: "来访好友",
+          password: "visitor-password",
+          inviteCode: invite.json().code
+        }
+      });
+      const visitorCookie = sessionCookie(visitorSetup.headers["set-cookie"]);
+
+      const overview = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/social",
+        headers: { cookie: visitorCookie }
+      });
+      expect(overview.statusCode).toBe(200);
+      expect(overview.json().friends).toEqual([
+        expect.objectContaining({ userId: ownerUserId, displayName: "庄园主人" })
+      ]);
+      expect(overview.json().farmRanking).toHaveLength(2);
+      expect(overview.json().pastureRanking).toHaveLength(2);
+
+      const visited = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/friends/${ownerUserId}/pasture`,
+        headers: { cookie: visitorCookie }
+      });
+      expect(visited.statusCode).toBe(200);
+      expect(visited.json()).toMatchObject({
+        owner: { displayName: "庄园主人" },
+        pasture: { animals: expect.arrayContaining([expect.objectContaining({ serial: 2 })]) }
+      });
+
+      const helped = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/pasture/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "help-production", animalSerial: 2 }
+      });
+      expect(helped.statusCode).toBe(200);
+      expect(helped.json()).toMatchObject({
+        pasture: {
+          animals: expect.arrayContaining([
+            expect.objectContaining({ serial: 2, pendingProduct: 12 })
+          ])
+        }
+      });
+
+      const stolen = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/pasture/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "steal-product", animalSerial: 2 }
+      });
+      expect(stolen.statusCode).toBe(200);
+      expect(stolen.json().pasture.animals).toEqual(
+        expect.arrayContaining([expect.objectContaining({ serial: 2, pendingProduct: 11 })])
+      );
+
+      const duplicate = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/pasture/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "steal-product", animalSerial: 2 }
+      });
+      expect(duplicate.statusCode).toBe(400);
+      expect(duplicate.json().error).toContain("已经偷过");
+
+      const ownerPasture = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/pasture",
+        headers: { cookie: ownerCookie }
+      });
+      expect(ownerPasture.json().animals).toEqual(
+        expect.arrayContaining([expect.objectContaining({ serial: 2, pendingProduct: 11 })])
+      );
+      const visitorPasture = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/pasture",
+        headers: { cookie: visitorCookie }
+      });
+      expect(visitorPasture.json().inventory).toEqual(
+        expect.arrayContaining([expect.objectContaining({ animalId: 1002, byproductCount: 1 })])
+      );
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("revalidates classic manor assets while retaining immutable hashed assets", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-static-test-"));
     const databasePath = join(directory, "test.sqlite");

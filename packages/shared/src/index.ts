@@ -478,6 +478,30 @@ export const ManorPastureActionRequestSchema = z.discriminatedUnion("type", [
 ]);
 export type ManorPastureActionRequest = z.infer<typeof ManorPastureActionRequestSchema>;
 
+export const ManorFriendFarmActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("steal-crop"), plotId: ManorPlotIdSchema })
+]);
+export type ManorFriendFarmActionRequest = z.infer<typeof ManorFriendFarmActionRequestSchema>;
+
+export const ManorFriendPastureActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("feed-grass"),
+    quantity: z.number().int().min(1).max(400)
+  }),
+  z.object({
+    type: z.literal("help-production"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("steal-product"),
+    animalSerial: ManorAnimalSerialSchema
+  })
+]);
+export type ManorFriendPastureActionRequest = z.infer<typeof ManorFriendPastureActionRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -696,6 +720,8 @@ export interface ManorPlotView {
   fertilizedStage?: number;
   visualStageThresholds?: readonly [number, number];
   estimatedYield?: number;
+  minimumYield?: number;
+  stolenYield?: number;
 }
 
 export interface ManorFertilizerView {
@@ -741,6 +767,20 @@ export interface ManorLevelRewardView {
   items: ManorRewardItemView[];
 }
 
+export interface ManorTaskView {
+  id: number;
+  name: string;
+  description: string;
+  rewardCoins: number;
+  rewardExperience: number;
+}
+
+export interface ManorTaskProgressView {
+  completedCount: number;
+  total: number;
+  current?: ManorTaskView;
+}
+
 export interface ManorFarmView {
   serverTime: number;
   revision: number;
@@ -760,6 +800,7 @@ export interface ManorFarmView {
     items: ManorRewardItemView[];
   };
   pendingLevelRewards: ManorLevelRewardView[];
+  tasks: ManorTaskProgressView;
   decorations: {
     catalog: ManorDecorationView[];
     active: Partial<Record<ManorDecorationType, ManorDecorationView>>;
@@ -817,6 +858,8 @@ export interface ManorAnimalView {
   growthProgress: number;
   nextStateAt?: number;
   pendingProduct: number;
+  minimumProduct: number;
+  stolenProduct: number;
   byproductName: string;
   productionAction: string;
   canStartProduction: boolean;
@@ -856,6 +899,34 @@ export interface ManorPastureView {
   catalog: ManorAnimalCatalogView[];
   animals: ManorAnimalView[];
   inventory: ManorPastureInventoryView[];
+}
+
+export interface ManorFriendSummaryView {
+  userId: string;
+  displayName: string;
+  farmLevel: number;
+  farmExperience: number;
+  pastureLevel: number;
+  pastureExperience: number;
+  isCurrentUser: boolean;
+}
+
+export interface ManorSocialOverviewView {
+  friends: ManorFriendSummaryView[];
+  farmRanking: ManorFriendSummaryView[];
+  pastureRanking: ManorFriendSummaryView[];
+}
+
+export interface ManorFriendFarmView {
+  owner: ManorFriendSummaryView;
+  farm: ManorFarmView;
+  message?: string;
+}
+
+export interface ManorFriendPastureView {
+  owner: ManorFriendSummaryView;
+  pasture: ManorPastureView;
+  message?: string;
 }
 
 export interface AdminLlmConfigView {

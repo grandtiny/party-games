@@ -317,7 +317,7 @@ describe("manor farm", () => {
     delete legacy.activeDecorationIds;
 
     expect(migrateManorFarm(legacy)).toMatchObject({
-      schemaVersion: 8,
+      schemaVersion: 9,
       decorationPurchases: [],
       activeDecorationIds: []
     });
@@ -504,7 +504,7 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(8);
+    expect(migrated.schemaVersion).toBe(9);
     expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
     expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
@@ -530,7 +530,7 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 8, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 9, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 
@@ -555,7 +555,7 @@ describe("manor farm", () => {
     });
 
     expect(migrated).toMatchObject({
-      schemaVersion: 8,
+      schemaVersion: 9,
       starterGiftClaimed: true,
       rewardedThroughOriginalLevel: 7,
       pendingLevelRewardLevels: [],

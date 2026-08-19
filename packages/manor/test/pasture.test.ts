@@ -211,8 +211,8 @@ function emptyPasture(
   now: number,
   overrides: Partial<ManorPastureState> = {}
 ): ManorPastureState {
-  return {
-    schemaVersion: 1,
+  const state = {
+    schemaVersion: 2,
     experience: 0,
     grass: 0,
     hutchLevel: 1,
@@ -223,5 +223,13 @@ function emptyPasture(
     harvestedAnimals: {},
     updatedAt: now,
     ...overrides
+  };
+  return {
+    ...state,
+    animals: state.animals.map((animal) => ({
+      productThiefUserIds: [],
+      stolenProduct: 0,
+      ...animal
+    }))
   };
 }

@@ -60,6 +60,31 @@ export interface ManorPlotState {
   pestAt?: number;
   pestClearedAt?: number;
   fertilizedStage?: number;
+  stolenYield?: number;
+  thiefUserIds?: string[];
+}
+
+export type ManorTaskEvent =
+  | "plant"
+  | "fertilize"
+  | "water"
+  | "clear-weed"
+  | "clear-pest"
+  | "harvest"
+  | "clear-plot"
+  | "buy-seeds"
+  | "sell"
+  | "visit-friend"
+  | "help-friend"
+  | "steal-friend";
+
+export interface ManorTaskDefinition {
+  id: number;
+  event: ManorTaskEvent;
+  name: string;
+  description: string;
+  rewardCoins: number;
+  rewardExperience: number;
 }
 
 export interface ManorDecorationPurchaseState {
@@ -68,7 +93,7 @@ export interface ManorDecorationPurchaseState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 8;
+  schemaVersion: 9;
   revision: number;
   coins: number;
   experience: number;
@@ -80,6 +105,7 @@ export interface ManorFarmState {
   decorationEntitlements: number[];
   decorationPurchases: ManorDecorationPurchaseState[];
   activeDecorationIds: number[];
+  nextTaskId: number;
   unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
   produce: Record<ManorCropId, number>;
@@ -97,6 +123,21 @@ export interface ManorRuntimeOptions {
 export const MANOR_PLOT_COUNT = 18;
 export const MANOR_INITIAL_PLOT_COUNT = 6;
 export const MANOR_MAX_LEVEL_REWARD = MANOR_LEVEL_REWARDS.length;
+
+export const MANOR_TASKS: readonly ManorTaskDefinition[] = [
+  { id: 0, event: "plant", name: "播下种子", description: "在任意空地种下一颗种子", rewardCoins: 0, rewardExperience: 100 },
+  { id: 1, event: "fertilize", name: "使用化肥", description: "给生长中的作物施一次肥", rewardCoins: 50, rewardExperience: 100 },
+  { id: 2, event: "water", name: "照料作物", description: "给缺水的作物浇一次水", rewardCoins: 100, rewardExperience: 100 },
+  { id: 3, event: "clear-weed", name: "清除杂草", description: "为作物清除一次杂草", rewardCoins: 150, rewardExperience: 100 },
+  { id: 4, event: "clear-pest", name: "消灭害虫", description: "为作物清除一次害虫", rewardCoins: 200, rewardExperience: 100 },
+  { id: 5, event: "harvest", name: "收获果实", description: "收获一块成熟作物", rewardCoins: 250, rewardExperience: 100 },
+  { id: 6, event: "clear-plot", name: "清理土地", description: "清理一块已经枯萎的作物", rewardCoins: 300, rewardExperience: 100 },
+  { id: 7, event: "buy-seeds", name: "购买种子", description: "在商店购买任意种子", rewardCoins: 350, rewardExperience: 100 },
+  { id: 8, event: "sell", name: "出售果实", description: "从仓库出售任意果实", rewardCoins: 400, rewardExperience: 100 },
+  { id: 9, event: "visit-friend", name: "拜访好友", description: "进入一位好友的农场", rewardCoins: 450, rewardExperience: 100 },
+  { id: 10, event: "help-friend", name: "帮助好友", description: "为好友完成一次农场或牧场照料", rewardCoins: 500, rewardExperience: 100 },
+  { id: 11, event: "steal-friend", name: "顺手牵羊", description: "从好友农场或牧场取得一份产物", rewardCoins: 550, rewardExperience: 100 }
+];
 
 export interface ManorLandUnlockRequirement {
   plotId: number;
@@ -120,13 +161,17 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   fertilizer?: unknown;
 };
 
-export function createManorFarm(now: number, seedSource: string): ManorFarmState {
+export function createManorFarm(
+  now: number,
+  seedSource: string,
+  options: { enableStarterTasks?: boolean } = {}
+): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 8,
+    schemaVersion: 9,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -138,6 +183,7 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
     decorationEntitlements: [],
     decorationPurchases: [],
     activeDecorationIds: [],
+    nextTaskId: options.enableStarterTasks ? 0 : MANOR_TASKS.length,
     unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
@@ -161,7 +207,8 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     candidate.schemaVersion !== 5 &&
     candidate.schemaVersion !== 6 &&
     candidate.schemaVersion !== 7 &&
-    candidate.schemaVersion !== 8
+    candidate.schemaVersion !== 8 &&
+    candidate.schemaVersion !== 9
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -174,7 +221,7 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
   const createdAt = timestamp(candidate.createdAt, "创建时间");
   const updatedAt = timestamp(candidate.updatedAt, "更新时间");
   const state: ManorFarmState = {
-    schemaVersion: 8,
+    schemaVersion: 9,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
@@ -200,6 +247,9 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     activeDecorationIds: candidate.schemaVersion >= 8
       ? integerArray(candidate.activeDecorationIds, "已启用装扮")
       : [],
+    nextTaskId: candidate.schemaVersion >= 9
+      ? integer(candidate.nextTaskId, "新手任务进度")
+      : MANOR_TASKS.length,
     unlockedPlotCount: candidate.schemaVersion >= 5
       ? integer(candidate.unlockedPlotCount, "已开垦土地数量")
       : MANOR_PLOT_COUNT,
@@ -385,11 +435,75 @@ export function applyManorAction(
     }
   }
 
+  const taskEvent = taskEventForAction(action.type);
+  if (taskEvent) recordManorTaskEvent(state, taskEvent);
   awardReachedLevelRewards(state);
   state.revision += 1;
   state.updatedAt = now;
   validateManorFarm(state);
   return state;
+}
+
+export function recordManorTaskEvent(
+  state: ManorFarmState,
+  event: ManorTaskEvent
+): ManorTaskDefinition | undefined {
+  const task = MANOR_TASKS[state.nextTaskId];
+  if (!task || task.event !== event) return undefined;
+  state.nextTaskId += 1;
+  state.coins += task.rewardCoins;
+  state.experience += task.rewardExperience;
+  awardReachedLevelRewards(state);
+  return task;
+}
+
+export function cloneManorFarm(state: ManorFarmState): ManorFarmState {
+  return cloneState(state);
+}
+
+export function manorEstimatedYield(
+  plot: ManorPlotState,
+  now: number,
+  timeScale = 1
+): number {
+  if (!plot.cropId) throw new Error("这块土地还没有作物");
+  return estimatedYield(plot, cropById(plot.cropId), now, timeScale);
+}
+
+export function manorMinimumYield(plot: ManorPlotState, now: number, timeScale = 1): number {
+  const remaining = manorEstimatedYield(plot, now, timeScale);
+  return Math.max(1, Math.floor((remaining + (plot.stolenYield ?? 0)) * 0.6));
+}
+
+export function drawManorRandom(state: ManorFarmState): number {
+  const drawn = nextRandom(state.randomState);
+  state.randomState = drawn.state;
+  return drawn.value;
+}
+
+export function finalizeManorFarmMutation(state: ManorFarmState, now: number): ManorFarmState {
+  awardReachedLevelRewards(state);
+  state.revision += 1;
+  state.updatedAt = now;
+  validateManorFarm(state);
+  return state;
+}
+
+function taskEventForAction(type: ManorActionRequest["type"]): ManorTaskEvent | undefined {
+  switch (type) {
+    case "plant":
+    case "fertilize":
+    case "water":
+    case "clear-weed":
+    case "clear-pest":
+    case "harvest":
+    case "clear-plot":
+    case "buy-seeds":
+    case "sell":
+      return type;
+    default:
+      return undefined;
+  }
 }
 
 export function toManorFarmView(
@@ -459,6 +573,21 @@ export function toManorFarmView(
         items: [toRewardItemView(reward.item)]
       };
     }),
+    tasks: {
+      completedCount: state.nextTaskId,
+      total: MANOR_TASKS.length,
+      ...(MANOR_TASKS[state.nextTaskId]
+        ? {
+            current: {
+              id: MANOR_TASKS[state.nextTaskId]!.id,
+              name: MANOR_TASKS[state.nextTaskId]!.name,
+              description: MANOR_TASKS[state.nextTaskId]!.description,
+              rewardCoins: MANOR_TASKS[state.nextTaskId]!.rewardCoins,
+              rewardExperience: MANOR_TASKS[state.nextTaskId]!.rewardExperience
+            }
+          }
+        : {})
+    },
     decorations: {
       catalog: decorations,
       active: activeDecorations
@@ -472,12 +601,13 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 8) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 9) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
     ["经验", state.experience],
     ["随机状态", state.randomState],
+    ["新手任务进度", state.nextTaskId],
     ["升级奖励进度", state.rewardedThroughOriginalLevel],
     ["已开垦土地数量", state.unlockedPlotCount],
     ["创建时间", state.createdAt],
@@ -486,6 +616,7 @@ export function validateManorFarm(state: ManorFarmState): void {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${label}无效`);
   }
   if (typeof state.starterGiftClaimed !== "boolean") throw new Error("新手礼包状态无效");
+  if (state.nextTaskId > MANOR_TASKS.length) throw new Error("新手任务进度无效");
   for (const fertilizer of MANOR_FERTILIZERS) {
     if (!Number.isInteger(state.fertilizers[fertilizer.id]) || state.fertilizers[fertilizer.id] < 0) {
       throw new Error(`${fertilizer.name}库存无效`);
@@ -552,6 +683,19 @@ export function validateManorFarm(state: ManorFarmState): void {
     }
     ids.add(plot.id);
     if (!Number.isInteger(plot.cycle) || plot.cycle < 0) throw new Error("土地轮次无效");
+    if (
+      plot.stolenYield !== undefined &&
+      (!Number.isInteger(plot.stolenYield) || plot.stolenYield < 0)
+    ) {
+      throw new Error("作物被偷数量无效");
+    }
+    if (
+      plot.thiefUserIds !== undefined &&
+      (new Set(plot.thiefUserIds).size !== plot.thiefUserIds.length ||
+        plot.thiefUserIds.some((userId) => typeof userId !== "string" || userId.length === 0))
+    ) {
+      throw new Error("作物偷取记录无效");
+    }
     if (plot.id > state.unlockedPlotCount && (plot.cropId || plot.cycle !== 0)) {
       throw new Error("未开垦土地包含作物状态");
     }
@@ -601,7 +745,9 @@ export function validateManorFarm(state: ManorFarmState): void {
       plot.readyAt ||
       plot.witheredAt ||
       careValues.some((value) => value !== undefined) ||
-      plot.fertilizedStage !== undefined
+      plot.fertilizedStage !== undefined ||
+      plot.stolenYield !== undefined ||
+      plot.thiefUserIds !== undefined
     ) {
       throw new Error("空地包含作物状态");
     }
@@ -712,6 +858,8 @@ function toPlotView(
   const progress = Math.max(0, Math.min(1, (now - plot.plantedAt) / duration));
   const sproutThreshold = crop.growthStageSeconds[0] ?? 0;
   const growingThreshold = crop.growthStageSeconds[2] ?? crop.growthSeconds;
+  const remainingYield = estimatedYield(plot, crop, now, timeScale);
+  const originalYield = remainingYield + (plot.stolenYield ?? 0);
   return {
     id: plot.id,
     ...landDetails,
@@ -730,7 +878,9 @@ function toPlotView(
           sproutThreshold / crop.growthSeconds,
           growingThreshold / crop.growthSeconds
         ],
-    estimatedYield: estimatedYield(plot, crop, now, timeScale)
+    estimatedYield: remainingYield,
+    minimumYield: Math.max(1, Math.floor(originalYield * 0.6)),
+    stolenYield: plot.stolenYield ?? 0
   };
 }
 
@@ -747,7 +897,8 @@ function estimatedYield(
       careEventPenalty(plot.weedAt, plot.weedClearedAt, now, interval, 1) +
       careEventPenalty(plot.pestAt, plot.pestClearedAt, now, interval, 1)
   );
-  return Math.max(1, Math.ceil(crop.baseYield * (100 - penalty) / 100));
+  const originalYield = Math.max(1, Math.ceil(crop.baseYield * (100 - penalty) / 100));
+  return Math.max(0, originalYield - (plot.stolenYield ?? 0));
 }
 
 function cropById(id: ManorCropId): ManorCropDefinition {
@@ -797,6 +948,8 @@ function clearPlot(plot: ManorPlotState): void {
   delete plot.plantedAt;
   delete plot.readyAt;
   delete plot.witheredAt;
+  delete plot.stolenYield;
+  delete plot.thiefUserIds;
   clearCareState(plot);
 }
 
@@ -832,6 +985,8 @@ function startGrowthCycle(
   const pest = nextRandom(weed.state);
   state.randomState = pest.state;
   delete plot.witheredAt;
+  delete plot.stolenYield;
+  delete plot.thiefUserIds;
   clearCareState(plot);
   plot.plantedAt = now;
   plot.readyAt = now + duration;
@@ -1014,7 +1169,10 @@ function cloneState(state: ManorFarmState): ManorFarmState {
     activeDecorationIds: [...state.activeDecorationIds],
     seeds: { ...state.seeds },
     produce: { ...state.produce },
-    plots: state.plots.map((plot) => ({ ...plot })),
+    plots: state.plots.map((plot) => ({
+      ...plot,
+      ...(plot.thiefUserIds ? { thiefUserIds: [...plot.thiefUserIds] } : {})
+    })),
     pasture: migrateManorPasture(state.pasture, state.updatedAt)
   };
 }
@@ -1050,7 +1208,10 @@ function migrateInventory(
   return result;
 }
 
-function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): ManorPlotState {
+function migratePlot(
+  value: unknown,
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
   const cropId = plot.cropId === undefined ? undefined : validCropId(plot.cropId);
@@ -1070,6 +1231,12 @@ function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 
     ...optionalTimestamp("pestClearedAt", plot.pestClearedAt),
     ...(schemaVersion >= 4 && plot.fertilizedStage !== undefined
       ? { fertilizedStage: integer(plot.fertilizedStage, "施肥阶段") }
+      : {}),
+    ...(schemaVersion >= 9 && plot.stolenYield !== undefined
+      ? { stolenYield: integer(plot.stolenYield, "作物被偷数量") }
+      : {}),
+    ...(schemaVersion >= 9 && plot.thiefUserIds !== undefined
+      ? { thiefUserIds: stringArray(plot.thiefUserIds, "作物偷取记录") }
       : {})
   };
 }
@@ -1093,6 +1260,13 @@ function integer(value: unknown, label: string): number {
 function integerArray(value: unknown, label: string): number[] {
   if (!Array.isArray(value)) throw new Error(`${label}无效`);
   return value.map((item) => integer(item, label));
+}
+
+function stringArray(value: unknown, label: string): string[] {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.length === 0)) {
+    throw new Error(`${label}无效`);
+  }
+  return [...value];
 }
 
 function boolean(value: unknown, label: string): boolean {

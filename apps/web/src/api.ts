@@ -30,8 +30,13 @@ import type {
   JoinRoomRequest,
   ManorActionRequest,
   ManorFarmView,
+  ManorFriendFarmActionRequest,
+  ManorFriendFarmView,
+  ManorFriendPastureActionRequest,
+  ManorFriendPastureView,
   ManorPastureActionRequest,
   ManorPastureView,
+  ManorSocialOverviewView,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
   PuzzleResultView,
@@ -107,6 +112,38 @@ export async function performManorPastureAction(
   input: ManorPastureActionRequest
 ): Promise<ManorPastureView> {
   return request("/api/manor/pasture/actions", { method: "POST", body: input });
+}
+
+export async function getManorSocialOverview(): Promise<ManorSocialOverviewView> {
+  return request("/api/manor/social");
+}
+
+export async function getManorFriendFarm(userId: string): Promise<ManorFriendFarmView> {
+  return request(`/api/manor/friends/${encodeURIComponent(userId)}/farm`);
+}
+
+export async function performManorFriendFarmAction(
+  userId: string,
+  input: ManorFriendFarmActionRequest
+): Promise<ManorFriendFarmView> {
+  return request(`/api/manor/friends/${encodeURIComponent(userId)}/farm/actions`, {
+    method: "POST",
+    body: input
+  });
+}
+
+export async function getManorFriendPasture(userId: string): Promise<ManorFriendPastureView> {
+  return request(`/api/manor/friends/${encodeURIComponent(userId)}/pasture`);
+}
+
+export async function performManorFriendPastureAction(
+  userId: string,
+  input: ManorFriendPastureActionRequest
+): Promise<ManorFriendPastureView> {
+  return request(`/api/manor/friends/${encodeURIComponent(userId)}/pasture/actions`, {
+    method: "POST",
+    body: input
+  });
 }
 
 export async function submitPuzzleResult(
