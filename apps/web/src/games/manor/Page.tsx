@@ -11,6 +11,7 @@ import { getManorFarm, performManorAction } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 
 const ASSET_ROOT = "/assets/manor/classic";
+const CROP_ASSET_VERSION = "classic-crops-v2";
 
 type ManorTool = "move" | "hoe" | "seed" | "water" | "weed" | "pest" | "harvest";
 type ManorWindow = "seed-pack" | "shop" | "warehouse";
@@ -559,7 +560,7 @@ function landPosition(index: number): { left: number; top: number; zIndex: numbe
 
 function cropImage(cropId: ManorCropId, stage: number): string {
   const images = CROP_IMAGES[cropId];
-  return `${ASSET_ROOT}/${images[Math.max(0, Math.min(3, stage))]}`;
+  return `${ASSET_ROOT}/${images[Math.max(0, Math.min(3, stage))]}?v=${CROP_ASSET_VERSION}`;
 }
 
 function cropStage(plot: ManorPlotView, progress: number): number {

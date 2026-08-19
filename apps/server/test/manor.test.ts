@@ -113,6 +113,39 @@ describe("manor account persistence", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+
+  it("revalidates classic manor assets while retaining immutable hashed assets", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-static-test-"));
+    const databasePath = join(directory, "test.sqlite");
+    const webDistPath = join(directory, "web");
+    const classicAssetPath = join(webDistPath, "assets", "manor", "classic");
+    const hashedAssetPath = join(webDistPath, "assets");
+    mkdirSync(classicAssetPath, { recursive: true });
+    writeFileSync(join(webDistPath, "index.html"), "<!doctype html><title>test</title>");
+    writeFileSync(join(classicAssetPath, "crop-radish-3.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    writeFileSync(join(hashedAssetPath, "index-abc123.js"), "export {};\n");
+
+    const instance = await createApp({ databasePath, webDistPath, logger: false });
+    try {
+      const classicAsset = await instance.app.inject({
+        method: "GET",
+        url: "/assets/manor/classic/crop-radish-3.png?v=classic-crops-v2"
+      });
+      expect(classicAsset.statusCode).toBe(200);
+      expect(classicAsset.headers["cache-control"]).toBe("public, max-age=0, must-revalidate");
+
+      const hashedAsset = await instance.app.inject({
+        method: "GET",
+        url: "/assets/index-abc123.js"
+      });
+      expect(hashedAsset.statusCode).toBe(200);
+      expect(hashedAsset.headers["cache-control"]).toContain("max-age=31536000");
+      expect(hashedAsset.headers["cache-control"]).toContain("immutable");
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
 
 function sessionCookie(header: string | string[] | undefined): string {

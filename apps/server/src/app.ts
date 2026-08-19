@@ -852,6 +852,12 @@ export async function createApp(options: AppOptions) {
 
   const webDistPath = options.webDistPath ? resolve(options.webDistPath) : undefined;
   if (webDistPath && existsSync(webDistPath)) {
+    app.addHook("onSend", async (request, reply, payload) => {
+      if (request.url.startsWith("/assets/manor/classic/")) {
+        reply.header("Cache-Control", "public, max-age=0, must-revalidate");
+      }
+      return payload;
+    });
     await app.register(fastifyStatic, {
       root: webDistPath,
       immutable: true,
