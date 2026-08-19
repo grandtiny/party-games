@@ -379,6 +379,8 @@ export const ManorCropIdSchema = z.enum(MANOR_CROP_IDS);
 export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
 export const ManorFertilizerIdSchema = z.enum(["ordinary", "fast", "instant"]);
 export type ManorFertilizerId = z.infer<typeof ManorFertilizerIdSchema>;
+export const ManorDecorationTypeSchema = z.enum(["background", "house", "fence", "doghouse"]);
+export type ManorDecorationType = z.infer<typeof ManorDecorationTypeSchema>;
 export const ManorAnimalSourceIdSchema = z.union(
   MANOR_ANIMAL_SOURCE_IDS.map((id) => z.literal(id))
 );
@@ -416,6 +418,18 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("reclaim-plot"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("claim-starter-gift") }),
   z.object({ type: z.literal("acknowledge-level-rewards") }),
+  z.object({
+    type: z.literal("buy-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
+  z.object({
+    type: z.literal("activate-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
+  z.object({
+    type: z.literal("deactivate-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
   z.object({
     type: z.literal("buy-fertilizer"),
     quantity: ManorPurchaseQuantitySchema
@@ -701,6 +715,26 @@ export interface ManorRewardItemView {
   available: boolean;
 }
 
+export interface ManorDecorationView {
+  sourceId: number;
+  name: string;
+  setName: string;
+  category: ManorDecorationType;
+  levelRequired: number;
+  coinPrice: number;
+  experience: number;
+  validSeconds: number;
+  purchasable: boolean;
+  width: number;
+  height: number;
+  assetUrl: string;
+  thumbnailUrl: string;
+  unlocked: boolean;
+  owned: boolean;
+  active: boolean;
+  validUntil?: number;
+}
+
 export interface ManorLevelRewardView {
   originalLevel: number;
   displayLevel: number;
@@ -726,6 +760,10 @@ export interface ManorFarmView {
     items: ManorRewardItemView[];
   };
   pendingLevelRewards: ManorLevelRewardView[];
+  decorations: {
+    catalog: ManorDecorationView[];
+    active: Partial<Record<ManorDecorationType, ManorDecorationView>>;
+  };
   catalog: ManorCropView[];
   plots: ManorPlotView[];
   art: {

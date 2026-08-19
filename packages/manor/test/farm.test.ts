@@ -272,6 +272,57 @@ describe("manor farm", () => {
     expect(farm.decorationEntitlements).toEqual([253, 255, 256, 254]);
   });
 
+  it("buys, activates, expires and preserves permanent decoration rewards", () => {
+    const startedAt = 480_000;
+    let farm = createManorFarm(startedAt, "decorations");
+    farm.coins = 100_000;
+
+    farm = applyManorAction(farm, { type: "buy-decoration", sourceId: 11 }, startedAt + 1);
+    expect(farm.coins).toBe(85_501);
+    expect(farm.decorationPurchases).toEqual([
+      { sourceId: 11, validUntil: startedAt + 1 + 2_592_000_000 }
+    ]);
+    expect(toManorFarmView(farm, "玩家", startedAt + 1).decorations.active.background).toMatchObject({
+      sourceId: 11,
+      owned: true,
+      active: true
+    });
+
+    farm = applyManorAction(farm, { type: "buy-decoration", sourceId: 16 }, startedAt + 2);
+    expect(farm.activeDecorationIds).toContain(16);
+    expect(farm.activeDecorationIds).not.toContain(11);
+    expect(() =>
+      applyManorAction(farm, { type: "buy-decoration", sourceId: 233 }, startedAt + 3)
+    ).toThrow("历史活动装扮");
+
+    const expiredAt = startedAt + 2 + 2_592_000_001;
+    expect(toManorFarmView(farm, "玩家", expiredAt).decorations.active.background).toBeUndefined();
+    expect(() =>
+      applyManorAction(farm, { type: "activate-decoration", sourceId: 16 }, expiredAt)
+    ).toThrow("已过期");
+
+    farm.decorationEntitlements.push(253);
+    farm = applyManorAction(farm, { type: "activate-decoration", sourceId: 253 }, expiredAt + 1);
+    expect(toManorFarmView(farm, "玩家", expiredAt + 1).decorations.active.background).toMatchObject({
+      sourceId: 253,
+      owned: true,
+      active: true
+    });
+  });
+
+  it("migrates version seven saves with an empty decoration runtime state", () => {
+    const legacy = JSON.parse(JSON.stringify(createManorFarm(490_000, "legacy-decoration")));
+    legacy.schemaVersion = 7;
+    delete legacy.decorationPurchases;
+    delete legacy.activeDecorationIds;
+
+    expect(migrateManorFarm(legacy)).toMatchObject({
+      schemaVersion: 8,
+      decorationPurchases: [],
+      activeDecorationIds: []
+    });
+  });
+
   it("buys and applies original normal fertilizer once per growth stage", () => {
     const startedAt = 500_000;
     let farm = createManorFarm(startedAt, "fertilizer-rules");
@@ -453,7 +504,7 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(7);
+    expect(migrated.schemaVersion).toBe(8);
     expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
     expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
@@ -479,7 +530,7 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 7, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 8, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 
@@ -504,7 +555,7 @@ describe("manor farm", () => {
     });
 
     expect(migrated).toMatchObject({
-      schemaVersion: 7,
+      schemaVersion: 8,
       starterGiftClaimed: true,
       rewardedThroughOriginalLevel: 7,
       pendingLevelRewardLevels: [],

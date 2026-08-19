@@ -2,12 +2,15 @@ import type {
   ManorActionRequest,
   ManorCropId,
   ManorCropView,
+  ManorDecorationType,
+  ManorDecorationView,
   ManorFarmView,
   ManorFertilizerId,
   ManorPlotView,
   ManorRewardItemView
 } from "@party-games/shared";
 import { MANOR_CROP_DATA } from "./crops.generated.js";
+import { MANOR_DECORATIONS, manorDecorationById } from "./decorations.js";
 import {
   createManorPasture,
   migrateManorPasture,
@@ -59,8 +62,13 @@ export interface ManorPlotState {
   fertilizedStage?: number;
 }
 
+export interface ManorDecorationPurchaseState {
+  sourceId: number;
+  validUntil: number;
+}
+
 export interface ManorFarmState {
-  schemaVersion: 7;
+  schemaVersion: 8;
   revision: number;
   coins: number;
   experience: number;
@@ -70,6 +78,8 @@ export interface ManorFarmState {
   rewardedThroughOriginalLevel: number;
   pendingLevelRewardLevels: number[];
   decorationEntitlements: number[];
+  decorationPurchases: ManorDecorationPurchaseState[];
+  activeDecorationIds: number[];
   unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
   produce: Record<ManorCropId, number>;
@@ -110,13 +120,13 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   fertilizer?: unknown;
 };
 
 export function createManorFarm(now: number, seedSource: string): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 7,
+    schemaVersion: 8,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -126,6 +136,8 @@ export function createManorFarm(now: number, seedSource: string): ManorFarmState
     rewardedThroughOriginalLevel: 0,
     pendingLevelRewardLevels: [],
     decorationEntitlements: [],
+    decorationPurchases: [],
+    activeDecorationIds: [],
     unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
     produce: cropRecord(),
@@ -148,7 +160,8 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     candidate.schemaVersion !== 4 &&
     candidate.schemaVersion !== 5 &&
     candidate.schemaVersion !== 6 &&
-    candidate.schemaVersion !== 7
+    candidate.schemaVersion !== 7 &&
+    candidate.schemaVersion !== 8
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -161,7 +174,7 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
   const createdAt = timestamp(candidate.createdAt, "创建时间");
   const updatedAt = timestamp(candidate.updatedAt, "更新时间");
   const state: ManorFarmState = {
-    schemaVersion: 7,
+    schemaVersion: 8,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
@@ -181,6 +194,12 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     decorationEntitlements: candidate.schemaVersion >= 6
       ? integerArray(candidate.decorationEntitlements, "装扮权益")
       : [],
+    decorationPurchases: candidate.schemaVersion >= 8
+      ? migrateDecorationPurchases(candidate.decorationPurchases)
+      : [],
+    activeDecorationIds: candidate.schemaVersion >= 8
+      ? integerArray(candidate.activeDecorationIds, "已启用装扮")
+      : [],
     unlockedPlotCount: candidate.schemaVersion >= 5
       ? integer(candidate.unlockedPlotCount, "已开垦土地数量")
       : MANOR_PLOT_COUNT,
@@ -188,7 +207,7 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     produce: migrateInventory(candidate.produce, "仓库"),
     plots,
     pasture: migrateManorPasture(
-      candidate.schemaVersion === 7 ? candidate.pasture : undefined,
+      candidate.schemaVersion >= 7 ? candidate.pasture : undefined,
       fallbackNow ?? updatedAt
     ),
     createdAt,
@@ -325,6 +344,38 @@ export function applyManorAction(
       state.pendingLevelRewardLevels = [];
       break;
     }
+    case "buy-decoration": {
+      const decoration = manorDecorationById(action.sourceId);
+      if (!decoration.purchasable) throw new Error("历史活动装扮不开放购买");
+      if (level < decoration.levelRequired) {
+        throw new Error(`达到 ${decoration.levelRequired} 级后解锁`);
+      }
+      if (isDecorationOwned(state, decoration.sourceId, now)) throw new Error("已经拥有这件装扮");
+      if (state.coins < decoration.coinPrice) throw new Error("金币不足");
+      state.coins -= decoration.coinPrice;
+      state.experience += decoration.experience;
+      state.decorationPurchases = state.decorationPurchases.filter(
+        (purchase) => purchase.sourceId !== decoration.sourceId
+      );
+      state.decorationPurchases.push({
+        sourceId: decoration.sourceId,
+        validUntil: now + decoration.validSeconds * 1_000
+      });
+      activateDecoration(state, decoration.sourceId);
+      break;
+    }
+    case "activate-decoration": {
+      const decoration = manorDecorationById(action.sourceId);
+      if (!isDecorationOwned(state, decoration.sourceId, now)) throw new Error("尚未拥有或装扮已过期");
+      activateDecoration(state, decoration.sourceId);
+      break;
+    }
+    case "deactivate-decoration": {
+      manorDecorationById(action.sourceId);
+      if (!state.activeDecorationIds.includes(action.sourceId)) throw new Error("这件装扮当前未启用");
+      state.activeDecorationIds = state.activeDecorationIds.filter((id) => id !== action.sourceId);
+      break;
+    }
     case "sell": {
       if (!crop) throw new Error("作物不存在");
       if (state.produce[crop.id] < action.quantity) throw new Error("仓库数量不足");
@@ -365,6 +416,13 @@ export function toManorFarmView(
   const plots: ManorPlotView[] = state.plots.map((plot) =>
     toPlotView(plot, now, options.timeScale, state.unlockedPlotCount)
   );
+  const decorations = MANOR_DECORATIONS.map((decoration) =>
+    toDecorationView(state, decoration.sourceId, level, now)
+  );
+  const activeDecorations: Partial<Record<ManorDecorationType, ManorDecorationView>> = {};
+  for (const decoration of decorations) {
+    if (decoration.active) activeDecorations[decoration.category] = decoration;
+  }
   return {
     serverTime: now,
     revision: state.revision,
@@ -401,6 +459,10 @@ export function toManorFarmView(
         items: [toRewardItemView(reward.item)]
       };
     }),
+    decorations: {
+      catalog: decorations,
+      active: activeDecorations
+    },
     catalog,
     plots,
     art: options.legacyBackgroundUrl
@@ -410,7 +472,7 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 7) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 8) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
@@ -442,12 +504,39 @@ export function validateManorFarm(state: ManorFarmState): void {
     throw new Error("待确认升级奖励无效");
   }
   const decorationEntitlements = new Set(state.decorationEntitlements);
-  const knownDecorationIds = new Set([253, 254, 255, 256]);
+  const knownDecorationIds = new Set(MANOR_DECORATIONS.map((decoration) => decoration.sourceId));
   if (
     decorationEntitlements.size !== state.decorationEntitlements.length ||
     state.decorationEntitlements.some((id) => !Number.isInteger(id) || !knownDecorationIds.has(id))
   ) {
     throw new Error("装扮权益无效");
+  }
+  const purchaseIds = new Set<number>();
+  for (const purchase of state.decorationPurchases) {
+    if (
+      !Number.isInteger(purchase.sourceId) ||
+      !knownDecorationIds.has(purchase.sourceId) ||
+      purchaseIds.has(purchase.sourceId) ||
+      !Number.isInteger(purchase.validUntil) ||
+      purchase.validUntil < 0
+    ) {
+      throw new Error("装扮购买记录无效");
+    }
+    purchaseIds.add(purchase.sourceId);
+  }
+  const activeIds = new Set<number>();
+  const activeTypes = new Set<ManorDecorationType>();
+  for (const sourceId of state.activeDecorationIds) {
+    const decoration = manorDecorationById(sourceId);
+    if (
+      activeIds.has(sourceId) ||
+      activeTypes.has(decoration.category) ||
+      (!decorationEntitlements.has(sourceId) && !purchaseIds.has(sourceId))
+    ) {
+      throw new Error("已启用装扮无效");
+    }
+    activeIds.add(sourceId);
+    activeTypes.add(decoration.category);
   }
   if (
     state.unlockedPlotCount < MANOR_INITIAL_PLOT_COUNT ||
@@ -545,7 +634,28 @@ function toRewardItemView(item: ManorRewardItemDefinition): ManorRewardItemView 
     sourceId: item.sourceId,
     name: item.name,
     quantity: item.quantity,
-    available: item.kind !== "decoration"
+    available: item.kind !== "decoration" || MANOR_DECORATIONS.some(
+      (decoration) => decoration.sourceId === item.sourceId
+    )
+  };
+}
+
+function toDecorationView(
+  state: ManorFarmState,
+  sourceId: number,
+  level: number,
+  now: number
+): ManorDecorationView {
+  const decoration = manorDecorationById(sourceId);
+  const purchase = state.decorationPurchases.find((candidate) => candidate.sourceId === sourceId);
+  const permanent = state.decorationEntitlements.includes(sourceId);
+  const owned = permanent || Boolean(purchase && purchase.validUntil > now);
+  return {
+    ...decoration,
+    unlocked: level >= decoration.levelRequired,
+    owned,
+    active: owned && state.activeDecorationIds.includes(sourceId),
+    ...(!permanent && purchase ? { validUntil: purchase.validUntil } : {})
   };
 }
 
@@ -828,6 +938,21 @@ function awardReachedLevelRewards(state: ManorFarmState): void {
   );
 }
 
+function isDecorationOwned(state: ManorFarmState, sourceId: number, now: number): boolean {
+  if (state.decorationEntitlements.includes(sourceId)) return true;
+  return state.decorationPurchases.some(
+    (purchase) => purchase.sourceId === sourceId && purchase.validUntil > now
+  );
+}
+
+function activateDecoration(state: ManorFarmState, sourceId: number): void {
+  const category = manorDecorationById(sourceId).category;
+  state.activeDecorationIds = state.activeDecorationIds.filter(
+    (activeId) => manorDecorationById(activeId).category !== category
+  );
+  state.activeDecorationIds.push(sourceId);
+}
+
 function awardRewardItem(state: ManorFarmState, item: ManorRewardItemDefinition): void {
   switch (item.kind) {
     case "seed": {
@@ -885,11 +1010,25 @@ function cloneState(state: ManorFarmState): ManorFarmState {
     fertilizers: { ...state.fertilizers },
     pendingLevelRewardLevels: [...state.pendingLevelRewardLevels],
     decorationEntitlements: [...state.decorationEntitlements],
+    decorationPurchases: state.decorationPurchases.map((purchase) => ({ ...purchase })),
+    activeDecorationIds: [...state.activeDecorationIds],
     seeds: { ...state.seeds },
     produce: { ...state.produce },
     plots: state.plots.map((plot) => ({ ...plot })),
     pasture: migrateManorPasture(state.pasture, state.updatedAt)
   };
+}
+
+function migrateDecorationPurchases(value: unknown): ManorDecorationPurchaseState[] {
+  if (!Array.isArray(value)) throw new Error("装扮购买记录无效");
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") throw new Error("装扮购买记录无效");
+    const purchase = entry as Partial<ManorDecorationPurchaseState>;
+    return {
+      sourceId: integer(purchase.sourceId, "装扮编号"),
+      validUntil: timestamp(purchase.validUntil, "装扮有效期")
+    };
+  });
 }
 
 function migrateFertilizers(
@@ -911,7 +1050,7 @@ function migrateInventory(
   return result;
 }
 
-function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7): ManorPlotState {
+function migratePlot(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
   const cropId = plot.cropId === undefined ? undefined : validCropId(plot.cropId);

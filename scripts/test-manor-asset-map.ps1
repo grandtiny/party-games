@@ -15,6 +15,9 @@ $runtimePastureAssetDirectory = Join-Path $classicAssetDirectory "pasture"
 $runtimeAnimalAssetDirectory = Join-Path $runtimePastureAssetDirectory "animals"
 $runtimePastureUiAssetDirectory = Join-Path $runtimePastureAssetDirectory "ui"
 $runtimePastureAudioAssetDirectory = Join-Path $runtimePastureAssetDirectory "audio"
+$runtimeDecorationAssetDirectory = Join-Path $classicAssetDirectory "decorations"
+$runtimeDecorationImageDirectory = Join-Path $runtimeDecorationAssetDirectory "items"
+$runtimeDecorationThumbnailDirectory = Join-Path $runtimeDecorationAssetDirectory "thumbnails"
 
 function Assert-Equal($Actual, $Expected, [string]$Label) {
   if ($Actual -ne $Expected) {
@@ -53,6 +56,7 @@ $cropContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop
 $cropVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "crop-visual-review.csv"))
 $cropContactDirectory = Join-Path $OutputDirectory "contact-sheets\crops"
 $decorationAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-assets.csv"))
+$decorationRuntimeAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-runtime-assets.csv"))
 $decorationContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-contact-review.csv"))
 $decorationVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "decoration-visual-review.csv"))
 $decorationContactDirectory = Join-Path $OutputDirectory "contact-sheets\decorations"
@@ -197,6 +201,17 @@ Assert-Equal @($decorationAssets | Where-Object integration_policy -eq "deferred
 Assert-Equal @($decorationAssets | Where-Object integration_policy -eq "excluded").Count 2 "excluded decoration asset integrations"
 Assert-Equal @($decorationAssets | Where-Object automated_status -eq "ready-for-visual-review").Count 170 "decoration assets ready for review"
 Assert-Equal @($decorationAssets | Where-Object { $_.selected_source_kind -notlike "blocked-*" -and [int]$_.visible_pixels -le 0 }).Count 0 "empty usable decoration assets"
+Assert-Equal $decorationRuntimeAssets.Count 162 "runtime decoration mappings"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimeDecorationImageDirectory -File).Count 162 "runtime decoration images"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimeDecorationThumbnailDirectory -File -Filter "*.jpg").Count 162 "runtime decoration thumbnails"
+foreach ($asset in $decorationRuntimeAssets) {
+  $runtimePath = Join-Path $repositoryRoot $asset.runtime_asset.Replace("/", "\")
+  $thumbnailPath = Join-Path $repositoryRoot $asset.runtime_thumbnail.Replace("/", "\")
+  Assert-True (Test-Path -LiteralPath $runtimePath -PathType Leaf) "missing runtime decoration: $runtimePath"
+  Assert-True (Test-Path -LiteralPath $thumbnailPath -PathType Leaf) "missing runtime decoration thumbnail: $thumbnailPath"
+  Assert-Equal (Get-FileHash -LiteralPath $runtimePath -Algorithm SHA256).Hash.ToLowerInvariant() $asset.runtime_sha256 "runtime decoration hash for $($asset.source_id)"
+  Assert-Equal (Get-FileHash -LiteralPath $thumbnailPath -Algorithm SHA256).Hash.ToLowerInvariant() $asset.runtime_thumbnail_sha256 "runtime decoration thumbnail hash for $($asset.source_id)"
+}
 Assert-Equal $decorationContactReview.Count 172 "decoration contact review rows"
 Assert-Equal $decorationVisualReview.Count 172 "decoration visual review rows"
 Assert-Equal @($decorationVisualReview | Where-Object review_status -eq "reviewed-ok").Count 162 "approved decoration reviews"
@@ -386,6 +401,7 @@ foreach ($asset in $pastureRuntimeAudioAssets) {
   CurrentCropAssetMappings = $cropCurrentAssets.Count
   CropContactSheets = $contactSheets.Count
   DecorationContactSheets = $decorationContactSheets.Count
+  RuntimeDecorationAssets = $decorationRuntimeAssets.Count
   AnimalStateAssets = $animalStateAssets.Count
   RuntimeAnimalAssets = $runtimeAnimalFiles.Count
   RuntimePastureUiAssets = $runtimePastureUiFiles.Count

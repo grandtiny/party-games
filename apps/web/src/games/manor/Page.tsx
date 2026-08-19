@@ -2,6 +2,8 @@ import type {
   ManorActionRequest,
   ManorCropId,
   ManorCropView,
+  ManorDecorationType,
+  ManorDecorationView,
   ManorFarmView,
   ManorFertilizerId,
   ManorPlotView,
@@ -17,7 +19,7 @@ const ASSET_ROOT = "/assets/manor/classic";
 const CROP_ASSET_VERSION = "classic-crops-v3";
 
 type ManorTool = "move" | "hoe" | "seed" | "fertilizer" | "water" | "weed" | "pest" | "harvest";
-type ManorWindow = "seed-pack" | "fertilizer-pack" | "shop" | "warehouse";
+type ManorWindow = "seed-pack" | "fertilizer-pack" | "shop" | "warehouse" | "decorate";
 
 const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> = [
   { id: "move", label: "移动画面" },
@@ -347,8 +349,10 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
     );
   }
 
-  const backgroundImage = farm.art.backgroundUrl
-    ? `url("${farm.art.backgroundUrl}")`
+  const backgroundImage = farm.decorations.active.background
+    ? `url("${farm.decorations.active.background.assetUrl}")`
+    : farm.art.backgroundUrl
+      ? `url("${farm.art.backgroundUrl}")`
     : `url("${ASSET_ROOT}/farm-background.png")`;
   const fertilizerCount = farm.inventory.fertilizers.reduce(
     (total, fertilizer) => total + fertilizer.amount,
@@ -382,6 +386,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
               aria-label="QQ 农场经典场景"
             >
               <div className="manor-head-bg" aria-hidden="true" />
+              <FarmDecorations active={farm.decorations.active} />
               <PlayerHud farm={farm} levelProgress={levelProgress} />
               <img className="manor-weather" src={`${ASSET_ROOT}/sunny.png`} alt="晴天" />
 
@@ -402,6 +407,7 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                   label="农场商店"
                   onClick={() => setActiveWindow("shop")}
                 />
+                <DecorationNavButton onClick={() => setActiveWindow("decorate")} />
               </nav>
 
               {farm.plots.map((plot, index) => (
@@ -431,7 +437,36 @@ function ManorFarmPage({ onSwitchPasture }: { onSwitchPasture: () => void }) {
                 ))}
               </div>
 
-              {activeWindow ? (
+              {activeWindow === "decorate" ? (
+                <DecorationWindow
+                  busy={Boolean(busyKey)}
+                  coins={farm.profile.coins}
+                  decorations={farm.decorations.catalog}
+                  now={serverNow}
+                  onActivate={(decoration) =>
+                    void act(
+                      { type: "activate-decoration", sourceId: decoration.sourceId },
+                      `activate-decoration:${decoration.sourceId}`,
+                      `已启用${decoration.name}`
+                    )
+                  }
+                  onBuy={(decoration) =>
+                    void act(
+                      { type: "buy-decoration", sourceId: decoration.sourceId },
+                      `buy-decoration:${decoration.sourceId}`,
+                      `已购买并启用${decoration.name}`
+                    )
+                  }
+                  onClose={() => setActiveWindow(undefined)}
+                  onDeactivate={(decoration) =>
+                    void act(
+                      { type: "deactivate-decoration", sourceId: decoration.sourceId },
+                      `deactivate-decoration:${decoration.sourceId}`,
+                      `已停用${decoration.name}`
+                    )
+                  }
+                />
+              ) : activeWindow ? (
                 <ClassicWindow
                   busy={Boolean(busyKey)}
                   coins={farm.profile.coins}
@@ -712,6 +747,174 @@ function RewardDialog({
   );
 }
 
+function FarmDecorations({
+  active
+}: {
+  active: Partial<Record<ManorDecorationType, ManorDecorationView>>;
+}) {
+  return (
+    <div className="manor-decoration-scene" aria-hidden="true">
+      {(["fence", "house", "doghouse"] as const).map((category) => {
+        const decoration = active[category];
+        if (!decoration) return null;
+        const stageSized = category === "fence" && (decoration.width > 800 || decoration.height > 500);
+        return (
+          <img
+            className={`manor-decoration-scene__${category} ${stageSized ? "is-stage-sized" : ""}`}
+            key={decoration.sourceId}
+            src={decoration.assetUrl}
+            alt=""
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function DecorationNavButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      className="manor-decoration-nav"
+      type="button"
+      title="装扮农场"
+      aria-label="装扮农场"
+      onClick={onClick}
+    >
+      <img src="/assets/manor/classic/pasture/ui/nav-decorate.png" alt="" />
+    </button>
+  );
+}
+
+function DecorationWindow({
+  decorations,
+  coins,
+  now,
+  busy,
+  onBuy,
+  onActivate,
+  onDeactivate,
+  onClose
+}: {
+  decorations: ManorDecorationView[];
+  coins: number;
+  now: number;
+  busy: boolean;
+  onBuy: (decoration: ManorDecorationView) => void;
+  onActivate: (decoration: ManorDecorationView) => void;
+  onDeactivate: (decoration: ManorDecorationView) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<"all" | ManorDecorationType>("all");
+  const [scope, setScope] = useState<"shop" | "owned">("shop");
+  const visible = useMemo(() => {
+    const keyword = query.trim();
+    return decorations.filter((decoration) =>
+      (category === "all" || decoration.category === category) &&
+      (scope === "shop" || decoration.owned) &&
+      (!keyword ||
+        decoration.name.includes(keyword) ||
+        decoration.setName.includes(keyword) ||
+        String(decoration.sourceId) === keyword)
+    );
+  }, [category, decorations, query, scope]);
+
+  return (
+    <div className="manor-window-layer" role="presentation" onMouseDown={onClose}>
+      <section
+        className="manor-window manor-decoration-window"
+        role="dialog"
+        aria-modal="true"
+        aria-label="装扮农场"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <strong className="manor-window__title">装扮农场</strong>
+        <button className="manor-window__close" type="button" aria-label="关闭" onClick={onClose} />
+        <div className="manor-decoration-window__body">
+          <div className="manor-decoration-controls">
+            <div className="manor-decoration-segments" role="group" aria-label="装扮范围">
+              <button className={scope === "shop" ? "is-active" : ""} type="button" onClick={() => setScope("shop")}>装扮商店</button>
+              <button className={scope === "owned" ? "is-active" : ""} type="button" onClick={() => setScope("owned")}>我的装扮</button>
+            </div>
+            <label>
+              <Search size={15} aria-hidden="true" />
+              <input value={query} placeholder="名称、套装或编号" onChange={(event) => setQuery(event.target.value)} />
+              <span>{visible.length} 件</span>
+            </label>
+          </div>
+          <div className="manor-decoration-categories" role="group" aria-label="装扮分类">
+            {(["all", "background", "house", "fence", "doghouse"] as const).map((value) => (
+              <button className={category === value ? "is-active" : ""} type="button" key={value} onClick={() => setCategory(value)}>
+                {decorationCategoryLabel(value)}
+              </button>
+            ))}
+          </div>
+          {visible.length === 0 ? (
+            <p className="manor-window__empty">暂无符合条件的装扮</p>
+          ) : (
+            <div className="manor-decoration-list">
+              {visible.map((decoration) => {
+                const canBuy = decoration.purchasable && decoration.unlocked && coins >= decoration.coinPrice;
+                const buttonLabel = decoration.active
+                  ? "停用"
+                  : decoration.owned
+                    ? "启用"
+                    : !decoration.purchasable
+                      ? "历史活动"
+                      : !decoration.unlocked
+                        ? `${decoration.levelRequired}级解锁`
+                        : coins < decoration.coinPrice
+                          ? "金币不足"
+                          : "购买";
+                return (
+                  <article className={`${decoration.active ? "is-active" : ""} ${!decoration.unlocked ? "is-locked" : ""}`} key={decoration.sourceId}>
+                    <img src={decoration.thumbnailUrl} alt="" />
+                    <span>
+                      <strong>{decoration.name}</strong>
+                      <small>{decoration.setName} · {decorationCategoryLabel(decoration.category)}</small>
+                      <em>
+                        {decoration.owned
+                          ? decoration.validUntil
+                            ? `剩余 ${formatDuration(decoration.validUntil - now)}`
+                            : "永久拥有"
+                          : decoration.purchasable
+                            ? `${formatCoins(decoration.coinPrice)} 金币 · +${decoration.experience} 经验`
+                            : "原活动赠品，仅保留素材"}
+                      </em>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={busy || (!decoration.owned && !canBuy)}
+                      onClick={() => decoration.active
+                        ? onDeactivate(decoration)
+                        : decoration.owned
+                          ? onActivate(decoration)
+                          : onBuy(decoration)}
+                    >
+                      {buttonLabel}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function decorationCategoryLabel(category: "all" | ManorDecorationType): string {
+  const labels = {
+    all: "全部",
+    background: "背景",
+    house: "小屋",
+    fence: "栅栏",
+    doghouse: "狗窝"
+  } as const;
+  return labels[category];
+}
+
 function ClassicButton({
   asset,
   label,
@@ -958,7 +1161,7 @@ function rewardItemImage(item: ManorRewardItemView): string | undefined {
         : "instant";
     return fertilizerImage(id);
   }
-  return undefined;
+  return `/assets/manor/classic/decorations/thumbnails/${item.sourceId}.jpg`;
 }
 
 function cropStage(plot: ManorPlotView, progress: number): number {
