@@ -42,7 +42,7 @@ export function GomokuBoard({
 
   return (
     <svg
-      className="gomoku-board"
+      className={`gomoku-board is-${state.currentPlayer}-turn${disabled ? " is-disabled" : ""}`}
       viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
       role="grid"
       aria-label="十五路五子棋棋盘"
@@ -86,6 +86,7 @@ export function GomokuBoard({
       {state.result?.winningLine.length ? (
         <line
           className="gomoku-board__winning-line"
+          pathLength={100}
           x1={boardCoordinate(state.result.winningLine[0]?.x ?? 0)}
           y1={boardCoordinate(state.result.winningLine[0]?.y ?? 0)}
           x2={boardCoordinate(state.result.winningLine.at(-1)?.x ?? 0)}
@@ -131,7 +132,7 @@ export function GomokuBoard({
         const isForbidden = forbidden.has(pointKey(point));
         return (
           <circle
-            className="gomoku-board__hit"
+            className={`gomoku-board__hit ${occupied ? "is-occupied" : ""} ${isForbidden ? "is-forbidden" : ""}`}
             cx={boardCoordinate(point.x)}
             cy={boardCoordinate(point.y)}
             r="18"
@@ -175,8 +176,11 @@ function Stone({
       transform={`translate(${boardCoordinate(point.x)} ${boardCoordinate(point.y)})`}
       filter={`url(#${gradientId}-shadow)`}
     >
-      <circle r="17.5" fill={`url(#${gradientId}-${player})`} />
-      {isLast ? <circle className="gomoku-stone__last" r="4.2" /> : null}
+      <g className="gomoku-stone__body">
+        <circle r="17.5" fill={`url(#${gradientId}-${player})`} />
+        {isLast ? <circle className="gomoku-stone__last" r="4.2" /> : null}
+        {isLast ? <circle className="gomoku-stone__ripple" r="17.5" /> : null}
+      </g>
     </g>
   );
 }

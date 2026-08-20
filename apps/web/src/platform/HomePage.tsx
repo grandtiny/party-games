@@ -114,8 +114,8 @@ export function HomePage() {
         {
           id: "manor",
           title: "怀旧庄园",
-          description: "种植经营 · 好友玩法逐步开放",
-          note: "农场已开放，牧场建设中",
+          description: "经典农牧场 · 好友互动",
+          note: "实时成长与账号存档",
           tags: ["账号存档", "经营", "长期成长"],
           to: "/manor",
           icon: Wheat,
@@ -170,6 +170,7 @@ export function HomePage() {
 
   return (
     <AppShell
+      scope="home"
       actions={
         <Link className="icon-button" to="/settings" aria-label="系统设置" title="系统设置">
           <SettingsIcon size={19} />
@@ -179,8 +180,10 @@ export function HomePage() {
       <section className="home-intro">
         <div>
           <p className="eyebrow">PARTY GAMES</p>
-          <h1>今晚玩什么</h1>
-          <p className="home-intro__copy">多人桌台和单人挑战分开进入，临场选游戏更快。</p>
+          <h1>
+            今晚<span className="home-intro__mark">玩什么</span>
+          </h1>
+          <p className="home-intro__copy">多人桌台、长期经营和单人挑战分区进入，临场选游戏更快。</p>
         </div>
         <div className="home-intro__summary" aria-label="大厅概览">
           <span>

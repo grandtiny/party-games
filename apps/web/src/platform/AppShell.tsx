@@ -11,6 +11,7 @@ interface AppShellProps {
   hideAccountAction?: boolean;
   scope?:
     | "platform"
+    | "home"
     | "clocktower"
     | "poker"
     | "minesweeper"

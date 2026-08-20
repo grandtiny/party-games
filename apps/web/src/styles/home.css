@@ -1,0 +1,617 @@
+/*
+ * home.css — 首页专属样式（新粗野主义主题）。
+ * 全部规则收在 .app-shell--home 作用域下，只影响首页；
+ * 账号/设置页走 platform 皮肤，游戏页面各自走主题，互不牵连。
+ */
+
+.app-shell--home {
+  --nb-ink: #161616;
+  --nb-paper: #f6f0e4;
+  --nb-yellow: #ffd43b;
+  --nb-pink: #ff9ec6;
+  --nb-cyan: #8ce8ff;
+  --nb-lime: #c8f284;
+  min-height: 100vh;
+  background:
+    radial-gradient(rgb(22 22 22 / 7%) 1.2px, transparent 1.2px),
+    var(--nb-paper);
+  background-size: 22px 22px, auto;
+  color: var(--nb-ink);
+}
+
+/* ---------- 外壳（顶栏 / 页宽） ---------- */
+
+.app-shell--home .topbar {
+  border-bottom: 3px solid var(--nb-ink);
+  background: var(--nb-paper);
+  backdrop-filter: none;
+}
+
+.app-shell--home .topbar__title {
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.app-shell--home .brand-mark {
+  border: 3px solid var(--nb-ink);
+  border-radius: 8px;
+  background: var(--nb-yellow);
+  color: var(--nb-ink);
+  box-shadow: 3px 3px 0 var(--nb-ink);
+}
+
+.app-shell--home .icon-button {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--nb-ink);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--nb-ink);
+  box-shadow: 3px 3px 0 var(--nb-ink);
+  transition: transform 90ms ease, box-shadow 90ms ease, background 90ms ease;
+}
+
+.app-shell--home .icon-button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--nb-ink);
+  background: var(--nb-yellow);
+}
+
+.app-shell--home .icon-button:focus-visible {
+  outline: 3px dashed var(--nb-ink);
+  outline-offset: 3px;
+}
+
+.app-shell--home .icon-button.is-account-active {
+  border-color: var(--nb-ink);
+  background: var(--nb-lime);
+  color: var(--nb-ink);
+}
+
+.app-shell--home .page {
+  width: min(100%, 1120px);
+  padding: 40px 18px 72px;
+}
+
+/* ---------- Hero ---------- */
+
+.app-shell--home .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  border: 3px solid var(--nb-ink);
+  border-radius: 6px;
+  background: var(--nb-ink);
+  color: #fff;
+  padding: 4px 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.home-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: end;
+  margin: 14px 0 30px;
+}
+
+.home-intro > * {
+  min-width: 0;
+}
+
+.home-intro .eyebrow {
+  background: var(--nb-yellow);
+  color: var(--nb-ink);
+  transform: rotate(-2deg);
+  box-shadow: 3px 3px 0 var(--nb-ink);
+}
+
+.home-intro h1 {
+  margin: 20px 0 0;
+  font-size: clamp(44px, 7vw, 88px);
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1.04;
+}
+
+.home-intro__mark {
+  display: inline-block;
+  border: 3px solid var(--nb-ink);
+  border-radius: 12px;
+  background: var(--nb-yellow);
+  padding: 0 14px 6px;
+  box-shadow: 6px 6px 0 var(--nb-ink);
+  transform: rotate(-1.5deg);
+}
+
+.home-intro__copy {
+  max-width: 560px;
+  margin: 16px 0 0;
+  color: rgb(22 22 22 / 68%);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.home-intro__summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.home-intro__summary span {
+  display: inline-flex;
+  height: 38px;
+  align-items: center;
+  gap: 6px;
+  border: 3px solid var(--nb-ink);
+  border-radius: 8px;
+  background: var(--nb-cyan);
+  padding: 0 12px;
+  color: var(--nb-ink);
+  font-size: 12.5px;
+  font-weight: 800;
+  box-shadow: 4px 4px 0 var(--nb-ink);
+}
+
+.home-intro__summary span:nth-child(2) {
+  background: var(--nb-pink);
+}
+
+.home-intro__summary span:nth-child(3) {
+  background: var(--nb-lime);
+}
+
+/* ---------- 恢复会话条 ---------- */
+
+.resume-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 3px solid var(--nb-ink);
+  border-radius: 10px;
+  background: var(--nb-yellow);
+  padding: 16px 18px;
+  margin-bottom: 34px;
+  box-shadow: 6px 6px 0 var(--nb-ink);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.resume-row:hover {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0 var(--nb-ink);
+}
+
+.resume-row:focus-visible {
+  outline: 3px solid var(--nb-ink);
+  outline-offset: 4px;
+}
+
+.resume-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.resume-row strong {
+  font-weight: 900;
+}
+
+.resume-row small {
+  color: rgb(22 22 22 / 70%);
+  font-weight: 600;
+}
+
+/* ---------- 目录与分区 ---------- */
+
+.home-catalog {
+  display: grid;
+  gap: 46px;
+}
+
+.game-section {
+  display: grid;
+  gap: 20px;
+}
+
+.game-section__heading {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.game-section__heading > div {
+  min-width: 0;
+}
+
+.game-section__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 3px solid var(--nb-ink);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--nb-ink);
+  box-shadow: 4px 4px 0 var(--nb-ink);
+}
+
+.game-section--social .game-section__icon {
+  background: var(--nb-cyan);
+}
+
+.game-section--solo .game-section__icon {
+  background: var(--nb-pink);
+}
+
+.game-section__heading h2 {
+  margin: 4px 0 0;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.game-section__heading p:last-child {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: rgb(22 22 22 / 65%);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.game-section__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.game-section__body.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.game-section__body.is-single .game-card--featured {
+  min-height: 220px;
+}
+
+.game-section__body > * {
+  min-width: 0;
+}
+
+.game-lane {
+  display: grid;
+  gap: 18px;
+}
+
+/* ---------- 游戏卡片 ---------- */
+
+.app-shell--home .home-catalog .game-card {
+  --game-card-accent: #161616;
+  position: relative;
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  align-content: space-between;
+  gap: 16px;
+  border: 3px solid var(--nb-ink);
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 7px 7px 0 var(--nb-ink);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.app-shell--home .home-catalog .game-card--featured {
+  min-height: 274px;
+  padding: 24px;
+}
+
+.app-shell--home .home-catalog .game-card--compact {
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-areas:
+    "header body"
+    "header footer";
+  align-content: center;
+  align-items: center;
+  column-gap: 16px;
+  min-height: 126px;
+  box-shadow: 4px 4px 0 var(--nb-ink);
+}
+
+.app-shell--home .home-catalog .game-card::before {
+  position: absolute;
+  inset: 16px auto auto 16px;
+  width: 40px;
+  height: 6px;
+  border-radius: 0;
+  background: var(--game-card-accent);
+  content: "";
+}
+
+.app-shell--home .home-catalog .game-card--compact::before {
+  display: none;
+}
+
+.app-shell--home .home-catalog a.game-card:hover,
+.app-shell--home .home-catalog a.game-card:focus-visible {
+  transform: translate(4px, 4px);
+  box-shadow: 3px 3px 0 var(--nb-ink);
+}
+
+.app-shell--home .home-catalog a.game-card:focus-visible {
+  outline: 3px solid var(--nb-ink);
+  outline-offset: 4px;
+}
+
+.app-shell--home .home-catalog .game-card.is-disabled {
+  border-style: dashed;
+  border-color: rgb(22 22 22 / 40%);
+  background: rgb(22 22 22 / 5%);
+  color: rgb(22 22 22 / 55%);
+  box-shadow: none;
+}
+
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__body strong,
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__body small,
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__note,
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__tag {
+  color: rgb(22 22 22 / 55%);
+}
+
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__icon,
+.app-shell--home .home-catalog .game-card.is-disabled .game-card__go {
+  border-color: rgb(22 22 22 / 40%);
+  background: rgb(22 22 22 / 8%);
+  color: rgb(22 22 22 / 55%);
+  box-shadow: none;
+}
+
+.game-card__header,
+.game-card__footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.game-card--compact .game-card__header {
+  grid-area: header;
+  align-self: center;
+}
+
+.game-card--compact .game-card__body {
+  grid-area: body;
+}
+
+.game-card--compact .game-card__footer {
+  grid-area: footer;
+}
+
+.game-card__icon,
+.game-card__go {
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.game-card__icon {
+  width: 58px;
+  height: 58px;
+  border: 3px solid var(--nb-ink);
+  border-radius: 10px;
+  background: var(--game-card-accent);
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--nb-ink);
+  transform: rotate(-3deg);
+}
+
+.game-card--featured .game-card__icon {
+  width: 76px;
+  height: 76px;
+}
+
+.game-card--compact .game-card__icon {
+  width: 52px;
+  height: 52px;
+  transform: rotate(-2deg);
+}
+
+.game-card__note {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  border: 2px solid var(--nb-ink);
+  border-radius: 6px;
+  background: #fff;
+  padding: 3px 8px;
+  color: var(--nb-ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.game-card--compact .game-card__note {
+  display: none;
+}
+
+.game-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.game-card__body strong {
+  color: var(--nb-ink);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+}
+
+.game-card--featured .game-card__body strong {
+  font-size: clamp(30px, 3.7vw, 42px);
+  line-height: 1.05;
+}
+
+.game-card--compact .game-card__body strong {
+  font-size: 22px;
+}
+
+.game-card__body small {
+  color: rgb(22 22 22 / 62%);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.game-card__tags {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.game-card__tag {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border: 2px solid var(--nb-ink);
+  border-radius: 6px;
+  background: #fff;
+  padding: 3px 8px;
+  color: var(--nb-ink);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.game-card__go {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--nb-ink);
+  border-radius: 8px;
+  background: var(--game-card-accent);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--nb-ink);
+}
+
+.game-card--compact .game-card__go {
+  width: 36px;
+  height: 36px;
+  box-shadow: 2px 2px 0 var(--nb-ink);
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 900px) {
+  .game-section__body {
+      grid-template-columns: 1fr;
+    }
+
+  .game-lane {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+  .app-shell--home .home-catalog .game-card--featured {
+      min-height: 236px;
+    }
+
+  .app-shell--home .home-catalog .game-card--compact {
+      min-height: 158px;
+    }
+}
+
+@media (max-width: 640px) {
+  .app-shell--home .page {
+      padding: 26px 14px 52px;
+    }
+
+  .home-intro {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+  .home-intro h1 {
+      font-size: clamp(40px, 13vw, 60px);
+    }
+
+  .home-intro__mark {
+      padding: 0 10px 4px;
+      box-shadow: 4px 4px 0 var(--nb-ink);
+    }
+
+  .home-intro__copy {
+      font-size: 14px;
+    }
+
+  .home-intro__summary {
+      justify-content: flex-start;
+    }
+
+  .home-intro__summary span {
+      box-shadow: 3px 3px 0 var(--nb-ink);
+    }
+
+  .resume-row {
+      margin-bottom: 26px;
+      padding: 14px;
+      box-shadow: 4px 4px 0 var(--nb-ink);
+    }
+
+  .home-catalog {
+      gap: 32px;
+    }
+
+  .game-section__heading {
+      grid-template-columns: 38px minmax(0, 1fr);
+    }
+
+  .game-section__icon {
+      width: 38px;
+      height: 38px;
+      box-shadow: 3px 3px 0 var(--nb-ink);
+    }
+
+  .game-section__heading h2 {
+      font-size: 24px;
+    }
+
+  .game-lane {
+      grid-template-columns: 1fr;
+    }
+
+  .app-shell--home .home-catalog .game-card--featured,
+    .app-shell--home .home-catalog .game-card--compact {
+      grid-template-columns: 1fr;
+      grid-template-areas: none;
+      min-height: 176px;
+      padding: 16px;
+      box-shadow: 4px 4px 0 var(--nb-ink);
+    }
+
+  .app-shell--home .home-catalog .game-card--featured {
+      min-height: 208px;
+    }
+
+  .game-card__header {
+      align-items: flex-start;
+    }
+
+  .game-card--compact .game-card__header,
+    .game-card--compact .game-card__body,
+    .game-card--compact .game-card__footer {
+      grid-area: auto;
+    }
+
+  .game-card__note {
+      display: none;
+    }
+}
