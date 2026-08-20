@@ -241,6 +241,10 @@
   background: var(--nb-cyan);
 }
 
+.game-section--persistent .game-section__icon {
+  background: var(--nb-lime);
+}
+
 .game-section--solo .game-section__icon {
   background: var(--nb-pink);
 }
@@ -272,10 +276,6 @@
 
 .game-section__body.is-single {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.game-section__body.is-single .game-card--featured {
-  min-height: 220px;
 }
 
 .game-section__body > * {

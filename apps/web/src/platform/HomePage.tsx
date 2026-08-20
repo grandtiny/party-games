@@ -219,6 +219,7 @@ export function HomePage() {
         {sections.map((section) => {
           const SectionIcon = section.icon;
           const [featuredGame, ...laneGames] = section.games;
+          const isSingleGameSection = laneGames.length === 0;
           return (
             <section
               className={`game-section game-section--${section.id}`}
@@ -235,8 +236,10 @@ export function HomePage() {
                   <p>{section.description}</p>
                 </div>
               </div>
-              <div className={`game-section__body ${laneGames.length ? "" : "is-single"}`}>
-                {featuredGame ? <GameCard game={featuredGame} variant="featured" /> : null}
+              <div className={`game-section__body ${isSingleGameSection ? "is-single" : ""}`}>
+                {featuredGame ? (
+                  <GameCard game={featuredGame} variant={isSingleGameSection ? "compact" : "featured"} />
+                ) : null}
                 {laneGames.length ? (
                   <div className="game-lane">
                     {laneGames.map((game) => (
