@@ -1,0 +1,135 @@
+/*
+ * settings.css — 由 styles.css 按职责拆分而来。
+ * 系统设置页专属样式（settings-form 表单族在 base.css，被 turtle-soup 复用）。
+ * 拆分为纯搬运：每条规则与原文件逐字一致，未做改写。
+ */
+
+.settings-auth {
+  display: grid;
+  width: min(100%, 440px);
+  gap: 18px;
+  margin: 56px auto 0;
+  border: 1px solid #dfe3dd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 28px;
+}
+
+.settings-auth h1,
+.settings-section h1,
+.settings-section h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.settings-form label:not(.settings-toggle) {
+  display: grid;
+  gap: 7px;
+  color: #59615b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.settings-form textarea.settings-textarea--story {
+  min-height: 360px;
+}
+
+.settings-workspace {
+  display: grid;
+  gap: 34px;
+}
+
+.settings-section {
+  display: grid;
+  gap: 22px;
+  border-top: 1px solid #dfe3dd;
+  padding-top: 26px;
+}
+
+.settings-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settings-toggle {
+  display: flex;
+  min-height: 36px;
+  cursor: pointer;
+  align-items: center;
+  gap: 10px;
+  color: #303732;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.settings-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #a91f29;
+}
+
+.settings-toggle--compact {
+  min-height: 24px;
+  color: #7c3238;
+  font-size: 12px;
+}
+
+.settings-placeholder-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  color: #69716b;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.settings-placeholder-list code {
+  overflow-wrap: anywhere;
+  border: 1px solid #dfe3dd;
+  border-radius: 6px;
+  background: #f8f9f6;
+  padding: 10px;
+  color: #333a35;
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.5;
+}
+
+.settings-status-list {
+  display: grid;
+  max-width: 680px;
+  margin: 0;
+}
+
+.settings-status-list > div {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e7e9e5;
+}
+
+.settings-status-list dt {
+  color: #69716b;
+  font-size: 13px;
+}
+
+.settings-status-list dd {
+  margin: 0;
+  color: #242a26;
+  font-size: 13px;
+  font-weight: 720;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .settings-auth {
+      margin-top: 24px;
+      padding: 22px 18px;
+    }
+}
+
+.settings-actions--leading {
+  justify-content: flex-start;
+}
