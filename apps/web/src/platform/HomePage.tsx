@@ -11,7 +11,8 @@ import {
   Spade,
   Sparkles,
   UserRound,
-  UsersRound
+  UsersRound,
+  Wheat
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -37,7 +38,7 @@ interface GameEntry {
 interface GameSection {
   description: string;
   icon: LucideIcon;
-  id: "social" | "solo";
+  id: "social" | "persistent" | "solo";
   kicker: string;
   title: string;
   games: GameEntry[];
@@ -104,6 +105,26 @@ export function HomePage() {
       ]
     },
     {
+      id: "persistent",
+      icon: Wheat,
+      kicker: "长期经营",
+      title: "回来收成",
+      description: "使用现有账号保存庄园进度，作物会按现实时间持续成长。",
+      games: [
+        {
+          id: "manor",
+          title: "怀旧庄园",
+          description: "经典农牧场 · 好友互动",
+          note: "实时成长与账号存档",
+          tags: ["账号存档", "经营", "长期成长"],
+          to: "/manor",
+          icon: Wheat,
+          accent: "#3f7049",
+          tint: "#eef6e9"
+        }
+      ]
+    },
+    {
       id: "solo",
       icon: UserRound,
       kicker: "单人挑战",
@@ -162,7 +183,7 @@ export function HomePage() {
           <h1>
             今晚<span className="home-intro__mark">玩什么</span>
           </h1>
-          <p className="home-intro__copy">多人桌台和单人挑战分开进入，临场选游戏更快。</p>
+          <p className="home-intro__copy">多人桌台、长期经营和单人挑战分区进入，临场选游戏更快。</p>
         </div>
         <div className="home-intro__summary" aria-label="大厅概览">
           <span>
@@ -172,6 +193,10 @@ export function HomePage() {
           <span>
             <UserRound size={16} />
             单人 3
+          </span>
+          <span>
+            <Wheat size={16} />
+            经营 1
           </span>
           <span>
             <Sparkles size={16} />
@@ -194,6 +219,7 @@ export function HomePage() {
         {sections.map((section) => {
           const SectionIcon = section.icon;
           const [featuredGame, ...laneGames] = section.games;
+          const isSingleGameSection = laneGames.length === 0;
           return (
             <section
               className={`game-section game-section--${section.id}`}
@@ -210,13 +236,17 @@ export function HomePage() {
                   <p>{section.description}</p>
                 </div>
               </div>
-              <div className="game-section__body">
-                {featuredGame ? <GameCard game={featuredGame} variant="featured" /> : null}
-                <div className="game-lane">
-                  {laneGames.map((game) => (
-                    <GameCard game={game} key={game.id} variant="compact" />
-                  ))}
-                </div>
+              <div className={`game-section__body ${isSingleGameSection ? "is-single" : ""}`}>
+                {featuredGame ? (
+                  <GameCard game={featuredGame} variant={isSingleGameSection ? "compact" : "featured"} />
+                ) : null}
+                {laneGames.length ? (
+                  <div className="game-lane">
+                    {laneGames.map((game) => (
+                      <GameCard game={game} key={game.id} variant="compact" />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </section>
           );

@@ -43,6 +43,9 @@ importers:
       '@party-games/gomoku':
         specifier: workspace:*
         version: link:../../packages/gomoku
+      '@party-games/manor':
+        specifier: workspace:*
+        version: link:../../packages/manor
       '@party-games/poker':
         specifier: workspace:*
         version: link:../../packages/poker
@@ -138,6 +141,16 @@ importers:
       renjukit:
         specifier: 0.8.0
         version: 0.8.0(patch_hash=47566c35df8ce741998deb712456e76ca6ee657074c6c7dc91750008aad05f1b)
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)(tsx@4.23.1)
+
+  packages/manor:
+    dependencies:
+      '@party-games/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       vitest:
         specifier: ^3.2.4

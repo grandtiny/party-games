@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { createReadStream, existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyReply } from "fastify";
@@ -21,6 +21,11 @@ import {
   GomokuProgressSyncRequestSchema,
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
+  ManorActionRequestSchema,
+  ManorFriendFarmActionRequestSchema,
+  ManorFriendPastureActionRequestSchema,
+  ManorGuestbookCreateRequestSchema,
+  ManorPastureActionRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -33,6 +38,7 @@ import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
 import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
+import { ManorService } from "./manor-service.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
@@ -70,6 +76,15 @@ export async function createApp(options: AppOptions) {
   });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
+  const legacyFarmBackgroundPath = findLegacyFarmBackground(
+    environment.MANOR_LEGACY_ASSETS_PATH
+  );
+  const manorService = new ManorService(repository, {
+    timeScale: positiveNumber(environment.MANOR_TIME_SCALE, 1),
+    ...(legacyFarmBackgroundPath
+      ? { legacyBackgroundUrl: "/api/manor/assets/background" }
+      : {})
+  });
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -290,6 +305,191 @@ export async function createApp(options: AppOptions) {
         .code(message.includes("会话无效") ? 401 : message.includes("管理员") ? 403 : 400)
         .send({ error: message });
     }
+  });
+
+  app.get("/api/manor", async (request, reply) => {
+    try {
+      return manorService.getFarm(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/actions", async (request, reply) => {
+    try {
+      const input = ManorActionRequestSchema.parse(request.body);
+      return manorService.handleAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/pasture", async (request, reply) => {
+    try {
+      return manorService.getPasture(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/pasture/actions", async (request, reply) => {
+    try {
+      const input = ManorPastureActionRequestSchema.parse(request.body);
+      return manorService.handlePastureAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        input
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/social", async (request, reply) => {
+    try {
+      return manorService.getSocialOverview(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/farm", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getFriendFarm(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/farm/actions", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.handleFriendFarmAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorFriendFarmActionRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/pasture", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getFriendPasture(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/pasture/actions", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.handleFriendPastureAction(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorFriendPastureActionRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.getGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        undefined
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.createGuestbookMessage(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        undefined,
+        ManorGuestbookCreateRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.delete("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.clearGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/guestbook", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/guestbook", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.createGuestbookMessage(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorGuestbookCreateRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/assets/background", async (_request, reply) => {
+    if (!legacyFarmBackgroundPath) {
+      return reply.code(404).send({ error: "未配置本地怀旧资源" });
+    }
+    reply.header("Cache-Control", "public, max-age=3600");
+    reply.type("image/jpeg");
+    return reply.send(createReadStream(legacyFarmBackgroundPath));
   });
 
   app.get("/api/admin/status", async (request) => {
@@ -808,6 +1008,12 @@ export async function createApp(options: AppOptions) {
 
   const webDistPath = options.webDistPath ? resolve(options.webDistPath) : undefined;
   if (webDistPath && existsSync(webDistPath)) {
+    app.addHook("onSend", async (request, reply, payload) => {
+      if (request.url.startsWith("/assets/manor/classic/")) {
+        reply.header("Cache-Control", "public, max-age=0, must-revalidate");
+      }
+      return payload;
+    });
     await app.register(fastifyStatic, {
       root: webDistPath,
       immutable: true,
@@ -835,7 +1041,16 @@ export async function createApp(options: AppOptions) {
     accountLoginWindows.clear();
   });
 
-  return { app, io, roomService, repository, presence, adminService, accountService };
+  return {
+    app,
+    io,
+    roomService,
+    repository,
+    presence,
+    adminService,
+    accountService,
+    manorService
+  };
 }
 
 function messageOf(error: unknown): string {
@@ -845,6 +1060,21 @@ function messageOf(error: unknown): string {
 function enabledFlag(value: string | undefined, defaultValue = false): boolean {
   if (value === undefined || value.trim() === "") return defaultValue;
   return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
+}
+
+function positiveNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function findLegacyFarmBackground(configuredPath: string | undefined): string | undefined {
+  if (!configuredPath?.trim()) return undefined;
+  const root = resolve(configuredPath);
+  const candidates = [
+    join(root, "module", "nc", "farm", "diy", "26f.jpg"),
+    join(root, "upload", "home", "qqfarm", "module", "nc", "farm", "diy", "26f.jpg")
+  ];
+  return candidates.find((candidate) => existsSync(candidate));
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";

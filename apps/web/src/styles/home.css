@@ -241,6 +241,10 @@
   background: var(--nb-cyan);
 }
 
+.game-section--persistent .game-section__icon {
+  background: var(--nb-lime);
+}
+
 .game-section--solo .game-section__icon {
   background: var(--nb-pink);
 }
@@ -268,6 +272,10 @@
   grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
   gap: 18px;
   align-items: stretch;
+}
+
+.game-section__body.is-single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .game-section__body > * {

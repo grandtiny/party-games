@@ -212,11 +212,11 @@
   animation: gomoku-win-draw 750ms ease-out 180ms forwards;
 }
 
-.gomoku-board.is-black-turn .gomoku-board__hit:not(.is-occupied):not(.is-forbidden):hover {
+.gomoku-board:not(.is-disabled).is-black-turn .gomoku-board__hit:not(.is-occupied):not(.is-forbidden):hover {
   fill: rgb(43 38 32 / 16%);
 }
 
-.gomoku-board.is-white-turn .gomoku-board__hit:not(.is-occupied):not(.is-forbidden):hover {
+.gomoku-board:not(.is-disabled).is-white-turn .gomoku-board__hit:not(.is-occupied):not(.is-forbidden):hover {
   fill: rgb(255 255 255 / 38%);
   stroke: rgb(43 38 32 / 22%);
   stroke-width: 1;
@@ -277,6 +277,10 @@
   cursor: pointer;
   fill: transparent;
   outline: none;
+}
+
+.gomoku-board.is-disabled .gomoku-board__hit {
+  cursor: default;
 }
 
 .gomoku-board__hit:focus-visible {

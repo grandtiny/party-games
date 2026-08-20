@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import type {
   GameType,
@@ -222,6 +223,38 @@ const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `
+  },
+  {
+    version: 6,
+    sql: `
+      CREATE TABLE IF NOT EXISTS manor_farms (
+        user_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL,
+        state_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `
+  },
+  {
+    version: 7,
+    sql: `
+      CREATE TABLE IF NOT EXISTS manor_guestbook_messages (
+        id TEXT PRIMARY KEY,
+        owner_user_id TEXT NOT NULL,
+        sender_user_id TEXT NOT NULL,
+        reply_to_id TEXT,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (reply_to_id) REFERENCES manor_guestbook_messages(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_manor_guestbook_owner_created
+        ON manor_guestbook_messages(owner_user_id, created_at DESC, id DESC);
+    `
   }
 ];
 
@@ -295,6 +328,24 @@ export interface StoredGomokuProgress {
 export interface StoredGomokuSave {
   state: GomokuGameStatePayload;
   updatedAt: string;
+}
+
+export interface StoredManorAccount {
+  id: string;
+  displayName: string;
+}
+
+export interface StoredManorGuestbookMessage {
+  id: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  content: string;
+  createdAt: string;
+  replyTo?: {
+    id: string;
+    senderDisplayName: string;
+    content: string;
+  };
 }
 
 export class SqliteRoomRepository {
@@ -1135,6 +1186,189 @@ export class SqliteRoomRepository {
           updatedAt: row.updated_at
         }
       : undefined;
+  }
+
+  getManorFarm(userId: string): unknown | undefined {
+    const row = this.#database
+      .prepare("SELECT state_json FROM manor_farms WHERE user_id = ?")
+      .get(userId) as { state_json: string } | undefined;
+    return row ? JSON.parse(row.state_json) : undefined;
+  }
+
+  listManorAccounts(): StoredManorAccount[] {
+    const rows = this.#database
+      .prepare("SELECT id, display_name FROM users ORDER BY display_name COLLATE NOCASE, id")
+      .all() as Array<{ id: string; display_name: string }>;
+    return rows.map((row) => ({ id: row.id, displayName: row.display_name }));
+  }
+
+  findManorAccount(userId: string): StoredManorAccount | undefined {
+    const row = this.#database
+      .prepare("SELECT id, display_name FROM users WHERE id = ?")
+      .get(userId) as { id: string; display_name: string } | undefined;
+    return row ? { id: row.id, displayName: row.display_name } : undefined;
+  }
+
+  ensureManorFarm(
+    userId: string,
+    state: { revision: number; createdAt: number; updatedAt: number }
+  ): unknown {
+    this.#database
+      .prepare(`
+        INSERT OR IGNORE INTO manor_farms (
+          user_id, revision, state_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `)
+      .run(
+        userId,
+        state.revision,
+        JSON.stringify(state),
+        new Date(state.createdAt).toISOString(),
+        new Date(state.updatedAt).toISOString()
+      );
+    const stored = this.getManorFarm(userId);
+    if (!stored) throw new Error("庄园存档创建失败");
+    return stored;
+  }
+
+  updateManorFarm(
+    userId: string,
+    expectedRevision: number,
+    state: { revision: number; updatedAt: number }
+  ): void {
+    const result = this.#database
+      .prepare(`
+        UPDATE manor_farms
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `)
+      .run(
+        state.revision,
+        JSON.stringify(state),
+        new Date(state.updatedAt).toISOString(),
+        userId,
+        expectedRevision
+      );
+    if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
+  }
+
+  updateManorFarmsAtomically(
+    updates: Array<{
+      userId: string;
+      expectedRevision: number;
+      state: { revision: number; updatedAt: number };
+    }>
+  ): void {
+    if (new Set(updates.map((update) => update.userId)).size !== updates.length) {
+      throw new Error("庄园事务包含重复账号");
+    }
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const statement = this.#database.prepare(`
+        UPDATE manor_farms
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `);
+      for (const update of updates) {
+        const result = statement.run(
+          update.state.revision,
+          JSON.stringify(update.state),
+          new Date(update.state.updatedAt).toISOString(),
+          update.userId,
+          update.expectedRevision
+        );
+        if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
+      }
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  listManorGuestbook(ownerUserId: string, limit = 50): StoredManorGuestbookMessage[] {
+    const rows = this.#database
+      .prepare(`
+        SELECT
+          message.id,
+          message.sender_user_id,
+          sender.display_name AS sender_display_name,
+          message.content,
+          message.created_at,
+          reply.id AS reply_id,
+          reply_sender.display_name AS reply_sender_display_name,
+          reply.content AS reply_content
+        FROM manor_guestbook_messages AS message
+        JOIN users AS sender ON sender.id = message.sender_user_id
+        LEFT JOIN manor_guestbook_messages AS reply ON reply.id = message.reply_to_id
+        LEFT JOIN users AS reply_sender ON reply_sender.id = reply.sender_user_id
+        WHERE message.owner_user_id = ?
+        ORDER BY message.created_at DESC, message.id DESC
+        LIMIT ?
+      `)
+      .all(ownerUserId, limit) as Array<{
+        id: string;
+        sender_user_id: string;
+        sender_display_name: string;
+        content: string;
+        created_at: string;
+        reply_id: string | null;
+        reply_sender_display_name: string | null;
+        reply_content: string | null;
+      }>;
+    return rows.map((row) => ({
+      id: row.id,
+      senderUserId: row.sender_user_id,
+      senderDisplayName: row.sender_display_name,
+      content: row.content,
+      createdAt: row.created_at,
+      ...(row.reply_id && row.reply_sender_display_name !== null && row.reply_content !== null
+        ? {
+            replyTo: {
+              id: row.reply_id,
+              senderDisplayName: row.reply_sender_display_name,
+              content: row.reply_content
+            }
+          }
+        : {})
+    }));
+  }
+
+  createManorGuestbookMessage(
+    ownerUserId: string,
+    senderUserId: string,
+    content: string,
+    replyToId: string | undefined,
+    createdAt: string
+  ): void {
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      if (replyToId) {
+        const reply = this.#database
+          .prepare("SELECT 1 AS found FROM manor_guestbook_messages WHERE id = ? AND owner_user_id = ?")
+          .get(replyToId, ownerUserId) as { found: number } | undefined;
+        if (!reply) throw new Error("回复的留言不存在或不属于当前留言板");
+      }
+      this.#database
+        .prepare(`
+          INSERT INTO manor_guestbook_messages (
+            id, owner_user_id, sender_user_id, reply_to_id, content, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `)
+        .run(randomUUID(), ownerUserId, senderUserId, replyToId ?? null, content, createdAt);
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  clearManorGuestbook(ownerUserId: string): number {
+    return Number(
+      this.#database
+        .prepare("DELETE FROM manor_guestbook_messages WHERE owner_user_id = ?")
+        .run(ownerUserId).changes
+    );
   }
 
   hasAdminPassword(): boolean {

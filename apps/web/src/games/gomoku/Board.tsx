@@ -42,7 +42,7 @@ export function GomokuBoard({
 
   return (
     <svg
-      className={`gomoku-board is-${state.currentPlayer}-turn`}
+      className={`gomoku-board is-${state.currentPlayer}-turn${disabled ? " is-disabled" : ""}`}
       viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
       role="grid"
       aria-label="十五路五子棋棋盘"

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { MANOR_ANIMAL_SOURCE_IDS } from "./manor-animal-ids.generated.js";
+import { MANOR_CROP_IDS } from "./manor-crop-ids.generated.js";
 
 export const GameTypeSchema = z.enum(["clocktower", "poker", "turtle-soup"]);
 export type GameType = z.infer<typeof GameTypeSchema>;
@@ -373,6 +375,194 @@ export const GomokuProgressSyncRequestSchema = z.object({
 });
 export type GomokuProgressSyncRequest = z.infer<typeof GomokuProgressSyncRequestSchema>;
 
+export const ManorCropIdSchema = z.enum(MANOR_CROP_IDS);
+export type ManorCropId = z.infer<typeof ManorCropIdSchema>;
+export const ManorFertilizerIdSchema = z.enum(["ordinary", "fast", "instant"]);
+export type ManorFertilizerId = z.infer<typeof ManorFertilizerIdSchema>;
+export const ManorDecorationTypeSchema = z.enum(["background", "house", "fence", "doghouse"]);
+export type ManorDecorationType = z.infer<typeof ManorDecorationTypeSchema>;
+export const ManorAnimalSourceIdSchema = z.union(
+  MANOR_ANIMAL_SOURCE_IDS.map((id) => z.literal(id))
+);
+export type ManorAnimalSourceId = z.infer<typeof ManorAnimalSourceIdSchema>;
+export const ManorAnimalHouseSchema = z.enum(["hutch", "shed"]);
+export type ManorAnimalHouse = z.infer<typeof ManorAnimalHouseSchema>;
+export const ManorPastureItemTypeSchema = z.enum(["byproduct", "animal"]);
+export type ManorPastureItemType = z.infer<typeof ManorPastureItemTypeSchema>;
+export const ManorDogIdSchema = z.union([z.literal(1), z.literal(3)]);
+export type ManorDogId = z.infer<typeof ManorDogIdSchema>;
+export const ManorFlowerIdSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+  z.literal(9),
+  z.literal(10),
+  z.literal(11),
+  z.literal(12),
+  z.literal(13),
+  z.literal(14)
+]);
+export type ManorFlowerId = z.infer<typeof ManorFlowerIdSchema>;
+
+const ManorPlotIdSchema = z.number().int().min(1).max(18);
+const ManorPurchaseQuantitySchema = z.number().int().min(1).max(99);
+const ManorSaleQuantitySchema = z.number().int().min(1).max(999_999);
+
+export const ManorActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("buy-seeds"),
+    cropId: ManorCropIdSchema,
+    quantity: ManorPurchaseQuantitySchema
+  }),
+  z.object({
+    type: z.literal("plant"),
+    plotId: ManorPlotIdSchema,
+    cropId: ManorCropIdSchema
+  }),
+  z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("fertilize"),
+    plotId: ManorPlotIdSchema,
+    fertilizerId: ManorFertilizerIdSchema.default("ordinary")
+  }),
+  z.object({ type: z.literal("harvest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-plot"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("reclaim-plot"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("claim-starter-gift") }),
+  z.object({ type: z.literal("acknowledge-level-rewards") }),
+  z.object({
+    type: z.literal("buy-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
+  z.object({
+    type: z.literal("activate-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
+  z.object({
+    type: z.literal("deactivate-decoration"),
+    sourceId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
+  }),
+  z.object({
+    type: z.literal("buy-fertilizer"),
+    quantity: ManorPurchaseQuantitySchema
+  }),
+  z.object({
+    type: z.literal("sell"),
+    cropId: ManorCropIdSchema,
+    quantity: ManorSaleQuantitySchema
+  }),
+  z.object({ type: z.literal("sell-all") }),
+  z.object({ type: z.literal("buy-dog"), dogId: ManorDogIdSchema }),
+  z.object({ type: z.literal("activate-dog"), dogId: ManorDogIdSchema }),
+  z.object({ type: z.literal("buy-dog-food"), days: z.union([z.literal(1), z.literal(7)]) }),
+  z.object({
+    type: z.literal("craft-instant-fertilizer"),
+    quantity: ManorPurchaseQuantitySchema
+  })
+]);
+export type ManorActionRequest = z.infer<typeof ManorActionRequestSchema>;
+
+const ManorAnimalSerialSchema = z.number().int().min(1).max(Number.MAX_SAFE_INTEGER);
+export const ManorPastureActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("buy-animal"),
+    animalId: ManorAnimalSourceIdSchema,
+    quantity: z.number().int().min(1).max(10)
+  }),
+  z.object({
+    type: z.literal("buy-grass"),
+    quantity: z.number().int().min(1).max(400)
+  }),
+  z.object({
+    type: z.literal("start-animal-production"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("harvest-animal-product"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("harvest-animal"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("sell-pasture-item"),
+    animalId: ManorAnimalSourceIdSchema,
+    itemType: ManorPastureItemTypeSchema,
+    quantity: ManorSaleQuantitySchema
+  }),
+  z.object({ type: z.literal("sell-all-pasture") }),
+  z.object({
+    type: z.literal("upgrade-animal-house"),
+    house: ManorAnimalHouseSchema
+  }),
+  z.object({
+    type: z.literal("feed-animal-carrot"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({ type: z.literal("clean-mosquito") }),
+  z.object({ type: z.literal("clean-poop") }),
+  z.object({
+    type: z.literal("set-animal-order"),
+    animalSerials: z.array(ManorAnimalSerialSchema).max(20)
+  })
+]);
+export type ManorPastureActionRequest = z.infer<typeof ManorPastureActionRequestSchema>;
+
+export const ManorFriendFarmActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("water"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-weed"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("steal-crop"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("add-weed"), plotId: ManorPlotIdSchema }),
+  z.object({ type: z.literal("add-pest"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("send-flower"),
+    flowerId: ManorFlowerIdSchema,
+    message: z.string().trim().max(120)
+  })
+]);
+export type ManorFriendFarmActionRequest = z.infer<typeof ManorFriendFarmActionRequestSchema>;
+
+export const ManorFriendPastureActionRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("feed-grass"),
+    quantity: z.number().int().min(1).max(400)
+  }),
+  z.object({
+    type: z.literal("help-production"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("steal-product"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({
+    type: z.literal("feed-carrot"),
+    animalSerial: ManorAnimalSerialSchema
+  }),
+  z.object({ type: z.literal("clean-mosquito") }),
+  z.object({ type: z.literal("clean-poop") }),
+  z.object({
+    type: z.literal("release-mosquito"),
+    quantity: z.number().int().min(1).max(8)
+  })
+]);
+export type ManorFriendPastureActionRequest = z.infer<typeof ManorFriendPastureActionRequestSchema>;
+
+export const ManorGuestbookCreateRequestSchema = z.object({
+  content: z.string().trim().min(1).max(200),
+  replyToId: z.string().min(1).max(64).optional()
+});
+export type ManorGuestbookCreateRequest = z.infer<typeof ManorGuestbookCreateRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
@@ -546,6 +736,388 @@ export interface GomokuOverviewResponse {
   recentMatches: GomokuMatchView[];
   progress: GomokuProgressView[];
   save?: GomokuSaveView;
+}
+
+export interface ManorCropView {
+  id: ManorCropId;
+  sourceId: number;
+  name: string;
+  emoji: string;
+  levelRequired: number;
+  seedPrice: number;
+  salePrice: number;
+  growthSeconds: number;
+  regrowthSeconds: number;
+  growthStageSeconds: readonly number[];
+  baseYield: number;
+  experience: number;
+  harvestCycles: number;
+  purchasable: boolean;
+  unlocked: boolean;
+  seeds: number;
+  produce: number;
+}
+
+export interface ManorPlotView {
+  id: number;
+  unlocked: boolean;
+  nextUnlock: boolean;
+  unlockLevel?: number;
+  unlockCost?: number;
+  status: "empty" | "growing" | "mature" | "withered";
+  cropId?: ManorCropId;
+  cropSourceId?: number;
+  cropName?: string;
+  cropEmoji?: string;
+  plantedAt?: number;
+  readyAt?: number;
+  witheredAt?: number;
+  harvestedCycles?: number;
+  harvestCycles?: number;
+  progress: number;
+  watered: boolean;
+  weed: boolean;
+  weedLevel: number;
+  pest: boolean;
+  pestLevel: number;
+  fertilizedStage?: number;
+  visualStageThresholds?: readonly number[];
+  estimatedYield?: number;
+  minimumYield?: number;
+  stolenYield?: number;
+}
+
+export interface ManorWeatherView {
+  id: "sunny" | "rainy";
+  label: "晴天" | "雨天";
+  assetUrl: string;
+}
+
+export type ManorActivityKind =
+  | "care"
+  | "steal"
+  | "prank"
+  | "dog"
+  | "pasture-help"
+  | "pasture-steal"
+  | "pasture-clean";
+
+export interface ManorActivityView {
+  id: number;
+  kind: ManorActivityKind;
+  actorName: string;
+  message: string;
+  createdAt: number;
+}
+
+export type ManorBusinessKind = "purchase" | "sale";
+export type ManorBusinessArea = "farm" | "pasture";
+
+export interface ManorBusinessRecordView {
+  id: number;
+  kind: ManorBusinessKind;
+  area: ManorBusinessArea;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalCoins: number;
+  createdAt: number;
+}
+
+export interface ManorFlowerRequirementView {
+  cropId: ManorCropId;
+  sourceId: number;
+  cropName: string;
+  quantity: number;
+  available: number;
+}
+
+export interface ManorFlowerCatalogView {
+  id: ManorFlowerId;
+  name: string;
+  description: string;
+  assetUrl: string;
+  requirements: ManorFlowerRequirementView[];
+  canSend: boolean;
+}
+
+export interface ManorReceivedFlowerView {
+  id: number;
+  flowerId: ManorFlowerId;
+  name: string;
+  description: string;
+  assetUrl: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface ManorDogCatalogView {
+  id: ManorDogId;
+  name: string;
+  price: number;
+  catchChance: number;
+  assetUrl: string;
+  owned: boolean;
+  active: boolean;
+}
+
+export interface ManorFertilizerView {
+  id: ManorFertilizerId;
+  sourceId: number;
+  name: string;
+  amount: number;
+  effectSeconds: number;
+  coinPrice?: number;
+}
+
+export interface ManorRewardItemView {
+  kind: "seed" | "fertilizer" | "decoration";
+  sourceId: number;
+  name: string;
+  quantity: number;
+  available: boolean;
+}
+
+export interface ManorDecorationView {
+  sourceId: number;
+  name: string;
+  setName: string;
+  category: ManorDecorationType;
+  levelRequired: number;
+  coinPrice: number;
+  experience: number;
+  validSeconds: number;
+  purchasable: boolean;
+  width: number;
+  height: number;
+  assetUrl: string;
+  thumbnailUrl: string;
+  unlocked: boolean;
+  owned: boolean;
+  active: boolean;
+  validUntil?: number;
+}
+
+export interface ManorLevelRewardView {
+  originalLevel: number;
+  displayLevel: number;
+  items: ManorRewardItemView[];
+}
+
+export interface ManorTaskView {
+  id: number;
+  name: string;
+  description: string;
+  rewardCoins: number;
+  rewardExperience: number;
+}
+
+export interface ManorTaskProgressView {
+  completedCount: number;
+  total: number;
+  current?: ManorTaskView;
+}
+
+export interface ManorFarmView {
+  serverTime: number;
+  revision: number;
+  profile: {
+    displayName: string;
+    coins: number;
+    level: number;
+    experience: number;
+    currentLevelExperience: number;
+    nextLevelExperience: number;
+  };
+  inventory: {
+    fertilizers: ManorFertilizerView[];
+  };
+  weather: ManorWeatherView;
+  dog: {
+    catalog: ManorDogCatalogView[];
+    fedUntil: number;
+    fed: boolean;
+    foodOptions: Array<{ days: 1 | 7; coinPrice: number }>;
+  };
+  factory: {
+    recipe: { manure: number; redRoses: number; coins: number };
+    available: { manure: number; redRoses: number; coins: number };
+    craftable: number;
+  };
+  dailyLimits: {
+    farmPranksRemaining: number;
+    pastureMosquitoesRemaining: number;
+    specialFeedsRemaining: number;
+  };
+  activities: ManorActivityView[];
+  businessRecords: ManorBusinessRecordView[];
+  flowerBasket: ManorReceivedFlowerView[];
+  starterGift: {
+    claimed: boolean;
+    items: ManorRewardItemView[];
+  };
+  pendingLevelRewards: ManorLevelRewardView[];
+  tasks: ManorTaskProgressView;
+  decorations: {
+    catalog: ManorDecorationView[];
+    active: Partial<Record<ManorDecorationType, ManorDecorationView>>;
+  };
+  catalog: ManorCropView[];
+  plots: ManorPlotView[];
+  art: {
+    source: "built-in" | "legacy";
+    backgroundUrl?: string;
+  };
+}
+
+export type ManorAnimalVisualState =
+  | "cub"
+  | "growing"
+  | "ready_to_produce"
+  | "production_early"
+  | "production_late"
+  | "lifecycle_complete";
+
+export interface ManorAnimalCatalogView {
+  sourceId: ManorAnimalSourceId;
+  name: string;
+  levelRequired: number;
+  category: ManorAnimalHouse;
+  purchasePrice: number;
+  animalSalePrice: number;
+  animalHarvestExperience: number;
+  animalUnit: string;
+  productionAction: string;
+  byproductName: string;
+  byproductSalePrice: number;
+  byproductHarvestExperience: number;
+  byproductUnit: string;
+  baseYield: number;
+  grassPerFourHours: number;
+  cubSeconds: number;
+  maturitySeconds: number;
+  lifecycleSeconds: number;
+  productionCycleSeconds: number;
+  productionActionSeconds: number;
+  description: string;
+  audioUrls: string[];
+  unlocked: boolean;
+}
+
+export interface ManorAnimalView {
+  serial: number;
+  sourceId: ManorAnimalSourceId;
+  name: string;
+  category: ManorAnimalHouse;
+  visualState: ManorAnimalVisualState;
+  hungry: boolean;
+  growthSeconds: number;
+  growthProgress: number;
+  nextStateAt?: number;
+  pendingProduct: number;
+  minimumProduct: number;
+  stolenProduct: number;
+  byproductName: string;
+  productionAction: string;
+  canStartProduction: boolean;
+  canHarvestProduct: boolean;
+  canHarvestAnimal: boolean;
+  canFeedCarrot: boolean;
+  audioUrls: string[];
+}
+
+export interface ManorPastureInventoryView {
+  animalId: ManorAnimalSourceId;
+  animalName: string;
+  animalCount: number;
+  animalSalePrice: number;
+  byproductName: string;
+  byproductCount: number;
+  byproductSalePrice: number;
+}
+
+export interface ManorPastureView {
+  serverTime: number;
+  revision: number;
+  profile: {
+    displayName: string;
+    coins: number;
+    level: number;
+    experience: number;
+    currentLevelExperience: number;
+    nextLevelExperience: number;
+  };
+  grass: number;
+  grassCapacity: number;
+  grassPrice: number;
+  manure: number;
+  poopCount: number;
+  mosquitoCount: number;
+  specialFeedRemaining: number;
+  carrotCount: number;
+  weather: ManorWeatherView;
+  activities: ManorActivityView[];
+  businessRecords: ManorBusinessRecordView[];
+  houses: {
+    hutch: { level: number; capacity: number; occupied: number; assetUrl: string; nextUpgrade?: { levelRequired: number; coinCost: number } };
+    shed: { level: number; capacity: number; occupied: number; assetUrl: string; nextUpgrade?: { levelRequired: number; coinCost: number } };
+  };
+  catalog: ManorAnimalCatalogView[];
+  animals: ManorAnimalView[];
+  inventory: ManorPastureInventoryView[];
+}
+
+export interface ManorFriendSummaryView {
+  userId: string;
+  displayName: string;
+  farmLevel: number;
+  farmExperience: number;
+  pastureLevel: number;
+  pastureExperience: number;
+  isCurrentUser: boolean;
+}
+
+export interface ManorSocialOverviewView {
+  friends: ManorFriendSummaryView[];
+  farmRanking: ManorFriendSummaryView[];
+  pastureRanking: ManorFriendSummaryView[];
+}
+
+export interface ManorFriendFarmView {
+  owner: ManorFriendSummaryView;
+  farm: ManorFarmView;
+  flowerCatalog: ManorFlowerCatalogView[];
+  message?: string;
+}
+
+export interface ManorFriendPastureView {
+  owner: ManorFriendSummaryView;
+  pasture: ManorPastureView;
+  message?: string;
+}
+
+export interface ManorGuestbookReplyView {
+  id: string;
+  senderDisplayName: string;
+  content: string;
+}
+
+export interface ManorGuestbookMessageView {
+  id: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  content: string;
+  createdAt: number;
+  replyTo?: ManorGuestbookReplyView;
+}
+
+export interface ManorGuestbookView {
+  ownerUserId: string;
+  ownerDisplayName: string;
+  canClear: boolean;
+  messages: ManorGuestbookMessageView[];
 }
 
 export interface AdminLlmConfigView {

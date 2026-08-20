@@ -17,7 +17,8 @@ interface AppShellProps {
     | "minesweeper"
     | "sudoku"
     | "turtle-soup"
-    | "gomoku";
+    | "gomoku"
+    | "manor";
 }
 
 export function AppShell({

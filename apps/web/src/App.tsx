@@ -7,6 +7,7 @@ import { RequireAccount } from "./platform/RequireAccount";
 import { SettingsPage } from "./platform/SettingsPage";
 import "./games/clocktower/theme.css";
 import "./games/gomoku/theme.css";
+import "./games/manor/theme.css";
 import "./games/puzzles.css";
 import "./games/minesweeper/theme.css";
 import "./games/poker/theme.css";
@@ -58,6 +59,9 @@ const GomokuReplayPage = lazy(() =>
     default: GomokuReplayPage
   }))
 );
+const ManorPage = lazy(() =>
+  import("./games/manor/Page").then(({ ManorPage }) => ({ default: ManorPage }))
+);
 
 export default function App() {
   return (
@@ -73,6 +77,7 @@ export default function App() {
             <Route path="/poker/room/:roomCode" element={<PokerRoomPage />} />
             <Route path="/turtle-soup" element={<TurtleSoupEntryPage />} />
             <Route path="/turtle-soup/room/:roomCode" element={<TurtleSoupRoomPage />} />
+            <Route path="/manor" element={<ManorPage />} />
           </Route>
           <Route path="/turtle-soup/lab" element={<TurtleSoupPromptLabPage />} />
           <Route path="/minesweeper" element={<MinesweeperPage />} />
