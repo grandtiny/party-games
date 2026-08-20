@@ -169,6 +169,17 @@
   filter: drop-shadow(0 2px 3px rgba(35, 88, 117, 0.25));
 }
 
+.manor-rain {
+  position: absolute;
+  z-index: 790;
+  inset: 8.7% 0 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(108deg, transparent 0 12px, rgba(224, 245, 255, 0.42) 13px 14px, transparent 15px 30px);
+  background-size: 45px 90px;
+  animation: manor-rain-fall 0.55s linear infinite;
+}
+
 .manor-head-tools {
   position: absolute;
   z-index: 840;
@@ -178,6 +189,57 @@
   align-items: flex-start;
   gap: 0.85cqw;
 }
+
+.manor-feature-dock {
+  position: absolute;
+  z-index: 845;
+  top: 10.5%;
+  right: 1.2%;
+  display: grid;
+  gap: 0.45cqw;
+}
+
+.manor-feature-dock > button {
+  display: grid;
+  width: 3.5cqw;
+  height: 3.5cqw;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  place-items: center;
+  color: #fff8c7;
+  background: rgba(53, 104, 35, 0.9);
+  border: 1px solid rgba(246, 255, 210, 0.86);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(31, 65, 20, 0.32);
+  cursor: pointer;
+}
+
+.manor-feature-dock > button:hover { color: #3d501d; background: #f3dc70; }
+
+.manor-scene-dog {
+  position: absolute;
+  z-index: 365;
+  right: 9%;
+  bottom: 14%;
+  width: 8.5%;
+  height: 13%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.manor-scene-dog img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 2px 2px rgba(37, 57, 20, 0.35));
+  animation: manor-scene-idle 2.8s ease-in-out infinite;
+}
+
+.manor-scene-dog.is-hungry img { filter: grayscale(0.35) saturate(0.72) drop-shadow(0 2px 2px rgba(37, 57, 20, 0.35)); }
 
 .manor-classic-button {
   position: relative;
@@ -292,22 +354,25 @@
   transform: translateX(-50%);
   transform-origin: center bottom;
   filter: drop-shadow(0 3px 2px rgba(39, 73, 16, 0.28));
+  animation: manor-crop-idle 3.2s ease-in-out infinite;
 }
 
 .manor-land__crop--stage-0 { bottom: 37%; max-height: 56%; }
-.manor-land__crop--stage-1 { bottom: 33%; max-height: 92%; }
-.manor-land__crop--stage-2 { bottom: 29%; max-height: 145%; }
-.manor-land__crop--stage-3 { bottom: 22%; max-height: 155%; }
-.manor-land__crop--stage-4 { bottom: 28%; max-height: 135%; }
+.manor-land__crop--stage-1 { bottom: 34%; max-height: 76%; }
+.manor-land__crop--stage-2 { bottom: 31%; max-height: 104%; }
+.manor-land__crop--stage-3 { bottom: 28%; max-height: 132%; }
+.manor-land__crop--stage-4 { bottom: 24%; max-height: 148%; }
+.manor-land__crop--stage-5 { bottom: 22%; max-height: 155%; }
+.manor-land__crop--stage-6 { bottom: 28%; max-height: 135%; animation: none; }
 
 /* The legacy radish frame is unusually tall (135 x 210) compared with the other mature crops. */
-.manor-land__crop--radish.manor-land__crop--stage-3 { max-height: 145%; }
+.manor-land__crop--radish.manor-land__crop--stage-5 { max-height: 145%; }
 
 .manor-land__weed {
   position: absolute;
   z-index: 4;
-  right: 19%;
-  bottom: 32%;
+  right: calc(19% - var(--manor-nuisance-index, 0) * 11%);
+  bottom: calc(32% + var(--manor-nuisance-index, 0) * 5%);
   width: 24%;
   height: auto;
   pointer-events: none;
@@ -317,8 +382,8 @@
 .manor-land__pest {
   position: absolute;
   z-index: 5;
-  left: 30%;
-  bottom: 43%;
+  left: calc(30% + var(--manor-nuisance-index, 0) * 11%);
+  bottom: calc(43% + var(--manor-nuisance-index, 0) * 4%);
   width: 13%;
   height: auto;
   pointer-events: none;
@@ -517,6 +582,97 @@
   color: #687b81;
   text-align: center;
 }
+
+.manor-feature-window {
+  position: relative;
+  width: 58%;
+  max-height: 66%;
+  padding: 4.8cqw 2cqw 2cqw;
+  color: #3e4b45;
+  font-size: clamp(10px, 1.15cqw, 14px);
+  background: #e7f4df url("/assets/manor/classic/pasture/ui/window-bg.png") center / 100% 100% repeat;
+  border: 2px solid #d5ebba;
+  border-radius: 6px;
+  box-shadow: 0 9px 26px rgba(24, 61, 20, 0.5), inset 0 0 0 1px rgba(71, 126, 55, 0.42);
+}
+
+.manor-feature-window > header {
+  position: absolute;
+  top: 1.2cqw;
+  left: 2cqw;
+  display: flex;
+  align-items: center;
+  gap: 0.55cqw;
+  width: calc(100% - 4cqw);
+  color: #264e2e;
+  font-size: clamp(14px, 1.75cqw, 20px);
+}
+
+.manor-feature-window > header .manor-window__close { position: static; margin-left: auto; }
+
+.manor-dog-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8cqw; }
+
+.manor-dog-list article {
+  display: grid;
+  grid-template-columns: 7cqw minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65cqw;
+  padding: 0.7cqw;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid #b4cda8;
+  border-radius: 4px;
+}
+
+.manor-dog-list article.is-active { background: #fff8cf; border-color: #d6ad38; }
+.manor-dog-list img { width: 7cqw; height: 7cqw; object-fit: contain; }
+.manor-dog-list span { display: grid; min-width: 0; gap: 0.2cqw; }
+.manor-dog-list em { color: #a34e25; font-style: normal; font-weight: 700; }
+
+.manor-dog-list button,
+.manor-dog-food button,
+.manor-factory-actions button {
+  padding: 0.5cqw 0.75cqw;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(#72cb48, #3a982a);
+  border: 1px solid #2e751f;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.manor-dog-list button:disabled,
+.manor-dog-food button:disabled,
+.manor-factory-actions button:disabled { cursor: not-allowed; filter: grayscale(0.65); opacity: 0.58; }
+
+.manor-dog-food {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65cqw;
+  margin-top: 0.9cqw;
+  padding: 0.75cqw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid #b4cda8;
+  border-radius: 4px;
+}
+
+.manor-dog-food > span { display: grid; gap: 0.2cqw; }
+.manor-dog-food > i { position: absolute; bottom: 0; left: 0; height: 3px; background: #67ad3f; }
+
+.manor-feature-window--factory { width: 66%; }
+.manor-factory-recipe { display: grid; grid-template-columns: 1fr auto 1fr auto 0.8fr auto 1fr; align-items: center; gap: 0.55cqw; }
+.manor-factory-recipe > span { display: grid; min-width: 0; place-items: center; gap: 0.25cqw; padding: 0.65cqw; text-align: center; background: rgba(255, 255, 255, 0.62); border: 1px solid #b4cda8; border-radius: 4px; }
+.manor-factory-recipe img { width: 6.5cqw; height: 6.5cqw; object-fit: contain; }
+.manor-factory-recipe > b { color: #668348; font-size: 1.5em; }
+.manor-factory-recipe .is-coins { min-height: 8.3cqw; align-content: center; }
+.manor-factory-actions { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 0.8cqw; margin-top: 1cqw; }
+.manor-factory-actions label { display: grid; gap: 0.25cqw; }
+.manor-factory-actions input { width: 6cqw; padding: 0.4cqw; font: inherit; border: 1px solid #9db993; border-radius: 3px; }
+.manor-factory-actions > span { color: #68785f; }
 
 .manor-reclaim-window {
   width: 39%;
@@ -824,6 +980,32 @@
   50% { transform: translate(-50%, -8%); }
 }
 
+@keyframes manor-crop-idle {
+  0%, 100% { transform: translateX(-50%) rotate(-0.6deg); }
+  50% { transform: translateX(-50%) rotate(0.8deg); }
+}
+
+@keyframes manor-scene-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5%); }
+}
+
+@keyframes manor-rain-fall {
+  from { background-position: 0 -90px; }
+  to { background-position: -20px 0; }
+}
+
+@keyframes pasture-animal-idle {
+  0%, 100% { transform: translate(0, 0); }
+  45%, 55% { transform: translate(1.6%, -1.8%); }
+}
+
+@keyframes pasture-mosquito-drift {
+  0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+  33% { transform: translate(28%, -18%) rotate(5deg); }
+  66% { transform: translate(-18%, 16%) rotate(-2deg); }
+}
+
 @media (max-width: 760px) {
   .app-shell--manor .page { padding: 8px 0 10px; }
 
@@ -1023,6 +1205,38 @@
 .pasture-house-strip button:hover { background: rgba(78, 137, 39, 0.94); }
 .pasture-house-strip span { color: #fff6a3; font-weight: 700; }
 
+.pasture-building {
+  position: absolute;
+  z-index: 105;
+  width: 20%;
+  height: 22%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pasture-building--hutch { top: 15%; left: 0.5%; }
+.pasture-building--shed { top: 16%; right: 0.8%; width: 22%; height: 25%; }
+.pasture-building > img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 3px rgba(43, 59, 18, 0.24)); }
+.pasture-building:hover > img { filter: brightness(1.07) drop-shadow(0 0 4px #fff0a1); }
+
+.pasture-building > span {
+  position: absolute;
+  bottom: -0.2cqw;
+  left: 50%;
+  padding: 0.22cqw 0.45cqw;
+  color: #fff7bc;
+  font-size: clamp(8px, 0.92cqw, 11px);
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 1px #31551e;
+  background: rgba(53, 111, 31, 0.84);
+  border: 1px solid rgba(245, 255, 213, 0.72);
+  border-radius: 3px;
+  transform: translateX(-50%);
+}
+
 .pasture-animal {
   position: absolute;
   width: 13.5%;
@@ -1050,6 +1264,8 @@
   object-fit: contain;
   filter: drop-shadow(0 2px 2px rgba(34, 62, 20, 0.22));
   transition: filter 120ms ease, transform 120ms ease;
+  animation: pasture-animal-idle 2.7s ease-in-out infinite;
+  animation-delay: var(--pasture-animal-delay, 0s);
 }
 
 .pasture-animal:hover > button img,
@@ -1111,6 +1327,26 @@
 
 .pasture-animal.is-hungry > button img { filter: saturate(0.72) brightness(0.9); }
 
+.pasture-mosquito,
+.pasture-poop {
+  position: absolute;
+  z-index: 285;
+  width: 3.4%;
+  height: 4.2%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.pasture-mosquito { animation: pasture-mosquito-drift 1.7s ease-in-out infinite; animation-delay: var(--pasture-nuisance-delay, 0s); }
+.pasture-poop { z-index: 175; width: 4.2%; height: 4.8%; }
+.pasture-mosquito img,
+.pasture-poop img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 1px rgba(45, 55, 18, 0.35)); }
+.pasture-mosquito:hover img,
+.pasture-poop:hover img { filter: brightness(1.15) drop-shadow(0 0 3px #fff3a2); }
+.pasture-poop > b { position: absolute; top: -0.5cqw; right: -0.6cqw; padding: 0.08cqw 0.28cqw; color: #fff; font-size: clamp(8px, 0.85cqw, 10px); background: #a84628; border-radius: 3px; }
+
 .pasture-trough {
   position: absolute;
   z-index: 260;
@@ -1148,12 +1384,12 @@
   bottom: 0.5%;
   left: 50%;
   display: flex;
-  width: 41.33%;
+  width: 54%;
   height: 12.17%;
   align-items: center;
   justify-content: center;
-  gap: 0.95cqw;
-  padding: 3.1cqw 5.5cqw 1.1cqw;
+  gap: 0.42cqw;
+  padding: 3.1cqw 6.4cqw 1.1cqw;
   background: url("/assets/manor/classic/pasture/ui/toolbar-bg.png") center / 100% 100% no-repeat;
   transform: translateX(-50%);
 }
@@ -1171,9 +1407,9 @@
   bottom: 12.6%;
   left: 50%;
   display: grid;
-  width: 29%;
+  width: 47%;
   min-height: 6.5cqw;
-  grid-template-columns: 5.4cqw minmax(0, 1fr) auto;
+  grid-template-columns: 5.4cqw minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.55cqw;
   padding: 0.45cqw 0.65cqw;
@@ -1203,6 +1439,8 @@
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.45);
   cursor: pointer;
 }
+
+.pasture-animal-actions > .pasture-carrot-action { display: inline-flex; align-items: center; gap: 0.3cqw; color: #553417; background: linear-gradient(#ffd77b, #f2a63e); border-color: #b66f1e; }
 
 .pasture-animal-actions > button:disabled,
 .pasture-window button:disabled { cursor: not-allowed; filter: grayscale(0.65); opacity: 0.58; }
@@ -1372,8 +1610,62 @@
 }
 
 .pasture-house-window > div > span { display: grid; min-width: 0; gap: 0.22cqw; }
+.pasture-house-window > div > img { width: 8cqw; height: 6.5cqw; object-fit: contain; }
 .pasture-house-window em { color: #aa542c; font-style: normal; }
 .pasture-house-window button { grid-column: 1 / 3; }
+
+.pasture-queue-list {
+  display: grid;
+  max-height: calc(100% - 4.2cqw);
+  overflow-y: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55cqw;
+  padding-right: 0.3cqw;
+}
+
+.pasture-queue-list > div {
+  display: grid;
+  grid-template-columns: auto 4.8cqw minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35cqw;
+  padding: 0.4cqw;
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid #b4cda8;
+  border-radius: 4px;
+}
+
+.pasture-queue-list > div > b { display: grid; width: 1.8cqw; height: 1.8cqw; place-items: center; color: #fff; background: #629843; border-radius: 50%; }
+.pasture-queue-list img { width: 4.8cqw; height: 4.8cqw; object-fit: contain; }
+.pasture-queue-list span { display: grid; min-width: 0; }
+.pasture-queue-list button { display: grid; width: 2.4cqw; height: 2.4cqw; padding: 0; place-items: center; }
+.pasture-queue-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.8cqw; margin-top: 0.7cqw; color: #68785f; }
+
+.manor-activity-window {
+  width: 52%;
+  max-height: 64%;
+  overflow: hidden;
+  color: #3e4b45;
+  font-size: clamp(10px, 1.15cqw, 14px);
+  background: #e7f4df;
+  border: 2px solid #d5ebba;
+  border-radius: 6px;
+  box-shadow: 0 9px 26px rgba(24, 61, 20, 0.5);
+}
+
+.manor-activity-window > header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.55cqw; padding: 0.8cqw 1cqw; color: #264e2e; background: #d6eac9; border-bottom: 1px solid #afc9a2; }
+.manor-activity-window > header button { display: grid; width: 2.6cqw; height: 2.6cqw; min-width: 25px; min-height: 25px; padding: 0; place-items: center; color: #365a31; background: rgba(255,255,255,0.72); border: 1px solid #9ab18f; border-radius: 4px; cursor: pointer; }
+.manor-activity-window__empty { display: grid; min-height: 15cqw; place-items: center; color: #68785f; }
+.manor-activity-list { display: grid; max-height: 38cqw; margin: 0; padding: 0.7cqw 1cqw; overflow-y: auto; list-style: none; }
+.manor-activity-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.65cqw; padding: 0.65cqw 0.2cqw; border-bottom: 1px solid #c9d8bf; }
+.manor-activity-list li:last-child { border-bottom: 0; }
+.manor-activity-list li > span:nth-child(2) { display: grid; gap: 0.18cqw; }
+.manor-activity-list small { color: #5e6c58; }
+.manor-activity-list time { color: #758270; font-size: 0.86em; white-space: nowrap; }
+.manor-activity-list__kind { width: 0.8cqw; height: 0.8cqw; min-width: 8px; min-height: 8px; background: #6e9d4e; border-radius: 50%; box-shadow: 0 0 0 3px rgba(110,157,78,0.18); }
+.manor-activity-list__kind--steal,
+.manor-activity-list__kind--pasture-steal { background: #d08b2f; }
+.manor-activity-list__kind--prank { background: #b75c38; }
+.manor-activity-list__kind--dog { background: #466b86; }
 
 @media (max-width: 760px) {
   .manor-stage-shell--pasture {
@@ -1383,7 +1675,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pasture-animal > button img { transition: none; }
+  .pasture-animal > button img,
+  .pasture-mosquito,
+  .manor-rain,
+  .manor-land__crop,
+  .manor-scene-dog img { transition: none; animation: none; }
 }
 
 .manor-decoration-scene {

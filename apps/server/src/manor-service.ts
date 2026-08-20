@@ -6,6 +6,8 @@ import {
   applyManorAction,
   createManorFarm,
   migrateManorFarm,
+  refreshManorDailyState,
+  MANOR_SPECIAL_FEED_LIMIT,
   levelForExperience,
   levelForPastureExperience,
   toManorPastureView,
@@ -45,14 +47,7 @@ export class ManorService {
 
   getPasture(user: AccountUserView, now = Date.now()): ManorPastureView {
     const farm = this.#loadFarm(user.id, now);
-    return toManorPastureView(
-      farm.pasture,
-      farm.coins,
-      farm.revision,
-      user.displayName,
-      now,
-      this.options
-    );
+    return this.#pastureView(farm, user.displayName, now, farm.produce.carrot);
   }
 
   getSocialOverview(user: AccountUserView, now = Date.now()): ManorSocialOverviewView {
@@ -99,14 +94,7 @@ export class ManorService {
     const owner = this.#loadFarm(account.id, now);
     return {
       owner: this.#summary(account.id, account.displayName, owner, false),
-      pasture: toManorPastureView(
-        owner.pasture,
-        owner.coins,
-        owner.revision,
-        account.displayName,
-        now,
-        this.options
-      )
+      pasture: this.#pastureView(owner, account.displayName, now, currentVisitor.produce.carrot)
     };
   }
 
@@ -125,7 +113,8 @@ export class ManorService {
       visitor.id,
       action,
       now,
-      this.options
+      this.options,
+      visitor.displayName
     );
     this.#saveFriendMutation(visitor.id, currentVisitor, account.id, currentOwner, result);
     return {
@@ -150,18 +139,17 @@ export class ManorService {
       visitor.id,
       action,
       now,
-      this.options
+      this.options,
+      visitor.displayName
     );
     this.#saveFriendMutation(visitor.id, currentVisitor, account.id, currentOwner, result);
     return {
       owner: this.#summary(account.id, account.displayName, result.owner, false),
-      pasture: toManorPastureView(
-        result.owner.pasture,
-        result.owner.coins,
-        result.owner.revision,
+      pasture: this.#pastureView(
+        result.owner,
         account.displayName,
         now,
-        this.options
+        result.visitor.produce.carrot
       ),
       message: result.message
     };
@@ -184,24 +172,27 @@ export class ManorService {
     now = Date.now()
   ): ManorPastureView {
     const current = this.#loadFarm(user.id, now);
-    const result = applyManorPastureAction(current.pasture, current.coins, action, now, this.options);
+    const daily = refreshManorDailyState(current.daily, now);
+    const result = applyManorPastureAction(current.pasture, current.coins, action, now, {
+      ...this.options,
+      availableCarrots: current.produce.carrot,
+      specialFeedRemaining: MANOR_SPECIAL_FEED_LIMIT - daily.specialFeedsReceived
+    });
+    const produce = { ...current.produce };
+    produce.carrot -= result.carrotsConsumed;
+    daily.specialFeedsReceived += result.specialFeedsConsumed;
     const next: ManorFarmState = {
       ...current,
       pasture: result.pasture,
       coins: result.coins,
+      produce,
+      daily,
       revision: current.revision + 1,
       updatedAt: now
     };
     validateManorFarm(next);
     this.repository.updateManorFarm(user.id, current.revision, next);
-    return toManorPastureView(
-      next.pasture,
-      next.coins,
-      next.revision,
-      user.displayName,
-      now,
-      this.options
-    );
+    return this.#pastureView(next, user.displayName, now, next.produce.carrot);
   }
 
   #loadFarm(userId: string, now: number): ManorFarmState {
@@ -238,6 +229,27 @@ export class ManorService {
       pastureExperience: farm.pasture.experience,
       isCurrentUser
     };
+  }
+
+  #pastureView(
+    farm: ManorFarmState,
+    displayName: string,
+    now: number,
+    availableCarrots: number
+  ): ManorPastureView {
+    const daily = refreshManorDailyState(farm.daily, now);
+    return toManorPastureView(
+      farm.pasture,
+      farm.coins,
+      farm.revision,
+      displayName,
+      now,
+      {
+        ...this.options,
+        availableCarrots,
+        specialFeedRemaining: MANOR_SPECIAL_FEED_LIMIT - daily.specialFeedsReceived
+      }
+    );
   }
 
   #saveFriendMutation(

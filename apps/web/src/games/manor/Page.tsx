@@ -9,7 +9,7 @@ import type {
   ManorPlotView,
   ManorRewardItemView
 } from "@party-games/shared";
-import { ListChecks, RefreshCw, Search, UsersRound, Wheat } from "lucide-react";
+import { Bug, Dog, Factory, History, ListChecks, RefreshCw, Search, Sprout, UsersRound, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   getManorFarm,
@@ -18,6 +18,7 @@ import {
   performManorFriendFarmAction
 } from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { ManorActivityWindow } from "./ActivityWindow";
 import { ManorPasturePage } from "./PasturePage";
 import {
   ManorSocialWindow,
@@ -27,10 +28,11 @@ import {
 } from "./SocialWindow";
 
 const ASSET_ROOT = "/assets/manor/classic";
-const CROP_ASSET_VERSION = "classic-crops-v3";
+const CROP_ASSET_VERSION = "classic-crops-v4";
 
-type ManorTool = "move" | "hoe" | "seed" | "fertilizer" | "water" | "weed" | "pest" | "harvest";
-type ManorWindow = "seed-pack" | "fertilizer-pack" | "shop" | "warehouse" | "decorate";
+type ManorTool = "move" | "hoe" | "seed" | "fertilizer" | "water" | "weed" | "pest" | "harvest" | "prank-weed" | "prank-pest";
+type ClassicManorWindow = "seed-pack" | "fertilizer-pack" | "shop" | "warehouse";
+type ManorWindow = ClassicManorWindow | "decorate" | "dog" | "factory" | "activities";
 
 const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> = [
   { id: "move", label: "移动画面" },
@@ -41,6 +43,11 @@ const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> 
   { id: "weed", label: "除草", shortcut: "W" },
   { id: "pest", label: "除虫", shortcut: "E" },
   { id: "harvest", label: "收获", shortcut: "R" }
+];
+
+const VISITOR_PRANK_TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> = [
+  { id: "prank-weed", label: "放杂草" },
+  { id: "prank-pest", label: "放害虫" }
 ];
 
 export function ManorPage() {
@@ -308,6 +315,14 @@ function ManorFarmPage({
         setNotice(plotSummary(plot, serverNow));
         return;
       }
+      if (selectedTool === "prank-weed") {
+        await actForFriend({ type: "add-weed", plotId: plot.id }, `friend-add-weed:${plot.id}`);
+        return;
+      }
+      if (selectedTool === "prank-pest") {
+        await actForFriend({ type: "add-pest", plotId: plot.id }, `friend-add-pest:${plot.id}`);
+        return;
+      }
       if (selectedTool === "water") {
         if (plot.watered) setNotice("这块土地当前水分正常");
         else await actForFriend({ type: "water", plotId: plot.id }, `friend-water:${plot.id}`);
@@ -474,8 +489,12 @@ function ManorFarmPage({
     0
   );
   const visibleTools = visit
-    ? TOOLS.filter((tool) => ["move", "water", "weed", "pest", "harvest"].includes(tool.id))
+    ? [
+        ...TOOLS.filter((tool) => ["move", "water", "weed", "pest", "harvest"].includes(tool.id)),
+        ...VISITOR_PRANK_TOOLS
+      ]
     : TOOLS;
+  const activeDog = farm.dog.catalog.find((dog) => dog.active);
 
   return (
     <AppShell
@@ -519,7 +538,8 @@ function ManorFarmPage({
               <FarmDecorations active={farm.decorations.active} />
               <PlayerHud farm={farm} levelProgress={levelProgress} />
               {visit ? <ManorVisitBanner target={visit} onHome={onReturnHome} /> : null}
-              <img className="manor-weather" src={`${ASSET_ROOT}/sunny.png`} alt="晴天" />
+              <img className="manor-weather" src={farm.weather.assetUrl} alt={farm.weather.label} title={farm.weather.label} />
+              {farm.weather.id === "rainy" ? <div className="manor-rain" aria-hidden="true" /> : null}
 
               <nav className="manor-head-tools" aria-label="庄园功能">
                 <ClassicButton asset="nav-farm" label="我的农场" active={!visit} {...(visit ? { onClick: onReturnHome } : {})} />
@@ -537,6 +557,28 @@ function ManorFarmPage({
                 ) : null}
               </nav>
 
+              <div className="manor-feature-dock" aria-label="庄园扩展功能">
+                {!visit ? (
+                  <>
+                    <ManorFeatureButton icon={<Dog size={18} />} label="看门狗" onClick={() => setActiveWindow("dog")} />
+                    <ManorFeatureButton icon={<Factory size={18} />} label="加工厂" onClick={() => setActiveWindow("factory")} />
+                  </>
+                ) : null}
+                <ManorFeatureButton icon={<History size={18} />} label="庄园动态" onClick={() => setActiveWindow("activities")} />
+              </div>
+
+              {activeDog ? (
+                <button
+                  className={`manor-scene-dog ${farm.dog.fed ? "is-fed" : "is-hungry"}`}
+                  type="button"
+                  title={farm.dog.fed ? `${activeDog.name}正在看守农场` : `${activeDog.name}没有狗粮`}
+                  aria-label={farm.dog.fed ? `${activeDog.name}正在看守农场` : `${activeDog.name}没有狗粮`}
+                  onClick={() => visit ? setNotice(farm.dog.fed ? "好友的看门狗正在工作" : "好友的看门狗没有狗粮") : setActiveWindow("dog")}
+                >
+                  <img src={activeDog.assetUrl} alt="" />
+                </button>
+              ) : null}
+
               {farm.plots.map((plot, index) => (
                 <FarmLand
                   busy={Boolean(busyKey)}
@@ -552,11 +594,11 @@ function ManorFarmPage({
               {error ? <div className="manor-message manor-message--error">{error}</div> : null}
               {!error && notice ? <div className="manor-message">{notice}</div> : null}
 
-              <div className="manor-toolbar" role="toolbar" aria-label="农场工具">
+              <div className="manor-toolbar" role="toolbar" aria-label="农场工具" style={{ gridTemplateColumns: `repeat(${visibleTools.length}, 1fr)` }}>
                 {visibleTools.map((tool) => (
                   <ClassicButton
                     active={selectedTool === tool.id}
-                    asset={`tool-${tool.id === "pest" ? "pesticide" : tool.id}`}
+                    asset={toolAsset(tool.id)}
                     key={tool.id}
                     label={`${visit && tool.id === "harvest" ? "偷取" : tool.label}${tool.id === "fertilizer" ? ` ×${fertilizerCount}` : ""}${tool.shortcut ? ` (${tool.shortcut})` : ""}`}
                     onClick={() => selectTool(tool.id)}
@@ -593,7 +635,39 @@ function ManorFarmPage({
                     )
                   }
                 />
-              ) : !visit && activeWindow ? (
+              ) : null}
+
+              {!visit && activeWindow === "dog" ? (
+                <DogWindow
+                  busy={Boolean(busyKey)}
+                  coins={farm.profile.coins}
+                  dog={farm.dog}
+                  now={serverNow}
+                  onActivate={(dogId) => void act({ type: "activate-dog", dogId }, `activate-dog:${dogId}`, "看门狗已更换")}
+                  onBuy={(dogId) => void act({ type: "buy-dog", dogId }, `buy-dog:${dogId}`, "看门狗已入住农场")}
+                  onBuyFood={(days) => void act({ type: "buy-dog-food", days }, `buy-dog-food:${days}`, `已补充 ${days} 天狗粮`)}
+                  onClose={() => setActiveWindow(undefined)}
+                />
+              ) : null}
+
+              {!visit && activeWindow === "factory" ? (
+                <FactoryWindow
+                  busy={Boolean(busyKey)}
+                  factory={farm.factory}
+                  onClose={() => setActiveWindow(undefined)}
+                  onCraft={(quantity) => void act(
+                    { type: "craft-instant-fertilizer", quantity },
+                    `craft-instant-fertilizer:${quantity}`,
+                    `加工完成，获得 ${quantity} 包极速化肥`
+                  )}
+                />
+              ) : null}
+
+              {activeWindow === "activities" ? (
+                <ManorActivityWindow activities={farm.activities} onClose={() => setActiveWindow(undefined)} />
+              ) : null}
+
+              {!visit && isClassicWindow(activeWindow) ? (
                 <ClassicWindow
                   busy={Boolean(busyKey)}
                   coins={farm.profile.coins}
@@ -758,8 +832,24 @@ function FarmLand({
           alt=""
         />
       ) : null}
-      {plot.weed ? <img className="manor-land__weed" src={`${ASSET_ROOT}/weed.png`} alt="" /> : null}
-      {plot.pest ? <img className="manor-land__pest" src={`${ASSET_ROOT}/insect.png`} alt="" /> : null}
+      {Array.from({ length: plot.weedLevel }, (_, index) => (
+        <img
+          className="manor-land__weed"
+          src={`${ASSET_ROOT}/weed.png`}
+          alt=""
+          key={`weed:${index}`}
+          style={{ "--manor-nuisance-index": index } as CSSProperties}
+        />
+      ))}
+      {Array.from({ length: plot.pestLevel }, (_, index) => (
+        <img
+          className="manor-land__pest"
+          src={`${ASSET_ROOT}/insect.png`}
+          alt=""
+          key={`pest:${index}`}
+          style={{ "--manor-nuisance-index": index } as CSSProperties}
+        />
+      ))}
       {plot.status === "mature" || remaining === 0 && plot.status === "growing" ? (
         <img className="manor-land__harvest" src={`${ASSET_ROOT}/can-harvest.png`} alt="可摘" />
       ) : null}
@@ -1042,6 +1132,157 @@ function decorationCategoryLabel(category: "all" | ManorDecorationType): string 
   return labels[category];
 }
 
+function ManorFeatureButton({
+  icon,
+  label,
+  onClick
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" title={label} aria-label={label} onClick={onClick}>
+      {icon}
+    </button>
+  );
+}
+
+function DogWindow({
+  dog,
+  coins,
+  now,
+  busy,
+  onBuy,
+  onActivate,
+  onBuyFood,
+  onClose
+}: {
+  dog: ManorFarmView["dog"];
+  coins: number;
+  now: number;
+  busy: boolean;
+  onBuy: (dogId: ManorFarmView["dog"]["catalog"][number]["id"]) => void;
+  onActivate: (dogId: ManorFarmView["dog"]["catalog"][number]["id"]) => void;
+  onBuyFood: (days: ManorFarmView["dog"]["foodOptions"][number]["days"]) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="manor-window-layer" role="presentation" onMouseDown={onClose}>
+      <section className="manor-feature-window" role="dialog" aria-modal="true" aria-label="看门狗" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <Dog size={21} aria-hidden="true" />
+          <strong>看门狗</strong>
+          <button className="manor-window__close" type="button" aria-label="关闭" onClick={onClose} />
+        </header>
+        <div className="manor-dog-list">
+          {dog.catalog.map((item) => (
+            <article className={item.active ? "is-active" : ""} key={item.id}>
+              <img src={item.assetUrl} alt="" />
+              <span>
+                <strong>{item.name}</strong>
+                <small>抓偷菜概率 {Math.round(item.catchChance * 100)}%</small>
+                <em>{item.owned ? item.active ? "当前出战" : "已拥有" : `${item.price} 金币`}</em>
+              </span>
+              <button
+                type="button"
+                disabled={busy || item.active || (!item.owned && coins < item.price)}
+                onClick={() => item.owned ? onActivate(item.id) : onBuy(item.id)}
+              >
+                {item.active ? "出战中" : item.owned ? "出战" : coins < item.price ? "金币不足" : "购买"}
+              </button>
+            </article>
+          ))}
+        </div>
+        <footer className="manor-dog-food">
+          <span>
+            <strong>{dog.fed ? "狗粮充足" : "狗粮已用完"}</strong>
+            <small>{dog.fed ? `可工作至 ${formatDateTime(dog.fedUntil)}` : "没有狗粮时不会抓偷菜者"}</small>
+          </span>
+          {dog.foodOptions.map((option) => (
+            <button
+              type="button"
+              disabled={busy || dog.catalog.every((item) => !item.owned) || coins < option.coinPrice}
+              key={option.days}
+              onClick={() => onBuyFood(option.days)}
+            >
+              +{option.days} 天 · {option.coinPrice} 金币
+            </button>
+          ))}
+          {dog.fedUntil > now ? <i style={{ width: `${Math.min(100, ((dog.fedUntil - now) / (7 * 86_400_000)) * 100)}%` }} /> : null}
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function FactoryWindow({
+  factory,
+  busy,
+  onCraft,
+  onClose
+}: {
+  factory: ManorFarmView["factory"];
+  busy: boolean;
+  onCraft: (quantity: number) => void;
+  onClose: () => void;
+}) {
+  const [quantity, setQuantity] = useState(1);
+  const maximum = Math.max(1, factory.craftable);
+  return (
+    <div className="manor-window-layer" role="presentation" onMouseDown={onClose}>
+      <section className="manor-feature-window manor-feature-window--factory" role="dialog" aria-modal="true" aria-label="加工厂" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <Factory size={21} aria-hidden="true" />
+          <strong>加工厂</strong>
+          <button className="manor-window__close" type="button" aria-label="关闭" onClick={onClose} />
+        </header>
+        <div className="manor-factory-recipe">
+          <span>
+            <img src="/assets/manor/classic/legacy/manure.png" alt="" />
+            <strong>便便 ×{factory.recipe.manure}</strong>
+            <small>持有 {factory.available.manure}</small>
+          </span>
+          <b>+</b>
+          <span>
+            <img src={cropImage(41, 5)} alt="" />
+            <strong>红玫瑰 ×{factory.recipe.redRoses}</strong>
+            <small>持有 {factory.available.redRoses}</small>
+          </span>
+          <b>+</b>
+          <span className="is-coins">
+            <strong>{factory.recipe.coins} 金币</strong>
+            <small>持有 {factory.available.coins}</small>
+          </span>
+          <b>=</b>
+          <span>
+            <img src={fertilizerImage("instant")} alt="" />
+            <strong>极速化肥 ×1</strong>
+            <small>立即完成当前阶段</small>
+          </span>
+        </div>
+        <footer className="manor-factory-actions">
+          <label>
+            加工数量
+            <input
+              type="number"
+              min={1}
+              max={maximum}
+              value={quantity}
+              disabled={factory.craftable < 1}
+              onChange={(event) => setQuantity(Math.max(1, Math.min(maximum, Number(event.target.value) || 1)))}
+            />
+          </label>
+          <span>当前最多可加工 {factory.craftable} 包</span>
+          <button type="button" disabled={busy || factory.craftable < 1} onClick={() => onCraft(quantity)}>
+            开始加工
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 function ClassicButton({
   asset,
   label,
@@ -1082,7 +1323,7 @@ function ClassicWindow({
   onBuy,
   onSell
 }: {
-  kind: ManorWindow;
+  kind: ClassicManorWindow;
   crops: ManorCropView[];
   coins: number;
   inventory: ManorFarmView["inventory"];
@@ -1210,7 +1451,7 @@ function ClassicWindow({
                 {visibleCrops.map((crop) => (
                   <div className={!crop.unlocked ? "is-locked" : ""} key={crop.id}>
                     <span className="manor-item-image">
-                      <img src={cropImage(crop.sourceId, 3)} alt="" />
+                      <img src={cropImage(crop.sourceId, 5)} alt="" />
                     </span>
                     <span className="manor-item-copy">
                       <strong>{crop.name}</strong>
@@ -1235,7 +1476,7 @@ function ClassicWindow({
               {visibleCrops.map((crop) => (
                 <div className={crop.produce > 0 ? "has-stock" : ""} key={crop.id}>
                   <span className="manor-item-image">
-                    <img src={cropImage(crop.sourceId, 3)} alt="" />
+                    <img src={cropImage(crop.sourceId, 5)} alt="" />
                   </span>
                   <span className="manor-item-copy">
                     <strong>{crop.name}</strong>
@@ -1264,8 +1505,8 @@ function landPosition(index: number): { left: number; top: number; zIndex: numbe
 }
 
 function cropImage(sourceId: number, stage: number): string {
-  const stageNames = ["seed", "sprout", "growing", "mature", "withered"] as const;
-  const stageName = stageNames[Math.max(0, Math.min(4, stage))] ?? "seed";
+  const stageNames = ["seed", "sprout", "young", "growing", "pre_mature", "mature", "withered"] as const;
+  const stageName = stageNames[Math.max(0, Math.min(6, stage))] ?? "seed";
   return `${ASSET_ROOT}/crops/${sourceId}/${stageName}.png?v=${CROP_ASSET_VERSION}`;
 }
 
@@ -1292,12 +1533,39 @@ function rewardItemImage(item: ManorRewardItemView): string | undefined {
 }
 
 function cropStage(plot: ManorPlotView, progress: number): number {
-  if (plot.status === "withered") return 4;
-  if (plot.status === "mature") return 3;
-  const [sproutThreshold, growingThreshold] = plot.visualStageThresholds ?? [0.22, 0.55];
+  if (plot.status === "withered") return 6;
+  if (plot.status === "mature") return 5;
+  const thresholds = plot.visualStageThresholds ?? [0.16, 0.32, 0.55, 0.78];
+  const sproutThreshold = thresholds[0] ?? 0.16;
+  const youngThreshold = thresholds[1] ?? 0.32;
+  const growingThreshold = thresholds[2] ?? 0.55;
+  const preMatureThreshold = thresholds[3] ?? 0.78;
   if (progress < sproutThreshold) return 0;
-  if (progress < growingThreshold) return 1;
-  return 2;
+  if (progress < youngThreshold) return 1;
+  if (progress < growingThreshold) return 2;
+  if (progress < preMatureThreshold) return 3;
+  return 4;
+}
+
+function toolAsset(tool: ManorTool): string {
+  if (tool === "pest" || tool === "prank-pest") return "tool-pesticide";
+  if (tool === "prank-weed") return "tool-weed";
+  return `tool-${tool}`;
+}
+
+function isClassicWindow(window: ManorWindow | undefined): window is ClassicManorWindow {
+  return window === "seed-pack" || window === "fertilizer-pack" || window === "shop" || window === "warehouse";
+}
+
+function formatDateTime(timestamp: number): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(timestamp);
 }
 
 function plotProgress(plot: ManorPlotView, now: number): number {

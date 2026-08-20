@@ -7,6 +7,7 @@ import {
   MANOR_FERTILIZERS,
   MANOR_LAND_UNLOCKS,
   MANOR_LEVEL_REWARDS,
+  manorWeatherAt,
   migrateManorFarm,
   toManorFarmView
 } from "../src/index.js";
@@ -317,9 +318,12 @@ describe("manor farm", () => {
     delete legacy.activeDecorationIds;
 
     expect(migrateManorFarm(legacy)).toMatchObject({
-      schemaVersion: 9,
+      schemaVersion: 10,
       decorationPurchases: [],
-      activeDecorationIds: []
+      activeDecorationIds: [],
+      ownedDogIds: [],
+      dogFedUntil: 0,
+      activities: []
     });
   });
 
@@ -449,7 +453,7 @@ describe("manor farm", () => {
     farm = applyManorAction(farm, { type: "harvest", plotId: 1 }, readyAt, { timeScale: 3_600 });
     expect(farm.plots[0]).toMatchObject({ harvestedCycles: 1, plantedAt: readyAt });
     expect((farm.plots[0]?.readyAt ?? 0) - readyAt).toBe(20_000);
-    expect(toManorFarmView(farm, "玩家", readyAt, { timeScale: 3_600 }).plots[0]?.visualStageThresholds).toEqual([0, 0]);
+    expect(toManorFarmView(farm, "玩家", readyAt, { timeScale: 3_600 }).plots[0]?.visualStageThresholds).toEqual([0, 0, 0, 0]);
 
     readyAt = farm.plots[0]?.readyAt;
     if (!readyAt) throw new Error("second readyAt missing");
@@ -504,7 +508,7 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(9);
+    expect(migrated.schemaVersion).toBe(10);
     expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
     expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
@@ -530,7 +534,7 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 9, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 10, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 
@@ -555,7 +559,7 @@ describe("manor farm", () => {
     });
 
     expect(migrated).toMatchObject({
-      schemaVersion: 9,
+      schemaVersion: 10,
       starterGiftClaimed: true,
       rewardedThroughOriginalLevel: 7,
       pendingLevelRewardLevels: [],
@@ -565,5 +569,51 @@ describe("manor farm", () => {
       applyManorAction(migrated, { type: "buy-fertilizer", quantity: 1 }, startedAt + 1)
         .pendingLevelRewardLevels
     ).toEqual([]);
+  });
+
+  it("buys and feeds original watchdogs using the coin-based food fallback", () => {
+    const now = 1_000_000;
+    let farm = createManorFarm(now, "watchdog");
+    farm.coins = 10_000;
+
+    farm = applyManorAction(farm, { type: "buy-dog", dogId: 1 }, now);
+    expect(farm).toMatchObject({
+      coins: 9_000,
+      ownedDogIds: [1],
+      activeDogId: 1,
+      dogFedUntil: now + 86_400_000
+    });
+
+    farm = applyManorAction(farm, { type: "buy-dog-food", days: 7 }, now + 1);
+    expect(farm.coins).toBe(8_000);
+    expect(farm.dogFedUntil).toBe(now + 8 * 86_400_000);
+    const dogView = toManorFarmView(farm, "玩家", now + 1).dog;
+    expect(dogView.fed).toBe(true);
+    expect(dogView.catalog.find((dog) => dog.id === 1)).toMatchObject({ owned: true, active: true });
+  });
+
+  it("crafts instant fertilizer from manure, red roses and coins", () => {
+    const now = 1_100_000;
+    const redRose = MANOR_CROPS.find((crop) => crop.sourceId === 41);
+    if (!redRose) throw new Error("red rose missing");
+    let farm = createManorFarm(now, "factory");
+    farm.coins = 5_000;
+    farm.pasture.manure = 10;
+    farm.produce[redRose.id] = 10;
+
+    farm = applyManorAction(farm, { type: "craft-instant-fertilizer", quantity: 2 }, now + 1);
+
+    expect(farm.coins).toBe(3_000);
+    expect(farm.pasture.manure).toBe(0);
+    expect(farm.produce[redRose.id]).toBe(0);
+    expect(farm.fertilizers.instant).toBe(2);
+  });
+
+  it("uses Shanghai Thursday as the original fixed rainy day", () => {
+    const thursdayInShanghai = Date.UTC(2026, 7, 19, 16);
+    const fridayInShanghai = Date.UTC(2026, 7, 20, 16);
+
+    expect(manorWeatherAt(thursdayInShanghai)).toMatchObject({ id: "rainy", label: "雨天" });
+    expect(manorWeatherAt(fridayInShanghai)).toMatchObject({ id: "sunny", label: "晴天" });
   });
 });

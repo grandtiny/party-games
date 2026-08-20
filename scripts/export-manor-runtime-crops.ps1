@@ -74,15 +74,20 @@ function Get-StateSpritePath([string]$CropExportDirectory, [string]$CharacterId)
 $stageDefinitions = @(
   [pscustomobject]@{ RuntimeStage = 0; RuntimeKey = "seed"; StateIndex = 0; StateKey = "seed" },
   [pscustomobject]@{ RuntimeStage = 1; RuntimeKey = "sprout"; StateIndex = 1; StateKey = "sprout" },
-  [pscustomobject]@{ RuntimeStage = 2; RuntimeKey = "growing"; StateIndex = 3; StateKey = "growing" },
-  [pscustomobject]@{ RuntimeStage = 3; RuntimeKey = "mature"; StateIndex = 5; StateKey = "mature" },
-  [pscustomobject]@{ RuntimeStage = 4; RuntimeKey = "withered"; StateIndex = 6; StateKey = "withered" }
+  [pscustomobject]@{ RuntimeStage = 2; RuntimeKey = "young"; StateIndex = 2; StateKey = "young" },
+  [pscustomobject]@{ RuntimeStage = 3; RuntimeKey = "growing"; StateIndex = 3; StateKey = "growing" },
+  [pscustomobject]@{ RuntimeStage = 4; RuntimeKey = "pre_mature"; StateIndex = 4; StateKey = "pre_mature" },
+  [pscustomobject]@{ RuntimeStage = 5; RuntimeKey = "mature"; StateIndex = 5; StateKey = "mature" },
+  [pscustomobject]@{ RuntimeStage = 6; RuntimeKey = "withered"; StateIndex = 6; StateKey = "withered" }
 )
 $stageOverrides = @{
   # Rice's early top-level states include a field tile. The scene needs the plant-only child sprite.
   "60:1" = [pscustomobject]@{ StateIndex = 2; StateKey = "young"; CharacterId = 14; Relationship = "nested-character-of-state" }
-  "60:2" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 44; Relationship = "state-character" }
-  "61:2" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 22; Relationship = "state-character" }
+  "60:2" = [pscustomobject]@{ StateIndex = 2; StateKey = "young"; CharacterId = 14; Relationship = "nested-character-of-state" }
+  "60:3" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 44; Relationship = "state-character" }
+  "60:4" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 44; Relationship = "state-character" }
+  "61:3" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 22; Relationship = "state-character" }
+  "61:4" = [pscustomobject]@{ StateIndex = 4; StateKey = "pre_mature"; CharacterId = 22; Relationship = "state-character" }
 }
 
 $visualReviews = @{}
@@ -148,8 +153,8 @@ foreach ($crop in $crops) {
 }
 
 $mappingRows | Export-Csv -LiteralPath $MappingOutputPath -NoTypeInformation -Encoding utf8
-if ($mappingRows.Count -ne 430) {
-  throw "Expected 430 runtime crop mappings, found $($mappingRows.Count)"
+if ($mappingRows.Count -ne 602) {
+  throw "Expected 602 runtime crop mappings, found $($mappingRows.Count)"
 }
 
 [pscustomobject]@{

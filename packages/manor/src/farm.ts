@@ -4,6 +4,7 @@ import type {
   ManorCropView,
   ManorDecorationType,
   ManorDecorationView,
+  ManorDogId,
   ManorFarmView,
   ManorFertilizerId,
   ManorPlotView,
@@ -25,6 +26,22 @@ import {
   manorLevelReward,
   type ManorRewardItemDefinition
 } from "./rewards.js";
+import {
+  MANOR_DOGS,
+  MANOR_DOG_FOOD_OPTIONS,
+  MANOR_FARM_PRANK_LIMIT,
+  MANOR_PASTURE_MOSQUITO_LIMIT,
+  MANOR_SPECIAL_FEED_LIMIT,
+  cloneManorActivities,
+  createManorDailyState,
+  manorDogById,
+  manorWeatherAt,
+  refreshManorDailyState,
+  validateManorActivities,
+  validateManorDailyState,
+  type ManorActivityState,
+  type ManorDailyState
+} from "./legacy.js";
 
 export interface ManorCropDefinition {
   id: ManorCropId;
@@ -56,8 +73,10 @@ export interface ManorPlotState {
   dryAt?: number;
   wateredAt?: number;
   weedAt?: number;
+  weedLevel?: number;
   weedClearedAt?: number;
   pestAt?: number;
+  pestLevel?: number;
   pestClearedAt?: number;
   fertilizedStage?: number;
   stolenYield?: number;
@@ -93,7 +112,7 @@ export interface ManorDecorationPurchaseState {
 }
 
 export interface ManorFarmState {
-  schemaVersion: 9;
+  schemaVersion: 10;
   revision: number;
   coins: number;
   experience: number;
@@ -105,6 +124,11 @@ export interface ManorFarmState {
   decorationEntitlements: number[];
   decorationPurchases: ManorDecorationPurchaseState[];
   activeDecorationIds: number[];
+  ownedDogIds: ManorDogId[];
+  activeDogId?: ManorDogId;
+  dogFedUntil: number;
+  daily: ManorDailyState;
+  activities: ManorActivityState[];
   nextTaskId: number;
   unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
@@ -123,6 +147,7 @@ export interface ManorRuntimeOptions {
 export const MANOR_PLOT_COUNT = 18;
 export const MANOR_INITIAL_PLOT_COUNT = 6;
 export const MANOR_MAX_LEVEL_REWARD = MANOR_LEVEL_REWARDS.length;
+export const MANOR_FACTORY_RECIPE = { manure: 5, redRoses: 5, coins: 1_000 } as const;
 
 export const MANOR_TASKS: readonly ManorTaskDefinition[] = [
   { id: 0, event: "plant", name: "播下种子", description: "在任意空地种下一颗种子", rewardCoins: 0, rewardExperience: 100 },
@@ -161,7 +186,7 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
   fertilizer?: unknown;
 };
 
@@ -171,7 +196,7 @@ export function createManorFarm(
   options: { enableStarterTasks?: boolean } = {}
 ): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 9,
+    schemaVersion: 10,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -183,6 +208,10 @@ export function createManorFarm(
     decorationEntitlements: [],
     decorationPurchases: [],
     activeDecorationIds: [],
+    ownedDogIds: [],
+    dogFedUntil: 0,
+    daily: createManorDailyState(now),
+    activities: [],
     nextTaskId: options.enableStarterTasks ? 0 : MANOR_TASKS.length,
     unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
@@ -208,7 +237,8 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     candidate.schemaVersion !== 6 &&
     candidate.schemaVersion !== 7 &&
     candidate.schemaVersion !== 8 &&
-    candidate.schemaVersion !== 9
+    candidate.schemaVersion !== 9 &&
+    candidate.schemaVersion !== 10
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -221,7 +251,7 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
   const createdAt = timestamp(candidate.createdAt, "创建时间");
   const updatedAt = timestamp(candidate.updatedAt, "更新时间");
   const state: ManorFarmState = {
-    schemaVersion: 9,
+    schemaVersion: 10,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
@@ -246,6 +276,21 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
       : [],
     activeDecorationIds: candidate.schemaVersion >= 8
       ? integerArray(candidate.activeDecorationIds, "已启用装扮")
+      : [],
+    ownedDogIds: candidate.schemaVersion >= 10
+      ? dogIdArray(candidate.ownedDogIds)
+      : [],
+    ...(candidate.schemaVersion >= 10 && candidate.activeDogId !== undefined
+      ? { activeDogId: dogId(candidate.activeDogId) }
+      : {}),
+    dogFedUntil: candidate.schemaVersion >= 10
+      ? timestamp(candidate.dogFedUntil, "狗粮有效期")
+      : 0,
+    daily: candidate.schemaVersion >= 10
+      ? migrateDailyState(candidate.daily, fallbackNow ?? updatedAt)
+      : createManorDailyState(fallbackNow ?? updatedAt),
+    activities: candidate.schemaVersion >= 10
+      ? migrateActivities(candidate.activities)
       : [],
     nextTaskId: candidate.schemaVersion >= 9
       ? integer(candidate.nextTaskId, "新手任务进度")
@@ -275,6 +320,7 @@ export function applyManorAction(
 ): ManorFarmState {
   validateManorFarm(current);
   const state = cloneState(current);
+  state.daily = refreshManorDailyState(state.daily, now);
   const crop = "cropId" in action ? cropById(action.cropId) : undefined;
   const plot = "plotId" in action ? plotById(state, action.plotId) : undefined;
   const level = levelForExperience(state.experience);
@@ -433,6 +479,45 @@ export function applyManorAction(
       state.coins += crop.salePrice * action.quantity;
       break;
     }
+    case "buy-dog": {
+      const dog = manorDogById(action.dogId);
+      if (state.ownedDogIds.includes(dog.id)) throw new Error("已经拥有这只看门狗");
+      if (state.coins < dog.price) throw new Error("金币不足");
+      state.coins -= dog.price;
+      state.ownedDogIds.push(dog.id);
+      state.activeDogId = dog.id;
+      if (state.dogFedUntil < now) state.dogFedUntil = now + 86_400_000;
+      break;
+    }
+    case "activate-dog": {
+      manorDogById(action.dogId);
+      if (!state.ownedDogIds.includes(action.dogId)) throw new Error("尚未拥有这只看门狗");
+      state.activeDogId = action.dogId;
+      break;
+    }
+    case "buy-dog-food": {
+      if (state.ownedDogIds.length === 0) throw new Error("请先购买一只看门狗");
+      const option = MANOR_DOG_FOOD_OPTIONS.find((candidate) => candidate.days === action.days);
+      if (!option) throw new Error("狗粮不存在");
+      if (state.coins < option.coinPrice) throw new Error("金币不足");
+      state.coins -= option.coinPrice;
+      state.dogFedUntil = Math.max(now, state.dogFedUntil) + option.days * 86_400_000;
+      break;
+    }
+    case "craft-instant-fertilizer": {
+      const redRose = cropBySourceId(41);
+      const manureCost = MANOR_FACTORY_RECIPE.manure * action.quantity;
+      const roseCost = MANOR_FACTORY_RECIPE.redRoses * action.quantity;
+      const coinCost = MANOR_FACTORY_RECIPE.coins * action.quantity;
+      if (state.pasture.manure < manureCost) throw new Error("牧场便便不足");
+      if (state.produce[redRose.id] < roseCost) throw new Error("红玫瑰不足");
+      if (state.coins < coinCost) throw new Error("金币不足");
+      state.pasture.manure -= manureCost;
+      state.produce[redRose.id] -= roseCost;
+      state.coins -= coinCost;
+      state.fertilizers.instant += action.quantity;
+      break;
+    }
   }
 
   const taskEvent = taskEventForAction(action.type);
@@ -537,6 +622,13 @@ export function toManorFarmView(
   for (const decoration of decorations) {
     if (decoration.active) activeDecorations[decoration.category] = decoration;
   }
+  const daily = refreshManorDailyState(state.daily, now);
+  const redRose = cropBySourceId(41);
+  const craftable = Math.min(
+    Math.floor(state.pasture.manure / MANOR_FACTORY_RECIPE.manure),
+    Math.floor(state.produce[redRose.id] / MANOR_FACTORY_RECIPE.redRoses),
+    Math.floor(state.coins / MANOR_FACTORY_RECIPE.coins)
+  );
   return {
     serverTime: now,
     revision: state.revision,
@@ -561,6 +653,33 @@ export function toManorFarmView(
         ...(fertilizer.coinPrice === undefined ? {} : { coinPrice: fertilizer.coinPrice })
       }))
     },
+    weather: manorWeatherAt(now),
+    dog: {
+      catalog: MANOR_DOGS.map((dog) => ({
+        ...dog,
+        owned: state.ownedDogIds.includes(dog.id),
+        active: state.activeDogId === dog.id
+      })),
+      fedUntil: state.dogFedUntil,
+      fed: Boolean(state.activeDogId && state.dogFedUntil > now),
+      foodOptions: MANOR_DOG_FOOD_OPTIONS.map((option) => ({ ...option }))
+    },
+    factory: {
+      recipe: { ...MANOR_FACTORY_RECIPE },
+      available: {
+        manure: state.pasture.manure,
+        redRoses: state.produce[redRose.id],
+        coins: state.coins
+      },
+      craftable
+    },
+    dailyLimits: {
+      farmPranksRemaining: MANOR_FARM_PRANK_LIMIT - daily.farmPranksUsed,
+      pastureMosquitoesRemaining:
+        MANOR_PASTURE_MOSQUITO_LIMIT - daily.pastureMosquitoesReleased,
+      specialFeedsRemaining: MANOR_SPECIAL_FEED_LIMIT - daily.specialFeedsReceived
+    },
+    activities: cloneManorActivities(state.activities),
     starterGift: {
       claimed: state.starterGiftClaimed,
       items: MANOR_STARTER_GIFT.map(toRewardItemView)
@@ -601,7 +720,7 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 9) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 10) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
@@ -616,6 +735,19 @@ export function validateManorFarm(state: ManorFarmState): void {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${label}无效`);
   }
   if (typeof state.starterGiftClaimed !== "boolean") throw new Error("新手礼包状态无效");
+  if (!Number.isInteger(state.dogFedUntil) || state.dogFedUntil < 0) {
+    throw new Error("狗粮有效期无效");
+  }
+  const ownedDogIds = new Set(state.ownedDogIds);
+  if (
+    ownedDogIds.size !== state.ownedDogIds.length ||
+    state.ownedDogIds.some((id) => !MANOR_DOGS.some((dog) => dog.id === id)) ||
+    (state.activeDogId !== undefined && !ownedDogIds.has(state.activeDogId))
+  ) {
+    throw new Error("看门狗状态无效");
+  }
+  validateManorDailyState(state.daily);
+  validateManorActivities(state.activities);
   if (state.nextTaskId > MANOR_TASKS.length) throw new Error("新手任务进度无效");
   for (const fertilizer of MANOR_FERTILIZERS) {
     if (!Number.isInteger(state.fertilizers[fertilizer.id]) || state.fertilizers[fertilizer.id] < 0) {
@@ -696,6 +828,11 @@ export function validateManorFarm(state: ManorFarmState): void {
     ) {
       throw new Error("作物偷取记录无效");
     }
+    for (const [label, value] of [["杂草", plot.weedLevel], ["害虫", plot.pestLevel]] as const) {
+      if (value !== undefined && (!Number.isInteger(value) || value < 1 || value > 3)) {
+        throw new Error(`${label}数量无效`);
+      }
+    }
     if (plot.id > state.unlockedPlotCount && (plot.cropId || plot.cycle !== 0)) {
       throw new Error("未开垦土地包含作物状态");
     }
@@ -722,6 +859,8 @@ export function validateManorFarm(state: ManorFarmState): void {
           plot.plantedAt ||
           plot.readyAt ||
           careValues.some((value) => value !== undefined) ||
+          plot.weedLevel !== undefined ||
+          plot.pestLevel !== undefined ||
           plot.fertilizedStage !== undefined
         ) {
           throw new Error("枯萎作物状态无效");
@@ -745,6 +884,8 @@ export function validateManorFarm(state: ManorFarmState): void {
       plot.readyAt ||
       plot.witheredAt ||
       careValues.some((value) => value !== undefined) ||
+      plot.weedLevel !== undefined ||
+      plot.pestLevel !== undefined ||
       plot.fertilizedStage !== undefined ||
       plot.stolenYield !== undefined ||
       plot.thiefUserIds !== undefined
@@ -828,7 +969,9 @@ function toPlotView(
       progress: 0,
       watered: false,
       weed: false,
-      pest: false
+      weedLevel: 0,
+      pest: false,
+      pestLevel: 0
     };
   }
   const crop = cropById(plot.cropId);
@@ -850,14 +993,14 @@ function toPlotView(
       progress: 1,
       watered: false,
       weed: false,
-      pest: false
+      weedLevel: 0,
+      pest: false,
+      pestLevel: 0
     };
   }
   if (!plot.plantedAt || !plot.readyAt) throw new Error("作物时间无效");
   const duration = plot.readyAt - plot.plantedAt;
   const progress = Math.max(0, Math.min(1, (now - plot.plantedAt) / duration));
-  const sproutThreshold = crop.growthStageSeconds[0] ?? 0;
-  const growingThreshold = crop.growthStageSeconds[2] ?? crop.growthSeconds;
   const remainingYield = estimatedYield(plot, crop, now, timeScale);
   const originalYield = remainingYield + (plot.stolenYield ?? 0);
   return {
@@ -870,14 +1013,13 @@ function toPlotView(
     progress,
     watered: !isCareEventActive(plot.dryAt, plot.wateredAt, now),
     weed: isCareEventActive(plot.weedAt, plot.weedClearedAt, now),
+    weedLevel: isCareEventActive(plot.weedAt, plot.weedClearedAt, now) ? plot.weedLevel ?? 1 : 0,
     pest: isCareEventActive(plot.pestAt, plot.pestClearedAt, now),
+    pestLevel: isCareEventActive(plot.pestAt, plot.pestClearedAt, now) ? plot.pestLevel ?? 1 : 0,
     ...(plot.fertilizedStage === undefined ? {} : { fertilizedStage: plot.fertilizedStage }),
     visualStageThresholds: plot.harvestedCycles && plot.harvestedCycles > 0
-      ? [0, 0]
-      : [
-          sproutThreshold / crop.growthSeconds,
-          growingThreshold / crop.growthSeconds
-        ],
+      ? [0, 0, 0, 0]
+      : crop.growthStageSeconds.slice(0, 4).map((seconds) => seconds / crop.growthSeconds),
     estimatedYield: remainingYield,
     minimumYield: Math.max(1, Math.floor(originalYield * 0.6)),
     stolenYield: plot.stolenYield ?? 0
@@ -894,8 +1036,8 @@ function estimatedYield(
   const penalty = Math.min(
     50,
     careEventPenalty(plot.dryAt, plot.wateredAt, now, interval, 2) +
-      careEventPenalty(plot.weedAt, plot.weedClearedAt, now, interval, 1) +
-      careEventPenalty(plot.pestAt, plot.pestClearedAt, now, interval, 1)
+      careEventPenalty(plot.weedAt, plot.weedClearedAt, now, interval, plot.weedLevel ?? 1) +
+      careEventPenalty(plot.pestAt, plot.pestClearedAt, now, interval, plot.pestLevel ?? 1)
   );
   const originalYield = Math.max(1, Math.ceil(crop.baseYield * (100 - penalty) / 100));
   return Math.max(0, originalYield - (plot.stolenYield ?? 0));
@@ -957,8 +1099,10 @@ function clearCareState(plot: ManorPlotState): void {
   delete plot.dryAt;
   delete plot.wateredAt;
   delete plot.weedAt;
+  delete plot.weedLevel;
   delete plot.weedClearedAt;
   delete plot.pestAt;
+  delete plot.pestLevel;
   delete plot.pestClearedAt;
   delete plot.fertilizedStage;
 }
@@ -990,9 +1134,18 @@ function startGrowthCycle(
   clearCareState(plot);
   plot.plantedAt = now;
   plot.readyAt = now + duration;
-  if (dry.value < 0.55) plot.dryAt = now + Math.round(duration * (0.2 + dry.value * 0.4));
-  if (weed.value < 0.6) plot.weedAt = now + Math.round(duration * (0.28 + weed.value * 0.35));
-  if (pest.value < 0.5) plot.pestAt = now + Math.round(duration * (0.5 + pest.value * 0.4));
+  if (dry.value < 0.55) {
+    const dryAt = now + Math.round(duration * (0.2 + dry.value * 0.4));
+    if (manorWeatherAt(dryAt).id !== "rainy") plot.dryAt = dryAt;
+  }
+  if (weed.value < 0.6) {
+    plot.weedAt = now + Math.round(duration * (0.28 + weed.value * 0.35));
+    plot.weedLevel = 1;
+  }
+  if (pest.value < 0.5) {
+    plot.pestAt = now + Math.round(duration * (0.5 + pest.value * 0.4));
+    plot.pestLevel = 1;
+  }
 }
 
 function rewardCareAction(state: ManorFarmState): void {
@@ -1167,6 +1320,9 @@ function cloneState(state: ManorFarmState): ManorFarmState {
     decorationEntitlements: [...state.decorationEntitlements],
     decorationPurchases: state.decorationPurchases.map((purchase) => ({ ...purchase })),
     activeDecorationIds: [...state.activeDecorationIds],
+    ownedDogIds: [...state.ownedDogIds],
+    daily: { ...state.daily },
+    activities: cloneManorActivities(state.activities),
     seeds: { ...state.seeds },
     produce: { ...state.produce },
     plots: state.plots.map((plot) => ({
@@ -1187,6 +1343,49 @@ function migrateDecorationPurchases(value: unknown): ManorDecorationPurchaseStat
       validUntil: timestamp(purchase.validUntil, "装扮有效期")
     };
   });
+}
+
+function dogId(value: unknown): ManorDogId {
+  if (value !== 1 && value !== 3) throw new Error("看门狗编号无效");
+  return value;
+}
+
+function dogIdArray(value: unknown): ManorDogId[] {
+  if (!Array.isArray(value)) throw new Error("看门狗列表无效");
+  return value.map(dogId);
+}
+
+function migrateDailyState(value: unknown, now: number): ManorDailyState {
+  if (!value || typeof value !== "object") return createManorDailyState(now);
+  const daily = value as Partial<ManorDailyState>;
+  const migrated: ManorDailyState = {
+    day: typeof daily.day === "string" ? daily.day : createManorDailyState(now).day,
+    farmPranksUsed: integer(daily.farmPranksUsed ?? 0, "农场使坏次数"),
+    pastureMosquitoesReleased: integer(
+      daily.pastureMosquitoesReleased ?? 0,
+      "牧场放蚊次数"
+    ),
+    specialFeedsReceived: integer(daily.specialFeedsReceived ?? 0, "胡萝卜喂养次数")
+  };
+  validateManorDailyState(migrated);
+  return refreshManorDailyState(migrated, now);
+}
+
+function migrateActivities(value: unknown): ManorActivityState[] {
+  if (!Array.isArray(value)) throw new Error("庄园动态记录无效");
+  const activities = value.map((entry) => {
+    if (!entry || typeof entry !== "object") throw new Error("庄园动态记录无效");
+    const activity = entry as Partial<ManorActivityState>;
+    return {
+      id: integer(activity.id, "动态编号"),
+      kind: activity.kind as ManorActivityState["kind"],
+      actorName: text(activity.actorName, "动态用户"),
+      message: text(activity.message, "动态内容"),
+      createdAt: timestamp(activity.createdAt, "动态时间")
+    };
+  });
+  validateManorActivities(activities);
+  return activities;
 }
 
 function migrateFertilizers(
@@ -1210,7 +1409,7 @@ function migrateInventory(
 
 function migratePlot(
   value: unknown,
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 ): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;
@@ -1226,8 +1425,14 @@ function migratePlot(
     ...(schemaVersion >= 4 ? optionalTimestamp("dryAt", plot.dryAt) : {}),
     ...(schemaVersion >= 4 ? optionalTimestamp("wateredAt", plot.wateredAt) : {}),
     ...optionalTimestamp("weedAt", plot.weedAt),
+    ...(schemaVersion >= 10 && plot.weedLevel !== undefined
+      ? { weedLevel: integer(plot.weedLevel, "杂草数量") }
+      : plot.weedAt !== undefined ? { weedLevel: 1 } : {}),
     ...optionalTimestamp("weedClearedAt", plot.weedClearedAt),
     ...optionalTimestamp("pestAt", plot.pestAt),
+    ...(schemaVersion >= 10 && plot.pestLevel !== undefined
+      ? { pestLevel: integer(plot.pestLevel, "害虫数量") }
+      : plot.pestAt !== undefined ? { pestLevel: 1 } : {}),
     ...optionalTimestamp("pestClearedAt", plot.pestClearedAt),
     ...(schemaVersion >= 4 && plot.fertilizedStage !== undefined
       ? { fertilizedStage: integer(plot.fertilizedStage, "施肥阶段") }
@@ -1267,6 +1472,11 @@ function stringArray(value: unknown, label: string): string[] {
     throw new Error(`${label}无效`);
   }
   return [...value];
+}
+
+function text(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.length < 1) throw new Error(`${label}无效`);
+  return value;
 }
 
 function boolean(value: unknown, label: string): boolean {

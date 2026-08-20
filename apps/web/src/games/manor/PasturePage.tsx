@@ -5,7 +5,7 @@ import type {
   ManorPastureActionRequest,
   ManorPastureView
 } from "@party-games/shared";
-import { Home, PackageOpen, RefreshCw, Search, ShoppingBasket, UsersRound, Wheat } from "lucide-react";
+import { ArrowDown, ArrowUp, Carrot, History, Home, PackageOpen, RefreshCw, Search, ShoppingBasket, UsersRound, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   getManorFriendPasture,
@@ -14,11 +14,12 @@ import {
   performManorPastureAction
 } from "../../api";
 import { AppShell } from "../../platform/AppShell";
+import { ManorActivityWindow } from "./ActivityWindow";
 import { ManorVisitBanner, type ManorVisitTarget } from "./SocialWindow";
 
 const PASTURE_ASSET_ROOT = "/assets/manor/classic/pasture";
 
-type PastureWindow = "shop" | "warehouse" | "feed" | "houses";
+type PastureWindow = "shop" | "warehouse" | "feed" | "houses" | "queue" | "activities";
 
 export function ManorPasturePage({
   visit,
@@ -227,6 +228,9 @@ export function ManorPasturePage({
           <button className="icon-button" type="button" aria-label="好友与排行" title="好友与排行" onClick={onOpenSocial}>
             <UsersRound size={18} />
           </button>
+          <button className="icon-button" type="button" aria-label="庄园动态" title="庄园动态" onClick={() => setActiveWindow("activities")}>
+            <History size={18} />
+          </button>
           <button
             className="icon-button"
             type="button"
@@ -248,6 +252,8 @@ export function ManorPasturePage({
               <div className="pasture-head-bg" aria-hidden="true" />
               <PastureHud pasture={pasture} levelProgress={levelProgress} />
               {visit ? <ManorVisitBanner target={visit} onHome={onReturnHome} /> : null}
+              <img className="manor-weather" src={pasture.weather.assetUrl} alt={pasture.weather.label} title={pasture.weather.label} />
+              {pasture.weather.id === "rainy" ? <div className="manor-rain" aria-hidden="true" /> : null}
 
               <nav className="pasture-head-tools" aria-label="庄园功能">
                 <PastureImageButton asset="nav-farm" label="我的农场" onClick={onSwitchFarm} />
@@ -259,6 +265,19 @@ export function ManorPasturePage({
                   </>
                 ) : null}
               </nav>
+
+              <PastureBuilding
+                house="hutch"
+                status={pasture.houses.hutch}
+                onOpen={() => visit ? setNotice("好友的动物窝") : setActiveWindow("houses")}
+              />
+              {pasture.houses.shed.level > 0 ? (
+                <PastureBuilding
+                  house="shed"
+                  status={pasture.houses.shed}
+                  onOpen={() => visit ? setNotice("好友的动物棚") : setActiveWindow("houses")}
+                />
+              ) : null}
 
               <div className="pasture-house-strip">
                 <HouseStatus
@@ -283,6 +302,41 @@ export function ManorPasturePage({
                   selected={selectedAnimalSerial === animal.serial}
                   onSelect={() => selectAnimal(animal)}
                 />
+              ))}
+
+              {Array.from({ length: pasture.mosquitoCount }, (_, index) => (
+                <button
+                  className="pasture-mosquito"
+                  type="button"
+                  aria-label="拍掉蚊子"
+                  title="拍掉蚊子"
+                  disabled={Boolean(busyKey)}
+                  key={`mosquito:${index}`}
+                  style={pastureMosquitoPosition(index)}
+                  onClick={() => visit
+                    ? void actForFriend({ type: "clean-mosquito" }, `friend-clean-mosquito:${index}`)
+                    : void act({ type: "clean-mosquito" }, `clean-mosquito:${index}`, "拍掉 1 只蚊子，获得 3 点牧场经验")}
+                >
+                  <img src="/assets/manor/classic/legacy/mosquito.png" alt="" />
+                </button>
+              ))}
+
+              {Array.from({ length: Math.min(pasture.poopCount, 8) }, (_, index) => (
+                <button
+                  className="pasture-poop"
+                  type="button"
+                  aria-label="清扫便便"
+                  title="清扫便便"
+                  disabled={Boolean(busyKey)}
+                  key={`poop:${index}`}
+                  style={pasturePoopPosition(index)}
+                  onClick={() => visit
+                    ? void actForFriend({ type: "clean-poop" }, `friend-clean-poop:${index}`)
+                    : void act({ type: "clean-poop" }, `clean-poop:${index}`, "清扫完成，便便已收入牧场仓库")}
+                >
+                  <img src="/assets/manor/classic/legacy/manure.png" alt="" />
+                  {index === 7 && pasture.poopCount > 8 ? <b>+{pasture.poopCount - 8}</b> : null}
+                </button>
               ))}
 
               <button
@@ -317,6 +371,27 @@ export function ManorPasturePage({
                   label="购买牧草"
                   onClick={() => setActiveWindow("feed")}
                 />
+                <PastureImageButton
+                  asset="tool-fly"
+                  label={visit ? `放蚊子（今日剩余 ${pasture.mosquitoCount < 8 ? "可放" : "已满"}）` : "拍蚊子"}
+                  onClick={() => visit
+                    ? void actForFriend({ type: "release-mosquito", quantity: 1 }, "friend-release-mosquito")
+                    : pasture.mosquitoCount > 0
+                      ? void act({ type: "clean-mosquito" }, "clean-mosquito", "拍掉 1 只蚊子，获得 3 点牧场经验")
+                      : setNotice("牧场当前没有蚊子")}
+                />
+                <PastureImageButton
+                  asset="tool-poop"
+                  label="清扫便便"
+                  onClick={() => pasture.poopCount > 0
+                    ? visit
+                      ? void actForFriend({ type: "clean-poop" }, "friend-clean-poop")
+                      : void act({ type: "clean-poop" }, "clean-poop", "清扫完成，便便已收入牧场仓库")
+                    : setNotice("牧场当前没有便便")}
+                />
+                {!visit ? (
+                  <PastureImageButton asset="tool-whistle" label="动物展示队列" onClick={() => setActiveWindow("queue")} />
+                ) : null}
               </div>
 
               {selectedAnimal ? (
@@ -326,6 +401,18 @@ export function ManorPasturePage({
                   friendMode={Boolean(visit)}
                   now={serverNow}
                   onAction={() => performPrimaryAnimalAction(selectedAnimal)}
+                  carrotCount={pasture.carrotCount}
+                  specialFeedRemaining={pasture.specialFeedRemaining}
+                  onFeedCarrot={() => visit
+                    ? void actForFriend(
+                        { type: "feed-carrot", animalSerial: selectedAnimal.serial },
+                        `friend-feed-carrot:${selectedAnimal.serial}`
+                      )
+                    : void act(
+                        { type: "feed-animal-carrot", animalSerial: selectedAnimal.serial },
+                        `feed-carrot:${selectedAnimal.serial}`,
+                        `给${selectedAnimal.name}喂了胡萝卜，成长时间缩短 5 分钟`
+                      )}
                 />
               ) : null}
 
@@ -388,6 +475,25 @@ export function ManorPasturePage({
                     )
                   }
                 />
+              ) : null}
+
+              {!visit && activeWindow === "queue" ? (
+                <PastureQueueWindow
+                  animals={pasture.animals}
+                  busy={Boolean(busyKey)}
+                  onClose={() => setActiveWindow(undefined)}
+                  onSave={(animalSerials) => void act(
+                    { type: "set-animal-order", animalSerials },
+                    "set-animal-order",
+                    "动物展示队列已保存"
+                  ).then((succeeded) => {
+                    if (succeeded) setActiveWindow(undefined);
+                  })}
+                />
+              ) : null}
+
+              {activeWindow === "activities" ? (
+                <ManorActivityWindow activities={pasture.activities} onClose={() => setActiveWindow(undefined)} />
               ) : null}
             </section>
           </div>
@@ -463,6 +569,29 @@ function HouseStatus({
   );
 }
 
+function PastureBuilding({
+  house,
+  status,
+  onOpen
+}: {
+  house: ManorAnimalHouse;
+  status: ManorPastureView["houses"][ManorAnimalHouse];
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      className={`pasture-building pasture-building--${house}`}
+      type="button"
+      title={`管理${house === "hutch" ? "动物窝" : "动物棚"}`}
+      aria-label={`${house === "hutch" ? "动物窝" : "动物棚"} ${status.level} 级，容量 ${status.occupied}/${status.capacity}`}
+      onClick={onOpen}
+    >
+      <img src={status.assetUrl} alt="" />
+      <span>{house === "hutch" ? "窝" : "棚"} Lv.{status.level} · {status.occupied}/{status.capacity}</span>
+    </button>
+  );
+}
+
 function PastureAnimal({
   animal,
   busy,
@@ -480,7 +609,7 @@ function PastureAnimal({
 }) {
   return (
     <div
-      className={`pasture-animal ${selected ? "is-selected" : ""} ${animal.hungry ? "is-hungry" : ""}`}
+      className={`pasture-animal pasture-animal--${animal.visualState} ${selected ? "is-selected" : ""} ${animal.hungry ? "is-hungry" : ""}`}
       style={position}
     >
       <button type="button" disabled={busy} aria-label={`查看${animal.name}`} onClick={onSelect}>
@@ -501,13 +630,19 @@ function AnimalActionStrip({
   busy,
   friendMode,
   now,
-  onAction
+  carrotCount,
+  specialFeedRemaining,
+  onAction,
+  onFeedCarrot
 }: {
   animal: ManorAnimalView;
   busy: boolean;
   friendMode: boolean;
   now: number;
+  carrotCount: number;
+  specialFeedRemaining: number;
   onAction: () => void;
+  onFeedCarrot: () => void;
 }) {
   const actionLabel = friendMode
     ? animal.pendingProduct > animal.minimumProduct
@@ -533,7 +668,65 @@ function AnimalActionStrip({
         <small>{animalStatusText(animal, now)}</small>
       </span>
       <button type="button" disabled={busy || !enabled} onClick={onAction}>{actionLabel}</button>
+      {animal.canFeedCarrot ? (
+        <button
+          className="pasture-carrot-action"
+          type="button"
+          disabled={busy || carrotCount < 1 || specialFeedRemaining < 1}
+          title={`胡萝卜库存 ${carrotCount}，今日还可喂 ${specialFeedRemaining} 次`}
+          onClick={onFeedCarrot}
+        >
+          <Carrot size={15} />
+          {carrotCount < 1 ? "没有胡萝卜" : specialFeedRemaining < 1 ? "今日已喂满" : `喂胡萝卜 ×${carrotCount}`}
+        </button>
+      ) : null}
     </div>
+  );
+}
+
+function PastureQueueWindow({
+  animals,
+  busy,
+  onSave,
+  onClose
+}: {
+  animals: ManorAnimalView[];
+  busy: boolean;
+  onSave: (animalSerials: number[]) => void;
+  onClose: () => void;
+}) {
+  const [order, setOrder] = useState(() => animals.map((animal) => animal.serial));
+  const move = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= order.length) return;
+    setOrder((current) => {
+      const next = [...current];
+      [next[index], next[target]] = [next[target]!, next[index]!];
+      return next;
+    });
+  };
+  return (
+    <PastureWindow title="动物展示队列" onClose={onClose}>
+      <div className="pasture-queue-list">
+        {order.map((serial, index) => {
+          const animal = animals.find((candidate) => candidate.serial === serial);
+          if (!animal) return null;
+          return (
+            <div key={serial}>
+              <b>{index + 1}</b>
+              <img src={animalImageUrl(animal)} alt="" />
+              <span><strong>{animal.name}</strong><small>编号 #{animal.serial}</small></span>
+              <button type="button" aria-label="上移" title="上移" disabled={busy || index === 0} onClick={() => move(index, -1)}><ArrowUp size={16} /></button>
+              <button type="button" aria-label="下移" title="下移" disabled={busy || index === order.length - 1} onClick={() => move(index, 1)}><ArrowDown size={16} /></button>
+            </div>
+          );
+        })}
+      </div>
+      <footer className="pasture-queue-actions">
+        <span>队列顺序决定动物在场景中的展示位置。</span>
+        <button type="button" disabled={busy || order.length === 0} onClick={() => onSave(order)}>保存队列</button>
+      </footer>
+    </PastureWindow>
   );
 }
 
@@ -616,10 +809,18 @@ function PastureWarehouseWindow({
 }) {
   return (
     <PastureWindow title="牧场仓库" onClose={onClose}>
-      {pasture.inventory.length === 0 ? (
+      {pasture.inventory.length === 0 && pasture.manure === 0 ? (
         <div className="pasture-window-empty"><PackageOpen size={28} /><span>仓库暂无产品</span></div>
       ) : (
         <div className="pasture-warehouse-list">
+          {pasture.manure > 0 ? (
+            <div>
+              <span className="pasture-item-image">
+                <img src="/assets/manor/classic/legacy/manure.png" alt="" />
+              </span>
+              <span><strong>便便 ×{pasture.manure}</strong><small>可在农场加工厂制作极速化肥</small></span>
+            </div>
+          ) : null}
           {pasture.inventory.flatMap((item) => {
             const animal = pasture.catalog.find((candidate) => candidate.sourceId === item.animalId);
             const entries = [];
@@ -719,7 +920,7 @@ function PastureHouseWindow({
           const ready = next && pasture.profile.level >= next.levelRequired && pasture.profile.coins >= next.coinCost;
           return (
             <div key={house}>
-              <Home size={24} />
+              {status.level > 0 ? <img src={status.assetUrl} alt="" /> : <Home size={24} />}
               <span>
                 <strong>{house === "hutch" ? "动物窝" : "动物棚"} Lv.{status.level}</strong>
                 <small>容量 {status.occupied} / {status.capacity}</small>
@@ -772,8 +973,29 @@ function pastureAnimalPosition(index: number): CSSProperties {
   return {
     left: `${13 + column * 14 + stagger}%`,
     top: `${24 + row * 15}%`,
-    zIndex: 120 + row * 10 + column
-  };
+    zIndex: 120 + row * 10 + column,
+    "--pasture-animal-delay": `${-(index % 5) * 0.37}s`
+  } as CSSProperties;
+}
+
+function pastureMosquitoPosition(index: number): CSSProperties {
+  const positions = [
+    [32, 26], [48, 20], [65, 29], [25, 47], [55, 43], [75, 50], [40, 61], [67, 65]
+  ];
+  const [left, top] = positions[index % positions.length] ?? positions[0]!;
+  return {
+    left: `${left}%`,
+    top: `${top}%`,
+    "--pasture-nuisance-delay": `${-(index % 4) * 0.43}s`
+  } as CSSProperties;
+}
+
+function pasturePoopPosition(index: number): CSSProperties {
+  const positions = [
+    [22, 68], [34, 73], [47, 66], [59, 72], [71, 64], [28, 55], [51, 57], [78, 72]
+  ];
+  const [left, top] = positions[index % positions.length] ?? positions[0]!;
+  return { left: `${left}%`, top: `${top}%` };
 }
 
 function animalImageUrl(animal: ManorAnimalView): string {

@@ -9,6 +9,13 @@ import type {
   ManorPastureView
 } from "@party-games/shared";
 import { MANOR_ANIMAL_DATA } from "./animals.generated.js";
+import {
+  MANOR_SPECIAL_FEED_LIMIT,
+  cloneManorActivities,
+  manorWeatherAt,
+  validateManorActivities,
+  type ManorActivityState
+} from "./legacy.js";
 
 export interface ManorAnimalDefinition {
   sourceId: ManorAnimalSourceId;
@@ -49,7 +56,7 @@ export interface ManorPastureAnimalState {
 }
 
 export interface ManorPastureState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   experience: number;
   grass: number;
   hutchLevel: number;
@@ -58,16 +65,27 @@ export interface ManorPastureState {
   animals: ManorPastureAnimalState[];
   byproducts: Partial<Record<ManorAnimalSourceId, number>>;
   harvestedAnimals: Partial<Record<ManorAnimalSourceId, number>>;
+  manure: number;
+  poopCount: number;
+  mosquitoSources: string[];
+  nuisanceProgressSeconds: number;
+  randomState: number;
+  animalOrder: number[];
+  activities: ManorActivityState[];
   updatedAt: number;
 }
 
 export interface ManorPastureRuntimeOptions {
   timeScale?: number;
+  availableCarrots?: number;
+  specialFeedRemaining?: number;
 }
 
 export interface ManorPastureActionResult {
   pasture: ManorPastureState;
   coins: number;
+  carrotsConsumed: number;
+  specialFeedsConsumed: number;
 }
 
 export interface ManorPastureHouseUpgrade {
@@ -81,6 +99,10 @@ export interface ManorPastureHouseUpgrade {
 export const MANOR_ANIMALS: readonly ManorAnimalDefinition[] = MANOR_ANIMAL_DATA;
 export const MANOR_GRASS_CAPACITY = 400;
 export const MANOR_GRASS_PRICE = 60;
+export const MANOR_MANURE_SALE_PRICE = 30;
+export const MANOR_PASTURE_NUISANCE_INTERVAL_SECONDS = 21_600;
+export const MANOR_PASTURE_POOP_LIMIT = 16;
+export const MANOR_PASTURE_MOSQUITO_SCENE_LIMIT = 8;
 
 export const MANOR_HUTCH_UPGRADES: readonly ManorPastureHouseUpgrade[] = [
   { level: 1, originalLevelRequired: 0, displayLevelRequired: 1, coinCost: 0, capacity: 2 },
@@ -108,7 +130,7 @@ export const MANOR_SHED_UPGRADES: readonly ManorPastureHouseUpgrade[] = [
 export function createManorPasture(now: number): ManorPastureState {
   const rabbit = manorAnimalById(1002);
   const state: ManorPastureState = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     experience: 0,
     grass: 20,
     hutchLevel: 1,
@@ -134,6 +156,13 @@ export function createManorPasture(now: number): ManorPastureState {
     ],
     byproducts: {},
     harvestedAnimals: {},
+    manure: 0,
+    poopCount: 0,
+    mosquitoSources: [],
+    nuisanceProgressSeconds: 0,
+    randomState: hashPastureSeed(now),
+    animalOrder: [1, 2],
+    activities: [],
     updatedAt: now
   };
   validateManorPasture(state);
@@ -144,11 +173,11 @@ export function migrateManorPasture(value: unknown, fallbackNow: number): ManorP
   if (value === undefined) return createManorPasture(fallbackNow);
   if (!value || typeof value !== "object") throw new Error("牧场存档格式无效");
   const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
-  if (schemaVersion !== 1 && schemaVersion !== 2) {
+  if (schemaVersion !== 1 && schemaVersion !== 2 && schemaVersion !== 3) {
     throw new Error("牧场存档版本不受支持");
   }
   const state = value as Omit<ManorPastureState, "schemaVersion" | "animals"> & {
-    schemaVersion: 1 | 2;
+    schemaVersion: 1 | 2 | 3;
     animals: Array<
       Omit<ManorPastureAnimalState, "productThiefUserIds" | "stolenProduct"> &
       Partial<Pick<ManorPastureAnimalState, "productThiefUserIds" | "stolenProduct">>
@@ -156,14 +185,31 @@ export function migrateManorPasture(value: unknown, fallbackNow: number): ManorP
   };
   const migrated: ManorPastureState = {
     ...state,
-    schemaVersion: 2,
+    schemaVersion: 3,
     animals: state.animals.map((animal) => ({
       ...animal,
-      productThiefUserIds: schemaVersion === 2 ? [...(animal.productThiefUserIds ?? [])] : [],
-      stolenProduct: schemaVersion === 2 ? animal.stolenProduct ?? 0 : 0
+      productThiefUserIds: schemaVersion >= 2 ? [...(animal.productThiefUserIds ?? [])] : [],
+      stolenProduct: schemaVersion >= 2 ? animal.stolenProduct ?? 0 : 0
     })),
     byproducts: { ...state.byproducts },
-    harvestedAnimals: { ...state.harvestedAnimals }
+    harvestedAnimals: { ...state.harvestedAnimals },
+    manure: schemaVersion >= 3 ? integerOrZero((state as Partial<ManorPastureState>).manure) : 0,
+    poopCount: schemaVersion >= 3 ? integerOrZero((state as Partial<ManorPastureState>).poopCount) : 0,
+    mosquitoSources: schemaVersion >= 3
+      ? [...((state as Partial<ManorPastureState>).mosquitoSources ?? [])]
+      : [],
+    nuisanceProgressSeconds: schemaVersion >= 3
+      ? finiteOrZero((state as Partial<ManorPastureState>).nuisanceProgressSeconds)
+      : 0,
+    randomState: schemaVersion >= 3
+      ? integerOrZero((state as Partial<ManorPastureState>).randomState)
+      : hashPastureSeed(fallbackNow),
+    animalOrder: schemaVersion >= 3
+      ? [...((state as Partial<ManorPastureState>).animalOrder ?? state.animals.map((animal) => animal.serial))]
+      : state.animals.map((animal) => animal.serial),
+    activities: schemaVersion >= 3
+      ? cloneManorActivities((state as Partial<ManorPastureState>).activities ?? [])
+      : []
   };
   validateManorPasture(migrated);
   return migrated;
@@ -217,6 +263,22 @@ export function advanceManorPasture(
     next.grass = Math.max(0, next.grass - grassPerSecond * step);
     remaining -= step;
   }
+  next.nuisanceProgressSeconds += elapsedSeconds;
+  const nuisanceTicks = Math.floor(
+    next.nuisanceProgressSeconds / MANOR_PASTURE_NUISANCE_INTERVAL_SECONDS
+  );
+  next.nuisanceProgressSeconds %= MANOR_PASTURE_NUISANCE_INTERVAL_SECONDS;
+  for (let index = 0; index < Math.min(nuisanceTicks, 32); index += 1) {
+    const roll = nextPastureRandom(next.randomState);
+    next.randomState = roll.state;
+    next.poopCount = Math.min(
+      MANOR_PASTURE_POOP_LIMIT,
+      next.poopCount + (roll.value < 0.5 ? 1 : 2)
+    );
+    if (next.mosquitoSources.length < MANOR_PASTURE_MOSQUITO_SCENE_LIMIT) {
+      next.mosquitoSources.push("system");
+    }
+  }
   next.grass = roundGrass(next.grass);
   next.updatedAt = now;
   validateManorPasture(next);
@@ -232,6 +294,8 @@ export function applyManorPastureAction(
 ): ManorPastureActionResult {
   const pasture = advanceManorPasture(state, now, options);
   let nextCoins = coins;
+  let carrotsConsumed = 0;
+  let specialFeedsConsumed = 0;
   switch (action.type) {
     case "buy-animal": {
       const definition = manorAnimalById(action.animalId);
@@ -256,6 +320,7 @@ export function applyManorPastureAction(
           productThiefUserIds: [],
           stolenProduct: 0
         });
+        pasture.animalOrder.push(pasture.nextAnimalSerial);
         pasture.nextAnimalSerial += 1;
       }
       pasture.experience += action.quantity * 5;
@@ -311,6 +376,7 @@ export function applyManorPastureAction(
       if (animal.growthSeconds < definition.lifecycleSeconds) throw new Error("动物还未到收获时间");
       if (animal.pendingProduct > 0) throw new Error(`请先收获${definition.byproductName}`);
       pasture.animals.splice(animalIndex, 1);
+      pasture.animalOrder = pasture.animalOrder.filter((serial) => serial !== animal.serial);
       pasture.harvestedAnimals[definition.sourceId] =
         (pasture.harvestedAnimals[definition.sourceId] ?? 0) + 1;
       pasture.experience += definition.animalHarvestExperience;
@@ -345,9 +411,48 @@ export function applyManorPastureAction(
       else pasture.shedLevel = upgrade.level;
       break;
     }
+    case "feed-animal-carrot": {
+      if ((options.availableCarrots ?? 0) < 1) throw new Error("农场仓库没有胡萝卜");
+      if ((options.specialFeedRemaining ?? MANOR_SPECIAL_FEED_LIMIT) < 1) {
+        throw new Error("当前牧场今天已经喂满 30 个胡萝卜");
+      }
+      const animal = pastureAnimalBySerial(pasture, action.animalSerial);
+      const definition = manorAnimalById(animal.sourceId);
+      if (animal.growthSeconds >= definition.lifecycleSeconds) {
+        throw new Error("动物生命周期已经结束");
+      }
+      animal.growthSeconds = Math.min(definition.lifecycleSeconds, animal.growthSeconds + 300);
+      carrotsConsumed = 1;
+      specialFeedsConsumed = 1;
+      break;
+    }
+    case "clean-mosquito": {
+      if (pasture.mosquitoSources.length === 0) throw new Error("牧场当前没有蚊子");
+      pasture.mosquitoSources.shift();
+      pasture.experience += 3;
+      break;
+    }
+    case "clean-poop": {
+      if (pasture.poopCount < 1) throw new Error("牧场当前没有便便");
+      pasture.poopCount -= 1;
+      pasture.manure += 1;
+      break;
+    }
+    case "set-animal-order": {
+      const expected = [...pasture.animals.map((animal) => animal.serial)].sort((a, b) => a - b);
+      const requested = [...action.animalSerials].sort((a, b) => a - b);
+      if (
+        requested.length !== expected.length ||
+        requested.some((serial, index) => serial !== expected[index])
+      ) {
+        throw new Error("动物展示队列与当前动物不一致");
+      }
+      pasture.animalOrder = [...action.animalSerials];
+      break;
+    }
   }
   validateManorPasture(pasture);
-  return { pasture, coins: nextCoins };
+  return { pasture, coins: nextCoins, carrotsConsumed, specialFeedsConsumed };
 }
 
 export function toManorPastureView(
@@ -362,6 +467,9 @@ export function toManorPastureView(
   const level = levelForPastureExperience(pasture.experience);
   const hutch = houseView(pasture, "hutch", level);
   const shed = houseView(pasture, "shed", level);
+  const orderedAnimals = pasture.animalOrder.map((serial) =>
+    pasture.animals.find((animal) => animal.serial === serial)
+  ).filter((animal): animal is ManorPastureAnimalState => Boolean(animal));
   return {
     serverTime: now,
     revision,
@@ -376,9 +484,16 @@ export function toManorPastureView(
     grass: pasture.grass,
     grassCapacity: MANOR_GRASS_CAPACITY,
     grassPrice: MANOR_GRASS_PRICE,
+    manure: pasture.manure,
+    poopCount: pasture.poopCount,
+    mosquitoCount: pasture.mosquitoSources.length,
+    specialFeedRemaining: Math.max(0, options.specialFeedRemaining ?? MANOR_SPECIAL_FEED_LIMIT),
+    carrotCount: Math.max(0, options.availableCarrots ?? 0),
+    weather: manorWeatherAt(now),
+    activities: cloneManorActivities(pasture.activities),
     houses: { hutch, shed },
     catalog: MANOR_ANIMALS.map((definition) => toCatalogView(definition, level)),
-    animals: pasture.animals.map((animal) =>
+    animals: orderedAnimals.map((animal) =>
       toAnimalView(animal, pasture, now, normalizeTimeScale(options.timeScale))
     ),
     inventory: MANOR_ANIMALS.map((definition) =>
@@ -388,7 +503,7 @@ export function toManorPastureView(
 }
 
 export function validateManorPasture(state: ManorPastureState): void {
-  if (state.schemaVersion !== 2) throw new Error("牧场存档版本无效");
+  if (state.schemaVersion !== 3) throw new Error("牧场存档版本无效");
   if (!Number.isInteger(state.experience) || state.experience < 0) throw new Error("牧场经验无效");
   if (!Number.isFinite(state.grass) || state.grass < 0 || state.grass > MANOR_GRASS_CAPACITY) {
     throw new Error("牧草数量无效");
@@ -401,6 +516,27 @@ export function validateManorPasture(state: ManorPastureState): void {
   }
   if (!Number.isInteger(state.nextAnimalSerial) || state.nextAnimalSerial < 1) {
     throw new Error("动物序号无效");
+  }
+  if (!Number.isInteger(state.manure) || state.manure < 0) throw new Error("牧场便便库存无效");
+  if (!Number.isInteger(state.poopCount) || state.poopCount < 0 || state.poopCount > MANOR_PASTURE_POOP_LIMIT) {
+    throw new Error("牧场便便状态无效");
+  }
+  if (
+    !Array.isArray(state.mosquitoSources) ||
+    state.mosquitoSources.length > MANOR_PASTURE_MOSQUITO_SCENE_LIMIT ||
+    state.mosquitoSources.some((source) => typeof source !== "string" || source.length < 1)
+  ) {
+    throw new Error("牧场蚊子状态无效");
+  }
+  if (
+    !Number.isFinite(state.nuisanceProgressSeconds) ||
+    state.nuisanceProgressSeconds < 0 ||
+    state.nuisanceProgressSeconds >= MANOR_PASTURE_NUISANCE_INTERVAL_SECONDS
+  ) {
+    throw new Error("牧场随机事件进度无效");
+  }
+  if (!Number.isInteger(state.randomState) || state.randomState < 0) {
+    throw new Error("牧场随机状态无效");
   }
   if (!Number.isFinite(state.updatedAt) || state.updatedAt < 0) throw new Error("牧场更新时间无效");
   const serials = new Set<number>();
@@ -438,12 +574,20 @@ export function validateManorPasture(state: ManorPastureState): void {
       throw new Error("动物生产时间无效");
     }
   }
+  if (
+    state.animalOrder.length !== state.animals.length ||
+    new Set(state.animalOrder).size !== state.animalOrder.length ||
+    state.animalOrder.some((serial) => !serials.has(serial))
+  ) {
+    throw new Error("动物展示队列无效");
+  }
   for (const definition of MANOR_ANIMALS) {
     for (const inventory of [state.byproducts, state.harvestedAnimals]) {
       const count = inventory[definition.sourceId] ?? 0;
       if (!Number.isInteger(count) || count < 0) throw new Error("牧场仓库库存无效");
     }
   }
+  validateManorActivities(state.activities);
 }
 
 export function levelForPastureExperience(experience: number): number {
@@ -480,7 +624,10 @@ function clonePasture(state: ManorPastureState): ManorPastureState {
       productThiefUserIds: [...animal.productThiefUserIds]
     })),
     byproducts: { ...state.byproducts },
-    harvestedAnimals: { ...state.harvestedAnimals }
+    harvestedAnimals: { ...state.harvestedAnimals },
+    mosquitoSources: [...state.mosquitoSources],
+    animalOrder: [...state.animalOrder],
+    activities: cloneManorActivities(state.activities)
   };
 }
 
@@ -518,6 +665,7 @@ function houseView(
     level: currentLevel,
     capacity: houseCapacity(pasture, house),
     occupied: occupiedHouseSlots(pasture, house),
+    assetUrl: `/assets/manor/classic/pasture/buildings/${house}-${currentLevel}.png`,
     ...(next
       ? { nextUpgrade: { levelRequired: next.displayLevelRequired, coinCost: next.coinCost } }
       : {})
@@ -595,8 +743,30 @@ function toAnimalView(
     canHarvestProduct: animal.pendingProduct > 0,
     canHarvestAnimal:
       animal.growthSeconds >= definition.lifecycleSeconds && animal.pendingProduct === 0,
+    canFeedCarrot: animal.growthSeconds < definition.lifecycleSeconds,
     audioUrls: audioUrls(definition)
   };
+}
+
+function integerOrZero(value: unknown): number {
+  return Number.isInteger(value) && Number(value) >= 0 ? Number(value) : 0;
+}
+
+function finiteOrZero(value: unknown): number {
+  return Number.isFinite(value) && Number(value) >= 0 ? Number(value) : 0;
+}
+
+function hashPastureSeed(value: number): number {
+  let seed = Math.abs(Math.trunc(value)) >>> 0;
+  seed ^= seed << 13;
+  seed ^= seed >>> 17;
+  seed ^= seed << 5;
+  return seed >>> 0;
+}
+
+function nextPastureRandom(state: number): { state: number; value: number } {
+  const nextState = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+  return { state: nextState, value: nextState / 0x1_0000_0000 };
 }
 
 function animalVisualState(

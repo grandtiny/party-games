@@ -7,7 +7,10 @@ import {
   MANOR_ANIMALS,
   MANOR_GRASS_CAPACITY,
   MANOR_HUTCH_UPGRADES,
+  MANOR_PASTURE_MOSQUITO_SCENE_LIMIT,
+  MANOR_PASTURE_POOP_LIMIT,
   MANOR_SHED_UPGRADES,
+  migrateManorPasture,
   toManorPastureView,
   type ManorPastureState
 } from "../src/index.js";
@@ -205,6 +208,69 @@ describe("manor pasture", () => {
     expect(result.coins).toBe(0);
     expect(MANOR_GRASS_CAPACITY).toBe(400);
   });
+
+  it("migrates v2 pasture state with empty legacy feature defaults", () => {
+    const now = 50_000;
+    const legacy = JSON.parse(JSON.stringify(createManorPasture(now)));
+    legacy.schemaVersion = 2;
+    delete legacy.manure;
+    delete legacy.poopCount;
+    delete legacy.mosquitoSources;
+    delete legacy.nuisanceProgressSeconds;
+    delete legacy.randomState;
+    delete legacy.animalOrder;
+    delete legacy.activities;
+
+    expect(migrateManorPasture(legacy, now)).toMatchObject({
+      schemaVersion: 3,
+      manure: 0,
+      poopCount: 0,
+      mosquitoSources: [],
+      nuisanceProgressSeconds: 0,
+      animalOrder: [1, 2],
+      activities: []
+    });
+  });
+
+  it("feeds carrots, clears nuisances and preserves the requested animal order", () => {
+    const now = 60_000;
+    let pasture = createManorPasture(now);
+    pasture.animals[1]!.growthSeconds = 0;
+    pasture.mosquitoSources = ["system"];
+    pasture.poopCount = 1;
+
+    let result = applyManorPastureAction(
+      pasture,
+      0,
+      { type: "feed-animal-carrot", animalSerial: 2 },
+      now,
+      { availableCarrots: 1, specialFeedRemaining: 1 }
+    );
+    expect(result).toMatchObject({ carrotsConsumed: 1, specialFeedsConsumed: 1 });
+    expect(result.pasture.animals[1]?.growthSeconds).toBe(300);
+
+    result = applyManorPastureAction(result.pasture, 0, { type: "clean-mosquito" }, now + 1);
+    expect(result.pasture).toMatchObject({ mosquitoSources: [], experience: 3 });
+    result = applyManorPastureAction(result.pasture, 0, { type: "clean-poop" }, now + 2);
+    expect(result.pasture).toMatchObject({ poopCount: 0, manure: 1 });
+    result = applyManorPastureAction(
+      result.pasture,
+      0,
+      { type: "set-animal-order", animalSerials: [2, 1] },
+      now + 3
+    );
+    expect(result.pasture.animalOrder).toEqual([2, 1]);
+    expect(toManorPastureView(result.pasture, 0, 0, "玩家", now + 3).animals.map((animal) => animal.serial)).toEqual([2, 1]);
+  });
+
+  it("generates pasture nuisances every six game hours without exceeding scene caps", () => {
+    const now = 70_000;
+    const pasture = emptyPasture(now);
+    const advanced = advanceManorPasture(pasture, now + 100 * 6 * 3_600_000);
+
+    expect(advanced.poopCount).toBe(MANOR_PASTURE_POOP_LIMIT);
+    expect(advanced.mosquitoSources).toHaveLength(MANOR_PASTURE_MOSQUITO_SCENE_LIMIT);
+  });
 });
 
 function emptyPasture(
@@ -212,24 +278,23 @@ function emptyPasture(
   overrides: Partial<ManorPastureState> = {}
 ): ManorPastureState {
   const state = {
-    schemaVersion: 2,
-    experience: 0,
+    ...createManorPasture(now),
     grass: 0,
-    hutchLevel: 1,
-    shedLevel: 0,
     nextAnimalSerial: 2,
     animals: [],
     byproducts: {},
     harvestedAnimals: {},
-    updatedAt: now,
+    animalOrder: [],
     ...overrides
   };
+  const animals = state.animals.map((animal) => ({
+    productThiefUserIds: [],
+    stolenProduct: 0,
+    ...animal
+  }));
   return {
     ...state,
-    animals: state.animals.map((animal) => ({
-      productThiefUserIds: [],
-      stolenProduct: 0,
-      ...animal
-    }))
+    animals,
+    animalOrder: overrides.animalOrder ?? animals.map((animal) => animal.serial)
   };
 }

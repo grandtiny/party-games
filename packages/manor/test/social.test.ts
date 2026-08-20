@@ -158,9 +158,112 @@ describe("manor social rules", () => {
     }
 
     expect(migrateManorFarm(legacy)).toMatchObject({
-      schemaVersion: 9,
+      schemaVersion: 10,
       nextTaskId: 12,
-      pasture: { schemaVersion: 2 }
+      pasture: { schemaVersion: 3 }
     });
+  });
+
+  it("lets a fed watchdog catch thieves without creating coins", () => {
+    const now = 50_000;
+    const visitor = createManorFarm(now, "caught-visitor");
+    let owner = applyManorAction(
+      createManorFarm(now, "dog-owner"),
+      { type: "plant", plotId: 1, cropId: "radish" },
+      now,
+      { timeScale: 3_600 }
+    );
+    const readyAt = owner.plots[0]?.readyAt;
+    if (!readyAt) throw new Error("readyAt missing");
+    owner.ownedDogIds = [1];
+    owner.activeDogId = 1;
+    owner.dogFedUntil = readyAt + 1;
+    owner.randomState = 1;
+    const coinsBefore = visitor.coins + owner.coins;
+
+    const result = applyManorFriendFarmAction(
+      visitor,
+      owner,
+      "caught-visitor-id",
+      { type: "steal-crop", plotId: 1 },
+      readyAt,
+      { timeScale: 3_600 },
+      "小偷"
+    );
+
+    expect(result.message).toContain("被狗发现");
+    expect(result.visitor.coins + result.owner.coins).toBe(coinsBefore);
+    expect(result.visitor.produce.radish).toBe(0);
+    expect(result.owner.plots[0]?.thiefUserIds).toContain("caught-visitor-id");
+    expect(result.owner.activities[0]).toMatchObject({ kind: "dog", actorName: "小偷" });
+  });
+
+  it("limits farm pranks per visitor day and records the owner's activity", () => {
+    const now = 60_000;
+    const visitor = createManorFarm(now, "prank-visitor");
+    visitor.daily.farmPranksUsed = 49;
+    let owner = createManorFarm(now, "prank-owner");
+    owner = applyManorAction(owner, { type: "plant", plotId: 1, cropId: "radish" }, now);
+    owner = applyManorAction(owner, { type: "plant", plotId: 2, cropId: "radish" }, now);
+
+    const result = applyManorFriendFarmAction(
+      visitor,
+      owner,
+      "prank-visitor-id",
+      { type: "add-weed", plotId: 1 },
+      now + 1,
+      {},
+      "好友"
+    );
+    expect(result.visitor.daily.farmPranksUsed).toBe(50);
+    expect(result.owner.plots[0]?.weedLevel).toBe(1);
+    expect(result.owner.activities[0]).toMatchObject({ kind: "prank", actorName: "好友" });
+    expect(() =>
+      applyManorFriendFarmAction(
+        result.visitor,
+        result.owner,
+        "prank-visitor-id",
+        { type: "add-pest", plotId: 2 },
+        now + 2
+      )
+    ).toThrow("50 次");
+  });
+
+  it("supports pasture mosquitoes, cleanup and special carrot feeding", () => {
+    const now = 70_000;
+    let visitor = createManorFarm(now, "pasture-prank-visitor");
+    const owner = createManorFarm(now, "pasture-prank-owner");
+    visitor.produce.carrot = 1;
+
+    const released = applyManorFriendPastureAction(
+      visitor,
+      owner,
+      "visitor-id",
+      { type: "release-mosquito", quantity: 2 },
+      now + 1
+    );
+    expect(released.owner.pasture.mosquitoSources).toEqual(["visitor-id", "visitor-id"]);
+    expect(() =>
+      applyManorFriendPastureAction(
+        released.visitor,
+        released.owner,
+        "visitor-id",
+        { type: "clean-mosquito" },
+        now + 2
+      )
+    ).toThrow("没有可以帮忙清理");
+
+    const feedOwner = released.owner;
+    feedOwner.pasture.animals[1]!.growthSeconds = 0;
+    const fed = applyManorFriendPastureAction(
+      released.visitor,
+      feedOwner,
+      "visitor-id",
+      { type: "feed-carrot", animalSerial: 2 },
+      now + 3
+    );
+    expect(fed.visitor.produce.carrot).toBe(0);
+    expect(fed.owner.pasture.animals[1]?.growthSeconds).toBeCloseTo(300, 2);
+    expect(fed.owner.daily.specialFeedsReceived).toBe(1);
   });
 });

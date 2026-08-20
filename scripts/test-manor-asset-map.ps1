@@ -76,6 +76,7 @@ $interfaceMediaContactReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirec
 $interfaceMediaVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "interface-media-visual-review.csv"))
 $interfaceMediaContactDirectory = Join-Path $OutputDirectory "contact-sheets\interface-media"
 $assetReviewIssues = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "asset-review-issues.csv"))
+$legacyFeatureAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "legacy-feature-runtime-assets.csv"))
 
 Assert-Equal $crops.Count 86 "crop rows"
 Assert-Equal @($crops | Select-Object -ExpandProperty source_id -Unique).Count 86 "unique crop IDs"
@@ -83,21 +84,29 @@ Assert-Equal @($crops | Where-Object swf_parse_error).Count 0 "crop parse errors
 Assert-Equal @($crops | Where-Object processing_status -eq "integrated-4-stage").Count 12 "integrated crops"
 Assert-Equal @($crops | Where-Object { @($_.state_character_ids -split "," | Where-Object { $_ }).Count -ne 7 }).Count 0 "crops without seven states"
 $runtimeCropAssets = @(Get-ChildItem -LiteralPath $runtimeCropAssetDirectory -Recurse -File -Filter "*.png")
-Assert-Equal $runtimeCropAssets.Count 430 "runtime crop assets"
+Assert-Equal $runtimeCropAssets.Count 602 "runtime crop assets"
 Assert-Equal @(Get-ChildItem -LiteralPath $runtimeCropAssetDirectory -Directory).Count 86 "runtime crop asset directories"
-Assert-Equal $cropRuntimeAssets.Count 430 "runtime crop asset mappings"
-Assert-Equal @($cropRuntimeAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 430 "unique runtime crop asset mappings"
-Assert-Equal @($cropRuntimeAssets | Group-Object source_id | Where-Object Count -ne 5).Count 0 "crops without five runtime mappings"
+Assert-Equal $cropRuntimeAssets.Count 602 "runtime crop asset mappings"
+Assert-Equal @($cropRuntimeAssets | Select-Object -ExpandProperty runtime_asset -Unique).Count 602 "unique runtime crop asset mappings"
+Assert-Equal @($cropRuntimeAssets | Group-Object source_id | Where-Object Count -ne 7).Count 0 "crops without seven runtime mappings"
 Assert-Equal @($cropRuntimeAssets | Where-Object visual_review_status -ne "reviewed-ok").Count 0 "runtime crops without approved visual review"
 Assert-Equal @($cropRuntimeAssets | Where-Object processing_status -ne "ready").Count 0 "runtime crops not ready"
 foreach ($crop in $crops) {
   $directory = Join-Path $runtimeCropAssetDirectory $crop.source_id
-  foreach ($stage in @("seed", "sprout", "growing", "mature", "withered")) {
+  foreach ($stage in @("seed", "sprout", "young", "growing", "pre_mature", "mature", "withered")) {
     $asset = Join-Path $directory "$stage.png"
     Assert-True (Test-Path -LiteralPath $asset -PathType Leaf) "missing runtime crop asset: $($crop.source_id)/$stage.png"
     $size = Get-PngSize $asset
     Assert-True ($size.Width -gt 0 -and $size.Height -gt 0) "invalid runtime crop asset: $($crop.source_id)/$stage.png"
   }
+}
+
+Assert-Equal $legacyFeatureAssets.Count 21 "legacy feature runtime mappings"
+foreach ($asset in $legacyFeatureAssets) {
+  $path = Join-Path $repositoryRoot $asset.runtime_asset
+  Assert-True (Test-Path -LiteralPath $path -PathType Leaf) "missing legacy feature runtime asset: $($asset.runtime_asset)"
+  Assert-Equal (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() $asset.runtime_sha256 "legacy feature runtime hash: $($asset.feature)"
+  Assert-Equal $asset.status "ready" "legacy feature status: $($asset.feature)"
 }
 
 Assert-Equal $animals.Count 35 "animal rows"
