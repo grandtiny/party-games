@@ -152,6 +152,37 @@ describe("manor pasture", () => {
     });
   });
 
+  it("sells every saleable pasture product at once and returns ledger entries", () => {
+    const now = 35_000;
+    const pasture = emptyPasture(now, {
+      byproducts: { 1001: 4, 1002: 2 },
+      harvestedAnimals: { 1001: 1 },
+      manure: 3
+    });
+    const chicken = MANOR_ANIMALS.find((animal) => animal.sourceId === 1001)!;
+    const rabbit = MANOR_ANIMALS.find((animal) => animal.sourceId === 1002)!;
+    const result = applyManorPastureAction(
+      pasture,
+      100,
+      { type: "sell-all-pasture" },
+      now + 1
+    );
+
+    expect(result.pasture.byproducts[1001]).toBe(0);
+    expect(result.pasture.byproducts[1002]).toBe(0);
+    expect(result.pasture.harvestedAnimals[1001]).toBe(0);
+    expect(result.pasture.manure).toBe(3);
+    expect(result.coins).toBe(
+      100 + 4 * chicken.byproductSalePrice + 2 * rabbit.byproductSalePrice + chicken.animalSalePrice
+    );
+    expect(result.businessTransactions).toEqual([
+      expect.objectContaining({ kind: "sale", itemName: chicken.byproductName, quantity: 4 }),
+      expect.objectContaining({ kind: "sale", itemName: chicken.name, quantity: 1 }),
+      expect.objectContaining({ kind: "sale", itemName: rabbit.byproductName, quantity: 2 })
+    ]);
+    expect(() => applyManorPastureAction(result.pasture, result.coins, { type: "sell-all-pasture" }, now + 2)).toThrow("没有可出售");
+  });
+
   it("enforces house capacity, pasture levels, grass cap and balances", () => {
     const now = 40_000;
     let pasture = createManorPasture(now);

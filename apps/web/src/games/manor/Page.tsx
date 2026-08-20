@@ -6,10 +6,11 @@ import type {
   ManorDecorationView,
   ManorFarmView,
   ManorFertilizerId,
+  ManorFlowerCatalogView,
   ManorPlotView,
   ManorRewardItemView
 } from "@party-games/shared";
-import { Bug, Dog, Factory, History, ListChecks, RefreshCw, Search, Sprout, UsersRound, Wheat } from "lucide-react";
+import { Bug, Dog, Factory, Flower2, History, ListChecks, MessageSquare, ReceiptText, RefreshCw, Search, Sprout, UsersRound, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   getManorFarm,
@@ -19,6 +20,9 @@ import {
 } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 import { ManorActivityWindow } from "./ActivityWindow";
+import { ManorBusinessWindow } from "./BusinessWindow";
+import { ManorFlowerWindow } from "./FlowerWindow";
+import { ManorGuestbookWindow } from "./GuestbookWindow";
 import { ManorPasturePage } from "./PasturePage";
 import {
   ManorSocialWindow,
@@ -32,7 +36,7 @@ const CROP_ASSET_VERSION = "classic-crops-v4";
 
 type ManorTool = "move" | "hoe" | "seed" | "fertilizer" | "water" | "weed" | "pest" | "harvest" | "prank-weed" | "prank-pest";
 type ClassicManorWindow = "seed-pack" | "fertilizer-pack" | "shop" | "warehouse";
-type ManorWindow = ClassicManorWindow | "decorate" | "dog" | "factory" | "activities";
+type ManorWindow = ClassicManorWindow | "decorate" | "dog" | "factory" | "activities" | "flowers" | "business";
 
 const TOOLS: ReadonlyArray<{ id: ManorTool; label: string; shortcut?: string }> = [
   { id: "move", label: "移动画面" },
@@ -54,6 +58,7 @@ export function ManorPage() {
   const [mode, setMode] = useState<"farm" | "pasture">("farm");
   const [visit, setVisit] = useState<ManorVisitTarget>();
   const [socialOpen, setSocialOpen] = useState(false);
+  const [guestbookOpen, setGuestbookOpen] = useState(false);
 
   const visitFriend = (friend: ManorVisitTarget, nextMode: "farm" | "pasture") => {
     setVisit(friend);
@@ -68,13 +73,22 @@ export function ManorPage() {
       onVisit={visitFriend}
     />
   );
+  const guestbook = (
+    <ManorGuestbookWindow
+      open={guestbookOpen}
+      onClose={() => setGuestbookOpen(false)}
+      {...(visit ? { ownerUserId: visit.userId, ownerDisplayName: visit.displayName } : {})}
+    />
+  );
 
   if (mode === "pasture") {
     return (
       <ManorPasturePage
         visit={visit}
         socialWindow={social}
+        guestbookWindow={guestbook}
         onOpenSocial={() => setSocialOpen(true)}
+        onOpenGuestbook={() => setGuestbookOpen(true)}
         onReturnHome={() => setVisit(undefined)}
         onSwitchFarm={() => setMode("farm")}
       />
@@ -85,7 +99,9 @@ export function ManorPage() {
     <ManorFarmPage
       visit={visit}
       socialWindow={social}
+      guestbookWindow={guestbook}
       onOpenSocial={() => setSocialOpen(true)}
+      onOpenGuestbook={() => setGuestbookOpen(true)}
       onReturnHome={() => setVisit(undefined)}
       onSwitchPasture={() => setMode("pasture")}
     />
@@ -95,19 +111,24 @@ export function ManorPage() {
 function ManorFarmPage({
   visit,
   socialWindow,
+  guestbookWindow,
   onOpenSocial,
+  onOpenGuestbook,
   onReturnHome,
   onSwitchPasture
 }: {
   visit: ManorVisitTarget | undefined;
   socialWindow: ReactNode;
+  guestbookWindow: ReactNode;
   onOpenSocial: () => void;
+  onOpenGuestbook: () => void;
   onReturnHome: () => void;
   onSwitchPasture: () => void;
 }) {
   const stageViewportRef = useRef<HTMLDivElement>(null);
   const windowScrollLeftRef = useRef<number | undefined>(undefined);
   const [farm, setFarm] = useState<ManorFarmView>();
+  const [flowerCatalog, setFlowerCatalog] = useState<ManorFlowerCatalogView[]>();
   const [selectedCropId, setSelectedCropId] = useState<ManorCropId>("radish");
   const [selectedFertilizerId, setSelectedFertilizerId] = useState<ManorFertilizerId>("ordinary");
   const [selectedTool, setSelectedTool] = useState<ManorTool>("move");
@@ -130,7 +151,14 @@ function ManorFarmPage({
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setBusyKey("refresh");
     try {
-      acceptFarm(visit ? (await getManorFriendFarm(visit.userId)).farm : await getManorFarm());
+      if (visit) {
+        const result = await getManorFriendFarm(visit.userId);
+        acceptFarm(result.farm);
+        setFlowerCatalog(result.flowerCatalog);
+      } else {
+        acceptFarm(await getManorFarm());
+        setFlowerCatalog(undefined);
+      }
     } catch (requestError) {
       if (!silent) {
         setError(requestError instanceof Error ? requestError.message : "庄园读取失败");
@@ -229,6 +257,7 @@ function ManorFarmPage({
     try {
       const result = await performManorFriendFarmAction(visit.userId, action);
       acceptFarm(result.farm);
+      setFlowerCatalog(result.flowerCatalog);
       setNotice(result.message ?? "好友互动完成");
       return true;
     } catch (requestError) {
@@ -526,6 +555,7 @@ function ManorFarmPage({
     >
       <div className="manor-page">
         {socialWindow}
+        {guestbookWindow}
         {taskOpen && !visit ? <ManorTaskWindow tasks={farm.tasks} onClose={() => setTaskOpen(false)} /> : null}
         <div className="manor-stage-viewport" ref={stageViewportRef}>
           <div className="manor-stage-shell">
@@ -565,6 +595,9 @@ function ManorFarmPage({
                   </>
                 ) : null}
                 <ManorFeatureButton icon={<History size={18} />} label="庄园动态" onClick={() => setActiveWindow("activities")} />
+                <ManorFeatureButton icon={<Flower2 size={18} />} label={visit ? "赠送花束" : "我的花篮"} onClick={() => setActiveWindow("flowers")} />
+                <ManorFeatureButton icon={<MessageSquare size={18} />} label="庄园留言" onClick={onOpenGuestbook} />
+                {!visit ? <ManorFeatureButton icon={<ReceiptText size={18} />} label="经营流水" onClick={() => setActiveWindow("business")} /> : null}
               </div>
 
               {activeDog ? (
@@ -667,6 +700,26 @@ function ManorFarmPage({
                 <ManorActivityWindow activities={farm.activities} onClose={() => setActiveWindow(undefined)} />
               ) : null}
 
+              {activeWindow === "flowers" ? (
+                <ManorFlowerWindow
+                  basket={farm.flowerBasket}
+                  busy={Boolean(busyKey)}
+                  onClose={() => setActiveWindow(undefined)}
+                  {...(visit && flowerCatalog ? {
+                    catalog: flowerCatalog,
+                    recipientName: visit.displayName,
+                    onSend: (flowerId, message) => actForFriend(
+                      { type: "send-flower", flowerId, message },
+                      `send-flower:${flowerId}`
+                    )
+                  } : {})}
+                />
+              ) : null}
+
+              {!visit && activeWindow === "business" ? (
+                <ManorBusinessWindow records={farm.businessRecords} onClose={() => setActiveWindow(undefined)} />
+              ) : null}
+
               {!visit && isClassicWindow(activeWindow) ? (
                 <ClassicWindow
                   busy={Boolean(busyKey)}
@@ -698,6 +751,13 @@ function ManorFarmPage({
                       { type: "sell", cropId: crop.id, quantity: crop.produce },
                       `sell:${crop.id}`,
                       `${crop.name}已全部出售`
+                    )
+                  }
+                  onSellAll={() =>
+                    void act(
+                      { type: "sell-all" },
+                      "sell-all",
+                      "农场仓库中的作物已全部出售"
                     )
                   }
                 />
@@ -1321,7 +1381,8 @@ function ClassicWindow({
   onSelectSeed,
   onSelectFertilizer,
   onBuy,
-  onSell
+  onSell,
+  onSellAll
 }: {
   kind: ClassicManorWindow;
   crops: ManorCropView[];
@@ -1336,6 +1397,7 @@ function ClassicWindow({
   onSelectFertilizer: (fertilizerId: ManorFertilizerId) => void;
   onBuy: (crop: ManorCropView) => void;
   onSell: (crop: ManorCropView) => void;
+  onSellAll: () => void;
 }) {
   const [query, setQuery] = useState("");
   const title = kind === "seed-pack"
@@ -1472,8 +1534,13 @@ function ClassicWindow({
           ) : null}
 
           {kind === "warehouse" ? (
-            <div className="manor-warehouse-list">
-              {visibleCrops.map((crop) => (
+            <>
+              <div className="manor-warehouse-summary">
+                <span>共 {crops.reduce((total, crop) => total + crop.produce, 0)} 份作物 · 价值 {crops.reduce((total, crop) => total + crop.produce * crop.salePrice, 0)} 金币</span>
+                <button type="button" disabled={busy || crops.every((crop) => crop.produce < 1)} onClick={onSellAll}>一键出售全部</button>
+              </div>
+              <div className="manor-warehouse-list">
+                {visibleCrops.map((crop) => (
                 <div className={crop.produce > 0 ? "has-stock" : ""} key={crop.id}>
                   <span className="manor-item-image">
                     <img src={cropImage(crop.sourceId, 5)} alt="" />
@@ -1487,8 +1554,9 @@ function ClassicWindow({
                     全部出售
                   </button>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           ) : null}
         </div>
       </section>

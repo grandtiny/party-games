@@ -318,7 +318,7 @@ describe("manor farm", () => {
     delete legacy.activeDecorationIds;
 
     expect(migrateManorFarm(legacy)).toMatchObject({
-      schemaVersion: 10,
+      schemaVersion: 12,
       decorationPurchases: [],
       activeDecorationIds: [],
       ownedDogIds: [],
@@ -508,7 +508,7 @@ describe("manor farm", () => {
 
     const migrated = migrateManorFarm(legacy);
 
-    expect(migrated.schemaVersion).toBe(10);
+    expect(migrated.schemaVersion).toBe(12);
     expect(migrated.fertilizers).toEqual({ ordinary: 0, fast: 0, instant: 0 });
     expect(migrated.starterGiftClaimed).toBe(true);
     expect(migrated.unlockedPlotCount).toBe(18);
@@ -534,7 +534,7 @@ describe("manor farm", () => {
     const { unlockedPlotCount: _unlockedPlotCount, ...withoutLandProgress } = current;
     const migrated = migrateManorFarm({ ...withoutLandProgress, schemaVersion: 4 });
 
-    expect(migrated).toMatchObject({ schemaVersion: 10, unlockedPlotCount: 18 });
+    expect(migrated).toMatchObject({ schemaVersion: 12, unlockedPlotCount: 18 });
     expect(migrated.plots[17]).toMatchObject({ id: 18, cropId: "radish" });
   });
 
@@ -559,7 +559,7 @@ describe("manor farm", () => {
     });
 
     expect(migrated).toMatchObject({
-      schemaVersion: 10,
+      schemaVersion: 12,
       starterGiftClaimed: true,
       rewardedThroughOriginalLevel: 7,
       pendingLevelRewardLevels: [],
@@ -607,6 +607,28 @@ describe("manor farm", () => {
     expect(farm.pasture.manure).toBe(0);
     expect(farm.produce[redRose.id]).toBe(0);
     expect(farm.fertilizers.instant).toBe(2);
+  });
+
+  it("sells every farm product at once and keeps purchase and sale records", () => {
+    const now = 1_200_000;
+    let farm = createManorFarm(now, "farm-business");
+    farm.coins = 10_000;
+    farm = applyManorAction(farm, { type: "buy-seeds", cropId: "radish", quantity: 2 }, now + 1);
+    farm.produce.radish = 3;
+    farm.produce.carrot = 2;
+    const beforeSale = farm.coins;
+    farm = applyManorAction(farm, { type: "sell-all" }, now + 2);
+
+    expect(farm.produce.radish).toBe(0);
+    expect(farm.produce.carrot).toBe(0);
+    expect(farm.coins).toBe(beforeSale + 3 * 17 + 2 * 21);
+    expect(farm.businessRecords).toEqual([
+      expect.objectContaining({ kind: "sale", itemName: "胡萝卜", quantity: 2, totalCoins: 42 }),
+      expect.objectContaining({ kind: "sale", itemName: "白萝卜", quantity: 3, totalCoins: 51 }),
+      expect.objectContaining({ kind: "purchase", itemName: "白萝卜种子", quantity: 2, totalCoins: 250 })
+    ]);
+    expect(toManorFarmView(farm, "玩家", now + 2).businessRecords).toHaveLength(3);
+    expect(() => applyManorAction(farm, { type: "sell-all" }, now + 3)).toThrow("没有可出售");
   });
 
   it("uses Shanghai Thursday as the original fixed rainy day", () => {

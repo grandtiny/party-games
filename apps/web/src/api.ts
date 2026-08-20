@@ -34,6 +34,8 @@ import type {
   ManorFriendFarmView,
   ManorFriendPastureActionRequest,
   ManorFriendPastureView,
+  ManorGuestbookCreateRequest,
+  ManorGuestbookView,
   ManorPastureActionRequest,
   ManorPastureView,
   ManorSocialOverviewView,
@@ -144,6 +146,28 @@ export async function performManorFriendPastureAction(
     method: "POST",
     body: input
   });
+}
+
+export async function getManorGuestbook(userId?: string): Promise<ManorGuestbookView> {
+  return request(userId
+    ? `/api/manor/friends/${encodeURIComponent(userId)}/guestbook`
+    : "/api/manor/guestbook");
+}
+
+export async function createManorGuestbookMessage(
+  input: ManorGuestbookCreateRequest,
+  userId?: string
+): Promise<ManorGuestbookView> {
+  return request(userId
+    ? `/api/manor/friends/${encodeURIComponent(userId)}/guestbook`
+    : "/api/manor/guestbook", {
+    method: "POST",
+    body: input
+  });
+}
+
+export async function clearManorGuestbook(): Promise<ManorGuestbookView> {
+  return request("/api/manor/guestbook", { method: "DELETE" });
 }
 
 export async function submitPuzzleResult(

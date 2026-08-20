@@ -5,7 +5,7 @@ import type {
   ManorPastureActionRequest,
   ManorPastureView
 } from "@party-games/shared";
-import { ArrowDown, ArrowUp, Carrot, History, Home, PackageOpen, RefreshCw, Search, ShoppingBasket, UsersRound, Wheat } from "lucide-react";
+import { ArrowDown, ArrowUp, Carrot, History, Home, MessageSquare, PackageOpen, ReceiptText, RefreshCw, Search, ShoppingBasket, UsersRound, Wheat } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   getManorFriendPasture,
@@ -15,22 +15,27 @@ import {
 } from "../../api";
 import { AppShell } from "../../platform/AppShell";
 import { ManorActivityWindow } from "./ActivityWindow";
+import { ManorBusinessWindow } from "./BusinessWindow";
 import { ManorVisitBanner, type ManorVisitTarget } from "./SocialWindow";
 
 const PASTURE_ASSET_ROOT = "/assets/manor/classic/pasture";
 
-type PastureWindow = "shop" | "warehouse" | "feed" | "houses" | "queue" | "activities";
+type PastureWindow = "shop" | "warehouse" | "feed" | "houses" | "queue" | "activities" | "business";
 
 export function ManorPasturePage({
   visit,
   socialWindow,
+  guestbookWindow,
   onOpenSocial,
+  onOpenGuestbook,
   onReturnHome,
   onSwitchFarm
 }: {
   visit: ManorVisitTarget | undefined;
   socialWindow: ReactNode;
+  guestbookWindow: ReactNode;
   onOpenSocial: () => void;
+  onOpenGuestbook: () => void;
   onReturnHome: () => void;
   onSwitchFarm: () => void;
 }) {
@@ -231,6 +236,14 @@ export function ManorPasturePage({
           <button className="icon-button" type="button" aria-label="庄园动态" title="庄园动态" onClick={() => setActiveWindow("activities")}>
             <History size={18} />
           </button>
+          <button className="icon-button" type="button" aria-label="庄园留言" title="庄园留言" onClick={onOpenGuestbook}>
+            <MessageSquare size={18} />
+          </button>
+          {!visit ? (
+            <button className="icon-button" type="button" aria-label="经营流水" title="经营流水" onClick={() => setActiveWindow("business")}>
+              <ReceiptText size={18} />
+            </button>
+          ) : null}
           <button
             className="icon-button"
             type="button"
@@ -246,6 +259,7 @@ export function ManorPasturePage({
     >
       <div className="manor-page">
         {socialWindow}
+        {guestbookWindow}
         <div className="manor-stage-viewport">
           <div className="manor-stage-shell manor-stage-shell--pasture">
             <section className="manor-stage manor-stage--pasture" aria-label="QQ 牧场经典场景">
@@ -443,7 +457,18 @@ export function ManorPasturePage({
                       `${name}已全部出售`
                     )
                   }
+                  onSellAll={() =>
+                    void act(
+                      { type: "sell-all-pasture" },
+                      "sell-all-pasture",
+                      "牧场仓库中的产品已全部出售"
+                    )
+                  }
                 />
+              ) : null}
+
+              {!visit && activeWindow === "business" ? (
+                <ManorBusinessWindow records={pasture.businessRecords} onClose={() => setActiveWindow(undefined)} />
               ) : null}
 
               {activeWindow === "feed" ? (
@@ -795,6 +820,7 @@ function PastureWarehouseWindow({
   pasture,
   busy,
   onSell,
+  onSellAll,
   onClose
 }: {
   pasture: ManorPastureView;
@@ -805,6 +831,7 @@ function PastureWarehouseWindow({
     quantity: number,
     name: string
   ) => void;
+  onSellAll: () => void;
   onClose: () => void;
 }) {
   return (
@@ -812,7 +839,12 @@ function PastureWarehouseWindow({
       {pasture.inventory.length === 0 && pasture.manure === 0 ? (
         <div className="pasture-window-empty"><PackageOpen size={28} /><span>仓库暂无产品</span></div>
       ) : (
-        <div className="pasture-warehouse-list">
+        <>
+          <div className="pasture-warehouse-summary">
+            <span>可售产品价值 {pasture.inventory.reduce((total, item) => total + item.animalCount * item.animalSalePrice + item.byproductCount * item.byproductSalePrice, 0)} 金币</span>
+            <button type="button" disabled={busy || pasture.inventory.length === 0} onClick={onSellAll}>一键出售全部</button>
+          </div>
+          <div className="pasture-warehouse-list">
           {pasture.manure > 0 ? (
             <div>
               <span className="pasture-item-image">
@@ -848,7 +880,8 @@ function PastureWarehouseWindow({
             }
             return entries;
           })}
-        </div>
+          </div>
+        </>
       )}
     </PastureWindow>
   );

@@ -24,6 +24,7 @@ import {
   ManorActionRequestSchema,
   ManorFriendFarmActionRequestSchema,
   ManorFriendPastureActionRequestSchema,
+  ManorGuestbookCreateRequestSchema,
   ManorPastureActionRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
@@ -412,6 +413,69 @@ export async function createApp(options: AppOptions) {
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
         ownerUserId,
         ManorFriendPastureActionRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.getGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        undefined
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.createGuestbookMessage(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        undefined,
+        ManorGuestbookCreateRequestSchema.parse(request.body)
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.delete("/api/manor/guestbook", async (request, reply) => {
+    try {
+      return manorService.clearGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie))
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.get("/api/manor/friends/:userId/guestbook", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.getGuestbook(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId
+      );
+    } catch (error) {
+      const message = messageOf(error);
+      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+    }
+  });
+
+  app.post("/api/manor/friends/:userId/guestbook", async (request, reply) => {
+    try {
+      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
+      return manorService.createGuestbookMessage(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        ownerUserId,
+        ManorGuestbookCreateRequestSchema.parse(request.body)
       );
     } catch (error) {
       const message = messageOf(error);

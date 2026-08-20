@@ -30,6 +30,7 @@ import {
   manorDogById,
   refreshManorDailyState
 } from "./legacy.js";
+import { manorFlowerById } from "./flowers.js";
 
 export interface ManorFriendMutationResult {
   visitor: ManorFarmState;
@@ -61,6 +62,32 @@ export function applyManorFriendFarmAction(
   const owner = cloneManorFarm(currentOwner);
   visitor.daily = refreshManorDailyState(visitor.daily, now);
   owner.daily = refreshManorDailyState(owner.daily, now);
+
+  if (action.type === "send-flower") {
+    const flower = manorFlowerById(action.flowerId);
+    for (const requirement of flower.requirements) {
+      const crop = MANOR_CROPS.find((candidate) => candidate.sourceId === requirement.sourceId);
+      if (!crop) throw new Error("花束所需作物不存在");
+      if (visitor.produce[crop.id] < requirement.quantity) {
+        throw new Error(`${crop.name}不足，需要 ${requirement.quantity} 个`);
+      }
+    }
+    for (const requirement of flower.requirements) {
+      const crop = MANOR_CROPS.find((candidate) => candidate.sourceId === requirement.sourceId)!;
+      visitor.produce[crop.id] -= requirement.quantity;
+    }
+    owner.receivedFlowers.push({
+      id: owner.nextReceivedFlowerId,
+      flowerId: flower.id,
+      senderUserId: visitorUserId,
+      senderDisplayName: actorDisplayName,
+      message: action.message,
+      createdAt: now
+    });
+    owner.nextReceivedFlowerId += 1;
+    return finish(visitor, owner, now, `${flower.name}已经包装好并送出去了`);
+  }
+
   const plot = friendPlot(owner, action.plotId);
 
   if (action.type === "steal-crop") {

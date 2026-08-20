@@ -4,6 +4,7 @@ import type {
   ManorAnimalSourceId,
   ManorAnimalView,
   ManorAnimalVisualState,
+  ManorBusinessRecordView,
   ManorPastureActionRequest,
   ManorPastureInventoryView,
   ManorPastureView
@@ -16,6 +17,7 @@ import {
   validateManorActivities,
   type ManorActivityState
 } from "./legacy.js";
+import type { ManorBusinessTransaction } from "./business.js";
 
 export interface ManorAnimalDefinition {
   sourceId: ManorAnimalSourceId;
@@ -79,6 +81,7 @@ export interface ManorPastureRuntimeOptions {
   timeScale?: number;
   availableCarrots?: number;
   specialFeedRemaining?: number;
+  businessRecords?: ManorBusinessRecordView[];
 }
 
 export interface ManorPastureActionResult {
@@ -86,6 +89,7 @@ export interface ManorPastureActionResult {
   coins: number;
   carrotsConsumed: number;
   specialFeedsConsumed: number;
+  businessTransactions: ManorBusinessTransaction[];
 }
 
 export interface ManorPastureHouseUpgrade {
@@ -296,6 +300,7 @@ export function applyManorPastureAction(
   let nextCoins = coins;
   let carrotsConsumed = 0;
   let specialFeedsConsumed = 0;
+  const businessTransactions: ManorBusinessTransaction[] = [];
   switch (action.type) {
     case "buy-animal": {
       const definition = manorAnimalById(action.animalId);
@@ -324,6 +329,7 @@ export function applyManorPastureAction(
         pasture.nextAnimalSerial += 1;
       }
       pasture.experience += action.quantity * 5;
+      businessTransactions.push({ kind: "purchase", area: "pasture", itemName: definition.name, quantity: action.quantity, unitPrice: definition.purchasePrice });
       break;
     }
     case "buy-grass": {
@@ -334,6 +340,7 @@ export function applyManorPastureAction(
       if (nextCoins < cost) throw new Error("金币不足");
       nextCoins -= cost;
       pasture.grass = roundGrass(pasture.grass + quantity);
+      businessTransactions.push({ kind: "purchase", area: "pasture", itemName: "牧草", quantity, unitPrice: MANOR_GRASS_PRICE });
       break;
     }
     case "start-animal-production": {
@@ -394,6 +401,31 @@ export function applyManorPastureAction(
           ? definition.byproductSalePrice
           : definition.animalSalePrice;
       nextCoins += price * action.quantity;
+      businessTransactions.push({
+        kind: "sale",
+        area: "pasture",
+        itemName: action.itemType === "byproduct" ? definition.byproductName : definition.name,
+        quantity: action.quantity,
+        unitPrice: price
+      });
+      break;
+    }
+    case "sell-all-pasture": {
+      for (const definition of MANOR_ANIMALS) {
+        const byproductQuantity = pasture.byproducts[definition.sourceId] ?? 0;
+        if (byproductQuantity > 0) {
+          pasture.byproducts[definition.sourceId] = 0;
+          nextCoins += definition.byproductSalePrice * byproductQuantity;
+          businessTransactions.push({ kind: "sale", area: "pasture", itemName: definition.byproductName, quantity: byproductQuantity, unitPrice: definition.byproductSalePrice });
+        }
+        const animalQuantity = pasture.harvestedAnimals[definition.sourceId] ?? 0;
+        if (animalQuantity > 0) {
+          pasture.harvestedAnimals[definition.sourceId] = 0;
+          nextCoins += definition.animalSalePrice * animalQuantity;
+          businessTransactions.push({ kind: "sale", area: "pasture", itemName: definition.name, quantity: animalQuantity, unitPrice: definition.animalSalePrice });
+        }
+      }
+      if (businessTransactions.length === 0) throw new Error("牧场仓库没有可出售的产品");
       break;
     }
     case "upgrade-animal-house": {
@@ -409,6 +441,7 @@ export function applyManorPastureAction(
       nextCoins -= upgrade.coinCost;
       if (action.house === "hutch") pasture.hutchLevel = upgrade.level;
       else pasture.shedLevel = upgrade.level;
+      businessTransactions.push({ kind: "purchase", area: "pasture", itemName: `${action.house === "hutch" ? "动物窝" : "动物棚"}${upgrade.level}级升级`, quantity: 1, unitPrice: upgrade.coinCost });
       break;
     }
     case "feed-animal-carrot": {
@@ -452,7 +485,7 @@ export function applyManorPastureAction(
     }
   }
   validateManorPasture(pasture);
-  return { pasture, coins: nextCoins, carrotsConsumed, specialFeedsConsumed };
+  return { pasture, coins: nextCoins, carrotsConsumed, specialFeedsConsumed, businessTransactions };
 }
 
 export function toManorPastureView(
@@ -491,6 +524,7 @@ export function toManorPastureView(
     carrotCount: Math.max(0, options.availableCarrots ?? 0),
     weather: manorWeatherAt(now),
     activities: cloneManorActivities(pasture.activities),
+    businessRecords: options.businessRecords?.map((record) => ({ ...record })) ?? [],
     houses: { hutch, shed },
     catalog: MANOR_ANIMALS.map((definition) => toCatalogView(definition, level)),
     animals: orderedAnimals.map((animal) =>

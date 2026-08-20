@@ -4,6 +4,7 @@ import {
   applyManorFriendVisit,
   applyManorPastureAction,
   applyManorAction,
+  appendManorBusinessTransactions,
   createManorFarm,
   migrateManorFarm,
   refreshManorDailyState,
@@ -11,7 +12,9 @@ import {
   levelForExperience,
   levelForPastureExperience,
   toManorPastureView,
+  toManorFlowerCatalog,
   toManorFarmView,
+  toManorBusinessRecordViews,
   validateManorFarm,
   type ManorFarmState
 } from "@party-games/manor";
@@ -22,6 +25,8 @@ import type {
   ManorFriendPastureActionRequest,
   ManorFriendPastureView,
   ManorFriendSummaryView,
+  ManorGuestbookCreateRequest,
+  ManorGuestbookView,
   ManorSocialOverviewView,
   ManorActionRequest,
   ManorFarmView,
@@ -76,7 +81,11 @@ export class ManorService {
     const owner = this.#loadFarm(account.id, now);
     return {
       owner: this.#summary(account.id, account.displayName, owner, false),
-      farm: toManorFarmView(owner, account.displayName, now, this.options)
+      farm: toManorFarmView(owner, account.displayName, now, {
+        ...this.options,
+        includeBusinessRecords: false
+      }),
+      flowerCatalog: toManorFlowerCatalog(visit.visitor)
     };
   }
 
@@ -94,7 +103,7 @@ export class ManorService {
     const owner = this.#loadFarm(account.id, now);
     return {
       owner: this.#summary(account.id, account.displayName, owner, false),
-      pasture: this.#pastureView(owner, account.displayName, now, currentVisitor.produce.carrot)
+      pasture: this.#pastureView(owner, account.displayName, now, currentVisitor.produce.carrot, false)
     };
   }
 
@@ -119,7 +128,11 @@ export class ManorService {
     this.#saveFriendMutation(visitor.id, currentVisitor, account.id, currentOwner, result);
     return {
       owner: this.#summary(account.id, account.displayName, result.owner, false),
-      farm: toManorFarmView(result.owner, account.displayName, now, this.options),
+      farm: toManorFarmView(result.owner, account.displayName, now, {
+        ...this.options,
+        includeBusinessRecords: false
+      }),
+      flowerCatalog: toManorFlowerCatalog(result.visitor),
       message: result.message
     };
   }
@@ -149,7 +162,8 @@ export class ManorService {
         result.owner,
         account.displayName,
         now,
-        result.visitor.produce.carrot
+        result.visitor.produce.carrot,
+        false
       ),
       message: result.message
     };
@@ -181,18 +195,73 @@ export class ManorService {
     const produce = { ...current.produce };
     produce.carrot -= result.carrotsConsumed;
     daily.specialFeedsReceived += result.specialFeedsConsumed;
+    const business = appendManorBusinessTransactions(
+      current.businessRecords,
+      current.nextBusinessRecordId,
+      result.businessTransactions,
+      now
+    );
     const next: ManorFarmState = {
       ...current,
       pasture: result.pasture,
       coins: result.coins,
       produce,
       daily,
+      businessRecords: business.records,
+      nextBusinessRecordId: business.nextId,
       revision: current.revision + 1,
       updatedAt: now
     };
     validateManorFarm(next);
     this.repository.updateManorFarm(user.id, current.revision, next);
     return this.#pastureView(next, user.displayName, now, next.produce.carrot);
+  }
+
+  getGuestbook(
+    viewer: AccountUserView,
+    ownerUserId: string | undefined,
+    now = Date.now()
+  ): ManorGuestbookView {
+    const owner = ownerUserId
+      ? this.#friendAccount(viewer.id, ownerUserId)
+      : { id: viewer.id, displayName: viewer.displayName };
+    return {
+      ownerUserId: owner.id,
+      ownerDisplayName: owner.displayName,
+      canClear: owner.id === viewer.id,
+      messages: this.repository.listManorGuestbook(owner.id, 50).map((message) => ({
+        id: message.id,
+        senderUserId: message.senderUserId,
+        senderDisplayName: message.senderDisplayName,
+        content: message.content,
+        createdAt: parseStoredDate(message.createdAt, now),
+        ...(message.replyTo ? { replyTo: { ...message.replyTo } } : {})
+      }))
+    };
+  }
+
+  createGuestbookMessage(
+    sender: AccountUserView,
+    ownerUserId: string | undefined,
+    input: ManorGuestbookCreateRequest,
+    now = Date.now()
+  ): ManorGuestbookView {
+    const owner = ownerUserId
+      ? this.#friendAccount(sender.id, ownerUserId)
+      : { id: sender.id, displayName: sender.displayName };
+    this.repository.createManorGuestbookMessage(
+      owner.id,
+      sender.id,
+      input.content,
+      input.replyToId,
+      new Date(now).toISOString()
+    );
+    return this.getGuestbook(sender, ownerUserId, now);
+  }
+
+  clearGuestbook(owner: AccountUserView, now = Date.now()): ManorGuestbookView {
+    this.repository.clearManorGuestbook(owner.id);
+    return this.getGuestbook(owner, undefined, now);
   }
 
   #loadFarm(userId: string, now: number): ManorFarmState {
@@ -235,7 +304,8 @@ export class ManorService {
     farm: ManorFarmState,
     displayName: string,
     now: number,
-    availableCarrots: number
+    availableCarrots: number,
+    includeBusinessRecords = true
   ): ManorPastureView {
     const daily = refreshManorDailyState(farm.daily, now);
     return toManorPastureView(
@@ -247,6 +317,9 @@ export class ManorService {
       {
         ...this.options,
         availableCarrots,
+        businessRecords: includeBusinessRecords
+          ? toManorBusinessRecordViews(farm.businessRecords)
+          : [],
         specialFeedRemaining: MANOR_SPECIAL_FEED_LIMIT - daily.specialFeedsReceived
       }
     );
@@ -272,6 +345,11 @@ export class ManorService {
       }
     ]);
   }
+}
+
+function parseStoredDate(value: string, fallback: number): number {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : fallback;
 }
 
 function compareFarmRank(left: ManorFriendSummaryView, right: ManorFriendSummaryView): number {

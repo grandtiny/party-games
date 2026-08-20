@@ -5,11 +5,20 @@ import {
   applyManorFriendPastureAction,
   applyManorFriendVisit,
   createManorFarm,
+  MANOR_CROPS,
+  MANOR_FLOWERS,
   MANOR_TASKS,
-  migrateManorFarm
+  migrateManorFarm,
+  toManorFlowerCatalog
 } from "../src/index.js";
 
 describe("manor social rules", () => {
+  it("keeps all 14 original bouquet recipes", () => {
+    expect(MANOR_FLOWERS).toHaveLength(14);
+    expect(MANOR_FLOWERS[0]).toMatchObject({ id: 1, name: "最爱纯真", requirements: [{ sourceId: 105, quantity: 33 }] });
+    expect(MANOR_FLOWERS[13]).toMatchObject({ id: 14, name: "真爱久久", requirements: [{ sourceId: 41, quantity: 99 }] });
+  });
+
   it("completes starter tasks only when the matching real action occurs", () => {
     const now = 1_000;
     const initial = createManorFarm(now, "task-user", { enableStarterTasks: true });
@@ -69,6 +78,48 @@ describe("manor social rules", () => {
     expect(result.visitor).toMatchObject({ nextTaskId: 11, coins: 622, experience: 102 });
     expect(owner).toMatchObject({ coins: 120, experience: 2 });
     expect(owner.plots[0]?.wateredAt).toBe(now + 2);
+  });
+
+  it("packages original bouquets and moves them between accounts atomically", () => {
+    const now = 15_000;
+    const visitor = createManorFarm(now, "flower-sender");
+    const owner = createManorFarm(now, "flower-owner");
+    const lily = MANOR_CROPS.find((crop) => crop.sourceId === 103);
+    const daisy = MANOR_CROPS.find((crop) => crop.sourceId === 105);
+    if (!lily || !daisy) throw new Error("flower crops missing");
+    visitor.produce[lily.id] = 10;
+    visitor.produce[daisy.id] = 50;
+
+    expect(toManorFlowerCatalog(visitor).find((flower) => flower.id === 2)?.canSend).toBe(true);
+    const result = applyManorFriendFarmAction(
+      visitor,
+      owner,
+      "sender-id",
+      { type: "send-flower", flowerId: 2, message: "聚会愉快" },
+      now + 1,
+      {},
+      "送花人"
+    );
+
+    expect(result.visitor.produce[lily.id]).toBe(0);
+    expect(result.visitor.produce[daisy.id]).toBe(0);
+    expect(result.owner.receivedFlowers).toEqual([{
+      id: 1,
+      flowerId: 2,
+      senderUserId: "sender-id",
+      senderDisplayName: "送花人",
+      message: "聚会愉快",
+      createdAt: now + 1
+    }]);
+    expect(result.owner.nextReceivedFlowerId).toBe(2);
+    expect(toManorFlowerCatalog(result.visitor).find((flower) => flower.id === 2)?.canSend).toBe(false);
+    expect(() => applyManorFriendFarmAction(
+      result.visitor,
+      result.owner,
+      "sender-id",
+      { type: "send-flower", flowerId: 2, message: "" },
+      now + 2
+    )).toThrow("天香百合不足");
   });
 
   it("uses original crop steal odds, minimum output and one steal per player per season", () => {
@@ -158,7 +209,7 @@ describe("manor social rules", () => {
     }
 
     expect(migrateManorFarm(legacy)).toMatchObject({
-      schemaVersion: 10,
+      schemaVersion: 12,
       nextTaskId: 12,
       pasture: { schemaVersion: 3 }
     });

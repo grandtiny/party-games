@@ -391,6 +391,23 @@ export const ManorPastureItemTypeSchema = z.enum(["byproduct", "animal"]);
 export type ManorPastureItemType = z.infer<typeof ManorPastureItemTypeSchema>;
 export const ManorDogIdSchema = z.union([z.literal(1), z.literal(3)]);
 export type ManorDogId = z.infer<typeof ManorDogIdSchema>;
+export const ManorFlowerIdSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+  z.literal(9),
+  z.literal(10),
+  z.literal(11),
+  z.literal(12),
+  z.literal(13),
+  z.literal(14)
+]);
+export type ManorFlowerId = z.infer<typeof ManorFlowerIdSchema>;
 
 const ManorPlotIdSchema = z.number().int().min(1).max(18);
 const ManorPurchaseQuantitySchema = z.number().int().min(1).max(99);
@@ -441,6 +458,7 @@ export const ManorActionRequestSchema = z.discriminatedUnion("type", [
     cropId: ManorCropIdSchema,
     quantity: ManorSaleQuantitySchema
   }),
+  z.object({ type: z.literal("sell-all") }),
   z.object({ type: z.literal("buy-dog"), dogId: ManorDogIdSchema }),
   z.object({ type: z.literal("activate-dog"), dogId: ManorDogIdSchema }),
   z.object({ type: z.literal("buy-dog-food"), days: z.union([z.literal(1), z.literal(7)]) }),
@@ -480,6 +498,7 @@ export const ManorPastureActionRequestSchema = z.discriminatedUnion("type", [
     itemType: ManorPastureItemTypeSchema,
     quantity: ManorSaleQuantitySchema
   }),
+  z.object({ type: z.literal("sell-all-pasture") }),
   z.object({
     type: z.literal("upgrade-animal-house"),
     house: ManorAnimalHouseSchema
@@ -503,7 +522,12 @@ export const ManorFriendFarmActionRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("clear-pest"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("steal-crop"), plotId: ManorPlotIdSchema }),
   z.object({ type: z.literal("add-weed"), plotId: ManorPlotIdSchema }),
-  z.object({ type: z.literal("add-pest"), plotId: ManorPlotIdSchema })
+  z.object({ type: z.literal("add-pest"), plotId: ManorPlotIdSchema }),
+  z.object({
+    type: z.literal("send-flower"),
+    flowerId: ManorFlowerIdSchema,
+    message: z.string().trim().max(120)
+  })
 ]);
 export type ManorFriendFarmActionRequest = z.infer<typeof ManorFriendFarmActionRequestSchema>;
 
@@ -532,6 +556,12 @@ export const ManorFriendPastureActionRequestSchema = z.discriminatedUnion("type"
   })
 ]);
 export type ManorFriendPastureActionRequest = z.infer<typeof ManorFriendPastureActionRequestSchema>;
+
+export const ManorGuestbookCreateRequestSchema = z.object({
+  content: z.string().trim().min(1).max(200),
+  replyToId: z.string().min(1).max(64).optional()
+});
+export type ManorGuestbookCreateRequest = z.infer<typeof ManorGuestbookCreateRequestSchema>;
 
 const AdminPasswordSchema = z.string().min(8).max(128);
 
@@ -780,6 +810,49 @@ export interface ManorActivityView {
   createdAt: number;
 }
 
+export type ManorBusinessKind = "purchase" | "sale";
+export type ManorBusinessArea = "farm" | "pasture";
+
+export interface ManorBusinessRecordView {
+  id: number;
+  kind: ManorBusinessKind;
+  area: ManorBusinessArea;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalCoins: number;
+  createdAt: number;
+}
+
+export interface ManorFlowerRequirementView {
+  cropId: ManorCropId;
+  sourceId: number;
+  cropName: string;
+  quantity: number;
+  available: number;
+}
+
+export interface ManorFlowerCatalogView {
+  id: ManorFlowerId;
+  name: string;
+  description: string;
+  assetUrl: string;
+  requirements: ManorFlowerRequirementView[];
+  canSend: boolean;
+}
+
+export interface ManorReceivedFlowerView {
+  id: number;
+  flowerId: ManorFlowerId;
+  name: string;
+  description: string;
+  assetUrl: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  message: string;
+  createdAt: number;
+}
+
 export interface ManorDogCatalogView {
   id: ManorDogId;
   name: string;
@@ -879,6 +952,8 @@ export interface ManorFarmView {
     specialFeedsRemaining: number;
   };
   activities: ManorActivityView[];
+  businessRecords: ManorBusinessRecordView[];
+  flowerBasket: ManorReceivedFlowerView[];
   starterGift: {
     claimed: boolean;
     items: ManorRewardItemView[];
@@ -984,6 +1059,7 @@ export interface ManorPastureView {
   carrotCount: number;
   weather: ManorWeatherView;
   activities: ManorActivityView[];
+  businessRecords: ManorBusinessRecordView[];
   houses: {
     hutch: { level: number; capacity: number; occupied: number; assetUrl: string; nextUpgrade?: { levelRequired: number; coinCost: number } };
     shed: { level: number; capacity: number; occupied: number; assetUrl: string; nextUpgrade?: { levelRequired: number; coinCost: number } };
@@ -1012,6 +1088,7 @@ export interface ManorSocialOverviewView {
 export interface ManorFriendFarmView {
   owner: ManorFriendSummaryView;
   farm: ManorFarmView;
+  flowerCatalog: ManorFlowerCatalogView[];
   message?: string;
 }
 
@@ -1019,6 +1096,28 @@ export interface ManorFriendPastureView {
   owner: ManorFriendSummaryView;
   pasture: ManorPastureView;
   message?: string;
+}
+
+export interface ManorGuestbookReplyView {
+  id: string;
+  senderDisplayName: string;
+  content: string;
+}
+
+export interface ManorGuestbookMessageView {
+  id: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  content: string;
+  createdAt: number;
+  replyTo?: ManorGuestbookReplyView;
+}
+
+export interface ManorGuestbookView {
+  ownerUserId: string;
+  ownerDisplayName: string;
+  canClear: boolean;
+  messages: ManorGuestbookMessageView[];
 }
 
 export interface AdminLlmConfigView {

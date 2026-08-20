@@ -7,6 +7,8 @@ import type {
   ManorDogId,
   ManorFarmView,
   ManorFertilizerId,
+  ManorFlowerCatalogView,
+  ManorFlowerId,
   ManorPlotView,
   ManorRewardItemView
 } from "@party-games/shared";
@@ -42,6 +44,15 @@ import {
   type ManorActivityState,
   type ManorDailyState
 } from "./legacy.js";
+import { MANOR_FLOWERS, manorFlowerById } from "./flowers.js";
+import {
+  appendManorBusinessTransactions,
+  cloneManorBusinessRecords,
+  toManorBusinessRecordViews,
+  validateManorBusinessRecords,
+  type ManorBusinessRecordState,
+  type ManorBusinessTransaction
+} from "./business.js";
 
 export interface ManorCropDefinition {
   id: ManorCropId;
@@ -111,8 +122,17 @@ export interface ManorDecorationPurchaseState {
   validUntil: number;
 }
 
+export interface ManorReceivedFlowerState {
+  id: number;
+  flowerId: ManorFlowerId;
+  senderUserId: string;
+  senderDisplayName: string;
+  message: string;
+  createdAt: number;
+}
+
 export interface ManorFarmState {
-  schemaVersion: 10;
+  schemaVersion: 12;
   revision: number;
   coins: number;
   experience: number;
@@ -129,6 +149,10 @@ export interface ManorFarmState {
   dogFedUntil: number;
   daily: ManorDailyState;
   activities: ManorActivityState[];
+  businessRecords: ManorBusinessRecordState[];
+  nextBusinessRecordId: number;
+  receivedFlowers: ManorReceivedFlowerState[];
+  nextReceivedFlowerId: number;
   nextTaskId: number;
   unlockedPlotCount: number;
   seeds: Record<ManorCropId, number>;
@@ -142,6 +166,7 @@ export interface ManorFarmState {
 export interface ManorRuntimeOptions {
   timeScale?: number;
   legacyBackgroundUrl?: string;
+  includeBusinessRecords?: boolean;
 }
 
 export const MANOR_PLOT_COUNT = 18;
@@ -186,7 +211,7 @@ export const MANOR_LAND_UNLOCKS: readonly ManorLandUnlockRequirement[] = [
 ];
 
 type PersistedManorFarm = Omit<Partial<ManorFarmState>, "schemaVersion"> & {
-  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  schemaVersion?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   fertilizer?: unknown;
 };
 
@@ -196,7 +221,7 @@ export function createManorFarm(
   options: { enableStarterTasks?: boolean } = {}
 ): ManorFarmState {
   const state: ManorFarmState = {
-    schemaVersion: 10,
+    schemaVersion: 12,
     revision: 0,
     coins: 120,
     experience: 0,
@@ -212,6 +237,10 @@ export function createManorFarm(
     dogFedUntil: 0,
     daily: createManorDailyState(now),
     activities: [],
+    businessRecords: [],
+    nextBusinessRecordId: 1,
+    receivedFlowers: [],
+    nextReceivedFlowerId: 1,
     nextTaskId: options.enableStarterTasks ? 0 : MANOR_TASKS.length,
     unlockedPlotCount: MANOR_INITIAL_PLOT_COUNT,
     seeds: cropRecord({ radish: 3 }),
@@ -238,7 +267,9 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     candidate.schemaVersion !== 7 &&
     candidate.schemaVersion !== 8 &&
     candidate.schemaVersion !== 9 &&
-    candidate.schemaVersion !== 10
+    candidate.schemaVersion !== 10 &&
+    candidate.schemaVersion !== 11 &&
+    candidate.schemaVersion !== 12
   ) {
     throw new Error("庄园存档版本不受支持");
   }
@@ -251,7 +282,7 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
   const createdAt = timestamp(candidate.createdAt, "创建时间");
   const updatedAt = timestamp(candidate.updatedAt, "更新时间");
   const state: ManorFarmState = {
-    schemaVersion: 10,
+    schemaVersion: 12,
     revision: integer(candidate.revision, "存档修订号"),
     coins: integer(candidate.coins, "金币"),
     experience: integer(candidate.experience, "经验"),
@@ -292,6 +323,18 @@ export function migrateManorFarm(value: unknown, fallbackNow?: number): ManorFar
     activities: candidate.schemaVersion >= 10
       ? migrateActivities(candidate.activities)
       : [],
+    businessRecords: candidate.schemaVersion >= 12
+      ? migrateBusinessRecords(candidate.businessRecords)
+      : [],
+    nextBusinessRecordId: candidate.schemaVersion >= 12
+      ? integer(candidate.nextBusinessRecordId, "下一经营流水编号")
+      : 1,
+    receivedFlowers: candidate.schemaVersion >= 11
+      ? migrateReceivedFlowers(candidate.receivedFlowers)
+      : [],
+    nextReceivedFlowerId: candidate.schemaVersion >= 11
+      ? integer(candidate.nextReceivedFlowerId, "下一花束编号")
+      : 1,
     nextTaskId: candidate.schemaVersion >= 9
       ? integer(candidate.nextTaskId, "新手任务进度")
       : MANOR_TASKS.length,
@@ -324,6 +367,7 @@ export function applyManorAction(
   const crop = "cropId" in action ? cropById(action.cropId) : undefined;
   const plot = "plotId" in action ? plotById(state, action.plotId) : undefined;
   const level = levelForExperience(state.experience);
+  const businessTransactions: ManorBusinessTransaction[] = [];
   if (plot && action.type !== "reclaim-plot") ensurePlotUnlocked(state, plot);
 
   switch (action.type) {
@@ -335,6 +379,7 @@ export function applyManorAction(
       if (state.coins < cost) throw new Error("金币不足");
       state.coins -= cost;
       state.seeds[crop.id] += action.quantity;
+      businessTransactions.push({ kind: "purchase", area: "farm", itemName: `${crop.name}种子`, quantity: action.quantity, unitPrice: crop.seedPrice });
       break;
     }
     case "plant": {
@@ -427,6 +472,7 @@ export function applyManorAction(
       if (state.coins < cost) throw new Error("金币不足");
       state.coins -= cost;
       state.fertilizers.ordinary += action.quantity;
+      businessTransactions.push({ kind: "purchase", area: "farm", itemName: "普通化肥", quantity: action.quantity, unitPrice: coinPrice });
       break;
     }
     case "claim-starter-gift": {
@@ -458,6 +504,7 @@ export function applyManorAction(
         validUntil: now + decoration.validSeconds * 1_000
       });
       activateDecoration(state, decoration.sourceId);
+      businessTransactions.push({ kind: "purchase", area: "farm", itemName: decoration.name, quantity: 1, unitPrice: decoration.coinPrice });
       break;
     }
     case "activate-decoration": {
@@ -477,6 +524,18 @@ export function applyManorAction(
       if (state.produce[crop.id] < action.quantity) throw new Error("仓库数量不足");
       state.produce[crop.id] -= action.quantity;
       state.coins += crop.salePrice * action.quantity;
+      businessTransactions.push({ kind: "sale", area: "farm", itemName: crop.name, quantity: action.quantity, unitPrice: crop.salePrice });
+      break;
+    }
+    case "sell-all": {
+      for (const sellCrop of MANOR_CROPS) {
+        const quantity = state.produce[sellCrop.id];
+        if (quantity < 1) continue;
+        state.produce[sellCrop.id] = 0;
+        state.coins += sellCrop.salePrice * quantity;
+        businessTransactions.push({ kind: "sale", area: "farm", itemName: sellCrop.name, quantity, unitPrice: sellCrop.salePrice });
+      }
+      if (businessTransactions.length === 0) throw new Error("农场仓库没有可出售的作物");
       break;
     }
     case "buy-dog": {
@@ -487,6 +546,7 @@ export function applyManorAction(
       state.ownedDogIds.push(dog.id);
       state.activeDogId = dog.id;
       if (state.dogFedUntil < now) state.dogFedUntil = now + 86_400_000;
+      businessTransactions.push({ kind: "purchase", area: "farm", itemName: dog.name, quantity: 1, unitPrice: dog.price });
       break;
     }
     case "activate-dog": {
@@ -502,6 +562,7 @@ export function applyManorAction(
       if (state.coins < option.coinPrice) throw new Error("金币不足");
       state.coins -= option.coinPrice;
       state.dogFedUntil = Math.max(now, state.dogFedUntil) + option.days * 86_400_000;
+      businessTransactions.push({ kind: "purchase", area: "farm", itemName: `${option.days}天狗粮`, quantity: 1, unitPrice: option.coinPrice });
       break;
     }
     case "craft-instant-fertilizer": {
@@ -518,6 +579,17 @@ export function applyManorAction(
       state.fertilizers.instant += action.quantity;
       break;
     }
+  }
+
+  if (businessTransactions.length > 0) {
+    const business = appendManorBusinessTransactions(
+      state.businessRecords,
+      state.nextBusinessRecordId,
+      businessTransactions,
+      now
+    );
+    state.businessRecords = business.records;
+    state.nextBusinessRecordId = business.nextId;
   }
 
   const taskEvent = taskEventForAction(action.type);
@@ -544,6 +616,30 @@ export function recordManorTaskEvent(
 
 export function cloneManorFarm(state: ManorFarmState): ManorFarmState {
   return cloneState(state);
+}
+
+export function toManorFlowerCatalog(state: ManorFarmState): ManorFlowerCatalogView[] {
+  validateManorFarm(state);
+  return MANOR_FLOWERS.map((flower) => {
+    const requirements = flower.requirements.map((requirement) => {
+      const crop = cropBySourceId(requirement.sourceId);
+      return {
+        cropId: crop.id,
+        sourceId: crop.sourceId,
+        cropName: crop.name,
+        quantity: requirement.quantity,
+        available: state.produce[crop.id]
+      };
+    });
+    return {
+      id: flower.id,
+      name: flower.name,
+      description: flower.description,
+      assetUrl: flower.assetUrl,
+      requirements,
+      canSend: requirements.every((requirement) => requirement.available >= requirement.quantity)
+    };
+  });
 }
 
 export function manorEstimatedYield(
@@ -586,6 +682,8 @@ function taskEventForAction(type: ManorActionRequest["type"]): ManorTaskEvent | 
     case "buy-seeds":
     case "sell":
       return type;
+    case "sell-all":
+      return "sell";
     default:
       return undefined;
   }
@@ -680,6 +778,20 @@ export function toManorFarmView(
       specialFeedsRemaining: MANOR_SPECIAL_FEED_LIMIT - daily.specialFeedsReceived
     },
     activities: cloneManorActivities(state.activities),
+    businessRecords: options.includeBusinessRecords === false
+      ? []
+      : toManorBusinessRecordViews(state.businessRecords),
+    flowerBasket: [...state.receivedFlowers]
+      .sort((left, right) => right.createdAt - left.createdAt || right.id - left.id)
+      .map((receipt) => {
+        const flower = manorFlowerById(receipt.flowerId);
+        return {
+          ...receipt,
+          name: flower.name,
+          description: flower.description,
+          assetUrl: flower.assetUrl
+        };
+      }),
     starterGift: {
       claimed: state.starterGiftClaimed,
       items: MANOR_STARTER_GIFT.map(toRewardItemView)
@@ -720,7 +832,7 @@ export function toManorFarmView(
 }
 
 export function validateManorFarm(state: ManorFarmState): void {
-  if (state.schemaVersion !== 10) throw new Error("庄园存档版本无效");
+  if (state.schemaVersion !== 12) throw new Error("庄园存档版本无效");
   for (const [label, value] of [
     ["修订号", state.revision],
     ["金币", state.coins],
@@ -748,6 +860,33 @@ export function validateManorFarm(state: ManorFarmState): void {
   }
   validateManorDailyState(state.daily);
   validateManorActivities(state.activities);
+  validateManorBusinessRecords(state.businessRecords, state.nextBusinessRecordId);
+  if (!Number.isInteger(state.nextReceivedFlowerId) || state.nextReceivedFlowerId < 1) {
+    throw new Error("下一花束编号无效");
+  }
+  const receivedFlowerIds = new Set<number>();
+  for (const receipt of state.receivedFlowers) {
+    manorFlowerById(receipt.flowerId);
+    if (
+      !Number.isInteger(receipt.id) ||
+      receipt.id < 1 ||
+      receivedFlowerIds.has(receipt.id) ||
+      typeof receipt.senderUserId !== "string" ||
+      receipt.senderUserId.length < 1 ||
+      typeof receipt.senderDisplayName !== "string" ||
+      receipt.senderDisplayName.length < 1 ||
+      typeof receipt.message !== "string" ||
+      receipt.message.length > 120 ||
+      !Number.isInteger(receipt.createdAt) ||
+      receipt.createdAt < 0
+    ) {
+      throw new Error("花篮记录无效");
+    }
+    receivedFlowerIds.add(receipt.id);
+  }
+  if (state.receivedFlowers.some((receipt) => receipt.id >= state.nextReceivedFlowerId)) {
+    throw new Error("下一花束编号无效");
+  }
   if (state.nextTaskId > MANOR_TASKS.length) throw new Error("新手任务进度无效");
   for (const fertilizer of MANOR_FERTILIZERS) {
     if (!Number.isInteger(state.fertilizers[fertilizer.id]) || state.fertilizers[fertilizer.id] < 0) {
@@ -1323,6 +1462,8 @@ function cloneState(state: ManorFarmState): ManorFarmState {
     ownedDogIds: [...state.ownedDogIds],
     daily: { ...state.daily },
     activities: cloneManorActivities(state.activities),
+    businessRecords: cloneManorBusinessRecords(state.businessRecords),
+    receivedFlowers: state.receivedFlowers.map((receipt) => ({ ...receipt })),
     seeds: { ...state.seeds },
     produce: { ...state.produce },
     plots: state.plots.map((plot) => ({
@@ -1388,6 +1529,49 @@ function migrateActivities(value: unknown): ManorActivityState[] {
   return activities;
 }
 
+function migrateReceivedFlowers(value: unknown): ManorReceivedFlowerState[] {
+  if (!Array.isArray(value)) throw new Error("花篮记录无效");
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") throw new Error("花篮记录无效");
+    const receipt = entry as Partial<ManorReceivedFlowerState>;
+    const flowerId = integer(receipt.flowerId, "花束编号") as ManorFlowerId;
+    manorFlowerById(flowerId);
+    if (typeof receipt.message !== "string") throw new Error("花束赠言无效");
+    return {
+      id: integer(receipt.id, "花篮记录编号"),
+      flowerId,
+      senderUserId: text(receipt.senderUserId, "赠花用户"),
+      senderDisplayName: text(receipt.senderDisplayName, "赠花用户名称"),
+      message: receipt.message,
+      createdAt: timestamp(receipt.createdAt, "赠花时间")
+    };
+  });
+}
+
+function migrateBusinessRecords(value: unknown): ManorBusinessRecordState[] {
+  if (!Array.isArray(value)) throw new Error("经营流水记录无效");
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") throw new Error("经营流水记录无效");
+    const record = entry as Partial<ManorBusinessRecordState>;
+    if (
+      (record.kind !== "purchase" && record.kind !== "sale") ||
+      (record.area !== "farm" && record.area !== "pasture")
+    ) {
+      throw new Error("经营流水记录无效");
+    }
+    return {
+      id: integer(record.id, "经营流水编号"),
+      kind: record.kind,
+      area: record.area,
+      itemName: text(record.itemName, "经营流水项目"),
+      quantity: integer(record.quantity, "经营流水数量"),
+      unitPrice: integer(record.unitPrice, "经营流水单价"),
+      totalCoins: integer(record.totalCoins, "经营流水金额"),
+      createdAt: timestamp(record.createdAt, "经营流水时间")
+    };
+  });
+}
+
 function migrateFertilizers(
   value: Partial<Record<ManorFertilizerId, number>> | undefined
 ): Record<ManorFertilizerId, number> {
@@ -1409,7 +1593,7 @@ function migrateInventory(
 
 function migratePlot(
   value: unknown,
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 ): ManorPlotState {
   if (!value || typeof value !== "object") throw new Error("土地存档格式无效");
   const plot = value as Partial<ManorPlotState>;

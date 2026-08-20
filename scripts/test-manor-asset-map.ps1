@@ -18,6 +18,7 @@ $runtimePastureAudioAssetDirectory = Join-Path $runtimePastureAssetDirectory "au
 $runtimeDecorationAssetDirectory = Join-Path $classicAssetDirectory "decorations"
 $runtimeDecorationImageDirectory = Join-Path $runtimeDecorationAssetDirectory "items"
 $runtimeDecorationThumbnailDirectory = Join-Path $runtimeDecorationAssetDirectory "thumbnails"
+$runtimeFlowerAssetDirectory = Join-Path $classicAssetDirectory "flowers"
 
 function Assert-Equal($Actual, $Expected, [string]$Label) {
   if ($Actual -ne $Expected) {
@@ -77,6 +78,7 @@ $interfaceMediaVisualReview = @(Import-Csv -LiteralPath (Join-Path $OutputDirect
 $interfaceMediaContactDirectory = Join-Path $OutputDirectory "contact-sheets\interface-media"
 $assetReviewIssues = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "asset-review-issues.csv"))
 $legacyFeatureAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "legacy-feature-runtime-assets.csv"))
+$flowerRuntimeAssets = @(Import-Csv -LiteralPath (Join-Path $OutputDirectory "flower-runtime-assets.csv"))
 
 Assert-Equal $crops.Count 86 "crop rows"
 Assert-Equal @($crops | Select-Object -ExpandProperty source_id -Unique).Count 86 "unique crop IDs"
@@ -107,6 +109,15 @@ foreach ($asset in $legacyFeatureAssets) {
   Assert-True (Test-Path -LiteralPath $path -PathType Leaf) "missing legacy feature runtime asset: $($asset.runtime_asset)"
   Assert-Equal (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() $asset.runtime_sha256 "legacy feature runtime hash: $($asset.feature)"
   Assert-Equal $asset.status "ready" "legacy feature status: $($asset.feature)"
+}
+
+Assert-Equal $flowerRuntimeAssets.Count 14 "flower runtime mappings"
+Assert-Equal @(Get-ChildItem -LiteralPath $runtimeFlowerAssetDirectory -File -Filter "*.gif").Count 14 "runtime flower assets"
+foreach ($asset in $flowerRuntimeAssets) {
+  $path = Join-Path $repositoryRoot $asset.runtime_asset
+  Assert-True (Test-Path -LiteralPath $path -PathType Leaf) "missing flower runtime asset: $($asset.runtime_asset)"
+  Assert-Equal (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() $asset.runtime_sha256 "flower runtime hash: $($asset.flower_id)"
+  Assert-Equal $asset.status "ready" "flower runtime status: $($asset.flower_id)"
 }
 
 Assert-Equal $animals.Count 35 "animal rows"
@@ -421,6 +432,7 @@ foreach ($asset in $pastureRuntimeAudioAssets) {
   InterfaceMediaContactSheets = $interfaceMediaContactSheets.Count
   AssetReviewIssues = $assetReviewIssues.Count
   LegacyDuplicateGroups = $duplicates.Count
+  RuntimeFlowerAssets = $flowerRuntimeAssets.Count
   CurrentDuplicateGroups = $currentDuplicates.Count
   Status = "ok"
 }

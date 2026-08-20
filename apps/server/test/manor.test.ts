@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { MANOR_CROPS } from "@party-games/manor";
 import { createApp } from "../src/app.js";
 
 describe("manor account persistence", () => {
@@ -360,6 +361,62 @@ describe("manor account persistence", () => {
       const visitorCookie = sessionCookie(visitorSetup.headers["set-cookie"]);
       const visitorUserId = String(visitorSetup.json().user.id);
 
+      const ownerMessage = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/guestbook",
+        headers: { cookie: ownerCookie },
+        payload: { content: "欢迎来到我的庄园" }
+      });
+      expect(ownerMessage.statusCode).toBe(200);
+      const ownerMessageId = String(ownerMessage.json().messages[0].id);
+      const visitorReply = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/guestbook`,
+        headers: { cookie: visitorCookie },
+        payload: { content: "已经来过了", replyToId: ownerMessageId }
+      });
+      expect(visitorReply.statusCode).toBe(200);
+      expect(visitorReply.json()).toMatchObject({
+        ownerUserId,
+        canClear: false,
+        messages: [
+          expect.objectContaining({
+            senderDisplayName: "来访好友",
+            replyTo: expect.objectContaining({ id: ownerMessageId, senderDisplayName: "庄园主人" })
+          }),
+          expect.objectContaining({ id: ownerMessageId })
+        ]
+      });
+      const visitorOwnMessage = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/guestbook",
+        headers: { cookie: visitorCookie },
+        payload: { content: "这是我自己的留言板" }
+      });
+      const crossBoardReply = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/guestbook`,
+        headers: { cookie: visitorCookie },
+        payload: { content: "错误引用", replyToId: visitorOwnMessage.json().messages[0].id }
+      });
+      expect(crossBoardReply.statusCode).toBe(400);
+      expect(crossBoardReply.json().error).toContain("不属于当前留言板");
+
+      instance.manorService.getFarm(visitorSetup.json().user);
+      const visitorFarmForFlowers = instance.repository.getManorFarm(visitorUserId) as {
+        revision: number;
+        updatedAt: number;
+        produce: Record<string, number>;
+      };
+      const daisy = MANOR_CROPS.find((crop) => crop.sourceId === 105);
+      if (!daisy) throw new Error("daisy crop missing");
+      instance.repository.updateManorFarm(visitorUserId, visitorFarmForFlowers.revision, {
+        ...visitorFarmForFlowers,
+        revision: visitorFarmForFlowers.revision + 1,
+        updatedAt: visitorFarmForFlowers.updatedAt + 1,
+        produce: { ...visitorFarmForFlowers.produce, [daisy.id]: 33 }
+      });
+
       const selfVisit = await instance.app.inject({
         method: "GET",
         url: `/api/manor/friends/${visitorUserId}/farm`,
@@ -449,7 +506,10 @@ describe("manor account persistence", () => {
         url: `/api/manor/friends/${ownerUserId}/farm`,
         headers: { cookie: visitorCookie }
       });
-      expect(friendFarm.statusCode).toBe(200);
+      expect(friendFarm.statusCode, JSON.stringify(friendFarm.json())).toBe(200);
+      expect(friendFarm.json().flowerCatalog).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 1, canSend: true })])
+      );
       expect(friendFarm.json().farm.plots).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: 1, status: "mature" })])
       );
@@ -471,6 +531,83 @@ describe("manor account persistence", () => {
       });
       expect(duplicateCropSteal.statusCode).toBe(400);
       expect(duplicateCropSteal.json().error).toContain("已经偷过");
+
+      const sentFlower = await instance.app.inject({
+        method: "POST",
+        url: `/api/manor/friends/${ownerUserId}/farm/actions`,
+        headers: { cookie: visitorCookie },
+        payload: { type: "send-flower", flowerId: 1, message: "庄园开张快乐" }
+      });
+      expect(sentFlower.statusCode, JSON.stringify(sentFlower.json())).toBe(200);
+      expect(sentFlower.json()).toMatchObject({
+        flowerCatalog: expect.arrayContaining([expect.objectContaining({ id: 1, canSend: false })]),
+        farm: {
+          flowerBasket: [expect.objectContaining({
+            flowerId: 1,
+            senderUserId: visitorUserId,
+            senderDisplayName: "来访好友",
+            message: "庄园开张快乐"
+          })]
+        }
+      });
+      const soldFarm = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/actions",
+        headers: { cookie: visitorCookie },
+        payload: { type: "sell-all" }
+      });
+      expect(soldFarm.statusCode, JSON.stringify(soldFarm.json())).toBe(200);
+      expect(soldFarm.json().businessRecords).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: "sale", area: "farm", itemName: "白萝卜" })])
+      );
+      const soldPasture = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/pasture/actions",
+        headers: { cookie: visitorCookie },
+        payload: { type: "sell-all-pasture" }
+      });
+      expect(soldPasture.statusCode, JSON.stringify(soldPasture.json())).toBe(200);
+      expect(soldPasture.json()).toMatchObject({
+        inventory: [],
+        businessRecords: expect.arrayContaining([
+          expect.objectContaining({ kind: "sale", area: "pasture", itemName: "兔仔", quantity: 1 }),
+          expect.objectContaining({ kind: "sale", area: "farm", itemName: "白萝卜" })
+        ])
+      });
+      const senderAfterFlower = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor",
+        headers: { cookie: visitorCookie }
+      });
+      expect(senderAfterFlower.json().catalog).toEqual(
+        expect.arrayContaining([expect.objectContaining({ sourceId: 105, produce: 0 })])
+      );
+
+      for (let index = 0; index < 51; index += 1) {
+        instance.repository.createManorGuestbookMessage(
+          ownerUserId,
+          visitorUserId,
+          `批量留言 ${index}`,
+          undefined,
+          new Date(Date.UTC(2030, 0, 1, 0, 0, index)).toISOString()
+        );
+      }
+      const recentGuestbook = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/friends/${ownerUserId}/guestbook`,
+        headers: { cookie: visitorCookie }
+      });
+      expect(recentGuestbook.json().messages).toHaveLength(50);
+      expect(recentGuestbook.json().messages[0].content).toBe("批量留言 50");
+      expect(recentGuestbook.json().messages.at(-1).content).toBe("批量留言 1");
+
+      const clearedGuestbook = await instance.app.inject({
+        method: "DELETE",
+        url: "/api/manor/guestbook",
+        headers: { cookie: ownerCookie }
+      });
+      expect(clearedGuestbook.statusCode).toBe(200);
+      expect(clearedGuestbook.json()).toMatchObject({ canClear: true, messages: [] });
 
       const ranked = await instance.app.inject({
         method: "GET",
