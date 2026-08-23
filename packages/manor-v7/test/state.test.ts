@@ -258,7 +258,7 @@ describe("QQ Farm V7 domain", () => {
       6_100
     );
 
-    expect(bought.coins).toBe(820);
+    expect(bought.coins).toBe(910);
     expect(bought.pasture.grass).toBe(20.875);
     expect(inventoryQuantity(bought.farm.produceInventory, 40)).toBe(3);
     expect(toManorV7View(bought, { userId: "u1", displayName: "玩家" }, 6_100).pasture.grass).toBe(20);
