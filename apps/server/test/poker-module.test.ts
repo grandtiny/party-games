@@ -710,7 +710,8 @@ describe("poker server module", () => {
     vi.setSystemTime(new Date("2026-06-21T12:00:00.000Z"));
     const context = createRepository();
     let repository = context.repository;
-    let service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    const options = { gameSeed: () => "preflop-all-in-tournament" };
+    let service = new RoomService(repository, new PresenceTracker(), pokerRegistry(), options);
     const { owner, second } = await createStartedPokerRoom(service, {
       mode: "tournament",
       smallBlind: 250,
@@ -752,7 +753,7 @@ describe("poker server module", () => {
 
     closeRepository(repository);
     ({ repository } = createRepository(context.databasePath));
-    service = new RoomService(repository, new PresenceTracker(), pokerRegistry());
+    service = new RoomService(repository, new PresenceTracker(), pokerRegistry(), options);
     expect(service.getView(owner.roomCode, owner.playerId).room.pokerTable).toEqual(
       view.room.pokerTable
     );

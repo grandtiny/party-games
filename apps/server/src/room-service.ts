@@ -30,6 +30,10 @@ import type { SqliteRoomRepository } from "./repository.js";
 
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+export interface RoomServiceOptions {
+  gameSeed?: () => string;
+}
+
 export class RoomService {
   readonly #locks = new Map<string, Promise<void>>();
   readonly #lastChatAt = new Map<string, number>();
@@ -37,7 +41,8 @@ export class RoomService {
   constructor(
     private readonly repository: SqliteRoomRepository,
     private readonly presence: PresenceTracker,
-    private readonly games: GameRegistry<GameType, ServerGameModule> = createGameRegistry()
+    private readonly games: GameRegistry<GameType, ServerGameModule> = createGameRegistry(),
+    private readonly options: RoomServiceOptions = {}
   ) {}
 
   async createRoom(
@@ -301,7 +306,7 @@ export class RoomService {
         throw new Error("仍有玩家未准备");
       }
 
-      const seed = randomBytes(32).toString("hex");
+      const seed = this.#gameSeed();
       const update = await this.#gameModule(state).create(state, { seed, now: Date.now() });
       const nextState = this.#nextState(state, update.changes);
 
@@ -690,7 +695,7 @@ export class RoomService {
       const update = await this.#gameModule(state).handle(
         state,
         { type: commandType, actorPlayerId: playerId, payload },
-        { now: Date.now(), seed: randomBytes(32).toString("hex"), voteIntervalMs: 2500 }
+        { now: Date.now(), seed: this.#gameSeed(), voteIntervalMs: 2500 }
       );
       const nextState = this.#nextState(state, update.changes);
       this.repository.commit(
@@ -718,6 +723,10 @@ export class RoomService {
     };
     this.#gameModule(nextState).validate(nextState);
     return nextState;
+  }
+
+  #gameSeed(): string {
+    return this.options.gameSeed?.() ?? randomBytes(32).toString("hex");
   }
 
   async #withLock<T>(roomCode: string, task: () => Promise<T>): Promise<T> {

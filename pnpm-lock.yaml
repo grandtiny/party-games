@@ -43,9 +43,9 @@ importers:
       '@party-games/gomoku':
         specifier: workspace:*
         version: link:../../packages/gomoku
-      '@party-games/manor':
+      '@party-games/manor-v7':
         specifier: workspace:*
-        version: link:../../packages/manor
+        version: link:../../packages/manor-v7
       '@party-games/poker':
         specifier: workspace:*
         version: link:../../packages/poker
@@ -80,9 +80,15 @@ importers:
       '@party-games/gomoku':
         specifier: workspace:*
         version: link:../../packages/gomoku
+      '@party-games/manor-v7':
+        specifier: workspace:*
+        version: link:../../packages/manor-v7
       '@party-games/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@ruffle-rs/ruffle':
+        specifier: 0.5.0
+        version: 0.5.0
       lucide-react:
         specifier: ^0.542.0
         version: 0.542.0(react@19.2.8)
@@ -146,11 +152,7 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.3)(tsx@4.23.1)
 
-  packages/manor:
-    dependencies:
-      '@party-games/shared':
-        specifier: workspace:*
-        version: link:../shared
+  packages/manor-v7:
     devDependencies:
       vitest:
         specifier: ^3.2.4
@@ -634,6 +636,9 @@ packages:
     resolution: {integrity: sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==}
     cpu: [x64]
     os: [win32]
+
+  '@ruffle-rs/ruffle@0.5.0':
+    resolution: {integrity: sha512-BBlfXsOkUXtB1wMUC5y27v6SRdDsuVYdPzGq80MzmF1QWryHkWYZh4I7I22uura07TFNzBeb5RKsyjct3JTjLA==}
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -1875,6 +1880,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
+
+  '@ruffle-rs/ruffle@0.5.0': {}
 
   '@socket.io/component-emitter@3.1.2': {}
 
