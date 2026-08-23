@@ -1,6 +1,7 @@
 import {
   MANOR_V7_BOARD_IDS,
   MANOR_V7_GRASS_PRICE,
+  MANOR_V7_GRASS_LIST_PRICE,
   MANOR_V7_HOUSE_UPGRADES,
   MANOR_V7_RECLAIM_RULES,
   manorV7DayKey,
@@ -22,6 +23,9 @@ import type { AccountUserView, ManorGuestbookView } from "@party-games/shared";
 import type { ManorV7Service } from "./manor-v7-service.js";
 
 type FlashParams = Record<string, string>;
+
+const FLASH_VIP_LEVEL = 7;
+const FLASH_VIP_STATUS = 2;
 
 export class ManorV7FlashAdapter {
   constructor(private readonly service: ManorV7Service) {}
@@ -906,6 +910,7 @@ export class ManorV7FlashAdapter {
       isCurrentUser: true
     });
     const friends = social.friends.map(flashFriendSummary);
+    const all = [own, ...friends];
     if (params.refresh === "friend") {
       return `_callback(${JSON.stringify({
         items: friends.map((friend) => ({
@@ -913,13 +918,13 @@ export class ManorV7FlashAdapter {
           groupid: 0,
           name: friend.userName,
           img: "",
-          yellow: 0,
+          yellow: FLASH_VIP_LEVEL,
           online: 1
         })),
         gpnames: [{ gpid: 0, gpname: "农场好友" }]
       })});`;
     }
-    return [own, ...friends];
+    return all;
   }
 
   #friendStatus(user: AccountUserView, now: number) {
@@ -1245,8 +1250,8 @@ export function flashFarmBootstrap(view: ManorV7View, playerView: ManorV7View = 
       uId: stableFlashUserId(view.owner.userId),
       uinLogin: stableFlashUserId(view.owner.userId),
       userName: view.owner.displayName,
-      yellowlevel: 0,
-      yellowstatus: 0
+      yellowlevel: FLASH_VIP_LEVEL,
+      yellowstatus: FLASH_VIP_STATUS
     },
     weather: { weatherDesc: "晴天", weatherId: 1 },
     beast: flashWildBeastBase(view, "farm", playerView)
@@ -1482,8 +1487,8 @@ export function flashPastureBootstrap(view: ManorV7View, playerView: ManorV7View
       uId: stableFlashUserId(view.owner.userId),
       uin: stableFlashUserId(view.owner.userId),
       userName: view.owner.displayName,
-      yellowlevel: 0,
-      yellowstatus: 0
+      yellowlevel: FLASH_VIP_LEVEL,
+      yellowstatus: FLASH_VIP_STATUS
     },
     weather: { weatherDesc: "晴天", weatherId: 1 },
     research: {
@@ -1642,11 +1647,11 @@ function flashPastureFriendSummary(userId: string, displayName: string, view: Ma
     uin,
     userName: displayName,
     headPic: "",
-    yellowlevel: 0,
-    yellowstatus: 0,
+    yellowlevel: FLASH_VIP_LEVEL,
+    yellowstatus: FLASH_VIP_STATUS,
     exp: view.pastureExperience,
     money: view.coins,
-    pf: 0
+    pf: 1
   };
 }
 
@@ -1694,7 +1699,7 @@ function flashGrassShop() {
     consume: "动物会持续消耗牧草",
     depict: "喂养动物（挨饿会停止成长或生产）",
     effect: 0,
-    price: MANOR_V7_GRASS_PRICE,
+    price: MANOR_V7_GRASS_LIST_PRICE,
     store: "购买后自动放入饲料机",
     tId: 1,
     tName: "牧草",
@@ -2218,12 +2223,12 @@ function flashFriendSummary(friend: ManorV7FriendSummary) {
     uin,
     userName: friend.displayName,
     headPic: "",
-    yellowlevel: 0,
-    yellowstatus: 0,
+    yellowlevel: FLASH_VIP_LEVEL,
+    yellowstatus: FLASH_VIP_STATUS,
     exp: friend.farmLevel,
     pastrueExp: friend.pastureLevel,
     money: friend.coins,
-    pf: 0
+    pf: 1
   };
 }
 

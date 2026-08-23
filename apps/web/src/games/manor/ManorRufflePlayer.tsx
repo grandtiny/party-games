@@ -81,6 +81,7 @@ export function ManorRufflePlayer({
         autoplay: "on",
         unmuteOverlay: "hidden",
         allowScriptAccess: true,
+        openUrlMode: "deny",
         backgroundColor: "#ffffff",
         letterbox: "on",
         scale: "showAll",
@@ -176,6 +177,7 @@ function loadRuffleScript(): Promise<void> {
     autoplay: "on",
     unmuteOverlay: "hidden",
     allowScriptAccess: true,
+    openUrlMode: "deny",
     splashScreen: false,
     warnOnUnsupportedContent: false,
     logLevel: "error"

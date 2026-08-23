@@ -38,13 +38,14 @@ $leftInfoPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\
 $pastureGiftIconPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\MyIconBar.as"
 $dailyPackagePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-VT§.as"
 $dailyPackageModelPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-VB§\§_-2S§.as"
+$farmFriendPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-OE§.as"
 $profileWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-42§\§_-1D§.as"
 $bagControllerPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 $warehouseModulePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\warehouse\ModuleWarehouse.as"
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -75,6 +76,8 @@ $farmArguments = @(
   $dailyPackagePatchSource,
   "§_-VB§.§_-2S§",
   $dailyPackageModelPatchSource,
+  "module.friend.§_-OE§",
+  $farmFriendPatchSource,
   "§_-42§.§_-1D§",
   $profileWindowPatchSource,
   "§_-1T§.§_-D3§",

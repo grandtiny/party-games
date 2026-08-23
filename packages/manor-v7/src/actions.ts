@@ -287,7 +287,6 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         state.pasture.nextAnimalSerial += 1;
       }
       state.pastureExperience += action.quantity * 5;
-      progressManorV7Task(state, "animal", action.quantity);
       addManorV7Activity(state, "pasture", `购买了 ${action.quantity} 只${animal.name}`, now);
       break;
     }
