@@ -1,5 +1,7 @@
 import {
   MANOR_V7_BOARD_IDS,
+  MANOR_V7_DAILY_SIGN_IN_LIMIT,
+  MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS,
   MANOR_V7_GRASS_PRICE,
   MANOR_V7_GRASS_LIST_PRICE,
   MANOR_V7_HOUSE_UPGRADES,
@@ -9,7 +11,9 @@ import {
   manorV7Fish,
   manorV7LandUpgrade,
   manorV7MaxProductionCount,
+  manorV7DailySignInReward,
   manorV7PastureGuard,
+  manorV7StreakSignInReward,
   manorV7WildAnimal,
   manorV7WildCrystal,
   wildAttackDamage,
@@ -141,9 +145,11 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_fish_sale") return this.#sellFish(user, params, now);
     if (moduleName === "cgi_fish_register") return { code: 1, direction: "", ecode: 0 };
     if (moduleName === "cgi_farm_login_home" || moduleName === "cgi_farm_login_click") {
-      return flashSignInStatus(this.service.getView(user, now), now);
+      return flashSignInStatus(this.#recordSignInVisit(user, now), now);
     }
-    if (moduleName === "cgi_pasture_signin") return this.#claimSignIn(user, params, now);
+    if (moduleName === "cgi_pasture_signin" || moduleName === "cgi_signin") {
+      return this.#claimSignIn(user, params, now);
+    }
     if (moduleName === "hydra_feeds_select") {
       return { data: flashActivityLog(this.service.getView(user, now)), ecode: 0 };
     }
@@ -194,20 +200,43 @@ export class ManorV7FlashAdapter {
 
   #claimSignIn(user: AccountUserView, params: FlashParams, now: number) {
     const flag = integer(params.flag) ?? 2;
-    if (flag !== 2) throw new Error("当前没有连续登录额外奖励");
+    if (flag === 1) {
+      const days = positiveInteger(params.days, "连续登录天数");
+      const reward = manorV7StreakSignInReward(days);
+      this.service.performAction(user, { type: "claim-sign-in-streak-reward", days }, now);
+      return {
+        code: 1,
+        direction: `连续登录奖励领取成功，获得${reward.name}。`,
+        ecode: 0,
+        id: reward.id,
+        timestamp: Math.floor(now / 1_000)
+      };
+    }
+    if (flag !== 2) throw new Error("签到类型无效");
     const after = this.service.performAction(user, { type: "claim-sign-in" }, now);
-    const rewardId = after.rewardClaims.signInRewardId;
+    const rewardIds = after.rewardClaims.signInRewardDay === manorV7DayKey(now)
+      ? after.rewardClaims.signInRewardIds
+      : [];
+    const rewardId = rewardIds.at(-1);
     if (!rewardId) throw new Error("签到奖励生成失败");
+    const reward = manorV7DailySignInReward(rewardId);
     return {
-      canNum: 0,
+      canNum: Math.max(0, MANOR_V7_DAILY_SIGN_IN_LIMIT - rewardIds.length),
       code: 1,
       days: after.rewardClaims.signInStreak,
-      direction: signInRewardDirection(rewardId),
+      direction: `签到成功，获得${reward.name}。`,
       ecode: 0,
       id: rewardId,
-      number: 1,
+      number: rewardIds.length,
       timestamp: Math.floor(now / 1_000)
     };
+  }
+
+  #recordSignInVisit(user: AccountUserView, now: number): ManorV7View {
+    const current = this.service.getView(user, now);
+    return current.rewardClaims.signInDay === manorV7DayKey(now)
+      ? current
+      : this.service.performAction(user, { type: "record-sign-in-visit" }, now);
   }
 
   #unlockFish(user: AccountUserView, params: FlashParams, now: number) {
@@ -319,11 +348,12 @@ export class ManorV7FlashAdapter {
       return { code: 1, content: "", time: Math.floor(now / 1000) };
     }
     if (moduleName === "cgi_pasture_login_home") {
-      return flashPastureLoginStatus(this.service.getView(user, now), now);
+      return flashPastureLoginStatus(this.#recordSignInVisit(user, now), now);
     }
     if (moduleName === "cgi_pasture_login_click") {
-      return { ...flashPastureLoginStatus(this.service.getView(user, now), now), is_playing: 1 };
+      return { ...flashPastureLoginStatus(this.#recordSignInVisit(user, now), now), is_playing: 1 };
     }
+    if (moduleName === "cgi_signin") return this.#claimSignIn(user, params, now);
     if (moduleName === "cgi_get_gifts") {
       return flashDailyPackage(this.service.getView(user, now), now);
     }
@@ -336,6 +366,8 @@ export class ManorV7FlashAdapter {
     }
 
     if (moduleName === "cgi_buy_animal") return this.#buyAnimal(user, params, now);
+    if (moduleName === "cgi_raise_cub") return this.#raiseInventoryAnimal(user, params, now);
+    if (moduleName === "cgi_feedcan") return this.#usePastureCan(user, params, now);
     if (moduleName === "cgi_buy_guard") return this.#buyPastureGuard(user, params, now);
     if (moduleName === "cgi_post_product") return this.#startPastureProduction(user, params, now);
     if (moduleName === "cgi_buy_food") return this.#buyPastureGrassToInventory(user, params, now);
@@ -657,6 +689,44 @@ export class ManorV7FlashAdapter {
       num: quantity,
       ecode: 0,
       poptype: 3
+    };
+  }
+
+  #raiseInventoryAnimal(user: AccountUserView, params: FlashParams, now: number) {
+    const animalId = positiveInteger(params.type ?? params.cId, "动物编号");
+    const quantity = positiveInteger(params.number ?? params.num, "放养数量");
+    const before = this.service.getView(user, now);
+    const existingSerials = new Set(before.pasture.animals.map((animal) => animal.serial));
+    const after = this.service.performAction(
+      user,
+      { type: "raise-animal-from-inventory", animalId, quantity },
+      now
+    );
+    return {
+      addExp: quantity * 5,
+      animal: after.pasture.animals
+        .filter((animal) => !existingSerials.has(animal.serial))
+        .map((animal) => flashPastureAnimal(animal, after.serverTime)),
+      code: 1,
+      direction: "添加成功",
+      ecode: 0,
+      post_data: { number: quantity, type: animalId }
+    };
+  }
+
+  #usePastureCan(user: AccountUserView, params: FlashParams, now: number) {
+    const serial = positiveInteger(params.serial, "动物编号");
+    const toolId = positiveInteger(params.tid, "罐头编号");
+    const after = this.service.performAction(user, { type: "use-pasture-can", serial, toolId }, now);
+    const animal = after.pasture.animals.find((item) => item.serial === serial);
+    if (!animal) throw new Error("动物不存在");
+    return {
+      animal: flashPastureAnimal(animal, after.serverTime),
+      code: 1,
+      direction: "使用罐头成功",
+      ecode: 0,
+      post_data: { serial, tid: toolId },
+      serial
     };
   }
 
@@ -1408,30 +1478,36 @@ function flashDailyPackage(view: ManorV7View, now: number, claimed = false) {
 }
 
 function flashSignInStatus(view: ManorV7View, now: number) {
-  const claimed = view.rewardClaims.signInDay === manorV7DayKey(now);
+  const number = dailySignInCount(view, now);
   return {
-    bonus: 0,
+    bonus: pendingStreakSignInRewardDays(view, now) === null ? 0 : 1,
     code: 1,
     days: activeSignInStreak(view, now),
     ecode: 0,
     is_playing: 0,
-    number: claimed ? 1 : 0,
+    number,
     timestamp: Math.floor(now / 1_000)
   };
 }
 
 function flashPastureLoginStatus(view: ManorV7View, now: number) {
-  const claimed = view.rewardClaims.signInDay === manorV7DayKey(now);
+  const number = dailySignInCount(view, now);
   return {
-    bonus: 0,
+    bonus: pendingStreakSignInRewardDays(view, now) === null ? 0 : 1,
     code: 1,
     days: activeSignInStreak(view, now),
     ecode: 0,
     is_playing: 0,
     // The pasture shell subtracts this used-attempt count from the daily limit.
-    number: claimed ? 1 : 0,
+    number,
     timestamp: Math.floor(now / 1_000)
   };
+}
+
+function dailySignInCount(view: ManorV7View, now: number): number {
+  return view.rewardClaims.signInRewardDay === manorV7DayKey(now)
+    ? view.rewardClaims.signInRewardIds.length
+    : 0;
 }
 
 function activeSignInStreak(view: ManorV7View, now: number): number {
@@ -1442,13 +1518,43 @@ function activeSignInStreak(view: ManorV7View, now: number): number {
     : 0;
 }
 
-function signInRewardDirection(rewardId: number): string {
-  switch (rewardId) {
-    case 1: return "签到成功，获得牧草果实 50 个。";
-    case 2: return "签到成功，获得牧草果实 200 个。";
-    case 3: return "签到成功，获得金币 100。";
-    default: return "签到成功，获得金币 500。";
-  }
+function pendingStreakSignInRewardDays(view: ManorV7View, now: number): number | null {
+  const streak = activeSignInStreak(view, now);
+  const milestone = streak >= 7 ? 7 : streak === 5 ? 5 : streak === 3 ? 3 : null;
+  return milestone !== null && !view.rewardClaims.signInStreakRewardDays.includes(milestone)
+    ? milestone
+    : null;
+}
+
+function flashPasturePackage(view: ManorV7View) {
+  const grass = view.farm.produceInventory.find((entry) => entry.sourceId === 40)?.quantity ?? 0;
+  return [
+    { amount: grass, tId: 40, tName: "牧草", type: 4 },
+    ...view.pasture.cubInventory.map((entry) => {
+      const animal = view.catalogs.animals.find((item) => item.id === entry.sourceId);
+      return {
+        amount: entry.quantity,
+        cId: entry.sourceId,
+        cName: animal?.name ?? `动物 ${entry.sourceId}`,
+        lv: animal?.originalLevel ?? 0,
+        tId: entry.sourceId,
+        tName: animal?.name ?? `动物 ${entry.sourceId}`,
+        type: 9
+      };
+    }),
+    ...view.pasture.toolInventory.map((entry) => {
+      const tool = view.catalogs.tools.find((item) => (
+        item.area === "pasture" && item.id === entry.sourceId && item.itemType === 7
+      ));
+      return {
+        amount: entry.quantity,
+        effect: tool?.effectSeconds ?? 0,
+        tId: entry.sourceId,
+        tName: tool?.name ?? `牧场道具 ${entry.sourceId}`,
+        type: 7
+      };
+    })
+  ];
 }
 
 export function flashPastureBootstrap(view: ManorV7View, playerView: ManorV7View = view) {
@@ -1657,6 +1763,9 @@ function flashPastureFriendSummary(userId: string, displayName: string, view: Ma
 
 function flashAnimalShop(view: ManorV7View) {
   return [...view.catalogs.animals]
+    .filter((animal) => !MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
+      animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
+    ))
     .sort((left, right) => left.originalLevel - right.originalLevel || left.id - right.id)
     .map((animal) => ({
       byproductprice: animal.byproductPrice,
@@ -1738,11 +1847,6 @@ function pastureToolDescription(name: string, type: number, effectSeconds: numbe
   if (type === 12) return `${name}可缩短科研时间。`;
   if (type === 106) return `${name}可看守牧场。`;
   return `${name}是牧场常规道具。`;
-}
-
-function flashPasturePackage(view: ManorV7View) {
-  const amount = view.farm.produceInventory.find((entry) => entry.sourceId === 40)?.quantity ?? 0;
-  return [{ amount, tId: 40, tName: "牧草", type: 4 }];
 }
 
 function flashPastureRepertory(view: ManorV7View) {

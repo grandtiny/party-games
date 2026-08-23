@@ -8,7 +8,8 @@ import {
   manorV7Board,
   manorV7Crop,
   manorV7Fish,
-  manorV7PastureGuard
+  manorV7PastureGuard,
+  manorV7Tool
 } from "./catalog.js";
 import type {
   ManorV7Action,
@@ -38,6 +39,11 @@ import {
   manorV7WildAnimal,
   manorV7WildCrystal
 } from "./wild.js";
+import {
+  MANOR_V7_DAILY_SIGN_IN_LIMIT,
+  MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  MANOR_V7_STREAK_SIGN_IN_REWARDS
+} from "./sign-in.js";
 
 export interface ManorV7RuntimeOptions {
   timeScale?: number;
@@ -174,6 +180,8 @@ export function createManorV7State(now: number): ManorV7State {
         { serial: 1, animalId: 1002, growthSeconds: 165_600, productionActive: false, productionProgressSeconds: 0, productionCount: 5, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] },
         { serial: 2, animalId: 1002, growthSeconds: 36_001, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] }
       ],
+      cubInventory: [],
+      toolInventory: [],
       productInventory: [],
       harvestedAnimalInventory: [],
       guards: [],
@@ -185,8 +193,11 @@ export function createManorV7State(now: number): ManorV7State {
     rewardClaims: {
       dailyPackageDay: null,
       signInDay: null,
+      signInRewardDay: null,
       signInRewardId: null,
-      signInStreak: 0
+      signInRewardIds: [],
+      signInStreak: 0,
+      signInStreakRewardDays: []
     },
     tasks: MANOR_V7_TASK_DEFINITIONS.map((task) => ({ key: task.key, progress: 0, completed: false, claimed: false })),
     activities: [{ id: 1, area: "farm", message: "欢迎来到 QQ 农场 7.0", createdAt: now }],
@@ -229,15 +240,27 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
   state.farm.selectedBoardId ??= null;
   state.farm.selectedAvatarId ??= null;
   state.pasture.harvestedAnimalInventory ??= [];
+  state.pasture.cubInventory ??= [];
+  state.pasture.toolInventory ??= [];
   state.pasture.guards ??= [];
   state.pasture.wild ??= createManorV7WildState();
   state.rewardClaims ??= {
     dailyPackageDay: null,
     signInDay: null,
+    signInRewardDay: null,
     signInRewardId: null,
-    signInStreak: 0
+    signInRewardIds: [],
+    signInStreak: 0,
+    signInStreakRewardDays: []
   };
   state.rewardClaims.signInStreak ??= state.rewardClaims.signInDay ? 1 : 0;
+  state.rewardClaims.signInRewardDay ??= state.rewardClaims.signInRewardId
+    ? state.rewardClaims.signInDay
+    : null;
+  state.rewardClaims.signInRewardIds ??= state.rewardClaims.signInRewardId
+    ? [state.rewardClaims.signInRewardId]
+    : [];
+  state.rewardClaims.signInStreakRewardDays ??= [];
   validateManorV7State(state);
   return state;
 }
@@ -335,6 +358,8 @@ export function toManorV7View(
       hutchCapacity: manorV7HouseCapacity("hutch", state.pasture.hutchLevel),
       shedCapacity: manorV7HouseCapacity("shed", state.pasture.shedLevel),
       animals: state.pasture.animals.map((animal) => toAnimalView(animal, state.pasture.grass)),
+      cubInventory: cloneInventory(state.pasture.cubInventory),
+      toolInventory: cloneInventory(state.pasture.toolInventory),
       productInventory: cloneInventory(state.pasture.productInventory),
       harvestedAnimalInventory: cloneInventory(state.pasture.harvestedAnimalInventory),
       guards: state.pasture.guards.map((guard) => ({ ...guard })),
@@ -352,7 +377,11 @@ export function toManorV7View(
       }
     },
     ownedDecorationIds: [...state.ownedDecorationIds],
-    rewardClaims: { ...state.rewardClaims },
+    rewardClaims: {
+      ...state.rewardClaims,
+      signInRewardIds: [...state.rewardClaims.signInRewardIds],
+      signInStreakRewardDays: [...state.rewardClaims.signInStreakRewardDays]
+    },
     tasks: toTaskViews(state.tasks),
     activities: state.activities.map((activity) => ({ ...activity })),
     catalogs: {
@@ -434,8 +463,18 @@ export function validateManorV7State(state: ManorV7State): void {
     !Number.isFinite(state.pasture.grass) || state.pasture.grass < 0 || state.pasture.grass > MANOR_V7_GRASS_CAPACITY ||
     !validClaimDay(state.rewardClaims.dailyPackageDay) ||
     !validClaimDay(state.rewardClaims.signInDay) ||
-    (state.rewardClaims.signInRewardId !== null && ![1, 2, 3, 4].includes(state.rewardClaims.signInRewardId)) ||
+    !validClaimDay(state.rewardClaims.signInRewardDay) ||
+    (state.rewardClaims.signInRewardId !== null && !validDailySignInRewardId(state.rewardClaims.signInRewardId)) ||
+    !Array.isArray(state.rewardClaims.signInRewardIds) ||
+    state.rewardClaims.signInRewardIds.length > MANOR_V7_DAILY_SIGN_IN_LIMIT ||
+    state.rewardClaims.signInRewardIds.some((id) => !validDailySignInRewardId(id)) ||
+    new Set(state.rewardClaims.signInRewardIds).size !== state.rewardClaims.signInRewardIds.length ||
+    (state.rewardClaims.signInRewardIds.at(-1) ?? null) !== state.rewardClaims.signInRewardId ||
+    (state.rewardClaims.signInRewardIds.length > 0) !== (state.rewardClaims.signInRewardDay !== null) ||
     !Number.isInteger(state.rewardClaims.signInStreak) || state.rewardClaims.signInStreak < 0 ||
+    !Array.isArray(state.rewardClaims.signInStreakRewardDays) ||
+    state.rewardClaims.signInStreakRewardDays.some((days) => !validStreakSignInRewardDay(days)) ||
+    new Set(state.rewardClaims.signInStreakRewardDays).size !== state.rewardClaims.signInStreakRewardDays.length ||
     !Number.isInteger(state.updatedAt) || state.updatedAt < 0
   ) {
     throw new Error("V7 庄园状态无效");
@@ -489,6 +528,13 @@ export function validateManorV7State(state: ManorV7State): void {
   validateInventory(state.farm.fishPool.produceInventory);
   validateInventory(state.pasture.productInventory);
   validateInventory(state.pasture.harvestedAnimalInventory);
+  validateInventory(state.pasture.cubInventory);
+  validateInventory(state.pasture.toolInventory);
+  for (const entry of state.pasture.cubInventory) manorV7Animal(entry.sourceId);
+  for (const entry of state.pasture.toolInventory) {
+    const tool = manorV7Tool("pasture", entry.sourceId);
+    if (tool.itemType !== 7) throw new Error("V7 牧场道具库存无效");
+  }
   const guardIds = new Set<number>();
   for (const guard of state.pasture.guards) {
     manorV7PastureGuard(guard.id);
@@ -560,6 +606,14 @@ function validAvatarId(value: number | null): boolean {
 
 function validClaimDay(value: string | null): boolean {
   return value === null || /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function validDailySignInRewardId(value: number): boolean {
+  return MANOR_V7_DAILY_SIGN_IN_REWARDS.some((reward) => reward.id === value);
+}
+
+function validStreakSignInRewardDay(value: number): boolean {
+  return MANOR_V7_STREAK_SIGN_IN_REWARDS.some((reward) => reward.days === value);
 }
 
 function createFishPool(): ManorV7State["farm"]["fishPool"] {

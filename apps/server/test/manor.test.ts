@@ -2,8 +2,10 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  MANOR_V7_DAILY_SIGN_IN_REWARDS,
   manorV7Animal,
   manorV7Crop,
+  manorV7DayKey,
   manorV7ExperienceForLevel,
   manorV7Fish,
   type ManorV7State
@@ -799,8 +801,8 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "flag=2&pid=0&yellow=0"
       });
       expect(signIn.statusCode, signIn.body).toBe(200);
-      expect(signIn.json()).toMatchObject({ canNum: 0, code: 1, id: expect.any(Number), number: 1 });
-      expect([1, 2, 3, 4]).toContain(signIn.json().id);
+      expect(signIn.json()).toMatchObject({ canNum: 1, code: 1, id: expect.any(Number), number: 1 });
+      expect(MANOR_V7_DAILY_SIGN_IN_REWARDS.map((reward) => reward.id)).toContain(signIn.json().id);
       const afterSignIn = instance.repository.getManorV7State(owner.userId);
       expect(afterSignIn).toMatchObject({ revision: beforeSignIn.revision + 1 });
       expect(afterSignIn?.rewardClaims).toMatchObject({ signInRewardId: signIn.json().id });
@@ -812,13 +814,102 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(completedStatus.json()).toMatchObject({ code: 1, number: 1 });
 
+      const pastureSignIn = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_signin",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `flag=2&pid=${signIn.json().id}&yellow=1`
+      });
+      expect(pastureSignIn.statusCode, pastureSignIn.body).toBe(200);
+      expect(pastureSignIn.json()).toMatchObject({ canNum: 0, code: 1, id: expect.any(Number), number: 2 });
+      expect(pastureSignIn.json().id).not.toBe(signIn.json().id);
+
       const duplicateSignIn = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/farm?qzonemod=cgi_pasture_signin",
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "flag=2&pid=0&yellow=0"
       });
-      expect(duplicateSignIn.json()).toMatchObject({ code: 0, direction: expect.stringContaining("已经领取") });
+      expect(duplicateSignIn.json()).toMatchObject({ code: 0, direction: expect.stringContaining("次数已经用完") });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("claims the original pasture five-day sign-in reward into the shared animal package", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-streak-sign-in-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("V7 state missing before streak sign-in test");
+      const now = Date.now();
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.rewardClaims.signInDay = manorV7DayKey(now - 24 * 60 * 60 * 1_000);
+      prepared.rewardClaims.signInStreak = 4;
+      prepared.rewardClaims.signInStreakRewardDays = [3];
+      prepared.pasture.hutchLevel = 2;
+      prepared.pasture.toolInventory = [{ sourceId: 1, quantity: 1 }];
+      prepared.revision += 1;
+      prepared.updatedAt = now;
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
+
+      const panel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_login_click",
+        headers: { cookie: owner.cookie }
+      });
+      expect(panel.statusCode, panel.body).toBe(200);
+      expect(panel.json()).toMatchObject({ bonus: 1, code: 1, days: 5, number: 0 });
+
+      const reward = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_signin",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "flag=1&days=5"
+      });
+      expect(reward.statusCode, reward.body).toBe(200);
+      expect(reward.json()).toMatchObject({ code: 1, ecode: 0, id: 16 });
+
+      const animalPackage = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_package",
+        headers: { cookie: owner.cookie }
+      });
+      expect(animalPackage.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ amount: 1, tId: 1047, tName: "丝光鸡", type: 9 }),
+        expect.objectContaining({ amount: 1, tId: 1, tName: "普通罐头", type: 7 })
+      ]));
+
+      const raised = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_raise_cub",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "type=1047&number=1"
+      });
+      expect(raised.statusCode, raised.body).toBe(200);
+      expect(raised.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        animal: [expect.objectContaining({ cId: 1047, status: 1 })]
+      });
+      const serial = raised.json().animal[0].serial;
+
+      const accelerated = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_feedcan",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `serial=${serial}&tid=1`
+      });
+      expect(accelerated.statusCode, accelerated.body).toBe(200);
+      expect(accelerated.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        serial,
+        animal: expect.objectContaining({ cId: 1047, growTime: 10_800 })
+      });
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -1406,7 +1497,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(initial.json().farm.lands).toHaveLength(24);
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
       expect(initial.json().catalogs.crops).toHaveLength(231);
-      expect(initial.json().catalogs.animals).toHaveLength(153);
+      expect(initial.json().catalogs.animals).toHaveLength(155);
       expect(initial.json().catalogs.tools).toHaveLength(91);
       expect(initial.json().catalogs.decorations).toHaveLength(603);
 

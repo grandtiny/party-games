@@ -25,6 +25,13 @@ import {
   setInventoryQuantity
 } from "./state.js";
 import { manorV7MaxProductionCount } from "./pasture-lifecycle.js";
+import {
+  MANOR_V7_DAILY_SIGN_IN_LIMIT,
+  MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS,
+  manorV7StreakSignInReward,
+  type ManorV7SignInRewardDefinition
+} from "./sign-in.js";
 import type { ManorV7Action, ManorV7AnimalHouse, ManorV7State } from "./types.js";
 import {
   MANOR_V7_WILD_MAX_SLOTS,
@@ -276,6 +283,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-animal": {
       requirePositiveInteger(action.quantity);
       const animal = manorV7Animal(action.animalId);
+      if (MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
+        animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
+      )) throw new Error("该动物只能通过签到奖励获得");
       const level = manorV7LevelForExperience(state.pastureExperience);
       if (level < animal.originalLevel) throw new Error(`${animal.name}需要牧场达到 ${animal.originalLevel} 级`);
       const houseLevel = animal.house === "hutch" ? state.pasture.hutchLevel : state.pasture.shedLevel;
@@ -288,6 +298,41 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       }
       state.pastureExperience += action.quantity * 5;
       addManorV7Activity(state, "pasture", `购买了 ${action.quantity} 只${animal.name}`, now);
+      break;
+    }
+    case "raise-animal-from-inventory": {
+      requirePositiveInteger(action.quantity);
+      const animal = manorV7Animal(action.animalId);
+      const available = inventoryQuantity(state.pasture.cubInventory, animal.id);
+      if (available < action.quantity) throw new Error("动物幼仔库存不足");
+      const houseLevel = animal.house === "hutch" ? state.pasture.hutchLevel : state.pasture.shedLevel;
+      const occupied = state.pasture.animals.filter((item) => manorV7Animal(item.animalId).house === animal.house).length;
+      if (occupied + action.quantity > manorV7HouseCapacity(animal.house, houseLevel)) {
+        throw new Error(`${animal.house === "hutch" ? "窝" : "棚"}的空位不足`);
+      }
+      setInventoryQuantity(state.pasture.cubInventory, animal.id, available - action.quantity);
+      for (let index = 0; index < action.quantity; index += 1) {
+        state.pasture.animals.push({ serial: state.pasture.nextAnimalSerial, animalId: animal.id, growthSeconds: 0, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] });
+        state.pasture.nextAnimalSerial += 1;
+      }
+      state.pastureExperience += action.quantity * 5;
+      addManorV7Activity(state, "pasture", `从物品包放养了 ${action.quantity} 只${animal.name}`, now);
+      break;
+    }
+    case "use-pasture-can": {
+      const animalState = state.pasture.animals.find((item) => item.serial === action.serial);
+      if (!animalState) throw new Error("动物不存在");
+      const animal = manorV7Animal(animalState.animalId);
+      if (animalState.growthSeconds >= animal.maturitySeconds || animalState.productionActive) {
+        throw new Error("当前状态不能使用罐头");
+      }
+      const tool = manorV7Tool("pasture", action.toolId);
+      if (tool.itemType !== 7 || tool.effectSeconds <= 0) throw new Error("该道具不是罐头");
+      const available = inventoryQuantity(state.pasture.toolInventory, tool.id);
+      if (available < 1) throw new Error("罐头库存不足");
+      setInventoryQuantity(state.pasture.toolInventory, tool.id, available - 1);
+      animalState.growthSeconds = Math.min(animal.maturitySeconds, animalState.growthSeconds + tool.effectSeconds);
+      addManorV7Activity(state, "pasture", `给${animal.name}使用了${tool.name}`, now);
       break;
     }
     case "buy-grass": {
@@ -342,28 +387,51 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       addManorV7Activity(state, "farm", "领取了每日礼包：金币 300", now);
       break;
     }
+    case "record-sign-in-visit": {
+      recordSignInVisit(state, now);
+      break;
+    }
     case "claim-sign-in": {
       const day = manorV7DayKey(now);
-      if (state.rewardClaims.signInDay === day) throw new Error("今日签到奖励已经领取");
-      const yesterday = manorV7DayKey(now - 24 * 60 * 60 * 1_000);
-      state.rewardClaims.signInStreak = state.rewardClaims.signInDay === yesterday
-        ? Math.max(1, state.rewardClaims.signInStreak) + 1
-        : 1;
-      const rewardIds = [1, 2, 3, 4] as const;
-      const rewardId = rewardIds[Math.floor(drawManorV7Random(state) * rewardIds.length)] ?? 3;
-      if (rewardId === 1 || rewardId === 2) {
-        const quantity = rewardId === 1 ? 50 : 200;
-        setInventoryQuantity(
-          state.farm.produceInventory,
-          40,
-          inventoryQuantity(state.farm.produceInventory, 40) + quantity
-        );
-      } else {
-        state.coins += rewardId === 3 ? 100 : 500;
+      recordSignInVisit(state, now);
+      if (state.rewardClaims.signInRewardDay !== day) {
+        state.rewardClaims.signInRewardDay = null;
+        state.rewardClaims.signInRewardId = null;
+        state.rewardClaims.signInRewardIds = [];
       }
-      state.rewardClaims.signInDay = day;
-      state.rewardClaims.signInRewardId = rewardId;
-      addManorV7Activity(state, "farm", `完成每日签到：${signInRewardName(rewardId)}`, now);
+      if (state.rewardClaims.signInRewardIds.length >= MANOR_V7_DAILY_SIGN_IN_LIMIT) {
+        throw new Error("今日签到翻牌次数已经用完");
+      }
+      const available = MANOR_V7_DAILY_SIGN_IN_REWARDS.filter(
+        (reward) => !state.rewardClaims.signInRewardIds.includes(reward.id)
+      );
+      const reward = available[Math.floor(drawManorV7Random(state) * available.length)] ?? available[0];
+      if (!reward) throw new Error("签到奖励生成失败");
+      awardSignInReward(state, reward);
+      state.rewardClaims.signInRewardDay = day;
+      state.rewardClaims.signInRewardId = reward.id;
+      state.rewardClaims.signInRewardIds.push(reward.id);
+      addManorV7Activity(state, "pasture", `完成每日签到：${reward.name}`, now);
+      break;
+    }
+    case "claim-sign-in-streak-reward": {
+      recordSignInVisit(state, now);
+      const reward = manorV7StreakSignInReward(action.days);
+      const milestone = reward.days;
+      if (!milestone || state.rewardClaims.signInStreak < milestone) {
+        throw new Error("连续登录天数不足");
+      }
+      const currentMilestone = state.rewardClaims.signInStreak >= 7
+        ? 7
+        : state.rewardClaims.signInStreak;
+      if (milestone !== currentMilestone) throw new Error("当前没有该连续登录奖励");
+      if (state.rewardClaims.signInStreakRewardDays.includes(milestone)) {
+        throw new Error("连续登录奖励已经领取");
+      }
+      awardSignInReward(state, reward);
+      state.rewardClaims.signInStreakRewardDays.push(milestone);
+      state.rewardClaims.signInStreakRewardDays.sort((left, right) => left - right);
+      addManorV7Activity(state, "pasture", `领取连续登录 ${milestone} 天奖励：${reward.name}`, now);
       break;
     }
     case "start-production": {
@@ -707,13 +775,41 @@ export function wildAttackDamage(attackType: string, weaponId: number): number {
   return 5;
 }
 
-function signInRewardName(rewardId: number): string {
-  switch (rewardId) {
-    case 1: return "牧草果实 50 个";
-    case 2: return "牧草果实 200 个";
-    case 3: return "金币 100";
-    default: return "金币 500";
+function recordSignInVisit(state: ManorV7State, now: number): void {
+  const day = manorV7DayKey(now);
+  if (state.rewardClaims.signInDay === day) return;
+  const yesterday = manorV7DayKey(now - 24 * 60 * 60 * 1_000);
+  const continued = state.rewardClaims.signInDay === yesterday;
+  state.rewardClaims.signInStreak = continued
+    ? Math.max(1, state.rewardClaims.signInStreak) + 1
+    : 1;
+  if (!continued) state.rewardClaims.signInStreakRewardDays = [];
+  state.rewardClaims.signInDay = day;
+}
+
+function awardSignInReward(state: ManorV7State, reward: ManorV7SignInRewardDefinition): void {
+  if (reward.kind === "coins") {
+    state.coins += reward.quantity;
+    return;
   }
+  const inventory = reward.kind === "grass"
+    ? state.farm.produceInventory
+    : reward.kind === "animal"
+      ? state.pasture.cubInventory
+      : reward.kind === "crystal"
+        ? state.pasture.wild.crystalInventory
+        : state.pasture.toolInventory;
+  if (reward.kind === "animal") manorV7Animal(reward.sourceId);
+  if (reward.kind === "crystal") manorV7WildCrystal(reward.sourceId);
+  if (reward.kind === "pasture-tool") {
+    const tool = manorV7Tool("pasture", reward.sourceId);
+    if (tool.itemType !== 7) throw new Error("签到牧场道具配置无效");
+  }
+  setInventoryQuantity(
+    inventory,
+    reward.sourceId,
+    inventoryQuantity(inventory, reward.sourceId) + reward.quantity
+  );
 }
 
 function upgradeHouse(state: ManorV7State, house: ManorV7AnimalHouse, now: number): void {

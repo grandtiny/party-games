@@ -3,12 +3,14 @@ import {
   MANOR_V7_ANIMALS,
   MANOR_V7_CROPS,
   MANOR_V7_DECORATIONS,
+  MANOR_V7_DAILY_SIGN_IN_LIMIT,
   MANOR_V7_FISH,
   MANOR_V7_LAND_COUNT,
   MANOR_V7_TOOLS,
   advanceManorV7State,
   createManorV7State,
   inventoryQuantity,
+  manorV7DailySignInReward,
   manorV7Animal,
   manorV7Crop,
   manorV7Decoration,
@@ -22,13 +24,14 @@ import {
   migrateManorV7State,
   toManorV7View,
   transitionManorV7FriendStates,
-  transitionManorV7State
+  transitionManorV7State,
+  type ManorV7State
 } from "../src/index.js";
 
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
     expect(MANOR_V7_CROPS).toHaveLength(231);
-    expect(MANOR_V7_ANIMALS).toHaveLength(153);
+    expect(MANOR_V7_ANIMALS).toHaveLength(155);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(603);
     expect(MANOR_V7_FISH).toHaveLength(12);
@@ -281,7 +284,7 @@ describe("QQ Farm V7 domain", () => {
     expect(advanced.pasture.guards[0]?.remainingSeconds).toBe(6 * 24 * 60 * 60 + 23 * 60 * 60);
   });
 
-  it("claims daily package and sign-in rewards once per Shanghai calendar day", () => {
+  it("shares two VIP sign-in cards per Shanghai calendar day", () => {
     const now = Date.UTC(2026, 7, 22, 2, 0, 0);
     const initial = createManorV7State(now);
     const packaged = transitionManorV7State(initial, { type: "claim-daily-package" }, now);
@@ -289,30 +292,88 @@ describe("QQ Farm V7 domain", () => {
     expect(packaged.rewardClaims.dailyPackageDay).toBe("2026-08-22");
     expect(() => transitionManorV7State(packaged, { type: "claim-daily-package" }, now)).toThrow("已经领取");
 
-    const signed = transitionManorV7State(packaged, { type: "claim-sign-in" }, now);
-    expect(signed.rewardClaims).toMatchObject({
+    const visited = transitionManorV7State(packaged, { type: "record-sign-in-visit" }, now);
+    expect(visited.rewardClaims).toMatchObject({
       signInDay: "2026-08-22",
-      signInRewardId: expect.any(Number),
       signInStreak: 1
     });
-    const rewardId = signed.rewardClaims.signInRewardId!;
-    if (rewardId === 1 || rewardId === 2) {
-      expect(inventoryQuantity(signed.farm.produceInventory, 40)).toBe(rewardId === 1 ? 50 : 200);
-      expect(signed.coins).toBe(300);
-    } else {
-      expect(signed.coins).toBe(300 + (rewardId === 3 ? 100 : 500));
-    }
-    expect(() => transitionManorV7State(signed, { type: "claim-sign-in" }, now)).toThrow("已经领取");
+    const first = transitionManorV7State(visited, { type: "claim-sign-in" }, now);
+    expectSignInRewardApplied(visited, first, first.rewardClaims.signInRewardId!);
+    const second = transitionManorV7State(first, { type: "claim-sign-in" }, now);
+    expectSignInRewardApplied(first, second, second.rewardClaims.signInRewardId!);
+    expect(second.rewardClaims).toMatchObject({
+      signInRewardDay: "2026-08-22",
+      signInRewardId: second.rewardClaims.signInRewardIds[1],
+      signInRewardIds: [expect.any(Number), expect.any(Number)],
+      signInStreak: 1
+    });
+    expect(new Set(second.rewardClaims.signInRewardIds).size).toBe(MANOR_V7_DAILY_SIGN_IN_LIMIT);
+    expect(() => transitionManorV7State(second, { type: "claim-sign-in" }, now)).toThrow("次数已经用完");
 
     const tomorrow = now + 24 * 60 * 60 * 1_000;
-    expect(transitionManorV7State(signed, { type: "claim-daily-package" }, tomorrow).rewardClaims.dailyPackageDay)
+    expect(transitionManorV7State(second, { type: "claim-daily-package" }, tomorrow).rewardClaims.dailyPackageDay)
       .toBe("2026-08-23");
-    const signedTomorrow = transitionManorV7State(signed, { type: "claim-sign-in" }, tomorrow);
-    expect(signedTomorrow.rewardClaims).toMatchObject({ signInDay: "2026-08-23", signInStreak: 2 });
+    const signedTomorrow = transitionManorV7State(second, { type: "claim-sign-in" }, tomorrow);
+    expect(signedTomorrow.rewardClaims).toMatchObject({
+      signInDay: "2026-08-23",
+      signInRewardDay: "2026-08-23",
+      signInRewardIds: [expect.any(Number)],
+      signInStreak: 2
+    });
 
     const afterGap = tomorrow + 2 * 24 * 60 * 60 * 1_000;
-    const signedAfterGap = transitionManorV7State(signedTomorrow, { type: "claim-sign-in" }, afterGap);
-    expect(signedAfterGap.rewardClaims).toMatchObject({ signInDay: "2026-08-25", signInStreak: 1 });
+    const visitedAfterGap = transitionManorV7State(signedTomorrow, { type: "record-sign-in-visit" }, afterGap);
+    expect(visitedAfterGap.rewardClaims).toMatchObject({
+      signInDay: "2026-08-25",
+      signInStreak: 1,
+      signInStreakRewardDays: []
+    });
+  });
+
+  it("grants original 3, 5 and 7 day pasture sign-in rewards once per streak", () => {
+    const start = Date.UTC(2026, 7, 1, 2, 0, 0);
+    let state = createManorV7State(start);
+    for (let day = 1; day <= 7; day += 1) {
+      const now = start + (day - 1) * 24 * 60 * 60 * 1_000;
+      state = transitionManorV7State(state, { type: "record-sign-in-visit" }, now);
+      if (day === 3 || day === 5 || day === 7) {
+        state = transitionManorV7State(state, { type: "claim-sign-in-streak-reward", days: day }, now);
+      }
+    }
+    expect(state.rewardClaims.signInStreakRewardDays).toEqual([3, 5, 7]);
+    expect(inventoryQuantity(state.farm.produceInventory, 40)).toBe(100);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1047)).toBe(1);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1035)).toBe(1);
+    expect(() => transitionManorV7State(
+      state,
+      { type: "claim-sign-in-streak-reward", days: 7 },
+      start + 6 * 24 * 60 * 60 * 1_000
+    )).toThrow("已经领取");
+  });
+
+  it("raises sign-in animals and consumes sign-in cans from the pasture package", () => {
+    const now = 7_000;
+    const initial = createManorV7State(now);
+    initial.pasture.hutchLevel = 2;
+    initial.pasture.cubInventory = [{ sourceId: 1050, quantity: 1 }];
+    initial.pasture.toolInventory = [{ sourceId: 1, quantity: 1 }];
+    const raised = transitionManorV7State(
+      initial,
+      { type: "raise-animal-from-inventory", animalId: 1050, quantity: 1 },
+      now
+    );
+    const pigeon = raised.pasture.animals.find((animal) => animal.animalId === 1050);
+    expect(pigeon).toBeDefined();
+    expect(raised.pasture.cubInventory).toEqual([]);
+
+    const accelerated = transitionManorV7State(
+      raised,
+      { type: "use-pasture-can", serial: pigeon!.serial, toolId: 1 },
+      now
+    );
+    expect(accelerated.pasture.toolInventory).toEqual([]);
+    expect(accelerated.pasture.animals.find((animal) => animal.serial === pigeon!.serial)?.growthSeconds)
+      .toBe(10_800);
   });
 
   it("closes the fish unlock, buy, plant, harvest and sale loop", () => {
@@ -381,6 +442,8 @@ describe("QQ Farm V7 domain", () => {
         selectedAvatarId?: number | null;
       };
       pasture: ManorV7State["pasture"] & {
+        cubInventory?: ManorV7State["pasture"]["cubInventory"];
+        toolInventory?: ManorV7State["pasture"]["toolInventory"];
         harvestedAnimalInventory?: ManorV7State["pasture"]["harvestedAnimalInventory"];
         guards?: ManorV7State["pasture"]["guards"];
         wild?: ManorV7State["pasture"]["wild"];
@@ -391,6 +454,8 @@ describe("QQ Farm V7 domain", () => {
     delete legacy.farm.selectedBoardId;
     delete legacy.farm.selectedAvatarId;
     delete legacy.pasture.harvestedAnimalInventory;
+    delete legacy.pasture.cubInventory;
+    delete legacy.pasture.toolInventory;
     delete legacy.pasture.guards;
     delete legacy.pasture.wild;
     delete legacy.rewardClaims;
@@ -407,11 +472,41 @@ describe("QQ Farm V7 domain", () => {
     expect(migrated.rewardClaims).toEqual({
       dailyPackageDay: null,
       signInDay: null,
+      signInRewardDay: null,
       signInRewardId: null,
-      signInStreak: 0
+      signInRewardIds: [],
+      signInStreak: 0,
+      signInStreakRewardDays: []
     });
+    expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });
     expect(migrated.pasture.animals[1]).toMatchObject({ productionActive: false, productionCount: 0 });
+  });
+
+  it("migrates the previous one-card sign-in state without granting another first card", () => {
+    const legacy = createManorV7State(8_500) as ManorV7State & {
+      rewardClaims: ManorV7State["rewardClaims"] & {
+        signInRewardDay?: string | null;
+        signInRewardIds?: number[];
+        signInStreakRewardDays?: number[];
+      };
+    };
+    legacy.rewardClaims.signInDay = "2026-08-22";
+    legacy.rewardClaims.signInRewardId = 2;
+    legacy.rewardClaims.signInStreak = 4;
+    delete legacy.rewardClaims.signInRewardDay;
+    delete legacy.rewardClaims.signInRewardIds;
+    delete legacy.rewardClaims.signInStreakRewardDays;
+
+    const migrated = migrateManorV7State(legacy, 8_500);
+    expect(migrated.rewardClaims).toMatchObject({
+      signInDay: "2026-08-22",
+      signInRewardDay: "2026-08-22",
+      signInRewardId: 2,
+      signInRewardIds: [2],
+      signInStreak: 4,
+      signInStreakRewardDays: []
+    });
   });
 
   it("produces identical random care events from identical snapshots", () => {
@@ -597,3 +692,27 @@ describe("QQ Farm V7 domain", () => {
     expect(rested.pasture.wild.slots[0]).toMatchObject({ status: 1, restUntil: null });
   });
 });
+
+function expectSignInRewardApplied(before: ManorV7State, after: ManorV7State, rewardId: number): void {
+  const reward = manorV7DailySignInReward(rewardId);
+  if (reward.kind === "coins") {
+    expect(after.coins - before.coins).toBe(reward.quantity);
+    return;
+  }
+  const inventory = reward.kind === "animal"
+    ? after.pasture.cubInventory
+    : reward.kind === "crystal"
+      ? after.pasture.wild.crystalInventory
+      : reward.kind === "pasture-tool"
+        ? after.pasture.toolInventory
+        : after.farm.produceInventory;
+  const previousInventory = reward.kind === "animal"
+    ? before.pasture.cubInventory
+    : reward.kind === "crystal"
+      ? before.pasture.wild.crystalInventory
+      : reward.kind === "pasture-tool"
+        ? before.pasture.toolInventory
+        : before.farm.produceInventory;
+  expect(inventoryQuantity(inventory, reward.sourceId) - inventoryQuantity(previousInventory, reward.sourceId))
+    .toBe(reward.quantity);
+}

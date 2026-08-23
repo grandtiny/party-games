@@ -26,16 +26,21 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "harvest-fish": return { type, serial: integer(input.serial) };
     case "buy-tool": return { type, area: area(input.area), toolId: integer(input.toolId), quantity: quantity(input.quantity) };
     case "buy-animal": return { type, animalId: integer(input.animalId), quantity: quantity(input.quantity) };
+    case "raise-animal-from-inventory": return { type, animalId: integer(input.animalId), quantity: quantity(input.quantity) };
+    case "use-pasture-can": return { type, serial: integer(input.serial), toolId: integer(input.toolId) };
     case "buy-grass":
     case "buy-grass-to-inventory":
       return { type, quantity: quantity(input.quantity) };
     case "buy-pasture-guard": return { type, guardId: integer(input.guardId) };
     case "feed-grass-from-inventory": return { type, quantity: quantity(input.quantity) };
     case "claim-daily-package":
+    case "record-sign-in-visit":
     case "claim-sign-in":
     case "sell-all-produce":
     case "sell-all-pasture-products":
       return { type };
+    case "claim-sign-in-streak-reward":
+      return { type, days: integer(input.days) };
     case "collect-products":
       return { type, ...(input.animalId === undefined ? {} : { animalId: integer(input.animalId) }) };
     case "harvest-animals":

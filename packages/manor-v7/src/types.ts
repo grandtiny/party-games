@@ -268,6 +268,8 @@ export interface ManorV7State {
     shedLevel: number;
     nextAnimalSerial: number;
     animals: ManorV7PastureAnimalState[];
+    cubInventory: ManorV7InventoryEntry[];
+    toolInventory: ManorV7InventoryEntry[];
     productInventory: ManorV7InventoryEntry[];
     harvestedAnimalInventory: ManorV7InventoryEntry[];
     guards: ManorV7PastureGuardState[];
@@ -279,8 +281,11 @@ export interface ManorV7State {
   rewardClaims: {
     dailyPackageDay: string | null;
     signInDay: string | null;
+    signInRewardDay: string | null;
     signInRewardId: number | null;
+    signInRewardIds: number[];
     signInStreak: number;
+    signInStreakRewardDays: number[];
   };
   tasks: ManorV7TaskState[];
   activities: ManorV7Activity[];
@@ -310,12 +315,16 @@ export type ManorV7Action =
   | { type: "sell-fish"; fishId: number; quantity: number }
   | { type: "buy-tool"; area: ManorV7Area; toolId: number; quantity: number }
   | { type: "buy-animal"; animalId: number; quantity: number }
+  | { type: "raise-animal-from-inventory"; animalId: number; quantity: number }
+  | { type: "use-pasture-can"; serial: number; toolId: number }
   | { type: "buy-grass"; quantity: number }
   | { type: "buy-grass-to-inventory"; quantity: number }
   | { type: "feed-grass-from-inventory"; quantity: number }
   | { type: "buy-pasture-guard"; guardId: number }
   | { type: "claim-daily-package" }
+  | { type: "record-sign-in-visit" }
   | { type: "claim-sign-in" }
+  | { type: "claim-sign-in-streak-reward"; days: number }
   | { type: "start-production"; serial: number }
   | { type: "collect-product"; serial: number }
   | { type: "collect-products"; animalId?: number }
@@ -418,6 +427,8 @@ export interface ManorV7View {
     hutchCapacity: number;
     shedCapacity: number;
     animals: ManorV7AnimalView[];
+    cubInventory: ManorV7InventoryEntry[];
+    toolInventory: ManorV7InventoryEntry[];
     productInventory: ManorV7InventoryEntry[];
     harvestedAnimalInventory: ManorV7InventoryEntry[];
     guards: ManorV7PastureGuardState[];
