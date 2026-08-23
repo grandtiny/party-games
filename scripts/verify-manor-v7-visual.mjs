@@ -383,6 +383,7 @@ async function sampleScreenshot(cdp, pngBase64, stage) {
 async function selectScene(cdp, scene) {
   const index = scene === "farm" ? 0 : 1;
   const label = scene === "farm" ? "农场" : "牧场";
+  const bootstrapCount = sceneBootstrapResponseCount(scene);
   await evaluate(cdp, `(() => {
     const tabs = [...document.querySelectorAll('.manor-scene-tabs button')];
     const tab = tabs.find((candidate) => candidate.textContent?.includes(${JSON.stringify(label)}));
@@ -391,18 +392,22 @@ async function selectScene(cdp, scene) {
   })()`);
   await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs button')[${index}]?.getAttribute('aria-pressed') === 'true'`, 5_000);
   await waitForManor(cdp);
+  await waitForSceneBootstrap(scene, bootstrapCount);
 }
 
 async function verifySceneNavigationRegression(cdp) {
+  const pastureBootstrapCount = sceneBootstrapResponseCount("pasture");
   await clickStage(cdp, 48, 350);
-  await waitForScene(cdp, "pasture");
+  await waitForScene(cdp, "pasture", pastureBootstrapCount);
+  const farmBootstrapCount = sceneBootstrapResponseCount("farm");
   for (const [x, y] of [[230, 490], [250, 490], [270, 490], [230, 510], [250, 510], [270, 510]]) {
     await clickStage(cdp, x, y);
     await delay(250);
     if (await sceneIsSelected(cdp, "farm")) break;
   }
-  await waitForScene(cdp, "farm");
+  await waitForScene(cdp, "farm", farmBootstrapCount);
 
+  const rapidSwitchBootstrapCount = sceneBootstrapResponseCount("farm");
   await evaluate(cdp, `(async () => {
     const tabs = [...document.querySelectorAll('.manor-scene-tabs button')].slice(0, 2);
     if (tabs.length !== 2) throw new Error('Manor scene buttons are missing');
@@ -411,7 +416,7 @@ async function verifySceneNavigationRegression(cdp) {
       await new Promise((resolve) => window.setTimeout(resolve, 50));
     }
   })()`);
-  await waitForScene(cdp, "farm");
+  await waitForScene(cdp, "farm", rapidSwitchBootstrapCount);
   const page = await evaluate(cdp, `(() => ({
     errorText: document.querySelector('.manor-flash-error')?.textContent ?? '',
     playerCount: document.querySelectorAll('ruffle-player').length,
@@ -448,10 +453,27 @@ async function verifySceneNavigationRegression(cdp) {
   };
 }
 
-async function waitForScene(cdp, scene) {
+async function waitForScene(cdp, scene, bootstrapCount) {
   const index = scene === "farm" ? 0 : 1;
   await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs button')[${index}]?.getAttribute('aria-pressed') === 'true'`, 5_000);
   await waitForManor(cdp);
+  await waitForSceneBootstrap(scene, bootstrapCount);
+}
+
+function sceneBootstrapResponseCount(scene) {
+  const marker = scene === "farm"
+    ? "/api/manor/flash/farm?qzonemod=user&act=run"
+    : "/api/manor/flash/pasture?mod=cgi_enter";
+  return responses.filter((response) => response.url.includes(marker) && response.status < 400).length;
+}
+
+async function waitForSceneBootstrap(scene, previousCount) {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    if (sceneBootstrapResponseCount(scene) > previousCount) return;
+    await delay(100);
+  }
+  throw new Error(`Timed out waiting for ${scene} scene bootstrap response`);
 }
 
 async function sceneIsSelected(cdp, scene) {

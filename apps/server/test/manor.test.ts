@@ -1777,78 +1777,22 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
-  it("lets only the owner advance manor time and grant persistent test resources", async () => {
-    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-test-tools-"));
+  it("does not expose manor test mutation routes", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-no-test-routes-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
     try {
-      const unauthorized = await instance.app.inject({
+      const advanceTime = await instance.app.inject({
         method: "POST",
         url: "/api/manor/test/advance-time",
         payload: { seconds: 3_600 }
       });
-      expect(unauthorized.statusCode).toBe(401);
-
-      const owner = await bootstrapOwner(instance.app);
-      const member = await registerMember(instance.app, owner.cookie);
-      const forbidden = await instance.app.inject({
+      const grantResource = await instance.app.inject({
         method: "POST",
         url: "/api/manor/test/grant-resource",
-        headers: { cookie: member.cookie },
         payload: { resource: "coins", amount: 100 }
       });
-      expect(forbidden.statusCode).toBe(401);
-
-      const initial = await getManor(instance.app, owner.cookie);
-      const grants = [
-        { resource: "coins", amount: 1_234 },
-        { resource: "farm-experience", amount: 400 },
-        { resource: "pasture-experience", amount: 500 },
-        { resource: "fertilizer", amount: 7 },
-        { resource: "pasture-feed", amount: 1_000 }
-      ] as const;
-      for (const payload of grants) {
-        const response = await instance.app.inject({
-          method: "POST",
-          url: "/api/manor/test/grant-resource",
-          headers: { cookie: owner.cookie },
-          payload
-        });
-        expect(response.statusCode, response.body).toBe(200);
-      }
-
-      const funded = await getManor(instance.app, owner.cookie);
-      expect(funded).toMatchObject({
-        coins: initial.coins + 1_234,
-        farmExperience: initial.farmExperience + 400,
-        pastureExperience: initial.pastureExperience + 500,
-        pasture: { grass: 1_000 }
-      });
-      expect(funded.farm.toolInventory).toEqual([
-        expect.objectContaining({ sourceId: 1, quantity: 7 })
-      ]);
-
-      const advanced = await instance.app.inject({
-        method: "POST",
-        url: "/api/manor/test/advance-time",
-        headers: { cookie: owner.cookie },
-        payload: { seconds: 7 * 24 * 60 * 60 }
-      });
-      expect(advanced.statusCode, advanced.body).toBe(200);
-      expect(advanced.json().message).toBe("庄园时间已推进 7 天");
-      expect(advanced.json().view.farm.lands[0]).toMatchObject({ harvestable: true });
-
-      const persisted = await getManor(instance.app, owner.cookie);
-      expect(persisted.coins).toBe(initial.coins + 1_234);
-      expect(persisted.farm.lands[0].harvestable).toBe(true);
-      expect(persisted.revision).toBeGreaterThan(initial.revision);
-
-      const invalidDuration = await instance.app.inject({
-        method: "POST",
-        url: "/api/manor/test/advance-time",
-        headers: { cookie: owner.cookie },
-        payload: { seconds: 31 * 24 * 60 * 60 }
-      });
-      expect(invalidDuration.statusCode).toBe(400);
+      expect(advanceTime.statusCode).toBe(404);
+      expect(grantResource.statusCode).toBe(404);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });

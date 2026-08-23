@@ -30,8 +30,6 @@ import type {
   JoinRoomRequest,
   ManorGuestbookCreateRequest,
   ManorGuestbookView,
-  ManorTestAdvanceTimeRequest,
-  ManorTestGrantResourceRequest,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
   PuzzleResultView,
@@ -104,23 +102,6 @@ export async function getManorV7(): Promise<ManorV7View> {
 
 export async function performManorV7Action(input: ManorV7Action): Promise<ManorV7View> {
   return request("/api/manor/actions", { method: "POST", body: input });
-}
-
-export interface ManorTestMutationResponse {
-  view: ManorV7View;
-  message: string;
-}
-
-export async function advanceManorTestTime(
-  input: ManorTestAdvanceTimeRequest
-): Promise<ManorTestMutationResponse> {
-  return request("/api/manor/test/advance-time", { method: "POST", body: input });
-}
-
-export async function grantManorTestResource(
-  input: ManorTestGrantResourceRequest
-): Promise<ManorTestMutationResponse> {
-  return request("/api/manor/test/grant-resource", { method: "POST", body: input });
 }
 
 export async function getManorV7Social(): Promise<ManorV7SocialView> {

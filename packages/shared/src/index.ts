@@ -379,28 +379,6 @@ export const ManorGuestbookCreateRequestSchema = z.object({
 });
 export type ManorGuestbookCreateRequest = z.infer<typeof ManorGuestbookCreateRequestSchema>;
 
-export const ManorTestResourceSchema = z.enum([
-  "coins",
-  "farm-experience",
-  "pasture-experience",
-  "fertilizer",
-  "pasture-feed"
-]);
-export type ManorTestResource = z.infer<typeof ManorTestResourceSchema>;
-
-export const ManorTestGrantResourceRequestSchema = z.object({
-  resource: ManorTestResourceSchema,
-  amount: z.number().int().min(1).max(10_000_000)
-});
-export type ManorTestGrantResourceRequest = z.infer<
-  typeof ManorTestGrantResourceRequestSchema
->;
-
-export const ManorTestAdvanceTimeRequestSchema = z.object({
-  seconds: z.number().int().min(60).max(30 * 24 * 60 * 60)
-});
-export type ManorTestAdvanceTimeRequest = z.infer<typeof ManorTestAdvanceTimeRequestSchema>;
-
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({
