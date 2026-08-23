@@ -1,8 +1,6 @@
 import {
   advanceManorV7State,
-  addManorV7Activity,
   createManorV7State,
-  MANOR_V7_GRASS_CAPACITY,
   manorV7LevelForExperience,
   migrateManorV7State,
   parseManorV7Action,
@@ -21,8 +19,7 @@ import {
 import type {
   AccountUserView,
   ManorGuestbookCreateRequest,
-  ManorGuestbookView,
-  ManorTestGrantResourceRequest
+  ManorGuestbookView
 } from "@party-games/shared";
 import type { SqliteRoomRepository } from "./repository.js";
 
@@ -172,53 +169,6 @@ export class ManorV7Service {
     return this.getGuestbook(owner, undefined, now);
   }
 
-  advanceTestTime(
-    user: AccountUserView,
-    seconds: number,
-    now = Date.now()
-  ): { view: ManorV7View; message: string } {
-    const current = this.#load(user.id, now);
-    const elapsedMilliseconds = seconds * 1_000;
-    const rebased = advanceManorV7State(current, now, this.options);
-    rebased.updatedAt = Math.max(0, now - elapsedMilliseconds);
-    rebaseWildlifeDeadlines(rebased, elapsedMilliseconds);
-    const next = advanceManorV7State(rebased, now, { timeScale: 1 });
-    next.revision = current.revision + 1;
-    next.updatedAt = now;
-    const duration = formatTestDuration(seconds);
-    addManorV7Activity(next, "farm", `测试工具推进时间 ${duration}`, now);
-    validateManorV7State(next);
-    this.repository.updateManorV7State(user.id, current.revision, next);
-    return {
-      view: toManorV7View(next, { userId: user.id, displayName: user.displayName }, now),
-      message: `庄园时间已推进 ${duration}`
-    };
-  }
-
-  grantTestResource(
-    user: AccountUserView,
-    input: ManorTestGrantResourceRequest,
-    now = Date.now()
-  ): { view: ManorV7View; message: string } {
-    const current = this.#load(user.id, now);
-    const next = advanceManorV7State(current, now, this.options);
-    const granted = grantResource(next, input);
-    next.revision = current.revision + 1;
-    next.updatedAt = now;
-    addManorV7Activity(
-      next,
-      "farm",
-      `测试工具发放 ${granted} ${testResourceLabel(input.resource)}`,
-      now
-    );
-    validateManorV7State(next);
-    this.repository.updateManorV7State(user.id, current.revision, next);
-    return {
-      view: toManorV7View(next, { userId: user.id, displayName: user.displayName }, now),
-      message: `${testResourceLabel(input.resource)}已增加 ${granted}`
-    };
-  }
-
   #loadAndAdvance(userId: string, now: number): ManorV7State {
     const current = this.#load(userId, now);
     const advanced = advanceManorV7State(current, now, this.options);
@@ -272,70 +222,4 @@ function comparePasture(left: ManorV7FriendSummary, right: ManorV7FriendSummary)
 function parseStoredDate(value: string, fallback: number): number {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) ? timestamp : fallback;
-}
-
-function grantResource(state: ManorV7State, input: ManorTestGrantResourceRequest): number {
-  switch (input.resource) {
-    case "coins":
-      state.coins = safeResourceTotal(state.coins, input.amount);
-      return input.amount;
-    case "farm-experience":
-      state.farmExperience = safeResourceTotal(state.farmExperience, input.amount);
-      return input.amount;
-    case "pasture-experience":
-      state.pastureExperience = safeResourceTotal(state.pastureExperience, input.amount);
-      return input.amount;
-    case "fertilizer": {
-      const entry = state.farm.toolInventory.find((item) => item.sourceId === 1);
-      if (entry) entry.quantity = safeResourceTotal(entry.quantity, input.amount);
-      else state.farm.toolInventory.push({ sourceId: 1, quantity: input.amount });
-      return input.amount;
-    }
-    case "pasture-feed": {
-      const previous = state.pasture.grass;
-      state.pasture.grass = Math.min(MANOR_V7_GRASS_CAPACITY, previous + input.amount);
-      return Math.round(state.pasture.grass - previous);
-    }
-  }
-}
-
-function safeResourceTotal(current: number, amount: number): number {
-  const total = current + amount;
-  if (!Number.isSafeInteger(total)) throw new Error("资源数量超过安全上限");
-  return total;
-}
-
-function rebaseWildlifeDeadlines(state: ManorV7State, elapsedMilliseconds: number): void {
-  for (const slot of state.pasture.wild.slots) {
-    slot.releasedAt = shiftTimestamp(slot.releasedAt, elapsedMilliseconds);
-    slot.returnAt = shiftTimestamp(slot.returnAt, elapsedMilliseconds);
-    slot.restUntil = shiftTimestamp(slot.restUntil, elapsedMilliseconds);
-  }
-  for (const animal of state.pasture.wild.incomingAnimals) {
-    animal.arrivedAt = Math.max(0, animal.arrivedAt - elapsedMilliseconds);
-    animal.returnAt = Math.max(animal.arrivedAt, animal.returnAt - elapsedMilliseconds);
-  }
-  for (const drop of state.pasture.wild.crystalDrops) {
-    drop.createdAt = Math.max(0, drop.createdAt - elapsedMilliseconds);
-  }
-}
-
-function shiftTimestamp(value: number | null, elapsedMilliseconds: number): number | null {
-  return value === null ? null : Math.max(0, value - elapsedMilliseconds);
-}
-
-function formatTestDuration(seconds: number): string {
-  if (seconds % (24 * 60 * 60) === 0) return `${seconds / (24 * 60 * 60)} 天`;
-  if (seconds % (60 * 60) === 0) return `${seconds / (60 * 60)} 小时`;
-  return `${Math.round(seconds / 60)} 分钟`;
-}
-
-function testResourceLabel(resource: ManorTestGrantResourceRequest["resource"]): string {
-  switch (resource) {
-    case "coins": return "金币";
-    case "farm-experience": return "农场经验";
-    case "pasture-experience": return "牧场经验";
-    case "fertilizer": return "普通化肥";
-    case "pasture-feed": return "牧场饲料";
-  }
 }

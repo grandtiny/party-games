@@ -22,8 +22,6 @@ import {
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   ManorGuestbookCreateRequestSchema,
-  ManorTestAdvanceTimeRequestSchema,
-  ManorTestGrantResourceRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -326,34 +324,6 @@ export async function createApp(options: AppOptions) {
     } catch (error) {
       const message = messageOf(error);
       return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
-    }
-  });
-
-  app.post("/api/manor/test/advance-time", async (request, reply) => {
-    try {
-      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
-      const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
-      const input = ManorTestAdvanceTimeRequestSchema.parse(request.body);
-      return manorService.advanceTestTime(user, input.seconds);
-    } catch (error) {
-      const message = messageOf(error);
-      return reply
-        .code(message.includes("会话无效") ? 401 : 400)
-        .send({ error: message });
-    }
-  });
-
-  app.post("/api/manor/test/grant-resource", async (request, reply) => {
-    try {
-      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
-      const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
-      const input = ManorTestGrantResourceRequestSchema.parse(request.body);
-      return manorService.grantTestResource(user, input);
-    } catch (error) {
-      const message = messageOf(error);
-      return reply
-        .code(message.includes("会话无效") ? 401 : 400)
-        .send({ error: message });
     }
   });
 
