@@ -7,7 +7,6 @@ import { RequireAccount } from "./platform/RequireAccount";
 import { SettingsPage } from "./platform/SettingsPage";
 import "./games/clocktower/theme.css";
 import "./games/gomoku/theme.css";
-import "./games/manor/theme.css";
 import "./games/puzzles.css";
 import "./games/minesweeper/theme.css";
 import "./games/poker/theme.css";
@@ -60,7 +59,7 @@ const GomokuReplayPage = lazy(() =>
   }))
 );
 const ManorPage = lazy(() =>
-  import("./games/manor/Page").then(({ ManorPage }) => ({ default: ManorPage }))
+  import("./games/manor/V7Page").then(({ ManorV7Page }) => ({ default: ManorV7Page }))
 );
 
 export default function App() {

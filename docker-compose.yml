@@ -12,7 +12,6 @@ services:
       WEB_DIST_PATH: /app/apps/web/dist
       POKER_ENABLED: ${POKER_ENABLED:-true}
       MANOR_TIME_SCALE: ${MANOR_TIME_SCALE:-1}
-      MANOR_LEGACY_ASSETS_PATH: /app/legacy-assets
       PARTY_GAMES_LLM_ENABLED: ${PARTY_GAMES_LLM_ENABLED:-}
       PARTY_GAMES_LLM_ENDPOINT: ${PARTY_GAMES_LLM_ENDPOINT:-}
       PARTY_GAMES_LLM_API_KEY: ${PARTY_GAMES_LLM_API_KEY:-}
@@ -29,10 +28,6 @@ services:
       - "${PARTY_GAMES_PORT:-18081}:3000"
     volumes:
       - party-games-data:/app/data
-      - type: bind
-        source: ${MANOR_LEGACY_ASSETS_HOST_PATH:-./data/legacy-assets}
-        target: /app/legacy-assets
-        read_only: true
     restart: unless-stopped
     healthcheck:
       test:

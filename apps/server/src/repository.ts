@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import type { ManorV7State } from "@party-games/manor-v7";
 import type {
   GameType,
   GomokuAiDifficultyValue,
@@ -254,6 +255,25 @@ const DATABASE_MIGRATIONS: ReadonlyArray<{ version: number; sql: string }> = [
 
       CREATE INDEX IF NOT EXISTS idx_manor_guestbook_owner_created
         ON manor_guestbook_messages(owner_user_id, created_at DESC, id DESC);
+    `
+  },
+  {
+    version: 8,
+    sql: `
+      CREATE TABLE IF NOT EXISTS manor_v7_states (
+        user_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL,
+        state_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `
+  },
+  {
+    version: 9,
+    sql: `
+      DROP TABLE IF EXISTS manor_farms;
     `
   }
 ];
@@ -1188,11 +1208,72 @@ export class SqliteRoomRepository {
       : undefined;
   }
 
-  getManorFarm(userId: string): unknown | undefined {
+  getManorV7State(userId: string): ManorV7State | undefined {
     const row = this.#database
-      .prepare("SELECT state_json FROM manor_farms WHERE user_id = ?")
+      .prepare("SELECT state_json FROM manor_v7_states WHERE user_id = ?")
       .get(userId) as { state_json: string } | undefined;
-    return row ? JSON.parse(row.state_json) : undefined;
+    return row ? JSON.parse(row.state_json) as ManorV7State : undefined;
+  }
+
+  ensureManorV7State(userId: string, state: ManorV7State): ManorV7State {
+    const timestamp = new Date(state.updatedAt).toISOString();
+    this.#database
+      .prepare(`
+        INSERT OR IGNORE INTO manor_v7_states (
+          user_id, revision, state_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `)
+      .run(userId, state.revision, JSON.stringify(state), timestamp, timestamp);
+    const stored = this.getManorV7State(userId);
+    if (!stored) throw new Error("V7 庄园存档创建失败");
+    return stored;
+  }
+
+  updateManorV7State(userId: string, expectedRevision: number, state: ManorV7State): void {
+    const result = this.#database
+      .prepare(`
+        UPDATE manor_v7_states
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `)
+      .run(
+        state.revision,
+        JSON.stringify(state),
+        new Date(state.updatedAt).toISOString(),
+        userId,
+        expectedRevision
+      );
+    if (result.changes !== 1) throw new Error("V7 庄园状态已更新，请刷新后重试");
+  }
+
+  updateManorV7StatesAtomically(
+    updates: Array<{ userId: string; expectedRevision: number; state: ManorV7State }>
+  ): void {
+    if (new Set(updates.map((update) => update.userId)).size !== updates.length) {
+      throw new Error("V7 庄园事务包含重复账号");
+    }
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const statement = this.#database.prepare(`
+        UPDATE manor_v7_states
+        SET revision = ?, state_json = ?, updated_at = ?
+        WHERE user_id = ? AND revision = ?
+      `);
+      for (const update of updates) {
+        const result = statement.run(
+          update.state.revision,
+          JSON.stringify(update.state),
+          new Date(update.state.updatedAt).toISOString(),
+          update.userId,
+          update.expectedRevision
+        );
+        if (result.changes !== 1) throw new Error("V7 庄园状态已更新，请刷新后重试");
+      }
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   listManorAccounts(): StoredManorAccount[] {
@@ -1207,83 +1288,6 @@ export class SqliteRoomRepository {
       .prepare("SELECT id, display_name FROM users WHERE id = ?")
       .get(userId) as { id: string; display_name: string } | undefined;
     return row ? { id: row.id, displayName: row.display_name } : undefined;
-  }
-
-  ensureManorFarm(
-    userId: string,
-    state: { revision: number; createdAt: number; updatedAt: number }
-  ): unknown {
-    this.#database
-      .prepare(`
-        INSERT OR IGNORE INTO manor_farms (
-          user_id, revision, state_json, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?)
-      `)
-      .run(
-        userId,
-        state.revision,
-        JSON.stringify(state),
-        new Date(state.createdAt).toISOString(),
-        new Date(state.updatedAt).toISOString()
-      );
-    const stored = this.getManorFarm(userId);
-    if (!stored) throw new Error("庄园存档创建失败");
-    return stored;
-  }
-
-  updateManorFarm(
-    userId: string,
-    expectedRevision: number,
-    state: { revision: number; updatedAt: number }
-  ): void {
-    const result = this.#database
-      .prepare(`
-        UPDATE manor_farms
-        SET revision = ?, state_json = ?, updated_at = ?
-        WHERE user_id = ? AND revision = ?
-      `)
-      .run(
-        state.revision,
-        JSON.stringify(state),
-        new Date(state.updatedAt).toISOString(),
-        userId,
-        expectedRevision
-      );
-    if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
-  }
-
-  updateManorFarmsAtomically(
-    updates: Array<{
-      userId: string;
-      expectedRevision: number;
-      state: { revision: number; updatedAt: number };
-    }>
-  ): void {
-    if (new Set(updates.map((update) => update.userId)).size !== updates.length) {
-      throw new Error("庄园事务包含重复账号");
-    }
-    this.#database.exec("BEGIN IMMEDIATE");
-    try {
-      const statement = this.#database.prepare(`
-        UPDATE manor_farms
-        SET revision = ?, state_json = ?, updated_at = ?
-        WHERE user_id = ? AND revision = ?
-      `);
-      for (const update of updates) {
-        const result = statement.run(
-          update.state.revision,
-          JSON.stringify(update.state),
-          new Date(update.state.updatedAt).toISOString(),
-          update.userId,
-          update.expectedRevision
-        );
-        if (result.changes !== 1) throw new Error("庄园状态已更新，请刷新后重试");
-      }
-      this.#database.exec("COMMIT");
-    } catch (error) {
-      this.#database.exec("ROLLBACK");
-      throw error;
-    }
   }
 
   listManorGuestbook(ownerUserId: string, limit = 50): StoredManorGuestbookMessage[] {

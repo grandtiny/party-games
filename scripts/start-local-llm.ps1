@@ -228,6 +228,15 @@ if ([string]::IsNullOrWhiteSpace($DatabasePath)) {
   New-Item -ItemType Directory -Force -Path $dataPath | Out-Null
   $DatabasePath = Join-Path $dataPath "party-games-local-llm.sqlite"
 }
+$DatabasePath = if ([IO.Path]::IsPathFullyQualified($DatabasePath)) {
+  [IO.Path]::GetFullPath($DatabasePath)
+} else {
+  [IO.Path]::GetFullPath((Join-Path $projectRoot $DatabasePath))
+}
+$databaseDirectory = Split-Path -Parent $DatabasePath
+if (-not (Test-Path -LiteralPath $databaseDirectory)) {
+  New-Item -ItemType Directory -Force -Path $databaseDirectory | Out-Null
+}
 
 [Environment]::SetEnvironmentVariable("PORT", [string]$Port, "Process")
 [Environment]::SetEnvironmentVariable("HOST", $HostName, "Process")

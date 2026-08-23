@@ -55,7 +55,7 @@ describe("admin settings", () => {
     });
     expect(configResponse.statusCode).toBe(200);
     expect(configResponse.json()).toMatchObject({
-      databaseSchemaVersion: 7,
+      databaseSchemaVersion: 9,
       llm: { enabled: false, hasApiKey: false, ready: false, source: "none" },
       turtleSoupPrompts: {
         version: expect.any(String),

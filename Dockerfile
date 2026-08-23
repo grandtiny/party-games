@@ -17,7 +17,7 @@ COPY packages/game-core/package.json ./packages/game-core/package.json
 COPY packages/clocktower/package.json ./packages/clocktower/package.json
 COPY packages/poker/package.json ./packages/poker/package.json
 COPY packages/gomoku/package.json ./packages/gomoku/package.json
-COPY packages/manor/package.json ./packages/manor/package.json
+COPY packages/manor-v7/package.json ./packages/manor-v7/package.json
 COPY patches ./patches
 
 RUN pnpm install --frozen-lockfile

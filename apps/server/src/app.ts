@@ -1,8 +1,8 @@
-import { createReadStream, existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
-import Fastify, { type FastifyReply } from "fastify";
+import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import {
   AccountBootstrapRequestSchema,
   AccountInviteCreateRequestSchema,
@@ -21,11 +21,9 @@ import {
   GomokuProgressSyncRequestSchema,
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
-  ManorActionRequestSchema,
-  ManorFriendFarmActionRequestSchema,
-  ManorFriendPastureActionRequestSchema,
   ManorGuestbookCreateRequestSchema,
-  ManorPastureActionRequestSchema,
+  ManorTestAdvanceTimeRequestSchema,
+  ManorTestGrantResourceRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -38,7 +36,8 @@ import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
 import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
-import { ManorService } from "./manor-service.js";
+import { ManorV7FlashAdapter } from "./manor-v7-flash-adapter.js";
+import { ManorV7Service } from "./manor-v7-service.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
 import { RoomService } from "./room-service.js";
@@ -60,6 +59,11 @@ export async function createApp(options: AppOptions) {
     threshold: 1024,
     customTypes: /^(application\/javascript|application\/wasm|application\/json|text\/css|text\/html)/u
   });
+  app.addContentTypeParser(
+    "application/x-www-form-urlencoded",
+    { parseAs: "string" },
+    (_request, body, done) => done(null, body)
+  );
   const environment = options.environment ?? process.env;
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
@@ -76,15 +80,10 @@ export async function createApp(options: AppOptions) {
   });
   const roomService = new RoomService(repository, presence, games);
   const accountService = new AccountService(repository);
-  const legacyFarmBackgroundPath = findLegacyFarmBackground(
-    environment.MANOR_LEGACY_ASSETS_PATH
-  );
-  const manorService = new ManorService(repository, {
-    timeScale: positiveNumber(environment.MANOR_TIME_SCALE, 1),
-    ...(legacyFarmBackgroundPath
-      ? { legacyBackgroundUrl: "/api/manor/assets/background" }
-      : {})
+  const manorService = new ManorV7Service(repository, {
+    timeScale: positiveNumber(environment.MANOR_TIME_SCALE, 1)
   });
+  const manorFlashAdapter = new ManorV7FlashAdapter(manorService);
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -309,7 +308,7 @@ export async function createApp(options: AppOptions) {
 
   app.get("/api/manor", async (request, reply) => {
     try {
-      return manorService.getFarm(
+      return manorService.getView(
         accountService.requireUser(accountSessionToken(request.headers.cookie))
       );
     } catch (error) {
@@ -320,10 +319,9 @@ export async function createApp(options: AppOptions) {
 
   app.post("/api/manor/actions", async (request, reply) => {
     try {
-      const input = ManorActionRequestSchema.parse(request.body);
-      return manorService.handleAction(
+      return manorService.performAction(
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
-        input
+        request.body
       );
     } catch (error) {
       const message = messageOf(error);
@@ -331,33 +329,81 @@ export async function createApp(options: AppOptions) {
     }
   });
 
-  app.get("/api/manor/pasture", async (request, reply) => {
+  app.post("/api/manor/test/advance-time", async (request, reply) => {
     try {
-      return manorService.getPasture(
-        accountService.requireUser(accountSessionToken(request.headers.cookie))
-      );
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+      const input = ManorTestAdvanceTimeRequestSchema.parse(request.body);
+      return manorService.advanceTestTime(user, input.seconds);
     } catch (error) {
       const message = messageOf(error);
-      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
     }
   });
 
-  app.post("/api/manor/pasture/actions", async (request, reply) => {
+  app.post("/api/manor/test/grant-resource", async (request, reply) => {
     try {
-      const input = ManorPastureActionRequestSchema.parse(request.body);
-      return manorService.handlePastureAction(
-        accountService.requireUser(accountSessionToken(request.headers.cookie)),
-        input
-      );
+      requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+      const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+      const input = ManorTestGrantResourceRequestSchema.parse(request.body);
+      return manorService.grantTestResource(user, input);
     } catch (error) {
       const message = messageOf(error);
-      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
+      return reply
+        .code(message.includes("会话无效") ? 401 : 400)
+        .send({ error: message });
+    }
+  });
+
+  const handleFarmFlash = async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const result = manorFlashAdapter.handleFarm(
+        accountService.requireUser(accountSessionToken(request.headers.cookie)),
+        request.query,
+        request.body
+      );
+      reply.header("Cache-Control", "no-store");
+      if (typeof result === "string") reply.type("text/plain; charset=utf-8");
+      return result;
+    } catch (error) {
+      const message = messageOf(error);
+      if (message.includes("账号会话无效")) {
+        return reply.code(401).send({ code: 0, error: message, direction: message });
+      }
+      return reply.send({ code: 0, poptype: 1, direction: message });
+    }
+  };
+  app.route({ method: ["GET", "POST"], url: "/api/manor/flash/farm", handler: handleFarmFlash });
+  app.route({ method: ["GET", "POST"], url: "/mync.php", handler: handleFarmFlash });
+
+  app.route({
+    method: ["GET", "POST"],
+    url: "/api/manor/flash/pasture",
+    handler: async (request, reply) => {
+      try {
+        const result = manorFlashAdapter.handlePasture(
+          accountService.requireUser(accountSessionToken(request.headers.cookie)),
+          request.query,
+          request.body
+        );
+        reply.header("Cache-Control", "no-store");
+        if (typeof result === "string") reply.type("text/plain; charset=utf-8");
+        return result;
+      } catch (error) {
+        const message = messageOf(error);
+        if (message.includes("账号会话无效")) {
+          return reply.code(401).send({ code: 0, error: message, direction: message });
+        }
+        return reply.send({ code: 0, errorContent: message, errorType: "1011", direction: message });
+      }
     }
   });
 
   app.get("/api/manor/social", async (request, reply) => {
     try {
-      return manorService.getSocialOverview(
+      return manorService.getSocial(
         accountService.requireUser(accountSessionToken(request.headers.cookie))
       );
     } catch (error) {
@@ -366,10 +412,10 @@ export async function createApp(options: AppOptions) {
     }
   });
 
-  app.get("/api/manor/friends/:userId/farm", async (request, reply) => {
+  app.get("/api/manor/friends/:userId", async (request, reply) => {
     try {
       const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
-      return manorService.getFriendFarm(
+      return manorService.getFriendView(
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
         ownerUserId
       );
@@ -379,40 +425,13 @@ export async function createApp(options: AppOptions) {
     }
   });
 
-  app.post("/api/manor/friends/:userId/farm/actions", async (request, reply) => {
+  app.post("/api/manor/friends/:userId/actions", async (request, reply) => {
     try {
       const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
-      return manorService.handleFriendFarmAction(
+      return manorService.performFriendAction(
         accountService.requireUser(accountSessionToken(request.headers.cookie)),
         ownerUserId,
-        ManorFriendFarmActionRequestSchema.parse(request.body)
-      );
-    } catch (error) {
-      const message = messageOf(error);
-      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
-    }
-  });
-
-  app.get("/api/manor/friends/:userId/pasture", async (request, reply) => {
-    try {
-      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
-      return manorService.getFriendPasture(
-        accountService.requireUser(accountSessionToken(request.headers.cookie)),
-        ownerUserId
-      );
-    } catch (error) {
-      const message = messageOf(error);
-      return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
-    }
-  });
-
-  app.post("/api/manor/friends/:userId/pasture/actions", async (request, reply) => {
-    try {
-      const ownerUserId = String((request.params as { userId?: string }).userId ?? "");
-      return manorService.handleFriendPastureAction(
-        accountService.requireUser(accountSessionToken(request.headers.cookie)),
-        ownerUserId,
-        ManorFriendPastureActionRequestSchema.parse(request.body)
+        request.body
       );
     } catch (error) {
       const message = messageOf(error);
@@ -481,15 +500,6 @@ export async function createApp(options: AppOptions) {
       const message = messageOf(error);
       return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
-  });
-
-  app.get("/api/manor/assets/background", async (_request, reply) => {
-    if (!legacyFarmBackgroundPath) {
-      return reply.code(404).send({ error: "未配置本地怀旧资源" });
-    }
-    reply.header("Cache-Control", "public, max-age=3600");
-    reply.type("image/jpeg");
-    return reply.send(createReadStream(legacyFarmBackgroundPath));
   });
 
   app.get("/api/admin/status", async (request) => {
@@ -1009,16 +1019,53 @@ export async function createApp(options: AppOptions) {
   const webDistPath = options.webDistPath ? resolve(options.webDistPath) : undefined;
   if (webDistPath && existsSync(webDistPath)) {
     app.addHook("onSend", async (request, reply, payload) => {
-      if (request.url.startsWith("/assets/manor/classic/")) {
-        reply.header("Cache-Control", "public, max-age=0, must-revalidate");
+      if (request.url.startsWith("/assets/manor/v7-runtime/")) {
+        reply.header("Cache-Control", "public, max-age=3600, must-revalidate");
       }
       return payload;
     });
+    const manorV7ConfigPath = resolve(webDistPath, "assets/manor/v7-swf/config");
+    const manorV7ConfigTemplates = new Map(
+      [
+        "load_main_v_20120209.xml",
+        "data_zh_CN_v_20120209.xml",
+        "addon_v_20120209.xml",
+        "mcini_main_v_20120209.xml",
+        "mcdata_zh_CN_v_20120209.xml",
+        "mccard_zh_CN_v_20120209.xml"
+      ].flatMap((fileName) => {
+        const filePath = resolve(manorV7ConfigPath, fileName);
+        return existsSync(filePath) ? [[fileName, readFileSync(filePath, "utf8")] as const] : [];
+      })
+    );
+    if (manorV7ConfigTemplates.size) {
+      app.get<{ Params: { fileName: string } }>("/api/manor/flash/config/:fileName", async (request, reply) => {
+        const template = manorV7ConfigTemplates.get(request.params.fileName);
+        if (!template) return reply.code(404).send({ error: "Flash 配置不存在" });
+        const host = request.headers.host;
+        if (!host) return reply.code(400).send({ error: "请求缺少 Host" });
+        const origin = new URL(`${request.protocol}://${host}`).origin;
+        return reply
+          .type("application/xml; charset=utf-8")
+          .header("Cache-Control", "no-store")
+          .send(template.replaceAll("__MANOR_ORIGIN__", origin));
+      });
+    }
     await app.register(fastifyStatic, {
       root: webDistPath,
       immutable: true,
       maxAge: "1y"
     });
+    const manorV7ModulePath = resolve(webDistPath, "assets/manor/v7-swf/module");
+    if (existsSync(manorV7ModulePath)) {
+      await app.register(fastifyStatic, {
+        root: manorV7ModulePath,
+        prefix: "/module/",
+        decorateReply: false,
+        immutable: true,
+        maxAge: "1y"
+      });
+    }
     const sendIndex = (_request: unknown, reply: FastifyReply) =>
       reply.sendFile("index.html", { immutable: false, maxAge: 0 });
     app.get("/", sendIndex);
@@ -1065,16 +1112,6 @@ function enabledFlag(value: string | undefined, defaultValue = false): boolean {
 function positiveNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function findLegacyFarmBackground(configuredPath: string | undefined): string | undefined {
-  if (!configuredPath?.trim()) return undefined;
-  const root = resolve(configuredPath);
-  const candidates = [
-    join(root, "module", "nc", "farm", "diy", "26f.jpg"),
-    join(root, "upload", "home", "qqfarm", "module", "nc", "farm", "diy", "26f.jpg")
-  ];
-  return candidates.find((candidate) => existsSync(candidate));
 }
 
 const ADMIN_SESSION_COOKIE = "party_games_admin_session";

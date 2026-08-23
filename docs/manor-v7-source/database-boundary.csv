@@ -1,0 +1,8 @@
+"table_name","data_class","migration_policy"
+"qqfarm_market","player-market","do-not-migrate"
+"qqfarm_mc","player-state","do-not-migrate"
+"qqfarm_mclogs","player-log","do-not-migrate"
+"qqfarm_message","player-message","do-not-migrate"
+"qqfarm_nc","player-state","do-not-migrate"
+"qqfarm_nclogs","player-log","do-not-migrate"
+"qqfarm_user","player-state","do-not-migrate"
