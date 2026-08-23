@@ -384,12 +384,12 @@ async function selectScene(cdp, scene) {
   const index = scene === "farm" ? 0 : 1;
   const label = scene === "farm" ? "农场" : "牧场";
   await evaluate(cdp, `(() => {
-    const tabs = [...document.querySelectorAll('.manor-scene-tabs [role="tab"]')];
+    const tabs = [...document.querySelectorAll('.manor-scene-tabs button')];
     const tab = tabs.find((candidate) => candidate.textContent?.includes(${JSON.stringify(label)}));
     if (!tab) throw new Error(${JSON.stringify(`${label} tab is missing`)});
     tab.click();
   })()`);
-  await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs [role="tab"]')[${index}]?.getAttribute('aria-selected') === 'true'`, 5_000);
+  await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs button')[${index}]?.getAttribute('aria-pressed') === 'true'`, 5_000);
   await waitForManor(cdp);
 }
 
@@ -404,8 +404,8 @@ async function verifySceneNavigationRegression(cdp) {
   await waitForScene(cdp, "farm");
 
   await evaluate(cdp, `(async () => {
-    const tabs = [...document.querySelectorAll('.manor-scene-tabs [role="tab"]')];
-    if (tabs.length !== 2) throw new Error('Manor scene tabs are missing');
+    const tabs = [...document.querySelectorAll('.manor-scene-tabs button')].slice(0, 2);
+    if (tabs.length !== 2) throw new Error('Manor scene buttons are missing');
     for (let index = 0; index < 20; index += 1) {
       tabs[index % 2 === 0 ? 1 : 0].click();
       await new Promise((resolve) => window.setTimeout(resolve, 50));
@@ -433,7 +433,7 @@ async function verifySceneNavigationRegression(cdp) {
   const toolbarRequests = {
     profile: responses.some((response) => response.url.includes("/api/manor/flash/pasture?mod=cgi_get_user_info")),
     messages: responses.some((response) => response.url.includes("/api/manor/flash/pasture?mod=chat&act=getAllInfo")),
-    signIn: responses.some((response) => response.url.includes("/api/manor/flash/pasture?mod=cgi_pasture_login_click"))
+    progress: responses.some((response) => response.url.includes("/api/manor/flash/pasture?mod=cgi_get_Exp"))
   };
   if (Object.values(toolbarRequests).some((observed) => !observed)) {
     throw new Error(`牧场左上工具栏回归失败：${JSON.stringify(toolbarRequests)}`);
@@ -450,13 +450,13 @@ async function verifySceneNavigationRegression(cdp) {
 
 async function waitForScene(cdp, scene) {
   const index = scene === "farm" ? 0 : 1;
-  await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs [role="tab"]')[${index}]?.getAttribute('aria-selected') === 'true'`, 5_000);
+  await waitForExpression(cdp, `document.querySelectorAll('.manor-scene-tabs button')[${index}]?.getAttribute('aria-pressed') === 'true'`, 5_000);
   await waitForManor(cdp);
 }
 
 async function sceneIsSelected(cdp, scene) {
   const index = scene === "farm" ? 0 : 1;
-  return evaluate(cdp, `document.querySelectorAll('.manor-scene-tabs [role="tab"]')[${index}]?.getAttribute('aria-selected') === 'true'`);
+  return evaluate(cdp, `document.querySelectorAll('.manor-scene-tabs button')[${index}]?.getAttribute('aria-pressed') === 'true'`);
 }
 
 async function resetPasture(cdp) {
