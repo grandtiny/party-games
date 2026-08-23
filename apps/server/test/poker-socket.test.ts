@@ -32,7 +32,8 @@ describe("poker socket boundary", () => {
 
     const platformResponse = await context.app.inject({ method: "GET", url: "/api/platform" });
     expect(platformResponse.json()).toEqual({
-      enabledGames: ["clocktower", "turtle-soup", "poker"]
+      enabledGames: ["clocktower", "turtle-soup", "poker"],
+      manorTestToolsEnabled: false
     });
 
     const owner = await context.roomService.createRoom({

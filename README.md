@@ -48,6 +48,13 @@ $env:MANOR_TIME_SCALE = "120"
 pnpm start
 ```
 
+庄园测试工具默认关闭，不会显示在页面中，相关变更数据接口也不会注册。仅在本地联调时显式启用；启用后仍只对平台 owner 账号开放：
+
+```powershell
+$env:MANOR_TEST_TOOLS_ENABLED = "true"
+pnpm start
+```
+
 V7 源文件、SWF、规则和运行时素材台账维护在 `docs/manor-v7-source/`；运行时只读取 `apps/web/public/assets/manor/v7-runtime/`，不读取外部旧站目录。
 
 德州扑克默认启用。如需临时关闭入口：

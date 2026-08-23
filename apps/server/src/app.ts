@@ -22,6 +22,8 @@ import {
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   ManorGuestbookCreateRequestSchema,
+  ManorTestAdvanceTimeRequestSchema,
+  ManorTestGrantResourceRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -63,6 +65,7 @@ export async function createApp(options: AppOptions) {
     (_request, body, done) => done(null, body)
   );
   const environment = options.environment ?? process.env;
+  const manorTestToolsEnabled = enabledFlag(environment.MANOR_TEST_TOOLS_ENABLED);
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
   const adminService = new AdminService(repository, environment);
@@ -101,7 +104,8 @@ export async function createApp(options: AppOptions) {
   }));
 
   app.get("/api/platform", async () => ({
-    enabledGames: games.list().map((game) => game.id)
+    enabledGames: games.list().map((game) => game.id),
+    manorTestToolsEnabled
   }));
 
   app.get("/api/account/status", async (request) =>
@@ -326,6 +330,36 @@ export async function createApp(options: AppOptions) {
       return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
   });
+
+  if (manorTestToolsEnabled) {
+    app.post("/api/manor/test/advance-time", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        const input = ManorTestAdvanceTimeRequestSchema.parse(request.body);
+        return manorService.advanceTestTime(user, input.seconds);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+
+    app.post("/api/manor/test/grant-resource", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        const input = ManorTestGrantResourceRequestSchema.parse(request.body);
+        return manorService.grantTestResource(user, input);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+  }
 
   const handleFarmFlash = async (request: FastifyRequest, reply: FastifyReply) => {
     try {

@@ -1,18 +1,43 @@
-import { PawPrint, Sprout } from "lucide-react";
-import { useEffect, useState } from "react";
+import { FlaskConical, PawPrint, Sprout } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { getPlatformStatus } from "../../api";
+import { useAccount } from "../../platform/AccountContext";
 import { AppShell } from "../../platform/AppShell";
 import { ManorRufflePlayer, type ManorRuffleScene } from "./ManorRufflePlayer";
 import "./ruffle.css";
 
+const ManorTestTools = lazy(async () => {
+  const module = await import("./ManorTestTools");
+  return { default: module.ManorTestTools };
+});
+
 export function ManorV7Page() {
+  const { status: accountStatus } = useAccount();
   const [scene, setScene] = useState<ManorRuffleScene>("farm");
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [testToolsAvailable, setTestToolsAvailable] = useState(false);
+  const [testToolsOpen, setTestToolsOpen] = useState(false);
+  const canUseTestTools = testToolsAvailable && accountStatus?.user?.role === "owner";
 
   useEffect(() => installLegacyNavigationBridge(setScene), []);
+  useEffect(() => {
+    let active = true;
+    void getPlatformStatus()
+      .then((status) => {
+        if (active) setTestToolsAvailable(status.manorTestToolsEnabled);
+      })
+      .catch(() => {
+        if (active) setTestToolsAvailable(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <AppShell scope="manor" title={`QQ${scene === "farm" ? "农场" : "牧场"} 7.0`} backTo="/">
       <div className="manor-flash-page">
-        <div className="manor-scene-tabs" role="group" aria-label="农场与牧场">
+        <div className="manor-scene-tabs" role="group" aria-label="农牧场场景">
           <button type="button" aria-pressed={scene === "farm"} onClick={() => setScene("farm")}>
             <Sprout size={17} />
             农场
@@ -21,8 +46,27 @@ export function ManorV7Page() {
             <PawPrint size={17} />
             牧场
           </button>
+          {canUseTestTools ? (
+            <button
+              className="manor-test-toggle"
+              type="button"
+              aria-expanded={testToolsOpen}
+              onClick={() => setTestToolsOpen((value) => !value)}
+            >
+              <FlaskConical size={17} />
+              测试
+            </button>
+          ) : null}
         </div>
-        <ManorRufflePlayer scene={scene} />
+        {canUseTestTools && testToolsOpen ? (
+          <Suspense fallback={null}>
+            <ManorTestTools
+              onClose={() => setTestToolsOpen(false)}
+              onMutated={() => setRefreshToken((value) => value + 1)}
+            />
+          </Suspense>
+        ) : null}
+        <ManorRufflePlayer scene={scene} refreshToken={refreshToken} />
       </div>
     </AppShell>
   );

@@ -27,7 +27,13 @@ let ruffleScriptPromise: Promise<void> | undefined;
 
 export type ManorRuffleScene = "farm" | "pasture";
 
-export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
+export function ManorRufflePlayer({
+  scene,
+  refreshToken = 0
+}: {
+  scene: ManorRuffleScene;
+  refreshToken?: number;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<RufflePlayerElement | undefined>(undefined);
   const loadQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -91,7 +97,7 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
     void queuedLoad.catch((caught) => {
       if (mountedRef.current && generationRef.current === generation) setError(messageOf(caught));
     });
-  }, [reloadToken, scene]);
+  }, [refreshToken, reloadToken, scene]);
 
   return (
     <div className="manor-flash-stage">
