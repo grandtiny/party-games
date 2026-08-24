@@ -59,14 +59,13 @@ $farmApplicationPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\m
 $farmBuyItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyItemWindow.as"
 $farmBuyDiyPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyDiyWindow.as"
 $farmBuySeedPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuySeedWindow.as"
-$farmTileBasePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\framework\base\§_-Eh§.as"
 $farmSeedTilePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\§_-Qq§.as"
 $farmLandWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\§_-LI§.as"
 $farmFriendVipPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-Zk§.as"
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $shopSeedTilePatchSource, $shopToolPatchSource, $shopTinPatchSource, $shopDiyPatchSource, $pastureSelectPatchSource, $pastureNameTextPatchSource, $pastureFlopGiftPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureGiftWindowPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $farmProfileBarPatchSource, $dailyPackageModelPatchSource, $farmGiftWindowPatchSource, $farmVipReturnGiftWindowPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmBuySeedPatchSource, $farmTileBasePatchSource, $farmSeedTilePatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $shopSeedTilePatchSource, $shopToolPatchSource, $shopTinPatchSource, $shopDiyPatchSource, $pastureSelectPatchSource, $pastureNameTextPatchSource, $pastureFlopGiftPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureGiftWindowPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $farmProfileBarPatchSource, $dailyPackageModelPatchSource, $farmGiftWindowPatchSource, $farmVipReturnGiftWindowPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmBuySeedPatchSource, $farmSeedTilePatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -139,8 +138,7 @@ $farmArguments = @(
   $farmBuyDiyPatchSource,
   "§_-W§.BuySeedWindow",
   $farmBuySeedPatchSource,
-  "framework.base.§_-Eh§",
-  $farmTileBasePatchSource,
+  # Recompiling this base class changes its protected namespace and breaks original subclasses.
   "§_-W§.§_-Qq§",
   $farmSeedTilePatchSource,
   "common.view.window.§_-LI§",

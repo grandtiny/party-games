@@ -53,11 +53,17 @@ package §_-W§
       private var §_-a5§:Label;
       
       private var _loader:§_-2Y§;
+
+      private var _pageTile:TileList;
+
+      private var _pageWidth:int;
       
       public function §_-Qq§(param1:DisplayObjectContainer, param2:int, param3:int)
       {
          var _loc4_:HBox = null;
          super(param1,param2,param3);
+         this._pageWidth = param2;
+         this._pageTile = null;
          this.§_-JZ§ = "green";
          this.§_-21§ = null;
          this.§_-4L§ = null;
@@ -178,55 +184,73 @@ package §_-W§
       
       override protected function onCreateTile() : void
       {
-         if(this.tile != null)
+         if(this._pageTile != null)
          {
-            this.tile.paddingH = 23;
-            this.tile.paddingV = 10;
-            this.tile.gapH = 0;
-            this.tile.gapV = 0;
-            this.tile.tileWidth = 90;
-            this.tile.tileHeight = 98;
-            this.tile.defaultSkin = null;
-            this.tile.horizontalScrollPolicy = §_-RG§.§_-YA§;
-            this.tile.itemRenderer = CropItem;
-            this.tile.y = this._tile_top;
-            this.tile.width = this.tileWidth - 5;
-            this.tile.height = this._tile_height;
+            this._pageTile.paddingH = 23;
+            this._pageTile.paddingV = 10;
+            this._pageTile.gapH = 0;
+            this._pageTile.gapV = 0;
+            this._pageTile.tileWidth = 90;
+            this._pageTile.tileHeight = 98;
+            this._pageTile.defaultSkin = null;
+            this._pageTile.horizontalScrollPolicy = §_-RG§.§_-YA§;
+            this._pageTile.itemRenderer = CropItem;
+            this._pageTile.y = this._tile_top;
+            this._pageTile.width = this._pageWidth - 5;
+            this._pageTile.height = this._tile_height;
          }
+      }
+
+      override public function get dataList() : Array
+      {
+         if(this._pageTile == null)
+         {
+            return null;
+         }
+         return this._pageTile.dataProvider;
       }
       
       override public function set dataList(param1:Array) : void
       {
-         if(this.tile == null)
+         if(this._pageTile == null)
          {
-            this.tile = new TileList();
+            this._pageTile = new TileList();
             this.onCreateTile();
-            addChild(this.tile);
+            addChild(this._pageTile);
          }
          this.§_-J9§(param1);
          if(this.§_-JZ§ == "green")
          {
-            this.tile.dataProvider = this.§_-37§;
+            this._pageTile.dataProvider = this.§_-37§;
          }
          else if(this.§_-JZ§ == "normal")
          {
-            this.tile.dataProvider = this.§_-21§;
+            this._pageTile.dataProvider = this.§_-21§;
          }
          else if(this.§_-JZ§ == "advanced")
          {
-            this.tile.dataProvider = this.§_-4L§;
+            this._pageTile.dataProvider = this.§_-4L§;
          }
          else if(this.§_-JZ§ == "mill")
          {
-            this.tile.dataProvider = this.§_-K3§;
+            this._pageTile.dataProvider = this.§_-K3§;
          }
          else if(this.§_-JZ§ == "vip")
          {
-            this.tile.dataProvider = this.§_-1o§;
+            this._pageTile.dataProvider = this.§_-1o§;
          }
          else if(this.§_-JZ§ == "black")
          {
-            this.tile.dataProvider = this.§_-Ko§;
+            this._pageTile.dataProvider = this.§_-Ko§;
+         }
+      }
+
+      override public function set §_-Q8§(param1:Boolean) : void
+      {
+         super.§_-Q8§ = param1;
+         if(this._pageTile != null)
+         {
+            this._pageTile.visible = !param1;
          }
       }
       
@@ -302,7 +326,7 @@ package §_-W§
          if(_loc2_ != null && this.§_-JZ§ != _loc2_.name)
          {
             this.§_-JZ§ = _loc2_.name;
-            if(this.tile == null)
+            if(this._pageTile == null)
             {
                return;
             }
@@ -325,13 +349,13 @@ package §_-W§
             }
             if(this.§_-JZ§ == "green" || this.§_-JZ§ == "normal" || this.§_-JZ§ == "advanced" || this.§_-JZ§ == "black")
             {
-               this.tile.tileWidth = 90;
-               this.tile.tileHeight = 98;
-               this.tile.y = this._tile_top;
+               this._pageTile.tileWidth = 90;
+               this._pageTile.tileHeight = 98;
+               this._pageTile.y = this._tile_top;
                this.§_-a5§.visible = false;
-               this.tile.itemRenderer = CropItem;
-               this.tile.dataProvider = _loc3_;
-               this.tile.height = this._tile_height;
+               this._pageTile.itemRenderer = CropItem;
+               this._pageTile.dataProvider = _loc3_;
+               this._pageTile.height = this._tile_height;
                if(this._loader)
                {
                   this._loader.visible = false;
@@ -340,17 +364,17 @@ package §_-W§
                {
                   this.§_-73§.visible = false;
                }
-               this.tile.scrollVerticalReset();
+               this._pageTile.scrollVerticalReset();
             }
             else if(this.§_-JZ§ == "vip")
             {
-               this.tile.tileWidth = 149;
-               this.tile.tileHeight = 170;
-               this.tile.y = this._tile_top;
-               this.tile.itemRenderer = §_-4m§;
-               this.tile.dataProvider = this.§_-1o§;
-               this.tile.height = this._tile_height - this.§_-a5§.height - 3;
-               this.tile.y = this._tile_top + this.§_-a5§.height + 3;
+               this._pageTile.tileWidth = 149;
+               this._pageTile.tileHeight = 170;
+               this._pageTile.y = this._tile_top;
+               this._pageTile.itemRenderer = §_-4m§;
+               this._pageTile.dataProvider = this.§_-1o§;
+               this._pageTile.height = this._tile_height - this.§_-a5§.height - 3;
+               this._pageTile.y = this._tile_top + this.§_-a5§.height + 3;
                if(this._isVip)
                {
                   this.§_-a5§.text = Settings.getInstance().getDynamicTip("shopVipTip");
@@ -372,7 +396,7 @@ package §_-W§
                {
                   this._loader.visible = true;
                }
-               this.tile.scrollVerticalReset();
+               this._pageTile.scrollVerticalReset();
             }
          }
       }

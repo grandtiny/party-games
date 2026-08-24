@@ -4,7 +4,7 @@
   <loading url="__MANOR_ORIGIN__/module/loading2_v_3.swf" />
   <!-- 模块列表 -->
   <moduleList>
-    <module name="main" url="__MANOR_ORIGIN__/module/main3_v_140.swf?v=a94336d93ecf" statusText="加载主文件...">
+    <module name="main" url="__MANOR_ORIGIN__/module/main3_v_140.swf?v=95a4a025fb0a" statusText="加载主文件...">
       <material url="__MANOR_ORIGIN__/module/ui/main/farmui_full_v_32.swf" statusText="加载UI素材..." />
       <material url="__MANOR_ORIGIN__/module/ui/main/farmui2_v_34.swf" statusText="加载UI素材..." />
       <material url="__MANOR_ORIGIN__/module/mc/farm/wild/wild_ui_v_10.swf" statusText="加载图标素材..." />
