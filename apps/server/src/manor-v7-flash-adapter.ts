@@ -96,6 +96,10 @@ export class ManorV7FlashAdapter {
     if (moduleName === "user" && ["received", "send", "card", "del", "case", "exchange"].includes(actionName)) {
       return this.#userProtocol(user, actionName, params, now);
     }
+    if (moduleName === "cgi_farm_flower_received") return this.#userProtocol(user, "received", params, now);
+    if (moduleName === "cgi_farm_flower_send") return this.#userProtocol(user, "send", params, now);
+    if (moduleName === "cgi_farm_flower_get_card") return this.#userProtocol(user, "card", params, now);
+    if (moduleName === "cgi_farm_flower_del_msg") return this.#userProtocol(user, "del", params, now);
     if (moduleName === "cgi_get_user_info") return this.#profile(user, "farm", params, now);
     if (moduleName === "chat" && actionName === "getallinfo") {
       return this.#profile(user, "farm", params, now);

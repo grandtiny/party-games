@@ -2459,7 +2459,7 @@ describe("QQ Farm V7 account persistence", () => {
 
       const sent = await instance.app.inject({
         method: "POST",
-        url: "/api/manor/flash/farm?mod=user&act=send",
+        url: "/api/manor/flash/farm?mod=cgi_farm_flower_send",
         headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: `to=${stableFlashUserId(owner.userId)}&fId=12&w=%E7%A5%9D%E4%BD%A0%E5%BC%80%E5%BF%83`
       });
@@ -2468,7 +2468,7 @@ describe("QQ Farm V7 account persistence", () => {
 
       const received = await instance.app.inject({
         method: "POST",
-        url: "/api/manor/flash/farm?mod=user&act=received",
+        url: "/api/manor/flash/farm?mod=cgi_farm_flower_received",
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: ""
       });
@@ -2480,13 +2480,13 @@ describe("QQ Farm V7 account persistence", () => {
       const flower = received.json().myFlower[0] as { fromId: number; time: number };
       const card = await instance.app.inject({
         method: "GET",
-        url: `/api/manor/flash/farm?mod=user&act=card&uid=${flower.fromId}&time=${flower.time}`,
+        url: `/api/manor/flash/farm?mod=cgi_farm_flower_get_card&uid=${flower.fromId}&time=${flower.time}`,
         headers: { cookie: owner.cookie }
       });
       expect(card.json()).toEqual({ code: 1, time: flower.time, uid: flower.fromId, word: "祝你开心" });
       const deleted = await instance.app.inject({
         method: "POST",
-        url: "/api/manor/flash/farm?mod=user&act=del",
+        url: "/api/manor/flash/farm?mod=cgi_farm_flower_del_msg",
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: `uid=${flower.fromId}&time=${flower.time}`
       });
