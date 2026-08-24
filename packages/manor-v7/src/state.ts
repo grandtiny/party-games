@@ -7,6 +7,7 @@ import {
   manorV7Animal,
   manorV7Board,
   manorV7Crop,
+  manorV7Decoration,
   manorV7Fish,
   manorV7PastureGuard,
   manorV7Tool
@@ -44,6 +45,8 @@ import {
   MANOR_V7_DAILY_SIGN_IN_REWARDS,
   MANOR_V7_STREAK_SIGN_IN_REWARDS
 } from "./sign-in.js";
+import { MANOR_V7_MAX_LEVEL_REWARD, MANOR_V7_TUTORIAL_TASKS } from "./rewards.js";
+import { MANOR_V7_FLOWERS, manorV7Flower } from "./flowers.js";
 
 export interface ManorV7RuntimeOptions {
   timeScale?: number;
@@ -59,6 +62,24 @@ export const MANOR_V7_GUARD_INITIAL_WAGE_SECONDS = 7 * 24 * 60 * 60;
 export const MANOR_V7_FISH_POOL_CAPACITY = 6;
 export const MANOR_V7_ACTIVITY_LIMIT = 50;
 export const MANOR_V7_EVENT_INTERVAL_SECONDS = 21_600;
+export const MANOR_V7_BAD_ACTION_DAILY_LIMIT = 50;
+export const MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT = 25;
+export const MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT = 100;
+export const MANOR_V7_SPECIAL_FEED_DAILY_LIMIT = 30;
+export const MANOR_V7_DOG_FOOD_DAY_SECONDS = 24 * 60 * 60;
+
+export const MANOR_V7_RESEARCH_RULES = {
+  hutch: [
+    { animalId: 1096, coins: 18_000, seconds: 24 * 60 * 60 },
+    { animalId: 1097, coins: 18_700, seconds: 28 * 60 * 60 },
+    { animalId: 1098, coins: 19_000, seconds: 34 * 60 * 60 }
+  ],
+  shed: [
+    { animalId: 1598, coins: 18_500, seconds: 24 * 60 * 60 },
+    { animalId: 1600, coins: 18_900, seconds: 28 * 60 * 60 },
+    { animalId: 1601, coins: 19_500, seconds: 34 * 60 * 60 }
+  ]
+} as const;
 
 export const MANOR_V7_RECLAIM_RULES = [
   { unlocked: 6, level: 5, coins: 10_000 },
@@ -150,7 +171,8 @@ export function createManorV7State(now: number): ManorV7State {
       pests: crop?.pests ?? false,
       stolen: 0,
       thiefUserIds: [],
-      fertilizedSeconds: 0
+      fertilizedSeconds: 0,
+      yieldPenaltyPercent: 0
     };
   });
 
@@ -165,6 +187,10 @@ export function createManorV7State(now: number): ManorV7State {
       seedInventory: [],
       produceInventory: [],
       toolInventory: [],
+      badActions: { day: manorV7DayKey(now), remaining: MANOR_V7_BAD_ACTION_DAILY_LIMIT },
+      manureCollection: { day: manorV7DayKey(now), remaining: MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT },
+      dog: { ownedIds: [], activeId: null, feedSeconds: 0 },
+      weather: manorV7Weather(now),
       fishPool: createFishPool(),
       eventProgressSeconds: 0,
       selectedDecorationIds: [1, 2, 3, 4],
@@ -181,15 +207,33 @@ export function createManorV7State(now: number): ManorV7State {
         { serial: 2, animalId: 1002, growthSeconds: 36_001, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] }
       ],
       cubInventory: [],
+      materialInventory: [],
       toolInventory: [],
+      weaponInventory: [],
       productInventory: [],
       harvestedAnimalInventory: [],
       guards: [],
+      research: {
+        hutch: { animalId: null, remainingSeconds: 0 },
+        shed: { animalId: null, remainingSeconds: 0 }
+      },
+      specialFeed: { day: manorV7DayKey(now), remaining: MANOR_V7_SPECIAL_FEED_DAILY_LIMIT },
+      mosquitoActions: { day: manorV7DayKey(now), remaining: MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT },
+      mosquitoes: { sourceUserIds: [] },
+      mousePresent: false,
+      parade: { info: "", patternId: 0, version: 0 },
       manure: 0,
       selectedDecorationIds: [105],
       wild: createManorV7WildState()
     },
     ownedDecorationIds: [1, 2, 3, 4, 105],
+    decorationOwnerships: [
+      { area: "farm", decorationId: 1, validUntil: 0 },
+      { area: "farm", decorationId: 2, validUntil: 0 },
+      { area: "farm", decorationId: 3, validUntil: 0 },
+      { area: "farm", decorationId: 4, validUntil: 0 },
+      { area: "pasture", decorationId: 105, validUntil: 0 }
+    ],
     rewardClaims: {
       dailyPackageDay: null,
       signInDay: null,
@@ -197,8 +241,16 @@ export function createManorV7State(now: number): ManorV7State {
       signInRewardId: null,
       signInRewardIds: [],
       signInStreak: 0,
-      signInStreakRewardDays: []
+      signInStreakRewardDays: [],
+      vipReturnGiftClaimed: false
     },
+    researchGuideSeen: false,
+    tutorialTask: { taskId: 0, accepted: true },
+    levelRewardClaims: { farm: 0, pasture: 0 },
+    redeemedCodes: [],
+    friendFilterUserIds: [],
+    receivedFlowers: [],
+    nextFlowerGiftId: 1,
     tasks: MANOR_V7_TASK_DEFINITIONS.map((task) => ({ key: task.key, progress: 0, completed: false, claimed: false })),
     activities: [{ id: 1, area: "farm", message: "欢迎来到 QQ 农场 7.0", createdAt: now }],
     nextActivityId: 2,
@@ -215,7 +267,17 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     throw new Error("V7 庄园存档格式无效");
   }
   const state = structuredClone(value as ManorV7State);
-  for (const land of state.farm.lands) land.thiefUserIds ??= [];
+  for (const land of state.farm.lands) {
+    land.thiefUserIds ??= [];
+    land.yieldPenaltyPercent ??= 0;
+  }
+  state.farm.badActions ??= { day: manorV7DayKey(now), remaining: MANOR_V7_BAD_ACTION_DAILY_LIMIT };
+  state.farm.manureCollection ??= {
+    day: manorV7DayKey(now),
+    remaining: MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT
+  };
+  state.farm.dog ??= { ownedIds: [], activeId: null, feedSeconds: 0 };
+  state.farm.weather ??= manorV7Weather(now);
   for (const animal of state.pasture.animals) {
     const definition = manorV7Animal(animal.animalId);
     const legacy = animal as ManorV7PastureAnimalState & {
@@ -237,13 +299,36 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     animal.growthSeconds = Math.min(animal.growthSeconds, definition.lifecycleSeconds);
   }
   state.farm.fishPool ??= createFishPool();
+  state.farm.fishPool.toolInventory ??= [];
+  for (const fish of state.farm.fishPool.fish) {
+    fish.stolen ??= 0;
+    fish.thiefUserIds ??= [];
+    fish.fedStage ??= 0;
+    fish.fedStage = Math.min(Math.max(0, Math.trunc(fish.fedStage)), manorV7Fish(fish.fishId).cycleSeconds.length);
+  }
   state.farm.selectedBoardId ??= null;
   state.farm.selectedAvatarId ??= null;
   state.pasture.harvestedAnimalInventory ??= [];
   state.pasture.cubInventory ??= [];
+  state.pasture.materialInventory ??= [];
   state.pasture.toolInventory ??= [];
+  state.pasture.weaponInventory ??= [];
   state.pasture.guards ??= [];
+  state.pasture.research ??= {
+    hutch: { animalId: null, remainingSeconds: 0 },
+    shed: { animalId: null, remainingSeconds: 0 }
+  };
+  state.pasture.specialFeed ??= { day: manorV7DayKey(now), remaining: MANOR_V7_SPECIAL_FEED_DAILY_LIMIT };
+  state.pasture.mosquitoActions ??= {
+    day: manorV7DayKey(now),
+    remaining: MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT
+  };
+  state.pasture.mosquitoes ??= { sourceUserIds: [] };
+  state.pasture.mousePresent ??= false;
+  state.pasture.parade ??= { info: "", patternId: 0, version: 0 };
   state.pasture.wild ??= createManorV7WildState();
+  state.decorationOwnerships ??= migrateLegacyDecorationOwnerships(state);
+  synchronizeDecorationOwnerships(state, now);
   state.rewardClaims ??= {
     dailyPackageDay: null,
     signInDay: null,
@@ -251,7 +336,8 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     signInRewardId: null,
     signInRewardIds: [],
     signInStreak: 0,
-    signInStreakRewardDays: []
+    signInStreakRewardDays: [],
+    vipReturnGiftClaimed: false
   };
   state.rewardClaims.signInStreak ??= state.rewardClaims.signInDay ? 1 : 0;
   state.rewardClaims.signInRewardDay ??= state.rewardClaims.signInRewardId
@@ -261,6 +347,17 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     ? [state.rewardClaims.signInRewardId]
     : [];
   state.rewardClaims.signInStreakRewardDays ??= [];
+  state.rewardClaims.vipReturnGiftClaimed ??= false;
+  state.researchGuideSeen ??= true;
+  state.tutorialTask ??= { taskId: MANOR_V7_TUTORIAL_TASKS.length, accepted: false };
+  state.levelRewardClaims ??= {
+    farm: Math.min(MANOR_V7_MAX_LEVEL_REWARD, manorV7LevelForExperience(state.farmExperience)),
+    pasture: Math.min(MANOR_V7_MAX_LEVEL_REWARD, manorV7LevelForExperience(state.pastureExperience))
+  };
+  state.redeemedCodes ??= [];
+  state.friendFilterUserIds ??= [];
+  state.receivedFlowers ??= [];
+  state.nextFlowerGiftId ??= Math.max(0, ...state.receivedFlowers.map((gift) => gift.id)) + 1;
   validateManorV7State(state);
   return state;
 }
@@ -273,13 +370,23 @@ export function advanceManorV7State(
   const state = structuredClone(current);
   if (now <= state.updatedAt) return state;
   const elapsed = ((now - state.updatedAt) / 1_000) * normalizeTimeScale(options.timeScale);
+  resetDailyCounters(state, now);
+  synchronizeWeather(state, now);
+  state.farm.dog.feedSeconds = Math.max(0, round(state.farm.dog.feedSeconds - elapsed));
 
   for (const land of state.farm.lands) {
     if (!land.cropId) continue;
     const crop = manorV7Crop(land.cropId);
     if (land.harvests >= crop.harvestCycles) continue;
-    const careFactor = land.weeds || land.pests || !land.watered ? 0.7 : 1;
-    land.growthSeconds = Math.min(crop.growthSeconds, land.growthSeconds + elapsed * careFactor);
+    const growableSeconds = Math.min(elapsed, Math.max(0, crop.growthSeconds - land.growthSeconds));
+    const careSeverity = Number(land.weeds) + Number(land.pests) + Number(!land.watered) * 2;
+    if (careSeverity > 0 && growableSeconds > 0) {
+      land.yieldPenaltyPercent = Math.min(
+        50,
+        round(land.yieldPenaltyPercent + growableSeconds / 300 * careSeverity)
+      );
+    }
+    land.growthSeconds = Math.min(crop.growthSeconds, land.growthSeconds + elapsed);
   }
 
   for (const fish of state.farm.fishPool.fish) {
@@ -294,7 +401,9 @@ export function advanceManorV7State(
   for (let index = 0; index < eventCount; index += 1) applyFarmEvent(state, now);
 
   advancePasture(state, elapsed, now);
+  advanceResearch(state, elapsed, now);
   advanceWildlife(state, now);
+  synchronizeDecorationOwnerships(state, now);
   state.updatedAt = now;
   state.revision += 1;
   validateManorV7State(state);
@@ -338,6 +447,10 @@ export function toManorV7View(
       seedInventory: cloneInventory(state.farm.seedInventory),
       produceInventory: cloneInventory(state.farm.produceInventory),
       toolInventory: cloneInventory(state.farm.toolInventory),
+      badActions: { ...state.farm.badActions },
+      manureCollection: { ...state.farm.manureCollection },
+      dog: { ...state.farm.dog, ownedIds: [...state.farm.dog.ownedIds] },
+      weather: { ...state.farm.weather },
       fishPool: {
         opened: state.farm.fishPool.opened,
         capacity: MANOR_V7_FISH_POOL_CAPACITY,
@@ -345,7 +458,8 @@ export function toManorV7View(
         unlockedFishIds: [...state.farm.fishPool.unlockedFishIds],
         fish: state.farm.fishPool.fish.map((fish) => ({ ...fish })),
         seedInventory: cloneInventory(state.farm.fishPool.seedInventory),
-        produceInventory: cloneInventory(state.farm.fishPool.produceInventory)
+        produceInventory: cloneInventory(state.farm.fishPool.produceInventory),
+        toolInventory: cloneInventory(state.farm.fishPool.toolInventory)
       },
       selectedDecorationIds: [...state.farm.selectedDecorationIds],
       selectedBoardId: state.farm.selectedBoardId,
@@ -359,10 +473,21 @@ export function toManorV7View(
       shedCapacity: manorV7HouseCapacity("shed", state.pasture.shedLevel),
       animals: state.pasture.animals.map((animal) => toAnimalView(animal, state.pasture.grass)),
       cubInventory: cloneInventory(state.pasture.cubInventory),
+      materialInventory: cloneInventory(state.pasture.materialInventory),
       toolInventory: cloneInventory(state.pasture.toolInventory),
+      weaponInventory: cloneInventory(state.pasture.weaponInventory),
       productInventory: cloneInventory(state.pasture.productInventory),
       harvestedAnimalInventory: cloneInventory(state.pasture.harvestedAnimalInventory),
       guards: state.pasture.guards.map((guard) => ({ ...guard })),
+      research: {
+        hutch: { ...state.pasture.research.hutch },
+        shed: { ...state.pasture.research.shed }
+      },
+      specialFeed: { ...state.pasture.specialFeed },
+      mosquitoActions: { ...state.pasture.mosquitoActions },
+      mosquitoes: { sourceUserIds: [...state.pasture.mosquitoes.sourceUserIds] },
+      mousePresent: state.pasture.mousePresent,
+      parade: { ...state.pasture.parade },
       manure: state.pasture.manure,
       selectedDecorationIds: [...state.pasture.selectedDecorationIds],
       wild: {
@@ -377,11 +502,18 @@ export function toManorV7View(
       }
     },
     ownedDecorationIds: [...state.ownedDecorationIds],
+    decorationOwnerships: state.decorationOwnerships.map((ownership) => ({ ...ownership })),
     rewardClaims: {
       ...state.rewardClaims,
       signInRewardIds: [...state.rewardClaims.signInRewardIds],
       signInStreakRewardDays: [...state.rewardClaims.signInStreakRewardDays]
     },
+    researchGuideSeen: state.researchGuideSeen,
+    tutorialTask: { ...state.tutorialTask },
+    levelRewardClaims: { ...state.levelRewardClaims },
+    redeemedCodes: [...state.redeemedCodes],
+    friendFilterUserIds: [...state.friendFilterUserIds],
+    receivedFlowers: state.receivedFlowers.map((gift) => ({ ...gift })),
     tasks: toTaskViews(state.tasks),
     activities: state.activities.map((activity) => ({ ...activity })),
     catalogs: {
@@ -391,7 +523,8 @@ export function toManorV7View(
       decorations: MANOR_V7_DECORATIONS,
       fish: MANOR_V7_FISH,
       wildAnimals: MANOR_V7_WILD_ANIMALS,
-      wildCrystals: MANOR_V7_WILD_CRYSTALS
+      wildCrystals: MANOR_V7_WILD_CRYSTALS,
+      flowers: MANOR_V7_FLOWERS
     },
     serverTime: now
   };
@@ -437,6 +570,15 @@ export function manorV7DayKey(now: number): string {
   return new Date(now + 8 * 60 * 60 * 1_000).toISOString().slice(0, 10);
 }
 
+export function manorV7EffectiveYield(land: ManorV7State["farm"]["lands"][number]): number {
+  if (!land.cropId) return 0;
+  const crop = manorV7Crop(land.cropId);
+  const caredYield = Math.max(1, Math.ceil(crop.baseYield * (100 - land.yieldPenaltyPercent) / 100));
+  if (land.tier === "black" && crop.landRequirement !== 2) return Math.max(1, Math.floor(caredYield * 1.2));
+  if (land.tier === "red" && crop.landRequirement !== 1) return Math.max(1, Math.floor(caredYield * 1.1));
+  return caredYield;
+}
+
 export function progressManorV7Task(state: ManorV7State, key: string, amount: number): void {
   const task = state.tasks.find((item) => item.key === key);
   const definition = MANOR_V7_TASK_DEFINITIONS.find((item) => item.key === key);
@@ -460,8 +602,23 @@ export function validateManorV7State(state: ManorV7State): void {
     new Set(state.farm.lands.map((land) => land.id)).size !== MANOR_V7_LAND_COUNT ||
     !validBoardId(state.farm.selectedBoardId) ||
     !validAvatarId(state.farm.selectedAvatarId) ||
+    !validDailyCounter(state.farm.badActions, MANOR_V7_BAD_ACTION_DAILY_LIMIT) ||
+    !validDailyCounter(state.farm.manureCollection, MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT) ||
+    !Array.isArray(state.farm.dog.ownedIds) ||
+    new Set(state.farm.dog.ownedIds).size !== state.farm.dog.ownedIds.length ||
+    state.farm.dog.ownedIds.some((id) => !MANOR_V7_TOOLS.some((tool) => tool.area === "farm" && tool.itemType === 4 && tool.id === id)) ||
+    (state.farm.dog.activeId !== null && !state.farm.dog.ownedIds.includes(state.farm.dog.activeId)) ||
+    !Number.isFinite(state.farm.dog.feedSeconds) || state.farm.dog.feedSeconds < 0 ||
     !Number.isFinite(state.pasture.grass) || state.pasture.grass < 0 || state.pasture.grass > MANOR_V7_GRASS_CAPACITY ||
     !validClaimDay(state.rewardClaims.dailyPackageDay) ||
+    !validDailyCounter(state.pasture.specialFeed, MANOR_V7_SPECIAL_FEED_DAILY_LIMIT) ||
+    !validDailyCounter(state.pasture.mosquitoActions, MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT) ||
+    !Array.isArray(state.pasture.mosquitoes.sourceUserIds) ||
+    state.pasture.mosquitoes.sourceUserIds.some((userId) => typeof userId !== "string" || userId.length === 0) ||
+    typeof state.pasture.mousePresent !== "boolean" ||
+    typeof state.pasture.parade.info !== "string" || state.pasture.parade.info.length > 512 ||
+    !Number.isInteger(state.pasture.parade.patternId) || state.pasture.parade.patternId < 0 ||
+    !Number.isInteger(state.pasture.parade.version) || state.pasture.parade.version < 0 ||
     !validClaimDay(state.rewardClaims.signInDay) ||
     !validClaimDay(state.rewardClaims.signInRewardDay) ||
     (state.rewardClaims.signInRewardId !== null && !validDailySignInRewardId(state.rewardClaims.signInRewardId)) ||
@@ -475,6 +632,18 @@ export function validateManorV7State(state: ManorV7State): void {
     !Array.isArray(state.rewardClaims.signInStreakRewardDays) ||
     state.rewardClaims.signInStreakRewardDays.some((days) => !validStreakSignInRewardDay(days)) ||
     new Set(state.rewardClaims.signInStreakRewardDays).size !== state.rewardClaims.signInStreakRewardDays.length ||
+    typeof state.rewardClaims.vipReturnGiftClaimed !== "boolean" ||
+    typeof state.researchGuideSeen !== "boolean" ||
+    !Number.isInteger(state.tutorialTask.taskId) || state.tutorialTask.taskId < 0 ||
+    state.tutorialTask.taskId > MANOR_V7_TUTORIAL_TASKS.length ||
+    typeof state.tutorialTask.accepted !== "boolean" ||
+    !validLevelRewardClaims(state.levelRewardClaims) ||
+    !validRedeemedCodes(state.redeemedCodes) ||
+    !validWeather(state.farm.weather) ||
+    !validUserIdList(state.friendFilterUserIds) ||
+    !Number.isInteger(state.nextFlowerGiftId) || state.nextFlowerGiftId < 1 ||
+    !validFlowerGifts(state) ||
+    !validDecorationOwnerships(state) ||
     !Number.isInteger(state.updatedAt) || state.updatedAt < 0
   ) {
     throw new Error("V7 庄园状态无效");
@@ -485,6 +654,8 @@ export function validateManorV7State(state: ManorV7State): void {
       land.growthSeconds < 0 ||
       land.harvests < 0 ||
       land.stolen < 0 ||
+      !Number.isFinite(land.yieldPenaltyPercent) ||
+      land.yieldPenaltyPercent < 0 || land.yieldPenaltyPercent > 50 ||
       !Array.isArray(land.thiefUserIds) ||
       new Set(land.thiefUserIds).size !== land.thiefUserIds.length
     ) throw new Error("V7 土地状态无效");
@@ -512,7 +683,11 @@ export function validateManorV7State(state: ManorV7State): void {
   let fishPoolSize = 0;
   for (const fish of state.farm.fishPool.fish) {
     const definition = manorV7Fish(fish.fishId);
-    if (fishSerials.has(fish.serial) || fish.growthSeconds < 0) throw new Error("V7 鱼塘状态无效");
+    if (
+      fishSerials.has(fish.serial) || fish.growthSeconds < 0 || fish.stolen < 0 ||
+      !Array.isArray(fish.thiefUserIds) || new Set(fish.thiefUserIds).size !== fish.thiefUserIds.length ||
+      !Number.isInteger(fish.fedStage) || fish.fedStage < 0 || fish.fedStage > definition.cycleSeconds.length
+    ) throw new Error("V7 鱼塘状态无效");
     fishSerials.add(fish.serial);
     fishPoolSize += definition.poolSize;
   }
@@ -526,14 +701,22 @@ export function validateManorV7State(state: ManorV7State): void {
   validateInventory(state.farm.toolInventory);
   validateInventory(state.farm.fishPool.seedInventory);
   validateInventory(state.farm.fishPool.produceInventory);
+  validateInventory(state.farm.fishPool.toolInventory);
   validateInventory(state.pasture.productInventory);
   validateInventory(state.pasture.harvestedAnimalInventory);
   validateInventory(state.pasture.cubInventory);
+  validateInventory(state.pasture.materialInventory);
   validateInventory(state.pasture.toolInventory);
+  validateInventory(state.pasture.weaponInventory);
   for (const entry of state.pasture.cubInventory) manorV7Animal(entry.sourceId);
   for (const entry of state.pasture.toolInventory) {
-    const tool = manorV7Tool("pasture", entry.sourceId);
-    if (tool.itemType !== 7) throw new Error("V7 牧场道具库存无效");
+    const tool = MANOR_V7_TOOLS.find((candidate) => candidate.area === "pasture" && candidate.id === entry.sourceId && [7, 12].includes(candidate.itemType));
+    if (!tool) throw new Error("V7 牧场道具库存无效");
+  }
+  for (const entry of state.pasture.weaponInventory) {
+    if (!MANOR_V7_TOOLS.some((tool) => tool.area === "pasture" && tool.itemType === 10 && tool.id === entry.sourceId)) {
+      throw new Error("V7 牧场武器库存无效");
+    }
   }
   const guardIds = new Set<number>();
   for (const guard of state.pasture.guards) {
@@ -548,7 +731,103 @@ export function validateManorV7State(state: ManorV7State): void {
   if (state.pasture.guards.filter((guard) => guard.active).length > 1) {
     throw new Error("V7 牧场看守状态无效");
   }
+  for (const house of ["hutch", "shed"] as const) {
+    const slot = state.pasture.research[house];
+    if (
+      !Number.isFinite(slot.remainingSeconds) || slot.remainingSeconds < 0 ||
+      (slot.animalId === null && slot.remainingSeconds !== 0) ||
+      (slot.animalId !== null && !MANOR_V7_RESEARCH_RULES[house].some((rule) => rule.animalId === slot.animalId))
+    ) throw new Error("V7 牧场科研状态无效");
+  }
   validateWildlife(state);
+}
+
+function migrateLegacyDecorationOwnerships(state: ManorV7State): ManorV7State["decorationOwnerships"] {
+  const ownerships: ManorV7State["decorationOwnerships"] = [];
+  for (const decorationId of state.ownedDecorationIds) {
+    const selectedAreas = (["farm", "pasture"] as const).filter((area) => (
+      (area === "farm" ? state.farm.selectedDecorationIds : state.pasture.selectedDecorationIds).includes(decorationId)
+    ));
+    const candidateAreas = selectedAreas.length > 0 ? selectedAreas : (["farm", "pasture"] as const);
+    for (const area of candidateAreas) {
+      try {
+        manorV7Decoration(area, decorationId);
+        ownerships.push({ area, decorationId, validUntil: 0 });
+      } catch {
+        // Legacy ownership IDs did not include an area; skip IDs absent from this area's V7 catalog.
+      }
+    }
+  }
+  return ownerships;
+}
+
+function synchronizeDecorationOwnerships(state: ManorV7State, now: number): void {
+  const current = state.decorationOwnerships.filter((ownership) => (
+    ownership.validUntil === 0 || ownership.validUntil > now
+  ));
+  const activeKeys = new Set(current.map((ownership) => `${ownership.area}:${ownership.decorationId}`));
+  state.farm.selectedDecorationIds = state.farm.selectedDecorationIds.filter((id) => activeKeys.has(`farm:${id}`));
+  state.pasture.selectedDecorationIds = state.pasture.selectedDecorationIds.filter((id) => activeKeys.has(`pasture:${id}`));
+  state.ownedDecorationIds = [...new Set(current.map((ownership) => ownership.decorationId))]
+    .sort((left, right) => left - right);
+}
+
+function validDecorationOwnerships(state: ManorV7State): boolean {
+  if (!Array.isArray(state.decorationOwnerships)) return false;
+  const keys = new Set<string>();
+  for (const ownership of state.decorationOwnerships) {
+    if (
+      (ownership.area !== "farm" && ownership.area !== "pasture") ||
+      !Number.isInteger(ownership.decorationId) ||
+      !Number.isInteger(ownership.validUntil) || ownership.validUntil < 0
+    ) return false;
+    try {
+      manorV7Decoration(ownership.area, ownership.decorationId);
+    } catch {
+      return false;
+    }
+    const key = `${ownership.area}:${ownership.decorationId}`;
+    if (keys.has(key)) return false;
+    keys.add(key);
+  }
+  return true;
+}
+
+function validRedeemedCodes(codes: string[]): boolean {
+  return Array.isArray(codes) &&
+    new Set(codes).size === codes.length &&
+    codes.every((code) => /^[A-Z0-9_-]{1,64}$/.test(code));
+}
+
+function validWeather(weather: ManorV7State["farm"]["weather"]): boolean {
+  return validClaimDay(weather.day) && weather.day !== null &&
+    (weather.kind === "sunny" || weather.kind === "rainy");
+}
+
+function validUserIdList(userIds: string[]): boolean {
+  return Array.isArray(userIds) && new Set(userIds).size === userIds.length &&
+    userIds.every((userId) => typeof userId === "string" && userId.length > 0 && userId.length <= 128);
+}
+
+function validFlowerGifts(state: ManorV7State): boolean {
+  if (!Array.isArray(state.receivedFlowers) || state.receivedFlowers.length > 200) return false;
+  const ids = new Set<number>();
+  for (const gift of state.receivedFlowers) {
+    if (
+      !Number.isInteger(gift.id) || gift.id < 1 || gift.id >= state.nextFlowerGiftId || ids.has(gift.id) ||
+      typeof gift.fromUserId !== "string" || gift.fromUserId.length < 1 || gift.fromUserId.length > 128 ||
+      typeof gift.fromDisplayName !== "string" || gift.fromDisplayName.length < 1 || gift.fromDisplayName.length > 128 ||
+      typeof gift.message !== "string" || gift.message.length > 200 ||
+      !Number.isInteger(gift.sentAt) || gift.sentAt < 0
+    ) return false;
+    try {
+      manorV7Flower(gift.flowerId);
+    } catch {
+      return false;
+    }
+    ids.add(gift.id);
+  }
+  return true;
 }
 
 function validateWildlife(state: ManorV7State): void {
@@ -616,6 +895,11 @@ function validStreakSignInRewardDay(value: number): boolean {
   return MANOR_V7_STREAK_SIGN_IN_REWARDS.some((reward) => reward.days === value);
 }
 
+function validLevelRewardClaims(value: ManorV7State["levelRewardClaims"]): boolean {
+  return Number.isInteger(value.farm) && value.farm >= 0 && value.farm <= MANOR_V7_MAX_LEVEL_REWARD &&
+    Number.isInteger(value.pasture) && value.pasture >= 0 && value.pasture <= MANOR_V7_MAX_LEVEL_REWARD;
+}
+
 function createFishPool(): ManorV7State["farm"]["fishPool"] {
   return {
     opened: true,
@@ -625,13 +909,63 @@ function createFishPool(): ManorV7State["farm"]["fishPool"] {
       .map((fish) => fish.id),
     fish: [] as ManorV7FishState[],
     seedInventory: [],
-    produceInventory: []
+    produceInventory: [],
+    toolInventory: []
   };
 }
 
+function validDailyCounter(value: { day: string | null; remaining: number }, limit: number): boolean {
+  return validClaimDay(value.day) && Number.isInteger(value.remaining) && value.remaining >= 0 && value.remaining <= limit;
+}
+
+function resetDailyCounters(state: ManorV7State, now: number): void {
+  const day = manorV7DayKey(now);
+  if (state.farm.badActions.day !== day) state.farm.badActions = { day, remaining: MANOR_V7_BAD_ACTION_DAILY_LIMIT };
+  if (state.farm.manureCollection.day !== day) {
+    state.farm.manureCollection = { day, remaining: MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT };
+  }
+  if (state.pasture.specialFeed.day !== day) state.pasture.specialFeed = { day, remaining: MANOR_V7_SPECIAL_FEED_DAILY_LIMIT };
+  if (state.pasture.mosquitoActions.day !== day) {
+    state.pasture.mosquitoActions = { day, remaining: MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT };
+  }
+}
+
+function manorV7Weather(now: number): ManorV7State["farm"]["weather"] {
+  const local = new Date(now + 8 * 60 * 60 * 1_000);
+  return {
+    day: manorV7DayKey(now),
+    kind: local.getUTCDay() === 4 ? "rainy" : "sunny"
+  };
+}
+
+function synchronizeWeather(state: ManorV7State, now: number): void {
+  const current = manorV7Weather(now);
+  if (state.farm.weather.day !== current.day || state.farm.weather.kind !== current.kind) {
+    state.farm.weather = current;
+    addManorV7Activity(state, "farm", current.kind === "rainy" ? "今天是雨天，土地会保持湿润" : "今天是晴天", now);
+  }
+  if (current.kind === "rainy") {
+    for (const land of state.farm.lands) {
+      if (land.cropId && land.harvests < manorV7Crop(land.cropId).harvestCycles) land.watered = true;
+    }
+  }
+}
+
+function advanceResearch(state: ManorV7State, elapsed: number, now: number): void {
+  for (const house of ["hutch", "shed"] as const) {
+    const slot = state.pasture.research[house];
+    if (slot.animalId === null) continue;
+    const previous = slot.remainingSeconds;
+    slot.remainingSeconds = Math.max(0, round(slot.remainingSeconds - elapsed));
+    if (previous > 0 && slot.remainingSeconds === 0) {
+      addManorV7Activity(state, "pasture", `${manorV7Animal(slot.animalId).name}科研完成，可以领取幼崽`, now);
+    }
+  }
+}
+
 function toLandView(land: ManorV7State["farm"]["lands"][number]): ManorV7LandView {
-  if (!land.unlocked) return { ...land, visualState: "locked", remainingSeconds: 0, harvestable: false };
-  if (!land.cropId) return { ...land, visualState: "empty", remainingSeconds: 0, harvestable: false };
+  if (!land.unlocked) return { ...land, visualState: "locked", remainingSeconds: 0, harvestable: false, effectiveYield: 0 };
+  if (!land.cropId) return { ...land, visualState: "empty", remainingSeconds: 0, harvestable: false, effectiveYield: 0 };
   const crop = manorV7Crop(land.cropId);
   const final = land.harvests >= crop.harvestCycles;
   const visualState = final ? "withered" : cropVisualState(crop.stageSeconds, crop.growthSeconds, land.growthSeconds);
@@ -640,7 +974,8 @@ function toLandView(land: ManorV7State["farm"]["lands"][number]): ManorV7LandVie
     crop,
     visualState,
     remainingSeconds: final ? 0 : Math.max(0, crop.growthSeconds - land.growthSeconds),
-    harvestable: visualState === "mature"
+    harvestable: visualState === "mature",
+    effectiveYield: manorV7EffectiveYield(land)
   };
 }
 
@@ -704,6 +1039,7 @@ function toAnimalView(animalState: ManorV7PastureAnimalState, grass: number): Ma
 function advancePasture(state: ManorV7State, elapsed: number, now: number): void {
   for (const guard of state.pasture.guards) {
     guard.remainingSeconds = Math.max(0, round(guard.remainingSeconds - elapsed));
+    if (guard.remainingSeconds === 0) guard.active = false;
   }
   let remaining = elapsed;
   let fedAnimalSeconds = 0;
@@ -802,6 +1138,14 @@ function advanceWildlife(state: ManorV7State, now: number): void {
 }
 
 function applyFarmEvent(state: ManorV7State, now: number): void {
+  const pastureRoll = drawManorV7Random(state);
+  if (pastureRoll < 0.08 && !state.pasture.mosquitoes.sourceUserIds.includes("system")) {
+    state.pasture.mosquitoes.sourceUserIds.push("system");
+    addManorV7Activity(state, "pasture", "牧场出现了蚊子", now);
+  } else if (pastureRoll < 0.12 && !state.pasture.mousePresent) {
+    state.pasture.mousePresent = true;
+    addManorV7Activity(state, "pasture", "牧场出现了老鼠", now);
+  }
   const candidates = state.farm.lands.filter((land) => land.cropId && !land.weeds && !land.pests);
   if (candidates.length === 0) return;
   const land = candidates[Math.floor(drawManorV7Random(state) * candidates.length)];

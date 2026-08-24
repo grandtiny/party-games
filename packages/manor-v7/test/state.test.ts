@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   MANOR_V7_ANIMALS,
+  MANOR_V7_BAD_ACTION_DAILY_LIMIT,
   MANOR_V7_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_DAILY_SIGN_IN_LIMIT,
   MANOR_V7_FISH,
+  MANOR_V7_FLOWERS,
+  MANOR_V7_HIDDEN_SEED_IDS,
   MANOR_V7_LAND_COUNT,
+  MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT,
+  MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT,
+  MANOR_V7_RESEARCH_RULES,
   MANOR_V7_TOOLS,
   advanceManorV7State,
   createManorV7State,
@@ -21,6 +27,7 @@ import {
   manorV7MaxProductionCount,
   manorV7PastureGuard,
   manorV7ProductionCycleDuration,
+  manorV7SpecialFeedCropId,
   migrateManorV7State,
   toManorV7View,
   transitionManorV7FriendStates,
@@ -30,12 +37,14 @@ import {
 
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
-    expect(MANOR_V7_CROPS).toHaveLength(231);
-    expect(MANOR_V7_ANIMALS).toHaveLength(155);
+    expect(MANOR_V7_CROPS).toHaveLength(403);
+    expect(MANOR_V7_ANIMALS).toHaveLength(161);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
-    expect(MANOR_V7_DECORATIONS).toHaveLength(603);
+    expect(MANOR_V7_DECORATIONS).toHaveLength(631);
     expect(MANOR_V7_FISH).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
+    expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
+    expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
@@ -59,6 +68,81 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7HouseCapacity("shed", 4)).toBe(6);
   });
 
+  it("runs the original tutorial sequence separately from cumulative tasks", () => {
+    const now = 5_000;
+    const initial = createManorV7State(now);
+    expect(initial.tutorialTask).toEqual({ taskId: 0, accepted: true });
+    const completedHelp = transitionManorV7State(initial, { type: "complete-tutorial-task" }, now);
+    expect(completedHelp).toMatchObject({
+      coins: 50,
+      pastureExperience: 50,
+      tutorialTask: { taskId: 1, accepted: true }
+    });
+    expect(completedHelp.tasks).toEqual(initial.tasks);
+  });
+
+  it("grants all unclaimed original level rewards once and migrates old saves as claimed", () => {
+    const now = 6_000;
+    const initial = createManorV7State(now);
+    initial.farmExperience = manorV7ExperienceForLevel(3);
+    const rewarded = transitionManorV7State(
+      initial,
+      { type: "claim-level-rewards", area: "farm", throughLevel: 3 },
+      now
+    );
+    expect(rewarded.levelRewardClaims.farm).toBe(3);
+    expect(inventoryQuantity(rewarded.farm.seedInventory, 4)).toBe(2);
+    expect(inventoryQuantity(rewarded.farm.toolInventory, 1)).toBe(2);
+    expect(inventoryQuantity(rewarded.farm.seedInventory, 6)).toBe(2);
+    expect(() => transitionManorV7State(
+      rewarded,
+      { type: "claim-level-rewards", area: "farm", throughLevel: 3 },
+      now
+    )).toThrow("升级奖励已经领取");
+
+    const legacy = structuredClone(initial) as unknown as Record<string, unknown>;
+    delete legacy.tutorialTask;
+    delete legacy.levelRewardClaims;
+    const migrated = migrateManorV7State(legacy, now);
+    expect(migrated.tutorialTask.taskId).toBe(10);
+    expect(migrated.levelRewardClaims.farm).toBe(3);
+  });
+
+  it("persists the one-time research guide, return gift and real activity clearing", () => {
+    const now = 7_000;
+    const initial = createManorV7State(now);
+    const guided = transitionManorV7State(initial, { type: "show-research-guide" }, now);
+    expect(guided.researchGuideSeen).toBe(true);
+    expect(() => transitionManorV7State(guided, { type: "show-research-guide" }, now))
+      .toThrow("科研引导已经展示");
+
+    const gifted = transitionManorV7State(guided, { type: "claim-vip-return-gift" }, now);
+    expect(gifted.rewardClaims.vipReturnGiftClaimed).toBe(true);
+    expect(gifted.coins - guided.coins).toBe(1_000);
+    expect(inventoryQuantity(gifted.farm.seedInventory, 1)).toBe(2);
+    expect(() => transitionManorV7State(gifted, { type: "claim-vip-return-gift" }, now))
+      .toThrow("VIP 回归礼包已经领取");
+
+    const cleared = transitionManorV7State(gifted, { type: "clear-activities" }, now);
+    expect(cleared.activities).toEqual([]);
+  });
+
+  it("normalizes local redeem codes and grants each code only once per account", () => {
+    const now = 9_000;
+    const state = createManorV7State(now);
+    const initialSeeds = inventoryQuantity(state.farm.seedInventory, 1);
+    const initialFertilizers = inventoryQuantity(state.farm.toolInventory, 1);
+    const redeemed = transitionManorV7State(state, { type: "redeem-code", code: " manor2026 " }, now);
+    expect(redeemed.redeemedCodes).toEqual(["MANOR2026"]);
+    expect(redeemed.coins).toBe(state.coins + 5_000);
+    expect(inventoryQuantity(redeemed.farm.seedInventory, 1)).toBe(initialSeeds + 5);
+    expect(inventoryQuantity(redeemed.farm.toolInventory, 1)).toBe(initialFertilizers + 3);
+    expect(() => transitionManorV7State(redeemed, { type: "redeem-code", code: "MANOR2026" }, now))
+      .toThrow("该兑换码已经使用");
+    expect(() => transitionManorV7State(state, { type: "redeem-code", code: "UNKNOWN" }, now))
+      .toThrow("兑换码无效");
+  });
+
   it("creates only the V7 default farm and pasture state", () => {
     const state = createManorV7State(1_000);
     expect(state.farm.lands).toHaveLength(MANOR_V7_LAND_COUNT);
@@ -68,6 +152,56 @@ describe("QQ Farm V7 domain", () => {
     expect(state.pasture.grass).toBe(20);
     expect(toManorV7View(state, { userId: "u1", displayName: "玩家" }, 1_000).version)
       .toBe("7.0 Beta1 Build 20120209.1000");
+  });
+
+  it("expires, unequips and renews decorations without mixing farm and pasture IDs", () => {
+    const now = 100_000;
+    const state = createManorV7State(now);
+    state.coins = 1_000_000;
+    state.farmExperience = manorV7ExperienceForLevel(60);
+    state.pastureExperience = manorV7ExperienceForLevel(60);
+    const farmDecoration = manorV7Decoration("farm", 217);
+
+    const bought = transitionManorV7State(
+      state,
+      { type: "buy-decoration", area: "farm", decorationId: 217 },
+      now
+    );
+    const equipped = transitionManorV7State(
+      bought,
+      { type: "equip-decoration", area: "farm", decorationId: 217 },
+      now
+    );
+    expect(equipped.decorationOwnerships).toContainEqual({
+      area: "farm",
+      decorationId: 217,
+      validUntil: now + farmDecoration.validSeconds * 1_000
+    });
+    expect(equipped.decorationOwnerships).not.toContainEqual(expect.objectContaining({ area: "pasture", decorationId: 217 }));
+
+    const renewAt = now + farmDecoration.validSeconds * 1_000 + 1;
+    const expired = advanceManorV7State(equipped, renewAt);
+    expect(expired.ownedDecorationIds).not.toContain(217);
+    expect(expired.farm.selectedDecorationIds).not.toContain(217);
+    const renewed = transitionManorV7State(
+      expired,
+      { type: "renew-decoration", area: "farm", decorationId: 217 },
+      renewAt
+    );
+    expect(renewed.decorationOwnerships).toContainEqual({
+      area: "farm",
+      decorationId: 217,
+      validUntil: renewAt + farmDecoration.validSeconds * 1_000
+    });
+    expect(renewed.coins).toBe(expired.coins - farmDecoration.coinPrice);
+
+    const withPasture = transitionManorV7State(
+      renewed,
+      { type: "buy-decoration", area: "pasture", decorationId: 217, useVip: true },
+      renewAt
+    );
+    expect(withPasture.decorationOwnerships.filter((ownership) => ownership.decorationId === 217))
+      .toHaveLength(2);
   });
 
   it("persists farm boards and avatars independently from regular decorations", () => {
@@ -146,6 +280,26 @@ describe("QQ Farm V7 domain", () => {
     const sold = transitionManorV7State(locked, { type: "sell-all-produce" }, 2_100);
     expect(sold.coins).toBe(50 + manorV7Crop(6).salePrice * 2);
     expect(sold.farm.produceInventory).toEqual([{ sourceId: 1, quantity: 3, locked: true }]);
+  });
+
+  it("sells one seed quantity or every selected seed at the original half-price rule", () => {
+    const now = 2_200;
+    const initial = createManorV7State(now);
+    initial.coins = 10;
+    initial.farm.seedInventory = [
+      { sourceId: 1, quantity: 3 },
+      { sourceId: 6, quantity: 2 }
+    ];
+
+    const single = transitionManorV7State(initial, { type: "sell-seed", cropId: 1, quantity: 1 }, now);
+    expect(single.coins).toBe(10 + Math.ceil(manorV7Crop(1).seedPrice / 2));
+    expect(inventoryQuantity(single.farm.seedInventory, 1)).toBe(2);
+
+    const selected = transitionManorV7State(single, { type: "sell-selected-seeds", cropIds: [1, 6] }, now);
+    expect(selected.coins).toBe(
+      single.coins + Math.ceil(manorV7Crop(1).seedPrice / 2) * 2 + Math.ceil(manorV7Crop(6).seedPrice / 2) * 2
+    );
+    expect(selected.farm.seedInventory).toEqual([]);
   });
 
   it("runs the original manual production lifecycle before an animal can be harvested", () => {
@@ -282,6 +436,44 @@ describe("QQ Farm V7 domain", () => {
 
     const advanced = advanceManorV7State(bought, 6_200 + 3_600_000);
     expect(advanced.pasture.guards[0]?.remainingSeconds).toBe(6 * 24 * 60 * 60 + 23 * 60 * 60);
+
+    const hidden = transitionManorV7State(
+      advanced,
+      { type: "set-pasture-guard-active", guardId: guard.id, active: false },
+      advanced.updatedAt
+    );
+    expect(hidden.pasture.guards[0]?.active).toBe(false);
+    const restored = transitionManorV7State(
+      hidden,
+      { type: "set-pasture-guard-active", guardId: guard.id, active: true },
+      hidden.updatedAt
+    );
+    const paid = transitionManorV7State(
+      restored,
+      { type: "pay-pasture-guard", guardId: guard.id, days: 7 },
+      restored.updatedAt
+    );
+    expect(paid.pasture.guards[0]!.remainingSeconds - restored.pasture.guards[0]!.remainingSeconds)
+      .toBe(7 * 24 * 60 * 60);
+
+    const owner = structuredClone(paid);
+    owner.randomState = 0;
+    owner.pasture.animals[1]!.pendingProduct = manorV7Animal(owner.pasture.animals[1]!.animalId).baseYield;
+    const visitor = createManorV7State(owner.updatedAt);
+    visitor.coins = 500;
+    const caught = transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "steal-product", serial: owner.pasture.animals[1]!.serial },
+      owner.updatedAt
+    );
+    expect(caught.message).toContain("看守员");
+    expect(caught.visitor.coins).toBeLessThan(500);
+    expect(caught.visitor.coins + caught.owner.coins).toBe(visitor.coins + owner.coins);
   });
 
   it("shares two VIP sign-in cards per Shanghai calendar day", () => {
@@ -290,6 +482,19 @@ describe("QQ Farm V7 domain", () => {
     const packaged = transitionManorV7State(initial, { type: "claim-daily-package" }, now);
     expect(packaged.coins).toBe(300);
     expect(packaged.rewardClaims.dailyPackageDay).toBe("2026-08-22");
+    expect(packaged.farm.toolInventory).toEqual([
+      { sourceId: 1, quantity: 1 },
+      { sourceId: 2, quantity: 1 },
+      { sourceId: 3, quantity: 1 },
+      { sourceId: 7, quantity: 1 }
+    ]);
+    expect(packaged.pasture.toolInventory).toEqual([
+      { sourceId: 1, quantity: 1 },
+      { sourceId: 2, quantity: 1 },
+      { sourceId: 3, quantity: 1 }
+    ]);
+    expect(inventoryQuantity(packaged.farm.produceInventory, 40)).toBe(100);
+    expect(packaged.farm.dog.feedSeconds).toBe(24 * 60 * 60);
     expect(() => transitionManorV7State(packaged, { type: "claim-daily-package" }, now)).toThrow("已经领取");
 
     const visited = transitionManorV7State(packaged, { type: "record-sign-in-visit" }, now);
@@ -449,6 +654,8 @@ describe("QQ Farm V7 domain", () => {
         wild?: ManorV7State["pasture"]["wild"];
       };
       rewardClaims?: ManorV7State["rewardClaims"];
+      decorationOwnerships?: ManorV7State["decorationOwnerships"];
+      redeemedCodes?: ManorV7State["redeemedCodes"];
     };
     delete legacy.farm.fishPool;
     delete legacy.farm.selectedBoardId;
@@ -459,6 +666,8 @@ describe("QQ Farm V7 domain", () => {
     delete legacy.pasture.guards;
     delete legacy.pasture.wild;
     delete legacy.rewardClaims;
+    delete legacy.decorationOwnerships;
+    delete legacy.redeemedCodes;
     for (const animal of legacy.pasture.animals) {
       delete (animal as Partial<typeof animal>).productionActive;
       delete (animal as Partial<typeof animal>).productionCount;
@@ -469,6 +678,11 @@ describe("QQ Farm V7 domain", () => {
     expect(migrated.pasture.wild).toMatchObject({ moralExperience: 0, maxSlotId: 0, slots: [], crystalInventory: [] });
     expect(migrated.farm.fishPool).toMatchObject({ opened: true, fish: [], seedInventory: [], produceInventory: [] });
     expect(migrated.farm).toMatchObject({ selectedBoardId: null, selectedAvatarId: null });
+    expect(migrated.decorationOwnerships).toEqual(expect.arrayContaining([
+      { area: "farm", decorationId: 1, validUntil: 0 },
+      { area: "pasture", decorationId: 105, validUntil: 0 }
+    ]));
+    expect(migrated.redeemedCodes).toEqual([]);
     expect(migrated.rewardClaims).toEqual({
       dailyPackageDay: null,
       signInDay: null,
@@ -476,11 +690,36 @@ describe("QQ Farm V7 domain", () => {
       signInRewardId: null,
       signInRewardIds: [],
       signInStreak: 0,
-      signInStreakRewardDays: []
+      signInStreakRewardDays: [],
+      vipReturnGiftClaimed: false
     });
     expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });
     expect(migrated.pasture.animals[1]).toMatchObject({ productionActive: false, productionCount: 0 });
+  });
+
+  it("migrates weather, yield, flowers, friend filters and workshop materials", () => {
+    const legacy = createManorV7State(8_200) as ManorV7State & {
+      farm: ManorV7State["farm"] & { weather?: ManorV7State["farm"]["weather"] };
+      pasture: ManorV7State["pasture"] & { materialInventory?: ManorV7State["pasture"]["materialInventory"] };
+      friendFilterUserIds?: string[];
+      receivedFlowers?: ManorV7State["receivedFlowers"];
+      nextFlowerGiftId?: number;
+    };
+    delete legacy.farm.weather;
+    delete (legacy.farm.lands[0] as Partial<ManorV7State["farm"]["lands"][number]>).yieldPenaltyPercent;
+    delete legacy.pasture.materialInventory;
+    delete legacy.friendFilterUserIds;
+    delete legacy.receivedFlowers;
+    delete legacy.nextFlowerGiftId;
+
+    const migrated = migrateManorV7State(legacy, 8_200);
+    expect(migrated.farm.weather).toMatchObject({ kind: "rainy" });
+    expect(migrated.farm.lands[0]?.yieldPenaltyPercent).toBe(0);
+    expect(migrated.pasture.materialInventory).toEqual([]);
+    expect(migrated.friendFilterUserIds).toEqual([]);
+    expect(migrated.receivedFlowers).toEqual([]);
+    expect(migrated.nextFlowerGiftId).toBe(1);
   });
 
   it("migrates the previous one-card sign-in state without granting another first card", () => {
@@ -514,6 +753,20 @@ describe("QQ Farm V7 domain", () => {
     const first = advanceManorV7State(initial, 10_000 + 86_400_000, { timeScale: 10 });
     const second = advanceManorV7State(initial, 10_000 + 86_400_000, { timeScale: 10 });
     expect(first).toEqual(second);
+  });
+
+  it("can generate pasture pests even when no farm crop can receive a care event", () => {
+    const now = 21_600_000;
+    const initial = createManorV7State(now);
+    for (const land of initial.farm.lands) {
+      delete land.cropId;
+      Object.assign(land, { growthSeconds: 0, weeds: false, pests: false });
+    }
+    initial.randomState = 1_972;
+
+    const advanced = advanceManorV7State(initial, now + 21_600_000);
+
+    expect(advanced.pasture.mosquitoes.sourceUserIds).toContain("system");
   });
 
   it("applies V7 friend crop care and stealing rules to both saves", () => {
@@ -623,6 +876,446 @@ describe("QQ Farm V7 domain", () => {
     expect(started.visitor.pastureExperience).toBe(visitor.pastureExperience + 2);
   });
 
+  it("limits friend weeds and pests to 50 per day and resets the allowance next day", () => {
+    const now = Date.UTC(2026, 7, 22, 2, 0, 0);
+    let visitor = createManorV7State(now);
+    let owner = createManorV7State(now);
+    const landId = 3;
+
+    for (let index = 0; index < MANOR_V7_BAD_ACTION_DAILY_LIMIT; index += 1) {
+      const added = transitionManorV7FriendStates(
+        visitor,
+        owner,
+        "visitor",
+        "访客",
+        "owner",
+        "主人",
+        { type: index % 2 === 0 ? "add-weeds" : "add-pests", landId },
+        now
+      );
+      const cleared = transitionManorV7FriendStates(
+        added.visitor,
+        added.owner,
+        "visitor",
+        "访客",
+        "owner",
+        "主人",
+        { type: index % 2 === 0 ? "remove-weeds" : "remove-pests", landId },
+        now
+      );
+      visitor = cleared.visitor;
+      owner = cleared.owner;
+    }
+
+    expect(visitor.farm.badActions.remaining).toBe(0);
+    expect(() => transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "add-weeds", landId },
+      now
+    )).toThrow("次数已经用完");
+
+    const tomorrow = now + 24 * 60 * 60 * 1_000;
+    const reset = transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "add-weeds", landId },
+      tomorrow
+    );
+    expect(reset.visitor.farm.badActions.remaining).toBe(MANOR_V7_BAD_ACTION_DAILY_LIMIT - 1);
+  });
+
+  it("lets a fed watchdog intercept stealing, transfer coins and expire over time", () => {
+    const now = 50_000;
+    const visitor = createManorV7State(now);
+    const owner = createManorV7State(now);
+    visitor.coins = 500;
+    owner.randomState = 0;
+    owner.farm.dog = { ownedIds: [2], activeId: 2, feedSeconds: 24 * 60 * 60 };
+    const land = owner.farm.lands[0]!;
+    land.growthSeconds = manorV7Crop(land.cropId!).growthSeconds;
+    land.thiefUserIds = [];
+
+    const caught = transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "steal-crop", landId: land.id },
+      now
+    );
+    expect(caught.message).toContain("损失");
+    expect(caught.visitor.coins).toBeLessThan(500);
+    expect(caught.visitor.coins + caught.owner.coins).toBe(500);
+    expect(caught.visitor.farm.produceInventory).toEqual([]);
+
+    const expiredAt = now + 24 * 60 * 60 * 1_000;
+    const expiredOwner = advanceManorV7State(caught.owner, expiredAt);
+    expect(expiredOwner.farm.dog.feedSeconds).toBe(0);
+    const secondVisitor = createManorV7State(expiredAt);
+    const stolen = transitionManorV7FriendStates(
+      secondVisitor,
+      expiredOwner,
+      "visitor-2",
+      "第二位访客",
+      "owner",
+      "主人",
+      { type: "steal-crop", landId: land.id },
+      expiredAt
+    );
+    expect(inventoryQuantity(stolen.visitor.farm.produceInventory, land.cropId!)).toBeGreaterThan(0);
+  });
+
+  it("enforces fish feeding stages, half-yield protection, locking and net harvest output", () => {
+    const now = 60_000;
+    const fish = manorV7Fish(2);
+    const own = createManorV7State(now);
+    own.farm.fishPool.opened = true;
+    own.farm.fishPool.fish = [{ serial: 1, fishId: fish.id, growthSeconds: 0, stolen: 0, thiefUserIds: [], fedStage: 0 }];
+    own.farm.fishPool.toolInventory = [{ sourceId: 1, quantity: 2 }];
+
+    const firstFeed = transitionManorV7State(own, { type: "fertilize-fish", serial: 1, toolId: 1 }, now);
+    expect(firstFeed.farm.fishPool.fish[0]).toMatchObject({ fedStage: 1, growthSeconds: 7_200 });
+    expect(() => transitionManorV7State(
+      firstFeed,
+      { type: "fertilize-fish", serial: 1, toolId: 1 },
+      now
+    )).toThrow("当前生长阶段已经使用过鱼食");
+
+    const secondStageAt = now + (fish.cycleSeconds[0]! - 7_200) * 1_000;
+    const secondStage = advanceManorV7State(firstFeed, secondStageAt);
+    const secondFeed = transitionManorV7State(
+      secondStage,
+      { type: "fertilize-fish", serial: 1, toolId: 1 },
+      secondStageAt
+    );
+    expect(secondFeed.farm.fishPool.fish[0]?.fedStage).toBe(2);
+
+    const matureAt = secondStageAt + fish.cycleSeconds.at(-1)! * 1_000;
+    const matureOwner = advanceManorV7State(secondFeed, matureAt);
+    const stolen = transitionManorV7FriendStates(
+      createManorV7State(matureAt),
+      matureOwner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "steal-fish", serial: 1 },
+      matureAt
+    );
+    const stolenCount = stolen.owner.farm.fishPool.fish[0]!.stolen;
+    expect(stolenCount).toBeGreaterThan(0);
+    expect(fish.baseYield - stolenCount).toBeGreaterThanOrEqual(Math.ceil(fish.baseYield / 2));
+
+    const harvested = transitionManorV7State(stolen.owner, { type: "harvest-fish", serial: 1 }, matureAt);
+    expect(inventoryQuantity(harvested.farm.fishPool.produceInventory, fish.id)).toBe(fish.baseYield - stolenCount);
+    const locked = transitionManorV7State(harvested, { type: "set-fish-lock", fishId: fish.id, locked: true }, matureAt);
+    expect(() => transitionManorV7State(
+      locked,
+      { type: "sell-fish", fishId: fish.id, quantity: 1 },
+      matureAt
+    )).toThrow("锁定的成鱼不能出售");
+  });
+
+  it("keeps cans, hourglasses and weapons in dedicated inventories and completes research", () => {
+    const now = 70_000;
+    let state = createManorV7State(now);
+    state.coins = 100_000;
+    state = transitionManorV7State(state, {
+      type: "buy-tool", area: "pasture", toolId: 1, itemType: 7, quantity: 2, useVip: true
+    }, now);
+    state = transitionManorV7State(state, {
+      type: "buy-tool", area: "pasture", toolId: 43, itemType: 12, quantity: 1, useVip: true
+    }, now);
+    state = transitionManorV7State(state, {
+      type: "buy-tool", area: "pasture", toolId: 7, itemType: 10, quantity: 1, useVip: true
+    }, now);
+    expect(state.pasture.toolInventory).toEqual([
+      { sourceId: 1, quantity: 2 },
+      { sourceId: 43, quantity: 1 }
+    ]);
+    expect(state.pasture.weaponInventory).toEqual([{ sourceId: 7, quantity: 1 }]);
+
+    const rule = MANOR_V7_RESEARCH_RULES.hutch[0];
+    const started = transitionManorV7State(
+      state,
+      { type: "start-research", house: "hutch", animalId: rule.animalId },
+      now
+    );
+    const accelerated = transitionManorV7State(
+      started,
+      { type: "use-research-hourglass", house: "hutch", toolId: 43 },
+      now
+    );
+    expect(accelerated.pasture.research.hutch.remainingSeconds).toBe(rule.seconds - 43_200);
+    expect(accelerated.pasture.toolInventory).toEqual([{ sourceId: 1, quantity: 2 }]);
+
+    const completedAt = now + accelerated.pasture.research.hutch.remainingSeconds * 1_000;
+    const completed = advanceManorV7State(accelerated, completedAt);
+    expect(completed.pasture.research.hutch).toMatchObject({ animalId: rule.animalId, remainingSeconds: 0 });
+    const collected = transitionManorV7State(completed, { type: "collect-research", house: "hutch" }, completedAt);
+    expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeGreaterThanOrEqual(1);
+    expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeLessThanOrEqual(2);
+    expect(collected.pasture.research.hutch).toEqual({ animalId: null, remainingSeconds: 0 });
+  });
+
+  it("applies friend special feed, manure, mosquito and mouse actions to both saves", () => {
+    const now = 80_000;
+    let visitor = createManorV7State(now);
+    let owner = createManorV7State(now);
+    const animal = owner.pasture.animals[1]!;
+    const cropId = manorV7SpecialFeedCropId(animal.animalId);
+    visitor.farm.produceInventory = [{ sourceId: cropId, quantity: 1 }];
+    owner.pasture.manure = 150;
+
+    let result = transitionManorV7FriendStates(
+      visitor, owner, "visitor", "访客", "owner", "主人", { type: "special-feed", serial: animal.serial }, now
+    );
+    expect(inventoryQuantity(result.visitor.farm.produceInventory, cropId)).toBe(0);
+    expect(result.owner.pasture.animals[1]!.growthSeconds).toBe(animal.growthSeconds + 300);
+
+    result = transitionManorV7FriendStates(
+      result.visitor,
+      result.owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "clean-manure", quantity: 150 },
+      now
+    );
+    expect(result.owner.pasture.manure).toBe(0);
+    expect(inventoryQuantity(result.visitor.pasture.materialInventory, 1506)).toBe(MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT);
+    expect(result.visitor.farm.manureCollection.remaining).toBe(0);
+
+    result = transitionManorV7FriendStates(
+      result.visitor, result.owner, "visitor", "访客", "owner", "主人", { type: "add-mosquito", quantity: 1 }, now
+    );
+    expect(result.owner.pasture.mosquitoes.sourceUserIds).toEqual(["visitor"]);
+    result = transitionManorV7FriendStates(
+      result.visitor, result.owner, "visitor", "访客", "owner", "主人", { type: "remove-mosquito" }, now
+    );
+    expect(result.owner.pasture.mosquitoes.sourceUserIds).toEqual([]);
+
+    result.owner.pasture.mousePresent = true;
+    const beforeCoins = result.visitor.coins;
+    result = transitionManorV7FriendStates(
+      result.visitor, result.owner, "visitor", "访客", "owner", "主人", { type: "catch-mouse" }, now
+    );
+    expect(result.owner.pasture.mousePresent).toBe(false);
+    expect(result.visitor.coins - beforeCoins).toBeGreaterThanOrEqual(50);
+    expect(result.visitor.coins - beforeCoins).toBeLessThanOrEqual(100);
+  });
+
+  it("keeps crop growth speed while care delays reduce final yield by at most half", () => {
+    const now = Date.parse("2026-08-17T00:00:00.000Z");
+    const initial = createManorV7State(now);
+    const land = initial.farm.lands[0]!;
+    land.growthSeconds = 0;
+    land.watered = false;
+    land.weeds = true;
+    land.pests = true;
+
+    const advanced = advanceManorV7State(initial, now + 10 * 60 * 1_000);
+    expect(advanced.farm.lands[0]).toMatchObject({ growthSeconds: 600, yieldPenaltyPercent: 8 });
+
+    const capped = advanceManorV7State(advanced, now + 2 * 60 * 60 * 1_000);
+    expect(capped.farm.lands[0]?.yieldPenaltyPercent).toBe(50);
+    expect(toManorV7View(capped, capped.updatedAt).farm.lands[0]?.effectiveYield).toBe(
+      Math.ceil(manorV7Crop(land.cropId!).baseYield / 2)
+    );
+  });
+
+  it("uses the original Thursday rain schedule and keeps active plots watered", () => {
+    const wednesday = Date.parse("2026-08-19T00:00:00.000Z");
+    const thursday = Date.parse("2026-08-20T00:00:00.000Z");
+    const initial = createManorV7State(wednesday);
+    initial.farm.lands[0]!.watered = false;
+
+    const advanced = advanceManorV7State(initial, thursday);
+    expect(advanced.farm.weather).toEqual({ day: "2026-08-20", kind: "rainy" });
+    expect(advanced.farm.lands[0]?.watered).toBe(true);
+  });
+
+  it("can discover one or two audited hidden seeds after the final scarify", () => {
+    const now = 81_000;
+    const initial = createManorV7State(now);
+    const land = initial.farm.lands[0]!;
+    land.cropId = 1;
+    land.harvests = manorV7Crop(1).harvestCycles;
+    initial.farm.seedInventory = [];
+    initial.randomState = 1_972;
+
+    const cleared = transitionManorV7State(initial, { type: "clear-land", landId: land.id }, now);
+    const reward = cleared.farm.seedInventory[0];
+    expect(reward).toBeDefined();
+    expect(MANOR_V7_HIDDEN_SEED_IDS).toContain(reward!.sourceId);
+    expect(reward!.quantity).toBeGreaterThanOrEqual(1);
+    expect(reward!.quantity).toBeLessThanOrEqual(2);
+  });
+
+  it("processes the original manure and red rose fertilizer recipe", () => {
+    const now = 82_000;
+    const initial = createManorV7State(now);
+    initial.coins = 2_000;
+    initial.pasture.materialInventory = [{ sourceId: 1506, quantity: 5 }];
+    initial.farm.produceInventory = [{ sourceId: 41, quantity: 5 }];
+
+    const processed = transitionManorV7State(initial, { type: "process-manure-fertilizer" }, now);
+    expect(processed.coins).toBe(1_000);
+    expect(inventoryQuantity(processed.pasture.materialInventory, 1506)).toBe(0);
+    expect(inventoryQuantity(processed.farm.produceInventory, 41)).toBe(0);
+    expect(inventoryQuantity(processed.farm.toolInventory, 3)).toBe(1);
+  });
+
+  it("packages the audited flower recipes and delivers a persistent gift", () => {
+    const now = 83_000;
+    const visitor = createManorV7State(now);
+    const owner = createManorV7State(now);
+    visitor.farm.produceInventory = [{ sourceId: 41, quantity: 3 }];
+
+    const result = transitionManorV7FriendStates(
+      visitor, owner, "visitor", "访客", "owner", "主人", { type: "send-flower", flowerId: 12, message: "祝你开心" }, now
+    );
+    expect(MANOR_V7_FLOWERS).toHaveLength(14);
+    expect(inventoryQuantity(result.visitor.farm.produceInventory, 41)).toBe(0);
+    expect(result.owner.receivedFlowers).toEqual([expect.objectContaining({
+      id: 1,
+      flowerId: 12,
+      fromUserId: "visitor",
+      message: "祝你开心"
+    })]);
+    expect(result.owner.nextFlowerGiftId).toBe(2);
+  });
+
+  it("blocks friend visits until the owner removes the visitor from the filter", () => {
+    const now = 84_000;
+    const visitor = createManorV7State(now);
+    const owner = transitionManorV7State(
+      createManorV7State(now),
+      { type: "block-friend", userId: "visitor" },
+      now
+    );
+    owner.farm.lands[0]!.weeds = 1;
+
+    expect(() => transitionManorV7FriendStates(
+      visitor, owner, "visitor", "访客", "owner", "主人", { type: "remove-weeds", landId: 1 }, now
+    )).toThrow("对方暂未允许你进入庄园");
+
+    const unblockedOwner = transitionManorV7State(
+      owner,
+      { type: "unblock-friend", userId: "visitor" },
+      now
+    );
+    expect(unblockedOwner.friendFilterUserIds).toEqual([]);
+    expect(() => transitionManorV7FriendStates(
+      visitor, unblockedOwner, "visitor", "访客", "owner", "主人", { type: "remove-weeds", landId: 1 }, now
+    )).not.toThrow();
+  });
+
+  it("buys grass for a friend and enforces the independent 25-mosquito daily limit", () => {
+    const now = Date.UTC(2026, 7, 23, 8);
+    const visitor = createManorV7State(now);
+    const owner = createManorV7State(now);
+    visitor.coins = 1_000;
+    owner.pasture.grass = 990;
+
+    const grass = transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "buy-grass-for-friend", quantity: 20 },
+      now
+    );
+    expect(grass.visitor.coins).toBe(700);
+    expect(grass.owner.pasture.grass).toBe(1_000);
+
+    const mosquitoes = transitionManorV7FriendStates(
+      grass.visitor,
+      grass.owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "add-mosquito", quantity: MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT },
+      now
+    );
+    expect(mosquitoes.visitor.pasture.mosquitoActions.remaining).toBe(0);
+    expect(mosquitoes.owner.pasture.mosquitoes.sourceUserIds).toHaveLength(
+      MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT
+    );
+    expect(() => transitionManorV7FriendStates(
+      mosquitoes.visitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "second-owner",
+      "另一位主人",
+      { type: "add-mosquito", quantity: 1 },
+      now
+    )).toThrow("今天最多还能放 0 只蚊子");
+
+    const nextDay = now + 24 * 60 * 60 * 1_000;
+    const reset = advanceManorV7State(mosquitoes.visitor, nextDay);
+    expect(reset.pasture.mosquitoActions.remaining).toBe(MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT);
+  });
+
+  it("supports cub sales, animal donation, parade persistence and free VIP goods", () => {
+    const now = 90_000;
+    let state = createManorV7State(now);
+    state.coins = 1_000;
+    state.farmExperience = manorV7ExperienceForLevel(60);
+    state.pastureExperience = manorV7ExperienceForLevel(60);
+    state.pasture.shedLevel = 8;
+    state.pasture.animals = [];
+    state.pasture.cubInventory = [{ sourceId: 1002, quantity: 2 }];
+
+    const soldCub = transitionManorV7State(state, { type: "sell-cub", animalId: 1002, quantity: 1 }, now);
+    expect(inventoryQuantity(soldCub.pasture.cubInventory, 1002)).toBe(1);
+    const withAnimal = transitionManorV7State(soldCub, { type: "buy-animal", animalId: 1001, quantity: 1 }, now);
+    const donated = transitionManorV7State(
+      withAnimal,
+      { type: "donate-animal", serial: withAnimal.pasture.animals[0]!.serial },
+      now
+    );
+    expect(donated.pasture.animals).toEqual([]);
+    const paraded = transitionManorV7State(
+      donated,
+      { type: "set-parade", info: "1,2,3", patternId: 2 },
+      now
+    );
+    expect(paraded.pasture.parade).toEqual({ info: "1,2,3", patternId: 2, version: 1 });
+
+    const vipCrop = manorV7Crop(335);
+    let vip = transitionManorV7State(paraded, { type: "buy-seed", cropId: vipCrop.id, quantity: 1 }, now);
+    const vipAnimal = manorV7Animal(1558);
+    vip = transitionManorV7State(vip, { type: "buy-animal", animalId: vipAnimal.id, quantity: 1 }, now);
+    vip = transitionManorV7State(vip, {
+      type: "buy-tool", area: "farm", toolId: 2, itemType: 3, quantity: 1, useVip: true
+    }, now);
+    vip = transitionManorV7State(vip, {
+      type: "buy-decoration", area: "farm", decorationId: 45, useVip: true
+    }, now);
+    expect(vip.coins).toBe(paraded.coins);
+    expect(inventoryQuantity(vip.farm.seedInventory, vipCrop.id)).toBe(1);
+    expect(vip.pasture.animals).toEqual([expect.objectContaining({ animalId: vipAnimal.id })]);
+    expect(inventoryQuantity(vip.farm.toolInventory, 2)).toBe(1);
+    expect(vip.ownedDecorationIds).toContain(45);
+  });
+
   it("closes the wild-animal adoption, release, return and crystal loop", () => {
     const now = 40_000;
     const keeper = createManorV7State(now);
@@ -656,8 +1349,10 @@ describe("QQ Farm V7 domain", () => {
       expect.objectContaining({ ownerUserId: "keeper", animalType: 1, status: 2, area: "pasture" })
     ]);
 
+    const defender = createManorV7State(now);
+    defender.pasture.weaponInventory = [{ sourceId: 7, quantity: 1 }];
     const attacked = transitionManorV7FriendStates(
-      createManorV7State(now),
+      defender,
       released.owner,
       "friend",
       "好友",
@@ -667,6 +1362,7 @@ describe("QQ Farm V7 domain", () => {
       now
     );
     expect(attacked.visitor.pasture.wild.moralExperience).toBe(1);
+    expect(attacked.visitor.pasture.weaponInventory).toEqual([]);
     expect(attacked.owner.pasture.wild.incomingAnimals[0]).toMatchObject({ blood: 15, status: 2 });
     expect(attacked.owner.pasture.wild.crystalDrops).toHaveLength(1);
     const picked = transitionManorV7FriendStates(
