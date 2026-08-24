@@ -91,13 +91,13 @@ export function transitionManorV7FriendStates(
   }
 
   if (action.type === "offer-halloween-cookie") {
-    const available = inventoryQuantity(visitor.pasture.cubInventory, 1037);
-    if (available < 1) throw new Error("没有饼干精灵可以投放");
+    const available = inventoryQuantity(visitor.pasture.productInventory, 1037);
+    if (available < 1) throw new Error("没有饼干可以投放");
     if (visitor.seasonal.cookieOfferingsRemaining < 1) throw new Error("今天已经投放饼干 10 次");
     if (owner.seasonal.cookieOfferedByUserIds.includes(visitorUserId)) {
       throw new Error("今天已经给这位好友投放过饼干");
     }
-    setInventoryQuantity(visitor.pasture.cubInventory, 1037, available - 1);
+    setInventoryQuantity(visitor.pasture.productInventory, 1037, available - 1);
     const returned = 1 + Math.floor(drawManorV7Random(visitor) * 2);
     setInventoryQuantity(
       visitor.pasture.cubInventory,

@@ -932,7 +932,7 @@ export class ManorV7FlashAdapter {
     );
     const beforeQuantity = before.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
     const afterQuantity = result.visitor.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
-    return { code: 1, num: afterQuantity - beforeQuantity + 1 };
+    return { code: 1, num: afterQuantity - beforeQuantity };
   }
 
   #claimSpringFestivalGift(user: AccountUserView, now: number) {

@@ -2558,6 +2558,23 @@ describe("QQ Farm V7 account persistence", () => {
       expect(cookieSprites.statusCode, cookieSprites.body).toBe(200);
       expect(cookieSprites.json()).toEqual({ code: 1, id: 1037, num: 3 });
 
+      const offeredWithoutCookie = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_putin",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(offeredWithoutCookie.statusCode, offeredWithoutCookie.body).toBe(200);
+      expect(offeredWithoutCookie.json()).toMatchObject({ code: 0, direction: "没有饼干可以投放" });
+
+      const cookieVisitor = instance.repository.getManorV7State(visitor.userId);
+      if (!cookieVisitor) throw new Error("Seasonal visitor state missing before cookie offering");
+      const visitorWithCookie: ManorV7State = structuredClone(cookieVisitor);
+      visitorWithCookie.pasture.productInventory = [{ sourceId: 1037, quantity: 1 }];
+      visitorWithCookie.revision += 1;
+      visitorWithCookie.updatedAt = Date.now();
+      instance.repository.updateManorV7State(visitor.userId, cookieVisitor.revision, visitorWithCookie);
+
       const offered = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_putin",
@@ -2566,6 +2583,13 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(offered.statusCode, offered.body).toBe(200);
       expect([1, 2]).toContain(offered.json().num);
+      const visitorAfterOffering = instance.repository.getManorV7State(visitor.userId);
+      expect(visitorAfterOffering?.pasture.productInventory).not.toEqual(
+        expect.arrayContaining([{ sourceId: 1037, quantity: expect.any(Number) }])
+      );
+      expect(visitorAfterOffering?.pasture.cubInventory).toEqual(
+        expect.arrayContaining([{ sourceId: 1037, quantity: 3 + offered.json().num }])
+      );
       expect(instance.repository.getManorV7State(owner.userId)?.seasonal).toMatchObject({
         halloweenCookies: 1,
         cookieOfferedByUserIds: [visitor.userId]

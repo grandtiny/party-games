@@ -180,7 +180,8 @@ describe("QQ Farm V7 domain", () => {
     const now = 7_500;
     const visitor = createManorV7State(now);
     const owner = createManorV7State(now);
-    visitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 1 }];
+    visitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 4 }];
+    visitor.pasture.productInventory = [{ sourceId: 1037, quantity: 2 }];
 
     const result = transitionManorV7FriendStates(
       visitor,
@@ -192,8 +193,9 @@ describe("QQ Farm V7 domain", () => {
       { type: "offer-halloween-cookie" },
       now
     );
-    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeGreaterThanOrEqual(1);
-    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeLessThanOrEqual(2);
+    expect(inventoryQuantity(result.visitor.pasture.productInventory, 1037)).toBe(1);
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeGreaterThanOrEqual(5);
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeLessThanOrEqual(6);
     expect(result.visitor.seasonal.cookieOfferingsRemaining).toBe(MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT - 1);
     expect(result.owner.seasonal).toMatchObject({
       halloweenCookies: 1,
@@ -209,6 +211,19 @@ describe("QQ Farm V7 domain", () => {
       { type: "offer-halloween-cookie" },
       now
     )).toThrow("今天已经给这位好友投放过饼干");
+
+    const noCookieVisitor = createManorV7State(now);
+    noCookieVisitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 3 }];
+    expect(() => transitionManorV7FriendStates(
+      noCookieVisitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-cookie" },
+      now
+    )).toThrow("没有饼干可以投放");
   });
 
   it("keeps activity rewards out of ordinary purchases", () => {
