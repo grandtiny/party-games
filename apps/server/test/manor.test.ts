@@ -2654,25 +2654,90 @@ describe("QQ Farm V7 account persistence", () => {
         cookieOfferedByUserIds: [visitor.userId]
       });
 
+      const insufficientCarnival = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_activity",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "actid=2&op=0"
+      });
+      expect(insufficientCarnival.json()).toMatchObject({
+        errorType: "logic",
+        limit: [{ id: 1, num: 54 }, { id: 2, num: 54 }]
+      });
+
       const currentOwner = instance.repository.getManorV7State(owner.userId);
       if (!currentOwner) throw new Error("Seasonal owner state missing before exchange");
       const exchangeReady: ManorV7State = structuredClone(currentOwner);
-      exchangeReady.seasonal.halloweenCookies = 5;
+      exchangeReady.seasonal.halloweenCandies = 60;
+      exchangeReady.seasonal.halloweenCookies = 60;
       exchangeReady.revision += 1;
       exchangeReady.updatedAt = Date.now();
       instance.repository.updateManorV7State(owner.userId, currentOwner.revision, exchangeReady);
-      const exchanged = await instance.app.inject({
+
+      const sweetGift = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=xiaoyoucgi_pasture_activity",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "actid=0&op=1"
+      });
+      expect(sweetGift.statusCode, sweetGift.body).toBe(200);
+      expect(sweetGift.json()).toEqual({ code: 1, money: 0 });
+
+      const happyGift = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_pasture_activity",
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "actid=1&op=1"
       });
-      expect(exchanged.statusCode, exchanged.body).toBe(200);
-      expect(exchanged.json()).toEqual({ code: 1 });
-      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        seasonal: { halloweenCookies: 0 },
-        pasture: { cubInventory: expect.arrayContaining([{ sourceId: 1537, quantity: 1 }]) }
+      expect(happyGift.statusCode, happyGift.body).toBe(200);
+      expect(happyGift.json()).toEqual({ code: 1, money: 0 });
+
+      const halloweenBox = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=xiaoyoucgi_farm_qixiflag",
+        headers: { cookie: owner.cookie }
       });
+      expect(halloweenBox.json()).toEqual({ biscuit: 55, candy: 55, code: 1, exchange_flag: 0 });
+
+      const carnivalGift = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=xiaoyoucgi_pasture_activity",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "actid=2&op=1"
+      });
+      expect(carnivalGift.statusCode, carnivalGift.body).toBe(200);
+      expect(carnivalGift.json()).toEqual({ code: 1, money: 20_000, reward: 0 });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: exchangeReady.coins + 20_000,
+        seasonal: {
+          halloweenCandies: 0,
+          halloweenCookies: 0,
+          halloweenCarnivalGiftClaimed: true
+        },
+        farm: {
+          seedInventory: expect.arrayContaining([
+            { sourceId: 164, quantity: 1 },
+            { sourceId: 166, quantity: 1 }
+          ])
+        },
+        pasture: {
+          cubInventory: expect.arrayContaining([
+            { sourceId: 1038, quantity: 1 },
+            { sourceId: 1537, quantity: 1 }
+          ])
+        },
+        decorationOwnerships: expect.arrayContaining([
+          ...[665, 666, 667, 668].map((decorationId) => expect.objectContaining({ area: "farm", decorationId })),
+          expect.objectContaining({ area: "pasture", decorationId: 135 })
+        ])
+      });
+
+      const claimedHalloweenBox = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_qixiflag",
+        headers: { cookie: owner.cookie }
+      });
+      expect(claimedHalloweenBox.json()).toEqual({ biscuit: 0, candy: 0, code: 1, exchange_flag: 1 });
 
       const springStatus = await instance.app.inject({
         method: "GET",
@@ -2717,7 +2782,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(ceremonyGift.json()).toEqual({ code: 1, ecode: 0, type: 3 });
       const ceremonyState = instance.repository.getManorV7State(owner.userId);
       expect(ceremonyState).toMatchObject({
-        coins: 99_999,
+        coins: exchangeReady.coins + 20_000 + 99_999,
         seasonal: { reunionFishGiftClaimed: true },
         farm: {
           fishPool: {

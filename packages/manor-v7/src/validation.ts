@@ -80,7 +80,9 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "generate-seasonal-animal-drop":
     case "claim-halloween-candy-seeds":
     case "claim-cookie-sprites":
+    case "exchange-halloween-candy-pumpkin":
     case "exchange-halloween-cookie-baby":
+    case "exchange-halloween-carnival-gift":
     case "claim-spring-festival-gift":
     case "claim-reunion-fish-gift":
       return { type };

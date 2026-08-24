@@ -205,8 +205,14 @@ export class ManorV7FlashAdapter {
     if (["cgi_farm_halloween", "xiaoyoucgi_farm_halloween"].includes(moduleName)) {
       return this.#halloweenStarterStatus(user, params, "farm", now);
     }
+    if (["cgi_farm_qixiflag", "xiaoyoucgi_farm_qixiflag"].includes(moduleName)) {
+      return this.#halloweenBoxStatus(user, now);
+    }
     if (["cgi_farm_get_halloweenseed", "xiaoyoucgi_farm_get_halloweenseed"].includes(moduleName)) {
       return this.#claimHalloweenStarter(user, params, "farm", now);
+    }
+    if (["cgi_pasture_activity", "xiaoyoucgi_pasture_activity"].includes(moduleName)) {
+      return this.#halloweenActivity(user, params, now);
     }
     if (["cgi_putin", "xiaoyoucgi_putin"].includes(moduleName)) {
       return this.#offerHalloweenCandy(user, params, now);
@@ -730,6 +736,9 @@ export class ManorV7FlashAdapter {
     if (["cgi_farm_halloween", "xiaoyoucgi_farm_halloween"].includes(moduleName)) {
       return this.#halloweenStarterStatus(user, params, "pasture", now);
     }
+    if (["cgi_farm_qixiflag", "xiaoyoucgi_farm_qixiflag"].includes(moduleName)) {
+      return this.#halloweenBoxStatus(user, now);
+    }
     if (["cgi_farm_get_halloweenseed", "xiaoyoucgi_farm_get_halloweenseed"].includes(moduleName)) {
       return this.#claimHalloweenStarter(user, params, "pasture", now);
     }
@@ -945,21 +954,54 @@ export class ManorV7FlashAdapter {
   #halloweenActivity(user: AccountUserView, params: FlashParams, now: number) {
     const activityId = integer(params.actid) ?? 1;
     const operation = integer(params.op) ?? 0;
-    if (activityId !== 1) throw new Error("该活动礼包未接入");
+    if (![0, 1, 2].includes(activityId)) throw new Error("活动礼包编号无效");
     const view = this.service.getView(user, now);
     if (operation === 0) {
-      if (view.seasonal.halloweenCookies < 5) {
+      if (activityId === 2 && view.seasonal.halloweenCarnivalGiftClaimed) {
         return {
-          errorContent: "对不起，您还没有满足兑换条件，无法兑换礼包。",
-          errorType: "logic",
-          limit: [{ id: 2, num: 5 - view.seasonal.halloweenCookies }]
+          errorContent: "万圣狂欢礼包已经兑换",
+          errorType: "logic"
         };
       }
+      const candyRequired = activityId === 0 ? 5 : activityId === 2 ? 55 : 0;
+      const cookieRequired = activityId === 1 ? 5 : activityId === 2 ? 55 : 0;
+      const limit = [
+        ...(view.seasonal.halloweenCandies < candyRequired
+          ? [{ id: 1, num: candyRequired - view.seasonal.halloweenCandies }]
+          : []),
+        ...(view.seasonal.halloweenCookies < cookieRequired
+          ? [{ id: 2, num: cookieRequired - view.seasonal.halloweenCookies }]
+          : [])
+      ];
+      if (limit.length > 0) return {
+        errorContent: "对不起，您还没有满足兑换条件，无法兑换礼包。",
+        errorType: "logic",
+        limit
+      };
       return { code: 1 };
     }
     if (operation !== 1) throw new Error("活动礼包操作无效");
-    this.service.performAction(user, { type: "exchange-halloween-cookie-baby" }, now);
-    return { code: 1 };
+    const action = activityId === 0
+      ? { type: "exchange-halloween-candy-pumpkin" } as const
+      : activityId === 1
+        ? { type: "exchange-halloween-cookie-baby" } as const
+        : { type: "exchange-halloween-carnival-gift" } as const;
+    const { before, after } = this.service.performActionWithPrevious(user, action, now);
+    return {
+      code: 1,
+      money: after.coins - before.coins,
+      ...(activityId === 2 ? { reward: 0 } : {})
+    };
+  }
+
+  #halloweenBoxStatus(user: AccountUserView, now: number) {
+    const seasonal = this.service.getView(user, now).seasonal;
+    return {
+      biscuit: seasonal.halloweenCookies,
+      candy: seasonal.halloweenCandies,
+      code: 1,
+      exchange_flag: Number(seasonal.halloweenCarnivalGiftClaimed)
+    };
   }
 
   #offerHalloweenCookie(user: AccountUserView, params: FlashParams, now: number) {

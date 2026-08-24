@@ -65,6 +65,8 @@ export const MANOR_V7_HIDDEN_SEED_IDS = MANOR_V7_CROPS
 
 const MANOR_V7_REUNION_DECORATION_IDS = [377, 378, 379, 380, 381, 382, 383, 384] as const;
 const MANOR_V7_REUNION_DECORATION_SECONDS = 16_070_400;
+const MANOR_V7_HALLOWEEN_FARM_DECORATION_IDS = [665, 666, 667, 668] as const;
+const MANOR_V7_HALLOWEEN_PASTURE_DECORATION_ID = 135;
 
 export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, now: number): void {
   switch (action.type) {
@@ -762,6 +764,17 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       addManorV7Activity(state, "pasture", "领取了 3 只饼干精灵", now);
       break;
     }
+    case "exchange-halloween-candy-pumpkin": {
+      if (state.seasonal.halloweenCandies < 5) throw new Error("兑换万圣南瓜种子需要 5 个好友投放的糖果");
+      state.seasonal.halloweenCandies -= 5;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        164,
+        inventoryQuantity(state.farm.seedInventory, 164) + 1
+      );
+      addManorV7Activity(state, "farm", "用 5 个糖果兑换了 1 个万圣南瓜种子", now);
+      break;
+    }
     case "exchange-halloween-cookie-baby": {
       if (state.seasonal.halloweenCookies < 5) throw new Error("兑换万圣宝宝需要 5 个好友投放的饼干");
       state.seasonal.halloweenCookies -= 5;
@@ -771,6 +784,32 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         inventoryQuantity(state.pasture.cubInventory, 1537) + 1
       );
       addManorV7Activity(state, "pasture", "用 5 个饼干兑换了 1 只万圣宝宝", now);
+      break;
+    }
+    case "exchange-halloween-carnival-gift": {
+      if (state.seasonal.halloweenCarnivalGiftClaimed) throw new Error("万圣狂欢礼包已经兑换");
+      if (state.seasonal.halloweenCandies < 55 || state.seasonal.halloweenCookies < 55) {
+        throw new Error("兑换万圣狂欢礼包需要 55 个糖果和 55 个饼干");
+      }
+      state.seasonal.halloweenCandies -= 55;
+      state.seasonal.halloweenCookies -= 55;
+      state.seasonal.halloweenCarnivalGiftClaimed = true;
+      state.coins += 20_000;
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1038,
+        inventoryQuantity(state.pasture.cubInventory, 1038) + 1
+      );
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        166,
+        inventoryQuantity(state.farm.seedInventory, 166) + 1
+      );
+      for (const decorationId of MANOR_V7_HALLOWEEN_FARM_DECORATION_IDS) {
+        grantTimedDecoration(state, "farm", decorationId, now);
+      }
+      grantTimedDecoration(state, "pasture", MANOR_V7_HALLOWEEN_PASTURE_DECORATION_ID, now);
+      addManorV7Activity(state, "farm", "兑换了万圣狂欢礼包", now);
       break;
     }
     case "claim-spring-festival-gift": {
@@ -1398,6 +1437,23 @@ function awardManorV7Reward(state: ManorV7State, reward: ManorV7RewardItem): voi
       return;
     }
   }
+}
+
+function grantTimedDecoration(
+  state: ManorV7State,
+  area: "farm" | "pasture",
+  decorationId: number,
+  now: number
+): void {
+  const definition = manorV7Decoration(area, decorationId);
+  const extension = definition.validSeconds * 1_000;
+  const ownership = decorationOwnership(state, area, decorationId);
+  if (ownership) {
+    if (ownership.validUntil !== 0) ownership.validUntil = Math.max(now, ownership.validUntil) + extension;
+  } else {
+    state.decorationOwnerships.push({ area, decorationId, validUntil: now + extension });
+  }
+  addOwnedDecorationId(state, decorationId);
 }
 
 function decorationOwnership(state: ManorV7State, area: "farm" | "pasture", decorationId: number) {

@@ -303,6 +303,7 @@ export interface ManorV7SeasonalState {
   cookieOfferingDay: string | null;
   cookieOfferingsRemaining: number;
   cookieOfferedByUserIds: string[];
+  halloweenCarnivalGiftClaimed: boolean;
   springFestivalClaimDay: string | null;
   reunionFishGiftClaimed: boolean;
 }
@@ -454,7 +455,9 @@ export type ManorV7Action =
   | { type: "generate-seasonal-animal-drop" }
   | { type: "claim-halloween-candy-seeds" }
   | { type: "claim-cookie-sprites" }
+  | { type: "exchange-halloween-candy-pumpkin" }
   | { type: "exchange-halloween-cookie-baby" }
+  | { type: "exchange-halloween-carnival-gift" }
   | { type: "claim-spring-festival-gift" }
   | { type: "claim-reunion-fish-gift" }
   | { type: "redeem-code"; code: string }

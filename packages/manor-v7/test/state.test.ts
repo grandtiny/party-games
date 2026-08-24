@@ -81,6 +81,7 @@ describe("QQ Farm V7 domain", () => {
       cookieOfferingDay: "2026-08-22",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
       springFestivalClaimDay: null,
       reunionFishGiftClaimed: false
     });
@@ -120,10 +121,50 @@ describe("QQ Farm V7 domain", () => {
     expect(() => transitionManorV7State(state, { type: "claim-cookie-sprites" }, now))
       .toThrow("饼干精灵已经领取");
 
-    state.seasonal.halloweenCookies = 5;
+    const insufficientCarnival = createManorV7State(now);
+    insufficientCarnival.seasonal.halloweenCandies = 55;
+    insufficientCarnival.seasonal.halloweenCookies = 54;
+    expect(() => transitionManorV7State(
+      insufficientCarnival,
+      { type: "exchange-halloween-carnival-gift" },
+      now
+    )).toThrow("兑换万圣狂欢礼包需要 55 个糖果和 55 个饼干");
+    expect(insufficientCarnival.seasonal).toMatchObject({ halloweenCandies: 55, halloweenCookies: 54 });
+
+    state.seasonal.halloweenCandies = 60;
+    state.seasonal.halloweenCookies = 60;
+    const coinsBeforeHalloween = state.coins;
+    state = transitionManorV7State(state, { type: "exchange-halloween-candy-pumpkin" }, now);
+    expect(state.seasonal.halloweenCandies).toBe(55);
+    expect(inventoryQuantity(state.farm.seedInventory, 164)).toBe(1);
+
     state = transitionManorV7State(state, { type: "exchange-halloween-cookie-baby" }, now);
-    expect(state.seasonal.halloweenCookies).toBe(0);
+    expect(state.seasonal.halloweenCookies).toBe(55);
     expect(inventoryQuantity(state.pasture.cubInventory, 1537)).toBe(1);
+
+    state = transitionManorV7State(state, { type: "exchange-halloween-carnival-gift" }, now);
+    expect(state.seasonal).toMatchObject({
+      halloweenCandies: 0,
+      halloweenCookies: 0,
+      halloweenCarnivalGiftClaimed: true
+    });
+    expect(state.coins).toBe(coinsBeforeHalloween + 20_000);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1038)).toBe(1);
+    expect(inventoryQuantity(state.farm.seedInventory, 166)).toBe(1);
+    expect(state.decorationOwnerships).toEqual(expect.arrayContaining([
+      ...[665, 666, 667, 668].map((decorationId) => ({
+        area: "farm",
+        decorationId,
+        validUntil: now + manorV7Decoration("farm", decorationId).validSeconds * 1_000
+      })),
+      {
+        area: "pasture",
+        decorationId: 135,
+        validUntil: now + manorV7Decoration("pasture", 135).validSeconds * 1_000
+      }
+    ]));
+    expect(() => transitionManorV7State(state, { type: "exchange-halloween-carnival-gift" }, now))
+      .toThrow("万圣狂欢礼包已经兑换");
 
     state = transitionManorV7State(state, { type: "claim-spring-festival-gift" }, now);
     expect(state.seasonal.springFestivalClaimDay).toBe("2026-08-22");
@@ -987,6 +1028,7 @@ describe("QQ Farm V7 domain", () => {
       cookieOfferingDay: "1970-01-01",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
       springFestivalClaimDay: null,
       reunionFishGiftClaimed: false
     });
@@ -1005,6 +1047,7 @@ describe("QQ Farm V7 domain", () => {
     delete seasonal.candyOfferingDay;
     delete seasonal.candyOfferingsRemaining;
     delete seasonal.candyOfferedByUserIds;
+    delete seasonal.halloweenCarnivalGiftClaimed;
 
     const migrated = migrateManorV7State(legacy, 8_100);
     expect(migrated.seasonal).toMatchObject({
@@ -1013,6 +1056,7 @@ describe("QQ Farm V7 domain", () => {
       candyOfferingDay: "1970-01-01",
       candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
       candyOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
       cookieSpritesClaimed: true,
       halloweenCookies: 2
     });
