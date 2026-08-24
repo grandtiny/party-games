@@ -2590,6 +2590,44 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(claimedSpringStatus.json()).toMatchObject({ anim_num: 4, code: 1, farm_num: 4, flag: 1 });
+
+      const ceremonyOwner = instance.repository.getManorV7State(owner.userId);
+      if (!ceremonyOwner) throw new Error("Seasonal owner state missing before ceremony package");
+      const ceremonyReady: ManorV7State = structuredClone(ceremonyOwner);
+      ceremonyReady.farm.produceInventory = [{ sourceId: 450, quantity: 1_999 }];
+      ceremonyReady.revision += 1;
+      ceremonyReady.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, ceremonyOwner.revision, ceremonyReady);
+      const ceremonyFlags = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_fetch_package_flags",
+        headers: { cookie: owner.cookie }
+      });
+      expect(ceremonyFlags.json()).toMatchObject({ bpck: 1, code: 1, ecode: 0, mcnt: 1_999 });
+      const ceremonyGift = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_ceremony_package",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "type=3"
+      });
+      expect(ceremonyGift.statusCode, ceremonyGift.body).toBe(200);
+      expect(ceremonyGift.json()).toEqual({ code: 1, ecode: 0, type: 3 });
+      const ceremonyState = instance.repository.getManorV7State(owner.userId);
+      expect(ceremonyState).toMatchObject({
+        coins: 99_999,
+        seasonal: { reunionFishGiftClaimed: true },
+        farm: {
+          fishPool: {
+            seedInventory: expect.arrayContaining([{ sourceId: 15, quantity: 2 }]),
+            unlockedFishIds: expect.arrayContaining([15])
+          },
+          seedInventory: expect.arrayContaining([{ sourceId: 448, quantity: 5 }]),
+          produceInventory: []
+        }
+      });
+      expect(ceremonyState?.decorationOwnerships.filter((ownership) => (
+        ownership.area === "farm" && ownership.decorationId >= 377 && ownership.decorationId <= 384
+      ))).toHaveLength(8);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });

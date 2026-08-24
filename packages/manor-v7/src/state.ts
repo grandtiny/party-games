@@ -340,6 +340,7 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
   state.seasonal.cookieOfferingsRemaining ??= MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT;
   state.seasonal.cookieOfferedByUserIds ??= [];
   state.seasonal.springFestivalClaimDay ??= null;
+  state.seasonal.reunionFishGiftClaimed ??= false;
   state.decorationOwnerships ??= migrateLegacyDecorationOwnerships(state);
   synchronizeDecorationOwnerships(state, now);
   state.rewardClaims ??= {
@@ -862,6 +863,7 @@ function validSeasonalState(state: ManorV7State): boolean {
     seasonal.cookieOfferingsRemaining > MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT ||
     !validUserIdList(seasonal.cookieOfferedByUserIds) ||
     !validClaimDay(seasonal.springFestivalClaimDay)
+    || typeof seasonal.reunionFishGiftClaimed !== "boolean"
   ) return false;
   const serials = new Set<number>();
   for (const drop of seasonal.animalDrops) {
@@ -971,7 +973,8 @@ function createManorV7SeasonalState(now: number): ManorV7State["seasonal"] {
     cookieOfferingDay: manorV7DayKey(now),
     cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
     cookieOfferedByUserIds: [],
-    springFestivalClaimDay: null
+    springFestivalClaimDay: null,
+    reunionFishGiftClaimed: false
   };
 }
 

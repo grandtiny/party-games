@@ -195,6 +195,8 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_clear_log") return this.#clearActivityLog(user, now);
     if (moduleName === "cgi_return_gift") return this.#vipReturnGift(user, params, now);
     if (moduleName === "cgi_pasture_chunjie") return this.#claimSpringFestivalGift(user, now);
+    if (moduleName === "cgi_fetch_package_flags") return this.#ceremonyPackageStatus(user, now);
+    if (moduleName === "cgi_farm_ceremony_package") return this.#claimCeremonyPackage(user, params, now);
     if (moduleName === "cgi_pasture_checkbitmap" || moduleName === "cgi_farm_checkbitmap") {
       return this.#springFestivalStatus(user, now);
     }
@@ -946,6 +948,27 @@ export class ManorV7FlashAdapter {
       farm_num: view.farm.seedInventory.find((entry) => entry.sourceId === 367)?.quantity ?? 0,
       flag: Number(view.seasonal.springFestivalClaimDay === manorV7DayKey(now))
     };
+  }
+
+  #ceremonyPackageStatus(user: AccountUserView, now: number) {
+    const view = this.service.getView(user, now);
+    return {
+      _qz: 1,
+      _wb: 1,
+      bpck: Number(!view.seasonal.reunionFishGiftClaimed),
+      code: 1,
+      ecode: 0,
+      mcnt: view.farm.produceInventory.find((entry) => entry.sourceId === 450)?.quantity ?? 0,
+      thxpck: 0,
+      ypck: 0
+    };
+  }
+
+  #claimCeremonyPackage(user: AccountUserView, params: FlashParams, now: number) {
+    const type = positiveInteger(params.type, "典礼礼包类型");
+    if (type !== 3) throw new Error("该典礼礼包未接入");
+    this.service.performAction(user, { type: "claim-reunion-fish-gift" }, now);
+    return { code: 1, ecode: 0, type };
   }
 
   #adoptWildAnimal(user: AccountUserView, params: FlashParams, now: number) {

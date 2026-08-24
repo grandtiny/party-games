@@ -299,6 +299,7 @@ export interface ManorV7SeasonalState {
   cookieOfferingsRemaining: number;
   cookieOfferedByUserIds: string[];
   springFestivalClaimDay: string | null;
+  reunionFishGiftClaimed: boolean;
 }
 
 export interface ManorV7Activity {
@@ -449,6 +450,7 @@ export type ManorV7Action =
   | { type: "claim-cookie-sprites" }
   | { type: "exchange-halloween-cookie-baby" }
   | { type: "claim-spring-festival-gift" }
+  | { type: "claim-reunion-fish-gift" }
   | { type: "redeem-code"; code: string }
   | { type: "start-production"; serial: number }
   | { type: "collect-product"; serial: number }

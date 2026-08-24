@@ -75,7 +75,8 @@ describe("QQ Farm V7 domain", () => {
       cookieOfferingDay: "2026-08-22",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
-      springFestivalClaimDay: null
+      springFestivalClaimDay: null,
+      reunionFishGiftClaimed: false
     });
 
     initial.seasonal.cookieOfferingsRemaining = 0;
@@ -114,6 +115,25 @@ describe("QQ Farm V7 domain", () => {
     expect(inventoryQuantity(state.pasture.cubInventory, 1546)).toBe(4);
     expect(() => transitionManorV7State(state, { type: "claim-spring-festival-gift" }, now))
       .toThrow("今日春节礼包已经领取");
+  });
+
+  it("exchanges the one-time reunion fish package through the complete crop loop", () => {
+    const now = 8_000;
+    const initial = createManorV7State(now);
+    initial.farm.produceInventory = [{ sourceId: 450, quantity: 2_000 }];
+    const exchanged = transitionManorV7State(initial, { type: "claim-reunion-fish-gift" }, now);
+
+    expect(exchanged.coins).toBe(99_999);
+    expect(exchanged.seasonal.reunionFishGiftClaimed).toBe(true);
+    expect(inventoryQuantity(exchanged.farm.produceInventory, 450)).toBe(1);
+    expect(inventoryQuantity(exchanged.farm.seedInventory, 448)).toBe(5);
+    expect(inventoryQuantity(exchanged.farm.fishPool.seedInventory, 15)).toBe(2);
+    expect(exchanged.farm.fishPool.unlockedFishIds).toContain(15);
+    expect(exchanged.decorationOwnerships.filter((ownership) => (
+      ownership.area === "farm" && ownership.decorationId >= 377 && ownership.decorationId <= 384
+    ))).toHaveLength(8);
+    expect(() => transitionManorV7State(exchanged, { type: "claim-reunion-fish-gift" }, now))
+      .toThrow("团圆鱼礼包已经领取");
   });
 
   it("adopts all three seasonal animals with the original atomic costs", () => {
@@ -858,7 +878,8 @@ describe("QQ Farm V7 domain", () => {
       cookieOfferingDay: "1970-01-01",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
-      springFestivalClaimDay: null
+      springFestivalClaimDay: null,
+      reunionFishGiftClaimed: false
     });
     expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });

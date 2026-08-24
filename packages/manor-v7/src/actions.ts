@@ -63,6 +63,9 @@ export const MANOR_V7_HIDDEN_SEED_IDS = MANOR_V7_CROPS
   .filter((crop) => crop.isHidden)
   .map((crop) => crop.id);
 
+const MANOR_V7_REUNION_DECORATION_IDS = [377, 378, 379, 380, 381, 382, 383, 384] as const;
+const MANOR_V7_REUNION_DECORATION_SECONDS = 16_070_400;
+
 export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, now: number): void {
   switch (action.type) {
     case "buy-seed": {
@@ -774,6 +777,40 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         inventoryQuantity(state.pasture.cubInventory, 1546) + 4
       );
       addManorV7Activity(state, "pasture", "领取了春节 VIP 礼包：4 个金条树种子和 4 只金兔子", now);
+      break;
+    }
+    case "claim-reunion-fish-gift": {
+      if (state.seasonal.reunionFishGiftClaimed) throw new Error("团圆鱼礼包已经领取");
+      const materials = inventoryQuantity(state.farm.produceInventory, 450);
+      if (materials < 1_999) throw new Error("领取团圆鱼礼包需要 1999 个火舞草产物");
+      state.seasonal.reunionFishGiftClaimed = true;
+      setInventoryQuantity(state.farm.produceInventory, 450, materials - 1_999);
+      state.coins += 99_999;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        448,
+        inventoryQuantity(state.farm.seedInventory, 448) + 5
+      );
+      setInventoryQuantity(
+        state.farm.fishPool.seedInventory,
+        15,
+        inventoryQuantity(state.farm.fishPool.seedInventory, 15) + 2
+      );
+      if (!state.farm.fishPool.unlockedFishIds.includes(15)) {
+        state.farm.fishPool.unlockedFishIds.push(15);
+        state.farm.fishPool.unlockedFishIds.sort((left, right) => left - right);
+      }
+      for (const decorationId of MANOR_V7_REUNION_DECORATION_IDS) {
+        const ownership = decorationOwnership(state, "farm", decorationId);
+        const extension = MANOR_V7_REUNION_DECORATION_SECONDS * 1_000;
+        if (ownership) {
+          if (ownership.validUntil !== 0) ownership.validUntil = Math.max(now, ownership.validUntil) + extension;
+        } else {
+          state.decorationOwnerships.push({ area: "farm", decorationId, validUntil: now + extension });
+        }
+        addOwnedDecorationId(state, decorationId);
+      }
+      addManorV7Activity(state, "farm", "兑换了团圆鱼典礼礼包", now);
       break;
     }
     case "redeem-code": {
