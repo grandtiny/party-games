@@ -992,6 +992,9 @@ export async function createApp(options: AppOptions) {
       if (request.url.startsWith("/assets/manor/v7-runtime/")) {
         reply.header("Cache-Control", "public, max-age=3600, must-revalidate");
       }
+      if (request.url.split("?", 1)[0]?.endsWith(".wasm")) {
+        reply.header("Vary", "Accept-Encoding");
+      }
       return payload;
     });
     const manorV7ConfigPath = resolve(webDistPath, "assets/manor/v7-swf/config");
@@ -1023,6 +1026,7 @@ export async function createApp(options: AppOptions) {
     }
     await app.register(fastifyStatic, {
       root: webDistPath,
+      preCompressed: true,
       immutable: true,
       maxAge: "1y"
     });
@@ -1032,6 +1036,7 @@ export async function createApp(options: AppOptions) {
         root: manorV7ModulePath,
         prefix: "/module/",
         decorateReply: false,
+        preCompressed: true,
         immutable: true,
         maxAge: "1y"
       });
