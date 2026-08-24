@@ -25,6 +25,9 @@ const defaultFarmDecorations = [
   { area: "farm", id: 3, name: "木桩栅栏", setName: "QQ农场", itemType: 3, originalLevel: 0, coinPrice: 0, premiumPrice: 25, experience: 0, validSeconds: 1 },
   { area: "farm", id: 4, name: "茅草狗屋", setName: "QQ农场", itemType: 4, originalLevel: 0, coinPrice: 0, premiumPrice: 20, experience: 0, validSeconds: 1 }
 ] as const satisfies readonly ManorV7DecorationDefinition[];
+const defaultPastureDecorations = [
+  { area: "pasture", id: 105, name: "默认牧场", setName: "QQ牧场", itemType: 101, originalLevel: 0, coinPrice: 0, premiumPrice: 0, experience: 0, validSeconds: 1 }
+] as const satisfies readonly ManorV7DecorationDefinition[];
 
 export const MANOR_V7_BOARD_IDS = [
   90020, 90021, 90022, 90023, 90024, 90025, 90026, 90027, 90028, 90029,
@@ -55,6 +58,14 @@ export function manorV7Tool(area: ManorV7Area, id: number): ManorV7ToolDefinitio
   return item;
 }
 
+export function manorV7ToolByType(area: ManorV7Area, id: number, itemType: number): ManorV7ToolDefinition {
+  const item = MANOR_V7_TOOLS.find((candidate) => (
+    candidate.area === area && candidate.id === id && candidate.itemType === itemType
+  ));
+  if (!item) throw new Error("工具不存在");
+  return item;
+}
+
 export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
   const item = MANOR_V7_TOOLS.find((candidate) => (
     candidate.area === "pasture" && candidate.itemType === 106 && candidate.id === id
@@ -65,6 +76,7 @@ export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
 
 export function manorV7Decoration(area: ManorV7Area, id: number): ManorV7DecorationDefinition {
   const item = defaultFarmDecorations.find((candidate) => candidate.area === area && candidate.id === id)
+    ?? defaultPastureDecorations.find((candidate) => candidate.area === area && candidate.id === id)
     ?? MANOR_V7_DECORATIONS.find((candidate) => candidate.area === area && candidate.id === id);
   if (!item) throw new Error("装扮不存在");
   return item;

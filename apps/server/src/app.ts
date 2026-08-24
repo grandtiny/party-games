@@ -22,6 +22,8 @@ import {
   GomokuSaveUpdateRequestSchema,
   JoinRoomRequestSchema,
   ManorGuestbookCreateRequestSchema,
+  ManorTestAdvanceTimeRequestSchema,
+  ManorTestGrantResourceRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -34,7 +36,10 @@ import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
 import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
-import { ManorV7FlashAdapter } from "./manor-v7-flash-adapter.js";
+import {
+  ManorV7FlashAdapter,
+  type ManorV7UnsupportedProtocolEvent
+} from "./manor-v7-flash-adapter.js";
 import { ManorV7Service } from "./manor-v7-service.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
@@ -48,6 +53,7 @@ export interface AppOptions {
   logger?: boolean;
   rulesAssistant?: RulesAssistant;
   environment?: NodeJS.ProcessEnv;
+  manorUnsupportedProtocolHandler?: (event: ManorV7UnsupportedProtocolEvent) => void;
 }
 
 export async function createApp(options: AppOptions) {
@@ -63,6 +69,7 @@ export async function createApp(options: AppOptions) {
     (_request, body, done) => done(null, body)
   );
   const environment = options.environment ?? process.env;
+  const manorTestToolsEnabled = enabledFlag(environment.MANOR_TEST_TOOLS_ENABLED);
   const repository = new SqliteRoomRepository(options.databasePath);
   const presence = new PresenceTracker();
   const adminService = new AdminService(repository, environment);
@@ -81,7 +88,17 @@ export async function createApp(options: AppOptions) {
   const manorService = new ManorV7Service(repository, {
     timeScale: positiveNumber(environment.MANOR_TIME_SCALE, 1)
   });
-  const manorFlashAdapter = new ManorV7FlashAdapter(manorService);
+  const reportedUnsupportedManorProtocols = new Set<string>();
+  const manorFlashAdapter = new ManorV7FlashAdapter(manorService, (event) => {
+    const key = `${event.area}:${event.module}:${event.action ?? ""}`;
+    if (reportedUnsupportedManorProtocols.has(key)) return;
+    reportedUnsupportedManorProtocols.add(key);
+    if (options.manorUnsupportedProtocolHandler) {
+      options.manorUnsupportedProtocolHandler(event);
+      return;
+    }
+    app.log.warn({ manorFlashProtocol: event }, "Unsupported manor Flash protocol");
+  });
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -101,7 +118,8 @@ export async function createApp(options: AppOptions) {
   }));
 
   app.get("/api/platform", async () => ({
-    enabledGames: games.list().map((game) => game.id)
+    enabledGames: games.list().map((game) => game.id),
+    manorTestToolsEnabled
   }));
 
   app.get("/api/account/status", async (request) =>
@@ -326,6 +344,36 @@ export async function createApp(options: AppOptions) {
       return reply.code(message.includes("账号会话无效") ? 401 : 400).send({ error: message });
     }
   });
+
+  if (manorTestToolsEnabled) {
+    app.post("/api/manor/test/advance-time", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        const input = ManorTestAdvanceTimeRequestSchema.parse(request.body);
+        return manorService.advanceTestTime(user, input.seconds);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+
+    app.post("/api/manor/test/grant-resource", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        const input = ManorTestGrantResourceRequestSchema.parse(request.body);
+        return manorService.grantTestResource(user, input);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+  }
 
   const handleFarmFlash = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -992,6 +1040,9 @@ export async function createApp(options: AppOptions) {
       if (request.url.startsWith("/assets/manor/v7-runtime/")) {
         reply.header("Cache-Control", "public, max-age=3600, must-revalidate");
       }
+      if (request.url.split("?", 1)[0]?.endsWith(".wasm")) {
+        reply.header("Vary", "Accept-Encoding");
+      }
       return payload;
     });
     const manorV7ConfigPath = resolve(webDistPath, "assets/manor/v7-swf/config");
@@ -1023,6 +1074,7 @@ export async function createApp(options: AppOptions) {
     }
     await app.register(fastifyStatic, {
       root: webDistPath,
+      preCompressed: true,
       immutable: true,
       maxAge: "1y"
     });
@@ -1032,6 +1084,7 @@ export async function createApp(options: AppOptions) {
         root: manorV7ModulePath,
         prefix: "/module/",
         decorateReply: false,
+        preCompressed: true,
         immutable: true,
         maxAge: "1y"
       });
@@ -1056,6 +1109,7 @@ export async function createApp(options: AppOptions) {
     rulesQuestionWindows.clear();
     adminLoginWindows.clear();
     accountLoginWindows.clear();
+    reportedUnsupportedManorProtocols.clear();
   });
 
   return {

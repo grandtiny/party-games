@@ -18,9 +18,10 @@ COPY packages/clocktower/package.json ./packages/clocktower/package.json
 COPY packages/poker/package.json ./packages/poker/package.json
 COPY packages/gomoku/package.json ./packages/gomoku/package.json
 COPY packages/manor-v7/package.json ./packages/manor-v7/package.json
-COPY patches ./patches
+COPY patches/@pokertools__engine@1.0.16.patch patches/renjukit@0.8.0.patch ./patches/
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=party-games-pnpm-store,target=/pnpm/store,sharing=locked \
+    pnpm install --frozen-lockfile
 
 COPY apps ./apps
 COPY packages ./packages

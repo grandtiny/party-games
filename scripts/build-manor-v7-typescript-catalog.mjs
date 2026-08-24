@@ -48,6 +48,7 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
+const specialAnimalIds = new Set([1055, 1056, 1096, 1097, 1098, 1598, 1600, 1601]);
 const timings = new Map(
   parseCsv("catalog-timings.csv")
     .filter((row) => row.domain === "farm")
@@ -56,12 +57,12 @@ const timings = new Map(
 const crops = parseCsv("catalog-crops.csv")
   .filter((row) =>
     row.integration_policy === "core-candidate" ||
+    (bool(row.hidden) && number(row.asset_files) >= 4) ||
     (
-      number(row.land_requirement) === 2 &&
       row.integration_policy === "blocked-assets" &&
       number(row.asset_files) >= 4 &&
-      !bool(row.hidden) &&
-      !bool(row.vip_only)
+      (number(row.land_requirement) === 2 || bool(row.vip_only)) &&
+      !bool(row.hidden)
     )
   )
   .map((row) => ({
@@ -77,11 +78,15 @@ const crops = parseCsv("catalog-crops.csv")
     harvestCycles: Math.max(1, number(row.harvest_cycles)),
     landRequirement: number(row.land_requirement),
     isFlower: bool(row.is_flower),
+    isHidden: bool(row.hidden),
+    isVip: bool(row.vip_only),
     stageSeconds: timings.get(number(row.source_id)) ?? []
   }));
 
 const animals = parseCsv("catalog-animals.csv")
-  .filter((row) => row.integration_policy === "core-candidate")
+  .filter((row) => (
+    row.integration_policy === "core-candidate" || specialAnimalIds.has(number(row.source_id))
+  ))
   .map((row) => {
     const maturitySeconds = number(row.maturity_seconds);
     const productionSeconds = number(row.production_seconds);
@@ -93,6 +98,7 @@ const animals = parseCsv("catalog-animals.csv")
       byproductName: row.byproduct_name,
       house: row.house,
       originalLevel: number(row.original_level),
+      isVip: bool(row.vip_only),
       purchasePrice: number(row.purchase_price),
       productPrice: number(row.product_price),
       byproductPrice: number(row.byproduct_price),
@@ -120,6 +126,7 @@ const tools = parseCsv("catalog-tools.csv")
     coinPrice: number(row.coin_price),
     premiumPrice: number(row.premium_price),
     effectSeconds: number(row.effect_seconds),
+    isVip: bool(row.vip_only),
     available: bool(row.available)
   }));
 
