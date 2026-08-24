@@ -905,7 +905,7 @@ function createFishPool(): ManorV7State["farm"]["fishPool"] {
     opened: true,
     nextFishSerial: 1,
     unlockedFishIds: MANOR_V7_FISH
-      .filter((fish) => fish.unlockCoins === 0 && fish.unlockCrystalAmount === 0)
+      .filter((fish) => !fish.isHidden && fish.unlockCoins === 0 && fish.unlockCrystalAmount === 0)
       .map((fish) => fish.id),
     fish: [] as ManorV7FishState[],
     seedInventory: [],

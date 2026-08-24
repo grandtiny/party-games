@@ -38,13 +38,17 @@ import {
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
     expect(MANOR_V7_CROPS).toHaveLength(403);
-    expect(MANOR_V7_ANIMALS).toHaveLength(161);
+    expect(MANOR_V7_ANIMALS).toHaveLength(167);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(631);
-    expect(MANOR_V7_FISH).toHaveLength(12);
+    expect(MANOR_V7_FISH).toHaveLength(13);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
+    expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden).map((animal) => animal.id)).toEqual(
+      expect.arrayContaining([1037, 1085, 1086, 1537, 1546, 1593])
+    );
+    expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
@@ -56,6 +60,28 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
     expect(manorV7Fish(2)).toMatchObject({ name: "小丑鱼", seedPrice: 650, salePrice: 90 });
     expect(manorV7Decoration("farm", 1)).toMatchObject({ name: "田园风光", itemType: 1 });
+  });
+
+  it("keeps activity rewards out of ordinary purchases", () => {
+    const initial = createManorV7State(5_500);
+    initial.coins = 1_000_000;
+
+    expect(initial.farm.fishPool.unlockedFishIds).not.toContain(15);
+    expect(() => transitionManorV7State(
+      initial,
+      { type: "buy-seed", cropId: MANOR_V7_HIDDEN_SEED_IDS[0]!, quantity: 1 },
+      5_500
+    )).toThrow("该种子只能通过活动获得");
+    expect(() => transitionManorV7State(
+      initial,
+      { type: "buy-animal", animalId: 1085, quantity: 1 },
+      5_500
+    )).toThrow("该动物只能通过活动获得");
+    expect(() => transitionManorV7State(
+      initial,
+      { type: "buy-fish-seed", fishId: 15, quantity: 1 },
+      5_500
+    )).toThrow("该鱼苗只能通过活动获得");
   });
 
   it("matches the V7 level formula and house capacities", () => {

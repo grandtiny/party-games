@@ -390,6 +390,7 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(shop.statusCode, shop.body).toBe(200);
       expect(shop.json()).toHaveLength(12);
+      expect((shop.json() as Array<{ fid: number }>).some((fish) => fish.fid === 15)).toBe(false);
       expect(shop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ fid: 2, lock: 2, type: 23 }),
         expect.objectContaining({ fid: 16, lock: 1, type: 23 })
@@ -1393,6 +1394,8 @@ describe("QQ Farm V7 account persistence", () => {
         expect.objectContaining({ cId: 1040, cType: 4, expect: 7 }),
         expect.objectContaining({ cId: 1066, isvip: 1 })
       ]));
+      const activityAnimalIds = new Set([1037, 1085, 1086, 1537, 1546, 1593]);
+      expect((shop.json() as Array<{ cId: number }>).some((animal) => activityAnimalIds.has(animal.cId))).toBe(false);
 
       const toolShop = await instance.app.inject({
         method: "GET",
@@ -1628,7 +1631,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
       expect(initial.json().catalogs.crops).toHaveLength(403);
       expect(initial.json().catalogs.crops.filter((crop: { isHidden?: boolean }) => crop.isHidden)).toHaveLength(88);
-      expect(initial.json().catalogs.animals).toHaveLength(161);
+      expect(initial.json().catalogs.animals).toHaveLength(167);
       expect(initial.json().catalogs.tools).toHaveLength(91);
       expect(initial.json().catalogs.decorations).toHaveLength(631);
 

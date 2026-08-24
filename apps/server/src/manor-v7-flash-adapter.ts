@@ -2685,7 +2685,7 @@ function flashPastureFriendSummary(userId: string, displayName: string, view: Ma
 
 function flashAnimalShop(view: ManorV7View) {
   return [...view.catalogs.animals]
-    .filter((animal) => !MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
+    .filter((animal) => !animal.isHidden && !MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
       animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
     ) && !PASTURE_RESEARCH_ANIMAL_IDS.has(animal.id))
     .sort((left, right) => left.originalLevel - right.originalLevel || left.id - right.id)
@@ -3061,7 +3061,7 @@ function flashReclaimQuery(view: ManorV7View) {
 
 function flashFishShop(view: ManorV7View) {
   const unlocked = new Set(view.farm.fishPool.unlockedFishIds);
-  return view.catalogs.fish.map((fish) => ({
+  return view.catalogs.fish.filter((fish) => !fish.isHidden).map((fish) => ({
     fid: fish.id,
     lock: unlocked.has(fish.id) ? 1 : 2,
     type: 23

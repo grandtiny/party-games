@@ -66,6 +66,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-seed": {
       requirePositiveInteger(action.quantity);
       const crop = manorV7Crop(action.cropId);
+      if (crop.isHidden) throw new Error("该种子只能通过活动获得");
       if (manorV7LevelForExperience(state.farmExperience) < crop.originalLevel) throw new Error(`${crop.name}需要农场达到 ${crop.originalLevel} 级`);
       if (crop.seedPrice <= 0 && !crop.isVip) throw new Error("该种子不是金币商店商品");
       charge(state, (crop.isVip ? 0 : crop.seedPrice) * action.quantity);
@@ -333,6 +334,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "unlock-fish": {
       const fish = manorV7Fish(action.fishId);
+      if (fish.isHidden) throw new Error("该鱼种只能通过活动获得");
       if (state.farm.fishPool.unlockedFishIds.includes(fish.id)) throw new Error("该鱼种已经解锁");
       charge(state, fish.unlockCoins);
       state.farm.fishPool.unlockedFishIds.push(fish.id);
@@ -374,6 +376,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-fish-seed": {
       requirePositiveInteger(action.quantity);
       const fish = manorV7Fish(action.fishId);
+      if (fish.isHidden) throw new Error("该鱼苗只能通过活动获得");
       if (!state.farm.fishPool.unlockedFishIds.includes(fish.id)) throw new Error("请先解锁该鱼种");
       charge(state, fish.seedPrice * action.quantity);
       setInventoryQuantity(
@@ -466,6 +469,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-animal": {
       requirePositiveInteger(action.quantity);
       const animal = manorV7Animal(action.animalId);
+      if (animal.isHidden) throw new Error("该动物只能通过活动获得");
       if (MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
         animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
       )) throw new Error("该动物只能通过签到奖励获得");

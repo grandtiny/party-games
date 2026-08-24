@@ -41,6 +41,7 @@ export interface ManorV7AnimalDefinition {
   byproductName: string;
   house: ManorV7AnimalHouse;
   originalLevel: number;
+  isHidden: boolean;
   isVip: boolean;
   purchasePrice: number;
   productPrice: number;
@@ -108,6 +109,7 @@ export interface ManorV7FishDefinition {
   matureHours: number;
   baseYield: number;
   poolSize: number;
+  isHidden: boolean;
   seedPrice: number;
   salePrice: number;
 }
