@@ -921,7 +921,7 @@ describe("QQ Farm V7 account persistence", () => {
         url: "/api/manor/flash/farm?mod=user&act=run",
         headers: { cookie: owner.cookie }
       });
-      expect(claimedBootstrap.json()).toMatchObject({ d: 3 });
+      expect(claimedBootstrap.json()).toMatchObject({ d: 0 });
 
       const pastureClaimedBootstrap = await instance.app.inject({
         method: "POST",

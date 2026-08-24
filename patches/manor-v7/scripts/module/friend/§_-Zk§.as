@@ -737,7 +737,7 @@ package module.friend
          var _loc3_:String = param1.target.name;
          if(_loc3_ == "vip_mc")
          {
-            this.§_-Z§.showTip(§_-Ac§.§_-B0§,"点击查看VIP特权详情");
+            this.§_-Z§.showTip(§_-Ac§.§_-B0§,"已启用 VIP 7级权益");
          }
          else if(_loc3_ == "mc_btn")
          {

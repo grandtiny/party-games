@@ -3774,9 +3774,7 @@ package mc.control
                this.onInGameBuySuccess(param1);
                return;
             }
-            JSProxy.addCallBackProxy("setBoughtRes",this.onInGameBuySuccess);
-            _loc2_ = int(INI.getInstance().data.sanbox);
-            ExternalInterface.call("SwfAppLib.pay.showBuy",param1["url_params"],_loc2_ == 1 ? true : false);
+            this.alertWindow("error","本地版本不支持元宝充值，请使用金币购买。");
          }
          else
          {

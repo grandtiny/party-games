@@ -2778,7 +2778,7 @@ export function flashFarmBootstrap(view: ManorV7View, playerView: ManorV7View = 
     b: 1,
     c: 0,
     // Status 3 is handled by the patched V7 shell as "claimed today" and hides the entry.
-    d: dailyPackageClaimed ? 3 : 2,
+    d: dailyPackageClaimed ? 0 : 2,
     dog: { dogId: view.farm.dog.activeId ?? 0, isHungry: Number(view.farm.dog.feedSeconds <= 0) },
     e: 0,
     exp: view.farmExperience,

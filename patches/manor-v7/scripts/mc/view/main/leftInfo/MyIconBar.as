@@ -226,30 +226,7 @@ package mc.view.main.leftInfo
       
       private function showYellowPackage(param1:Boolean) : void
       {
-         var _loc2_:String = null;
-         var _loc3_:int = 0;
-         var _loc4_:MainData = null;
-         var _loc5_:String = null;
-         var _loc6_:String = null;
-         var _loc7_:String = null;
-         if(ExternalInterface.available)
-         {
-            _loc3_ = int(CommonData.serverTime);
-            _loc4_ = MData.getInstance().mainData;
-            _loc5_ = CommonData.getKey();
-            _loc6_ = String(_loc3_);
-            _loc7_ = MainData.getKey2();
-            _loc2_ = "farmKey=" + _loc5_ + "&farmTime=" + _loc6_ + "&pastureKey=" + _loc7_ + "&uIdx=" + _loc4_.getHostId;
-            JSProxy.addCallBackProxy("getGiftBack",this.getGiftBack);
-            if(MData.getInstance().mainData.currentUser["yellowstatus"].toString() != "0")
-            {
-               ExternalInterface.call("C.canvas.showYellowPackage",358,param1 == true ? false : true,_loc2_,MData.getInstance().mainData.currentUser["yellowstatus"],MData.getInstance().mainData.currentUser["yellowlevel"]);
-            }
-            else
-            {
-               ExternalInterface.call("C.canvas.showYellowPackage",358,false,_loc2_,MData.getInstance().mainData.currentUser["yellowstatus"],MData.getInstance().mainData.currentUser["yellowlevel"]);
-            }
-         }
+         Command.getInstance().mainCommand.getGifts();
       }
       
       public function get gift() : Boolean
@@ -271,14 +248,7 @@ package mc.view.main.leftInfo
       
       private function giftClick(param1:MouseEvent) : void
       {
-         if(MainData.isNewUser == "2")
-         {
-            Command.getInstance().mainCommand.getGifts();
-         }
-         else
-         {
-            this.showYellowPackage(this._gift);
-         }
+         this.showYellowPackage(this._gift);
       }
       
       public function set post(param1:Boolean) : void
