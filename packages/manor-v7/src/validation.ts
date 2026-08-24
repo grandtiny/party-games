@@ -77,6 +77,10 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "show-research-guide":
     case "clear-activities":
     case "claim-vip-return-gift":
+    case "generate-seasonal-animal-drop":
+    case "claim-cookie-sprites":
+    case "exchange-halloween-cookie-baby":
+    case "claim-spring-festival-gift":
       return { type };
     case "redeem-code":
       return { type, code: boundedText(input.code, 64) };

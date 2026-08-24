@@ -445,6 +445,10 @@ export type ManorV7Action =
   | { type: "show-research-guide" }
   | { type: "clear-activities" }
   | { type: "claim-vip-return-gift" }
+  | { type: "generate-seasonal-animal-drop" }
+  | { type: "claim-cookie-sprites" }
+  | { type: "exchange-halloween-cookie-baby" }
+  | { type: "claim-spring-festival-gift" }
   | { type: "redeem-code"; code: string }
   | { type: "start-production"; serial: number }
   | { type: "collect-product"; serial: number }

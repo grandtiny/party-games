@@ -87,6 +87,34 @@ describe("QQ Farm V7 domain", () => {
     });
   });
 
+  it("runs the original single-player seasonal reward rules", () => {
+    const now = Date.UTC(2026, 7, 22, 2, 0, 0);
+    let state = createManorV7State(now);
+    for (let index = 0; index < 4; index += 1) {
+      state = transitionManorV7State(state, { type: "generate-seasonal-animal-drop" }, now);
+    }
+    expect(state.seasonal.animalDrops).toHaveLength(3);
+    expect(state.seasonal.animalDrops.every((drop) => [1085, 1086, 1593].includes(drop.animalId))).toBe(true);
+    expect(state.seasonal.nextAnimalDropSerial).toBe(4);
+
+    state = transitionManorV7State(state, { type: "claim-cookie-sprites" }, now);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1037)).toBe(3);
+    expect(() => transitionManorV7State(state, { type: "claim-cookie-sprites" }, now))
+      .toThrow("饼干精灵已经领取");
+
+    state.seasonal.halloweenCookies = 5;
+    state = transitionManorV7State(state, { type: "exchange-halloween-cookie-baby" }, now);
+    expect(state.seasonal.halloweenCookies).toBe(0);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1537)).toBe(1);
+
+    state = transitionManorV7State(state, { type: "claim-spring-festival-gift" }, now);
+    expect(state.seasonal.springFestivalClaimDay).toBe("2026-08-22");
+    expect(inventoryQuantity(state.farm.seedInventory, 367)).toBe(4);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1546)).toBe(4);
+    expect(() => transitionManorV7State(state, { type: "claim-spring-festival-gift" }, now))
+      .toThrow("今日春节礼包已经领取");
+  });
+
   it("keeps activity rewards out of ordinary purchases", () => {
     const initial = createManorV7State(5_500);
     initial.coins = 1_000_000;

@@ -19,6 +19,8 @@ import {
   MANOR_V7_FISH_POOL_CAPACITY,
   MANOR_V7_RECLAIM_RULES,
   MANOR_V7_RESEARCH_RULES,
+  MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT,
+  MANOR_V7_SEASONAL_ANIMAL_IDS,
   addManorV7Activity,
   drawManorV7Random,
   inventoryQuantity,
@@ -719,6 +721,59 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       }
       state.rewardClaims.vipReturnGiftClaimed = true;
       addManorV7Activity(state, "farm", "领取了 VIP 回归礼包", now);
+      break;
+    }
+    case "generate-seasonal-animal-drop": {
+      if (state.seasonal.animalDrops.length >= MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT) break;
+      const animalId = MANOR_V7_SEASONAL_ANIMAL_IDS[
+        Math.floor(drawManorV7Random(state) * MANOR_V7_SEASONAL_ANIMAL_IDS.length)
+      ] ?? MANOR_V7_SEASONAL_ANIMAL_IDS[0];
+      state.seasonal.animalDrops.push({
+        serial: state.seasonal.nextAnimalDropSerial,
+        animalId,
+        createdAt: now
+      });
+      state.seasonal.nextAnimalDropSerial += 1;
+      addManorV7Activity(state, "pasture", `发现了一只等待好友领养的${manorV7Animal(animalId).name}`, now);
+      break;
+    }
+    case "claim-cookie-sprites": {
+      if (state.seasonal.cookieSpritesClaimed) throw new Error("饼干精灵已经领取");
+      state.seasonal.cookieSpritesClaimed = true;
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1037,
+        inventoryQuantity(state.pasture.cubInventory, 1037) + 3
+      );
+      addManorV7Activity(state, "pasture", "领取了 3 只饼干精灵", now);
+      break;
+    }
+    case "exchange-halloween-cookie-baby": {
+      if (state.seasonal.halloweenCookies < 5) throw new Error("兑换万圣宝宝需要 5 个好友投放的饼干");
+      state.seasonal.halloweenCookies -= 5;
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1537,
+        inventoryQuantity(state.pasture.cubInventory, 1537) + 1
+      );
+      addManorV7Activity(state, "pasture", "用 5 个饼干兑换了 1 只万圣宝宝", now);
+      break;
+    }
+    case "claim-spring-festival-gift": {
+      const day = manorV7DayKey(now);
+      if (state.seasonal.springFestivalClaimDay === day) throw new Error("今日春节礼包已经领取");
+      state.seasonal.springFestivalClaimDay = day;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        367,
+        inventoryQuantity(state.farm.seedInventory, 367) + 4
+      );
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1546,
+        inventoryQuantity(state.pasture.cubInventory, 1546) + 4
+      );
+      addManorV7Activity(state, "pasture", "领取了春节 VIP 礼包：4 个金条树种子和 4 只金兔子", now);
       break;
     }
     case "redeem-code": {
