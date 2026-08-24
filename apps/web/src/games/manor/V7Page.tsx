@@ -1,9 +1,13 @@
-import { FlaskConical, PawPrint, Sprout } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Camera, FlaskConical, LoaderCircle, PawPrint, Sprout } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { getPlatformStatus } from "../../api";
 import { useAccount } from "../../platform/AccountContext";
 import { AppShell } from "../../platform/AppShell";
-import { ManorRufflePlayer, type ManorRuffleScene } from "./ManorRufflePlayer";
+import {
+  ManorRufflePlayer,
+  type ManorRufflePlayerHandle,
+  type ManorRuffleScene
+} from "./ManorRufflePlayer";
 import "./ruffle.css";
 
 const ManorTestTools = lazy(async () => {
@@ -13,8 +17,12 @@ const ManorTestTools = lazy(async () => {
 
 export function ManorV7Page() {
   const { status: accountStatus } = useAccount();
+  const playerRef = useRef<ManorRufflePlayerHandle>(null);
   const [scene, setScene] = useState<ManorRuffleScene>("farm");
   const [refreshToken, setRefreshToken] = useState(0);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [snapshotPending, setSnapshotPending] = useState(false);
+  const [snapshotNotice, setSnapshotNotice] = useState<{ kind: "success" | "error"; message: string }>();
   const [testToolsAvailable, setTestToolsAvailable] = useState(false);
   const [testToolsOpen, setTestToolsOpen] = useState(false);
   const canUseTestTools = testToolsAvailable && accountStatus?.user?.role === "owner";
@@ -34,6 +42,21 @@ export function ManorV7Page() {
     };
   }, []);
 
+  const saveSnapshot = useCallback(async () => {
+    if (!playerRef.current || snapshotPending) return;
+    setSnapshotPending(true);
+    setSnapshotNotice(undefined);
+    try {
+      const blob = await playerRef.current.capturePng();
+      downloadBlob(blob, manorSnapshotFileName(scene));
+      setSnapshotNotice({ kind: "success", message: "截图已保存到本地" });
+    } catch (error) {
+      setSnapshotNotice({ kind: "error", message: messageOf(error) });
+    } finally {
+      setSnapshotPending(false);
+    }
+  }, [scene, snapshotPending]);
+
   return (
     <AppShell scope="manor" title={`QQ${scene === "farm" ? "农场" : "牧场"} 7.0`} backTo="/">
       <div className="manor-flash-page">
@@ -45,6 +68,16 @@ export function ManorV7Page() {
           <button type="button" aria-pressed={scene === "pasture"} onClick={() => setScene("pasture")}>
             <PawPrint size={17} />
             牧场
+          </button>
+          <button
+            className="manor-snapshot-button"
+            type="button"
+            aria-label="保存当前场景截图"
+            title="保存当前场景截图"
+            disabled={!sceneReady || snapshotPending}
+            onClick={() => void saveSnapshot()}
+          >
+            {snapshotPending ? <LoaderCircle className="is-spinning" size={18} /> : <Camera size={18} />}
           </button>
           {canUseTestTools ? (
             <button
@@ -66,10 +99,52 @@ export function ManorV7Page() {
             />
           </Suspense>
         ) : null}
-        <ManorRufflePlayer scene={scene} refreshToken={refreshToken} />
+        {snapshotNotice ? (
+          <div className={`manor-snapshot-notice is-${snapshotNotice.kind}`} role="status">
+            {snapshotNotice.message}
+          </div>
+        ) : null}
+        <ManorRufflePlayer
+          ref={playerRef}
+          scene={scene}
+          refreshToken={refreshToken}
+          onReadyChange={setSceneReady}
+        />
       </div>
     </AppShell>
   );
+}
+
+function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function manorSnapshotFileName(scene: ManorRuffleScene, now = new Date()): string {
+  const stamp = [
+    now.getFullYear(),
+    twoDigits(now.getMonth() + 1),
+    twoDigits(now.getDate()),
+    "-",
+    twoDigits(now.getHours()),
+    twoDigits(now.getMinutes()),
+    twoDigits(now.getSeconds())
+  ].join("");
+  return `qq-${scene}-${stamp}.png`;
+}
+
+function twoDigits(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : "截图保存失败";
 }
 
 type LegacyManorWindow = Window & {

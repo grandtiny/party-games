@@ -65,6 +65,20 @@
   background: #477331;
 }
 
+.manor-scene-tabs .manor-snapshot-button {
+  min-width: 44px;
+  padding: 0;
+}
+
+.manor-scene-tabs .manor-snapshot-button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.manor-snapshot-button .is-spinning {
+  animation: manor-spin 0.8s linear infinite;
+}
+
 .manor-scene-tabs .manor-test-toggle[aria-expanded="true"] {
   color: #fff;
   background: #855f22;
@@ -199,6 +213,24 @@
   box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
 }
 
+.manor-snapshot-notice {
+  width: fit-content;
+  min-height: 28px;
+  margin: -2px auto 8px;
+  padding: 4px 10px;
+  color: #f5f8ed;
+  font-size: 13px;
+  background: #3e6232;
+  border: 1px solid #729264;
+  border-radius: 4px;
+}
+
+.manor-snapshot-notice.is-error {
+  color: #fff2ed;
+  background: #7a342b;
+  border-color: #a65a4e;
+}
+
 .manor-flash-player,
 .manor-flash-player ruffle-player {
   display: block;
@@ -240,6 +272,12 @@
   border: 1px solid #365c23;
   border-radius: 6px;
   cursor: pointer;
+}
+
+@keyframes manor-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 760px) {
