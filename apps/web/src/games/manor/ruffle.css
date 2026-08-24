@@ -65,11 +65,140 @@
   background: #477331;
 }
 
+.manor-scene-tabs .manor-snapshot-button {
+  min-width: 44px;
+  padding: 0;
+}
+
+.manor-scene-tabs .manor-snapshot-button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.manor-snapshot-button .is-spinning {
+  animation: manor-spin 0.8s linear infinite;
+}
+
+.manor-scene-tabs .manor-test-toggle[aria-expanded="true"] {
+  color: #fff;
+  background: #855f22;
+}
+
 .manor-scene-tabs button:focus-visible {
   position: relative;
   z-index: 1;
   outline: 2px solid #f2b84b;
   outline-offset: -2px;
+}
+
+.manor-test-tools {
+  position: relative;
+  display: flex;
+  align-items: end;
+  gap: 18px;
+  width: min(1100px, calc(100vw - 16px));
+  min-width: 720px;
+  min-height: 74px;
+  margin: 0 auto 8px;
+  padding: 10px 48px 10px 14px;
+  color: #f7f4e8;
+  background: #293126;
+  border: 1px solid #5c7255;
+  border-radius: 6px;
+}
+
+.manor-test-tools__group {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.manor-test-tools__group strong {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.manor-test-tools__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.manor-test-tools button,
+.manor-test-tools select,
+.manor-test-tools input {
+  min-height: 34px;
+  color: #2d3028;
+  font: inherit;
+  background: #f5f1df;
+  border: 1px solid #89947d;
+  border-radius: 4px;
+}
+
+.manor-test-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.manor-test-tools button:hover:not(:disabled) {
+  border-color: #d4b461;
+  background: #fff9df;
+}
+
+.manor-test-tools button:disabled,
+.manor-test-tools select:disabled,
+.manor-test-tools input:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.manor-test-tools label {
+  display: grid;
+  gap: 3px;
+  color: #cbd5c4;
+  font-size: 12px;
+}
+
+.manor-test-tools select {
+  width: 120px;
+  padding: 0 8px;
+}
+
+.manor-test-tools input {
+  width: 112px;
+  padding: 0 8px;
+}
+
+.manor-test-tools .manor-test-tools__submit {
+  color: #fff;
+  background: #477331;
+  border-color: #6e9759;
+}
+
+.manor-test-tools__notice {
+  align-self: center;
+  max-width: 220px;
+  color: #f2cf73;
+  font-size: 13px;
+}
+
+.manor-test-tools .manor-test-tools__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: #e9eee5;
+  background: transparent;
+  border-color: transparent;
 }
 
 .manor-flash-stage {
@@ -82,6 +211,24 @@
   background: #fff;
   border: 1px solid #52604e;
   box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
+}
+
+.manor-snapshot-notice {
+  width: fit-content;
+  min-height: 28px;
+  margin: -2px auto 8px;
+  padding: 4px 10px;
+  color: #f5f8ed;
+  font-size: 13px;
+  background: #3e6232;
+  border: 1px solid #729264;
+  border-radius: 4px;
+}
+
+.manor-snapshot-notice.is-error {
+  color: #fff2ed;
+  background: #7a342b;
+  border-color: #a65a4e;
 }
 
 .manor-flash-player,
@@ -127,12 +274,22 @@
   cursor: pointer;
 }
 
+@keyframes manor-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 760px) {
   .app-shell--manor .page {
     padding-inline: 0;
   }
 
   .manor-flash-stage {
+    margin-inline: 0;
+  }
+
+  .manor-test-tools {
     margin-inline: 0;
   }
 }

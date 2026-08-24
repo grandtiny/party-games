@@ -182,7 +182,11 @@ function DecorationWindow({ scene, view, busy, onAction }: ManorV7WindowPanelPro
       <SearchField value={search} onChange={setSearch} />
       <ItemGrid>
         {items.map((item) => {
-          const owned = view.ownedDecorationIds.includes(item.id);
+          const ownership = view.decorationOwnerships.find((candidate) => (
+            candidate.area === scene && candidate.decorationId === item.id
+          ));
+          const owned = Boolean(ownership && (ownership.validUntil === 0 || ownership.validUntil > view.serverTime));
+          const expired = Boolean(ownership && ownership.validUntil > 0 && ownership.validUntil <= view.serverTime);
           const equipped = selected.includes(item.id);
           const level = scene === "farm" ? view.farmLevel : view.pastureLevel;
           return (
@@ -190,11 +194,13 @@ function DecorationWindow({ scene, view, busy, onAction }: ManorV7WindowPanelPro
               key={`${item.area}:${item.id}`}
               name={item.name}
               detail={`${item.setName} · 等级 ${item.originalLevel}`}
-              actionLabel={equipped ? "使用中" : owned ? "使用" : "购买"}
+              actionLabel={equipped ? "使用中" : owned ? "使用" : expired ? "续期" : "购买"}
               disabled={busy || equipped || level < item.originalLevel || !owned && view.coins < item.coinPrice}
               onBuy={() => onAction(owned
                 ? { type: "equip-decoration", area: scene, decorationId: item.id }
-                : { type: "buy-decoration", area: scene, decorationId: item.id })}
+                : expired
+                  ? { type: "renew-decoration", area: scene, decorationId: item.id }
+                  : { type: "buy-decoration", area: scene, decorationId: item.id })}
               {...(!owned ? { price: item.coinPrice } : {})}
             />
           );

@@ -1,5 +1,5 @@
 import { RotateCw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 const RUFFLE_SCRIPT = "/vendor/ruffle/ruffle.js";
 const MODULE_ROOT = "/module";
@@ -27,7 +27,21 @@ let ruffleScriptPromise: Promise<void> | undefined;
 
 export type ManorRuffleScene = "farm" | "pasture";
 
-export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
+export interface ManorRufflePlayerHandle {
+  capturePng(): Promise<Blob>;
+}
+
+interface ManorRufflePlayerProps {
+  scene: ManorRuffleScene;
+  refreshToken?: number;
+  onReadyChange?: (ready: boolean) => void;
+}
+
+export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRufflePlayerProps>(function ManorRufflePlayer({
+  scene,
+  refreshToken = 0,
+  onReadyChange
+}, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<RufflePlayerElement | undefined>(undefined);
   const loadQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -36,6 +50,16 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
   const [reloadToken, setReloadToken] = useState(0);
   const [error, setError] = useState<string>();
 
+  useImperativeHandle(ref, () => ({
+    async capturePng() {
+      const player = playerRef.current;
+      if (!player || player.dataset.ruffleLoaded !== "true") throw new Error("场景尚未加载完成");
+      const canvas = player.shadowRoot?.querySelector<HTMLCanvasElement>("canvas");
+      if (!canvas || canvas.width < 1 || canvas.height < 1) throw new Error("没有找到可截图的游戏画面");
+      return captureCanvasPng(canvas);
+    }
+  }), []);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -43,14 +67,16 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
       generationRef.current += 1;
       const player = playerRef.current;
       playerRef.current = undefined;
+      onReadyChange?.(false);
       window.setTimeout(() => player?.remove(), 0);
     };
-  }, []);
+  }, [onReadyChange]);
 
   useEffect(() => {
     const generation = generationRef.current + 1;
     generationRef.current = generation;
     setError(undefined);
+    onReadyChange?.(false);
 
     const loadScene = async () => {
       await delay(150);
@@ -83,6 +109,7 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
       });
       if (mountedRef.current && generationRef.current === generation) {
         player.dataset.ruffleLoaded = "true";
+        onReadyChange?.(true);
       }
     };
 
@@ -91,7 +118,8 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
     void queuedLoad.catch((caught) => {
       if (mountedRef.current && generationRef.current === generation) setError(messageOf(caught));
     });
-  }, [reloadToken, scene]);
+    return () => onReadyChange?.(false);
+  }, [onReadyChange, refreshToken, reloadToken, scene]);
 
   return (
     <div className="manor-flash-stage">
@@ -108,10 +136,48 @@ export function ManorRufflePlayer({ scene }: { scene: ManorRuffleScene }) {
       ) : null}
     </div>
   );
-}
+});
 
 function nextTask(): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    try {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("游戏画面导出失败"));
+      }, "image/png");
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function captureCanvasPng(canvas: HTMLCanvasElement): Promise<Blob> {
+  const stream = canvas.captureStream(30);
+  const video = document.createElement("video");
+  video.muted = true;
+  video.playsInline = true;
+  video.srcObject = stream;
+  try {
+    await video.play();
+    await Promise.race([
+      new Promise<void>((resolve) => video.requestVideoFrameCallback(() => resolve())),
+      delay(3_000).then(() => { throw new Error("等待游戏画面超时"); })
+    ]);
+    const output = document.createElement("canvas");
+    output.width = canvas.width;
+    output.height = canvas.height;
+    const context = output.getContext("2d");
+    if (!context) throw new Error("游戏画面导出不可用");
+    context.drawImage(video, 0, 0, output.width, output.height);
+    return canvasToPng(output);
+  } finally {
+    stream.getTracks().forEach((track) => track.stop());
+    video.srcObject = null;
+  }
 }
 
 function delay(milliseconds: number): Promise<void> {
