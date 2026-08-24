@@ -1031,9 +1031,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "collect-manure": {
       if (state.pasture.manure < 1) throw new Error("没有可清理的便便");
-      const quantity = state.pasture.manure;
+      const quantity = 1;
       const rewarded = Math.min(quantity, state.farm.manureCollection.remaining);
-      state.pasture.manure = 0;
+      state.pasture.manure -= quantity;
       state.farm.manureCollection.remaining -= rewarded;
       if (rewarded > 0) setInventoryQuantity(
         state.pasture.materialInventory,

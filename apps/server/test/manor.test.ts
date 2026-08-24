@@ -2842,6 +2842,57 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("cleans owner and friend manure one visible sprite at a time", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-v7-manure-click-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+
+      const ownerState = instance.repository.getManorV7State(owner.userId);
+      const visitorState = instance.repository.getManorV7State(visitor.userId);
+      if (!ownerState || !visitorState) throw new Error("V7 manure click state missing");
+      const preparedOwner: ManorV7State = structuredClone(ownerState);
+      preparedOwner.pasture.manure = 4;
+      preparedOwner.farm.manureCollection.remaining = 1;
+      preparedOwner.revision += 1;
+      preparedOwner.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, ownerState.revision, preparedOwner);
+      const preparedVisitor: ManorV7State = structuredClone(visitorState);
+      preparedVisitor.farm.manureCollection.remaining = 1;
+      preparedVisitor.revision += 1;
+      preparedVisitor.updatedAt = Date.now();
+      instance.repository.updateManorV7State(visitor.userId, visitorState.revision, preparedVisitor);
+
+      for (let click = 0; click < 2; click += 1) {
+        const response = await instance.app.inject({
+          method: "POST",
+          url: "/api/manor/flash/pasture?mod=cgi_help_pasture",
+          headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+          payload: `type=2&num=4&pos=${click}`
+        });
+        expect(response.statusCode, response.body).toBe(200);
+        expect(response.json()).toMatchObject({ num: 1, pos: click, repNum: click === 0 ? 1 : 0, type: 2 });
+      }
+      expect(instance.repository.getManorV7State(owner.userId)?.pasture.manure).toBe(2);
+
+      const friendResponse = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_help_pasture",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `type=2&num=4&pos=2&uId=${stableFlashUserId(owner.userId)}`
+      });
+      expect(friendResponse.statusCode, friendResponse.body).toBe(200);
+      expect(friendResponse.json()).toMatchObject({ num: 1, pos: 2, repNum: 1, type: 2 });
+      expect(instance.repository.getManorV7State(owner.userId)?.pasture.manure).toBe(1);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("keeps the original friend filter synchronized across farm and pasture visits", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-v7-friend-filter-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });

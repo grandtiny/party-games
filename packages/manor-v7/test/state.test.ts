@@ -1553,6 +1553,25 @@ describe("QQ Farm V7 domain", () => {
     expect(collected.pasture.research.hutch).toEqual({ animalId: null, remainingSeconds: 0 });
   });
 
+  it("cleans one manure sprite per action even after the daily reward limit is reached", () => {
+    const now = 75_000;
+    const initial = createManorV7State(now);
+    initial.pasture.manure = 2;
+    initial.farm.manureCollection.remaining = 1;
+
+    const first = transitionManorV7State(initial, { type: "collect-manure" }, now);
+    expect(first.pasture.manure).toBe(1);
+    expect(first.farm.manureCollection.remaining).toBe(0);
+    expect(inventoryQuantity(first.pasture.materialInventory, 1506)).toBe(1);
+
+    const second = transitionManorV7State(first, { type: "collect-manure" }, now);
+    expect(second.pasture.manure).toBe(0);
+    expect(second.farm.manureCollection.remaining).toBe(0);
+    expect(inventoryQuantity(second.pasture.materialInventory, 1506)).toBe(1);
+    expect(() => transitionManorV7State(second, { type: "collect-manure" }, now))
+      .toThrow("没有可清理的便便");
+  });
+
   it("applies friend special feed, manure, mosquito and mouse actions to both saves", () => {
     const now = 80_000;
     let visitor = createManorV7State(now);

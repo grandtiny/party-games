@@ -1730,7 +1730,7 @@ export class ManorV7FlashAdapter {
       const result = this.service.performFriendAction(
         user,
         friend.userId,
-        { type: "clean-manure", quantity: positiveInteger(params.num ?? "1", "清理数量") },
+        { type: "clean-manure", quantity: 1 },
         now
       );
       const afterQuantity = result.visitor.pasture.materialInventory.find((entry) => entry.sourceId === 1506)?.quantity ?? 0;
@@ -1746,7 +1746,7 @@ export class ManorV7FlashAdapter {
     const after = this.service.performAction(user, { type: "collect-manure" }, now);
     const afterQuantity = after.pasture.materialInventory.find((entry) => entry.sourceId === 1506)?.quantity ?? 0;
     return {
-      num: before.pasture.manure,
+      num: Math.max(0, before.pasture.manure - after.pasture.manure),
       pos: integer(params.pos) ?? 0,
       repNum: afterQuantity - beforeQuantity,
       type: 2
