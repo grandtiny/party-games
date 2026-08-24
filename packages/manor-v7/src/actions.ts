@@ -579,7 +579,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (state.pasture.guards.some((guard) => guard.id === definition.id)) {
         throw new Error("已经拥有该看守员");
       }
-      charge(state, definition.coinPrice);
+      charge(state, action.useVip ? 0 : definition.coinPrice);
       for (const guard of state.pasture.guards) guard.active = false;
       state.pasture.guards.push({
         id: definition.id,
@@ -1052,7 +1052,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "upgrade-house": {
-      upgradeHouse(state, action.house, now);
+      upgradeHouse(state, action.house, action.useVip ?? false, now);
       break;
     }
     case "start-research": {
@@ -1490,12 +1490,12 @@ function addOwnedDecorationId(state: ManorV7State, decorationId: number): void {
   state.ownedDecorationIds.sort((left, right) => left - right);
 }
 
-function upgradeHouse(state: ManorV7State, house: ManorV7AnimalHouse, now: number): void {
+function upgradeHouse(state: ManorV7State, house: ManorV7AnimalHouse, useVip: boolean, now: number): void {
   const current = house === "hutch" ? state.pasture.hutchLevel : state.pasture.shedLevel;
   const upgrade = MANOR_V7_HOUSE_UPGRADES[house].find((item) => item.level === current + 1);
   if (!upgrade) throw new Error("该建筑已经达到当前接入的最高等级");
   if (manorV7LevelForExperience(state.pastureExperience) < upgrade.requiredLevel) throw new Error(`升级需要牧场达到 ${upgrade.requiredLevel} 级`);
-  charge(state, upgrade.coins);
+  charge(state, useVip ? 0 : upgrade.coins);
   if (house === "hutch") state.pasture.hutchLevel = upgrade.level;
   else state.pasture.shedLevel = upgrade.level;
   progressManorV7Task(state, "house", 1);

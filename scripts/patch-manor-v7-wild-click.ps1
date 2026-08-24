@@ -36,6 +36,7 @@ $patchSource = Join-Path $projectRoot "patches\manor-v7\scripts\wild\com\comm\Mo
 $shopSeedPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopSeedWindow.as"
 $leftInfoPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\LeftInfo.as"
 $pastureGiftIconPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\MyIconBar.as"
+$pastureMainCommandPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\control\MainCommand.as"
 $dailyPackagePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-VT§.as"
 $dailyPackageModelPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-VB§\§_-2S§.as"
 $farmFriendPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-OE§.as"
@@ -51,7 +52,7 @@ $farmFriendVipPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mod
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -70,7 +71,9 @@ $arguments = @(
   "mc.view.main.leftInfo.LeftInfo",
   $leftInfoPatchSource,
   "mc.view.main.leftInfo.MyIconBar",
-  $pastureGiftIconPatchSource
+  $pastureGiftIconPatchSource,
+  "mc.control.MainCommand",
+  $pastureMainCommandPatchSource
 )
 $farmArguments = @(
   "-jar",

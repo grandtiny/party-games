@@ -10,6 +10,7 @@ import {
   MANOR_V7_FISH,
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
+  MANOR_V7_HOUSE_UPGRADES,
   MANOR_V7_LAND_COUNT,
   MANOR_V7_LOVESDAY_ANIMAL_ID,
   MANOR_V7_LOVESDAY_CROP_ID,
@@ -389,6 +390,48 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7HouseCapacity("hutch", 3)).toBe(5);
     expect(manorV7HouseCapacity("shed", 0)).toBe(0);
     expect(manorV7HouseCapacity("shed", 4)).toBe(6);
+  });
+
+  it("keeps all 13 original house levels and only waives coins for local VIP upgrades", () => {
+    expect(MANOR_V7_HOUSE_UPGRADES.hutch).toHaveLength(13);
+    expect(MANOR_V7_HOUSE_UPGRADES.shed).toHaveLength(13);
+    expect(MANOR_V7_HOUSE_UPGRADES.hutch[12]).toEqual({
+      level: 13,
+      requiredLevel: 54,
+      coins: 1_200_000,
+      premiumPrice: 90
+    });
+    expect(MANOR_V7_HOUSE_UPGRADES.shed[12]).toEqual({
+      level: 13,
+      requiredLevel: 57,
+      coins: 1_250_000,
+      premiumPrice: 95
+    });
+
+    const initial = createManorV7State(4_500);
+    initial.coins = 900_000;
+    initial.pastureExperience = manorV7ExperienceForLevel(60);
+    initial.pasture.hutchLevel = 8;
+    initial.pasture.shedLevel = 8;
+    const upgraded = transitionManorV7State(
+      initial,
+      { type: "upgrade-house", house: "hutch", useVip: true },
+      4_500
+    );
+    expect(upgraded.coins).toBe(901_000);
+    expect(upgraded.pasture.hutchLevel).toBe(9);
+
+    const paid = transitionManorV7State(upgraded, { type: "upgrade-house", house: "shed" }, 4_500);
+    expect(paid.coins).toBe(51_000);
+    expect(paid.pasture.shedLevel).toBe(9);
+
+    const underleveled = createManorV7State(4_500);
+    underleveled.pasture.hutchLevel = 8;
+    expect(() => transitionManorV7State(
+      underleveled,
+      { type: "upgrade-house", house: "hutch", useVip: true },
+      4_500
+    )).toThrow("升级需要牧场达到 30 级");
   });
 
   it("runs the original tutorial sequence separately from cumulative tasks", () => {

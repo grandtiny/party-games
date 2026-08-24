@@ -439,7 +439,7 @@ export type ManorV7Action =
   | { type: "buy-grass"; quantity: number }
   | { type: "buy-grass-to-inventory"; quantity: number }
   | { type: "feed-grass-from-inventory"; quantity: number }
-  | { type: "buy-pasture-guard"; guardId: number }
+  | { type: "buy-pasture-guard"; guardId: number; useVip?: boolean }
   | { type: "set-pasture-guard-active"; guardId: number; active: boolean }
   | { type: "pay-pasture-guard"; guardId: number; days: number }
   | { type: "claim-daily-package" }
@@ -473,7 +473,7 @@ export type ManorV7Action =
   | { type: "sell-harvested-animal"; animalId: number; quantity: number }
   | { type: "sell-all-pasture-products" }
   | { type: "collect-manure" }
-  | { type: "upgrade-house"; house: ManorV7AnimalHouse }
+  | { type: "upgrade-house"; house: ManorV7AnimalHouse; useVip?: boolean }
   | { type: "start-research"; house: ManorV7AnimalHouse; animalId: number }
   | { type: "collect-research"; house: ManorV7AnimalHouse }
   | { type: "use-research-hourglass"; house: ManorV7AnimalHouse; toolId: number }

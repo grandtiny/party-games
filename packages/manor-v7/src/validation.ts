@@ -63,7 +63,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "buy-grass":
     case "buy-grass-to-inventory":
       return { type, quantity: quantity(input.quantity) };
-    case "buy-pasture-guard": return { type, guardId: integer(input.guardId) };
+    case "buy-pasture-guard": return {
+      type,
+      guardId: integer(input.guardId),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "set-pasture-guard-active": return { type, guardId: integer(input.guardId), active: boolean(input.active) };
     case "pay-pasture-guard": return { type, guardId: integer(input.guardId), days: quantity(input.days) };
     case "feed-grass-from-inventory": return { type, quantity: quantity(input.quantity) };
@@ -109,7 +113,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "sell-harvested-animal":
       return { type, animalId: integer(input.animalId), quantity: quantity(input.quantity) };
     case "collect-manure": return { type };
-    case "upgrade-house": return { type, house: animalHouse(input.house) };
+    case "upgrade-house": return {
+      type,
+      house: animalHouse(input.house),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "start-research": return { type, house: animalHouse(input.house), animalId: integer(input.animalId) };
     case "collect-research": return { type, house: animalHouse(input.house) };
     case "use-research-hourglass": return { type, house: animalHouse(input.house), toolId: integer(input.toolId) };

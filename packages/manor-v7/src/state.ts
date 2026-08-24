@@ -108,24 +108,34 @@ export const MANOR_V7_RECLAIM_RULES = [
 
 export const MANOR_V7_HOUSE_UPGRADES = {
   hutch: [
-    { level: 1, requiredLevel: 0, coins: 0 },
-    { level: 2, requiredLevel: 1, coins: 3_000 },
-    { level: 3, requiredLevel: 4, coins: 20_000 },
-    { level: 4, requiredLevel: 8, coins: 60_000 },
-    { level: 5, requiredLevel: 12, coins: 120_000 },
-    { level: 6, requiredLevel: 16, coins: 210_000 },
-    { level: 7, requiredLevel: 20, coins: 300_000 },
-    { level: 8, requiredLevel: 24, coins: 400_000 }
+    { level: 1, requiredLevel: 0, coins: 0, premiumPrice: 0 },
+    { level: 2, requiredLevel: 1, coins: 3_000, premiumPrice: 0 },
+    { level: 3, requiredLevel: 4, coins: 20_000, premiumPrice: 0 },
+    { level: 4, requiredLevel: 8, coins: 60_000, premiumPrice: 0 },
+    { level: 5, requiredLevel: 12, coins: 120_000, premiumPrice: 0 },
+    { level: 6, requiredLevel: 16, coins: 210_000, premiumPrice: 0 },
+    { level: 7, requiredLevel: 20, coins: 300_000, premiumPrice: 0 },
+    { level: 8, requiredLevel: 24, coins: 400_000, premiumPrice: 0 },
+    { level: 9, requiredLevel: 30, coins: 800_000, premiumPrice: 50 },
+    { level: 10, requiredLevel: 36, coins: 900_000, premiumPrice: 60 },
+    { level: 11, requiredLevel: 42, coins: 1_000_000, premiumPrice: 70 },
+    { level: 12, requiredLevel: 48, coins: 1_100_000, premiumPrice: 80 },
+    { level: 13, requiredLevel: 54, coins: 1_200_000, premiumPrice: 90 }
   ],
   shed: [
-    { level: 1, requiredLevel: 2, coins: 5_000 },
-    { level: 2, requiredLevel: 6, coins: 40_000 },
-    { level: 3, requiredLevel: 10, coins: 90_000 },
-    { level: 4, requiredLevel: 14, coins: 160_000 },
-    { level: 5, requiredLevel: 18, coins: 250_000 },
-    { level: 6, requiredLevel: 22, coins: 350_000 },
-    { level: 7, requiredLevel: 26, coins: 500_000 },
-    { level: 8, requiredLevel: 28, coins: 700_000 }
+    { level: 1, requiredLevel: 2, coins: 5_000, premiumPrice: 0 },
+    { level: 2, requiredLevel: 6, coins: 40_000, premiumPrice: 0 },
+    { level: 3, requiredLevel: 10, coins: 90_000, premiumPrice: 0 },
+    { level: 4, requiredLevel: 14, coins: 160_000, premiumPrice: 0 },
+    { level: 5, requiredLevel: 18, coins: 250_000, premiumPrice: 0 },
+    { level: 6, requiredLevel: 22, coins: 350_000, premiumPrice: 0 },
+    { level: 7, requiredLevel: 26, coins: 500_000, premiumPrice: 0 },
+    { level: 8, requiredLevel: 28, coins: 700_000, premiumPrice: 0 },
+    { level: 9, requiredLevel: 33, coins: 850_000, premiumPrice: 55 },
+    { level: 10, requiredLevel: 39, coins: 950_000, premiumPrice: 65 },
+    { level: 11, requiredLevel: 45, coins: 1_050_000, premiumPrice: 75 },
+    { level: 12, requiredLevel: 51, coins: 1_150_000, premiumPrice: 85 },
+    { level: 13, requiredLevel: 57, coins: 1_250_000, premiumPrice: 95 }
   ]
 } as const;
 

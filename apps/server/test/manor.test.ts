@@ -1295,6 +1295,124 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("completes original pasture local purchases without external payment or coin charges", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-pasture-local-shop-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Pasture V7 state missing before local shop test");
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = 12_345;
+      prepared.pastureExperience = manorV7ExperienceForLevel(60);
+      prepared.pasture.hutchLevel = 8;
+      prepared.pasture.shedLevel = 8;
+      prepared.pasture.guards = [];
+      prepared.revision += 1;
+      prepared.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
+
+      const beforeVerify = instance.repository.getManorV7State(owner.userId);
+      const verify = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=shop_verify",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "payitem=60109-1-%E4%B9%A1%E6%9D%91%E8%AE%B0%E5%BF%86"
+      });
+      expect(verify.statusCode, verify.body).toBe(200);
+      expect(verify.json()).toEqual({
+        code: 1,
+        direction: "",
+        ecode: 0,
+        itemId: 109,
+        itemNum: 1,
+        itemType: 6,
+        open: "1"
+      });
+      const afterVerify = instance.repository.getManorV7State(owner.userId);
+      expect(afterVerify?.coins).toBe(beforeVerify?.coins);
+      expect(afterVerify?.pasture.toolInventory).toEqual(beforeVerify?.pasture.toolInventory);
+      expect(afterVerify?.pasture.weaponInventory).toEqual(beforeVerify?.pasture.weaponInventory);
+      expect(afterVerify?.decorationOwnerships).toEqual(beforeVerify?.decorationOwnerships);
+
+      const buy = async (payitem: string, payType = 1, expectedMoney = 0) => {
+        const response = await instance.app.inject({
+          method: "POST",
+          url: "/api/manor/flash/pasture?mod=cgi_pasture_shop_pay",
+          headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+          payload: `payitem=${payitem}&payType=${payType}`
+        });
+        expect(response.statusCode, response.body).toBe(200);
+        expect(response.json()).toMatchObject({
+          code: 1,
+          ecode: 0,
+          local: 1,
+          money: expectedMoney,
+          url_params: ""
+        });
+        return response.json();
+      };
+
+      await buy("60109-1-%E4%B9%A1%E6%9D%91%E8%AE%B0%E5%BF%86");
+      await buy("70002-2-%E9%AB%98%E9%80%9A%E7%BD%90%E5%A4%B4", 2);
+      await buy("120040-1-%E8%BF%B7%E4%BD%A0%E6%B2%99%E6%BC%8F");
+      await buy("1060001-1-%E7%8C%8E%E4%BA%BA");
+      await buy("50101-1-%E6%99%AE%E9%80%9A%E5%B7%A5%E8%B5%84");
+
+      const crossVerify = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_shop_verify",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=10&itemType=10&itemId=4&itemNum=1"
+      });
+      expect(crossVerify.statusCode, crossVerify.body).toBe(200);
+      expect(crossVerify.json()).toMatchObject({ code: 1, itemId: 4, itemType: 10, shopType: 10 });
+
+      const crossPurchase = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=10&itemType=10&itemId=4&itemNum=1&payType=2"
+      });
+      expect(crossPurchase.statusCode, crossPurchase.body).toBe(200);
+      expect(crossPurchase.json()).toMatchObject({ code: 1, itemId: 4, local: 1, money: 0, url_params: "" });
+
+      const hutch = await buy("130009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, 1_000);
+      expect(hutch).toMatchObject({ 2: { id: 102, lv: 9 }, itemId: 9, itemType: 13 });
+      const shed = await buy("140009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7");
+      expect(shed).toMatchObject({ 3: { id: 103, lv: 9 }, itemId: 9, itemType: 14 });
+
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 13_345,
+        ownedDecorationIds: expect.arrayContaining([109]),
+        pasture: {
+          guards: [expect.objectContaining({ id: 1, active: true })],
+          hutchLevel: 9,
+          selectedDecorationIds: expect.arrayContaining([109]),
+          shedLevel: 9,
+          toolInventory: expect.arrayContaining([
+            { sourceId: 2, quantity: 2 },
+            { sourceId: 40, quantity: 1 }
+          ]),
+          weaponInventory: [{ sourceId: 4, quantity: 1 }]
+        }
+      });
+
+      const skippedLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "payitem=130011-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7&payType=1"
+      });
+      expect(skippedLevel.statusCode, skippedLevel.body).toBe(200);
+      expect(skippedLevel.json()).toMatchObject({ code: 0, direction: "窝棚升级商品参数无效" });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("persists original farm VIP and local shop purchases without Tencent payment", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-vip-protocol-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
