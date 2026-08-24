@@ -35,6 +35,24 @@ docker compose up --build
 浏览器打开 `http://localhost:18081`。SQLite 数据保存在 Docker 命名卷 `party-games-data`。
 Compose 默认拉取官方 `node:24-bookworm-slim` 镜像；可使用环境变量 `NODE_IMAGE` 覆盖镜像来源。
 
+Ruffle 的 WASM 文件使用仓库内的可复现 Brotli 产物，更新 Ruffle 后需要重新生成并提交对应的 `.wasm.br`：
+
+```powershell
+pnpm assets:precompress
+```
+
+线上增量部署使用 `scripts/deploy-server.ps1`。脚本只传输当前线上提交到待发布提交之间的 Git 二进制补丁和必需对象，不再重复上传完整庄园素材；候选镜像会在旧容器在线时构建，随后短暂停服、备份 SQLite 并切换容器，健康检查失败时恢复旧镜像、旧源码和停服时备份。部署前必须在干净的 `main` 上完成提交并推送到 `origin/main`：
+
+```powershell
+$env:PARTY_GAMES_DEPLOY_HOST = "server.example.com"
+$env:PARTY_GAMES_DEPLOY_USER = "ubuntu"
+$env:PARTY_GAMES_SSH_KEY = "C:\path\to\server-key.pem"
+$env:PARTY_GAMES_REMOTE_PATH = "/opt/party-games"
+pwsh -NoProfile -File .\scripts\deploy-server.ps1
+```
+
+服务端部署必须将 `/app/data` 绑定到项目目录下的 `data`，脚本会在改动源码或停止容器前校验该挂载、线上 `HEAD` 和 `origin/main` 都与发布基线一致。
+
 ### QQ 农牧场 V7
 
 农牧场没有单独的登录页或游客存档。玩家登录现有平台账号后，每个账号自动创建一份独立 V7 存档；旧 `manor_farms` 存档、PHP、MySQL、Flash 和 Discuz 数据均不迁移。农场使用 1024×800 场景和 24 块菱形土地，接入 219 种核心作物、普通/红/黑土地、离线成长、照料事件、化肥、多季收获、开垦、商店和仓库。牧场接入 153 种核心动物、窝棚 1–8 级、共享牧草、成长生产、副产品、出售和清理。

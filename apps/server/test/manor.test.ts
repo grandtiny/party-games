@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { brotliCompressSync } from "node:zlib";
 import {
   MANOR_V7_DAILY_SIGN_IN_REWARDS,
   manorV7Animal,
@@ -61,6 +62,10 @@ describe("QQ Farm V7 account persistence", () => {
     mkdirSync(configPath, { recursive: true });
     mkdirSync(modulePath, { recursive: true });
     writeFileSync(join(webDistPath, "index.html"), "<!doctype html><title>test</title>");
+    const wasm = Buffer.from("precompressed-ruffle-wasm");
+    const compressedWasm = brotliCompressSync(wasm);
+    writeFileSync(join(webDistPath, "ruffle.wasm"), wasm);
+    writeFileSync(join(webDistPath, "ruffle.wasm.br"), compressedWasm);
     writeFileSync(
       join(configPath, "load_main_v_20120209.xml"),
       '<data module="__MANOR_ORIGIN__/module/test.swf" api="__MANOR_ORIGIN__/api/manor/flash/farm?" />'
@@ -87,6 +92,21 @@ describe("QQ Farm V7 account persistence", () => {
       const module = await instance.app.inject({ method: "GET", url: "/module/test.swf" });
       expect(module.statusCode, module.body).toBe(200);
       expect(module.body).toBe("swf-test");
+
+      const precompressed = await instance.app.inject({
+        method: "GET",
+        url: "/ruffle.wasm",
+        headers: { "accept-encoding": "br" }
+      });
+      expect(precompressed.statusCode, precompressed.body).toBe(200);
+      expect(precompressed.headers["content-encoding"]).toBe("br");
+      expect(precompressed.headers.vary).toContain("Accept-Encoding");
+      expect(precompressed.rawPayload).toEqual(compressedWasm);
+
+      const uncompressed = await instance.app.inject({ method: "GET", url: "/ruffle.wasm" });
+      expect(uncompressed.statusCode, uncompressed.body).toBe(200);
+      expect(uncompressed.headers["content-encoding"]).toBeUndefined();
+      expect(uncompressed.rawPayload).toEqual(wasm);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });

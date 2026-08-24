@@ -5,3 +5,14 @@ node_modules
 data
 *.sqlite*
 coverage
+docs
+scripts
+patches/manor-v7
+**/test
+**/tests
+**/*.test.*
+**/*.spec.*
+apps/web/public/vendor/ruffle/*.map
+.env
+.env.*
+!.env.example
