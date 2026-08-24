@@ -2472,6 +2472,129 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("restores the original seasonal animal, cookie and Spring Festival protocols", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-seasonal-protocol-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+      const ownerFlashId = stableFlashUserId(owner.userId);
+
+      const visitorState = instance.repository.getManorV7State(visitor.userId);
+      if (!visitorState) throw new Error("Seasonal visitor state missing");
+      const fundedVisitor: ManorV7State = structuredClone(visitorState);
+      fundedVisitor.coins = 10_000;
+      fundedVisitor.pasture.wild.moralExperience = 200;
+      fundedVisitor.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 15 }];
+      fundedVisitor.revision += 1;
+      fundedVisitor.updatedAt = Date.now();
+      instance.repository.updateManorV7State(visitor.userId, visitorState.revision, fundedVisitor);
+
+      const created = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_create_animal",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `ownerId=${ownerFlashId}&op=0`
+      });
+      expect(created.statusCode, created.body).toBe(200);
+      expect(created.json()).toMatchObject({
+        code: 1,
+        drop: { id: expect.any(Number), num: 1, time: expect.any(Number), type: 12 },
+        ecode: 0
+      });
+      expect([1085, 1086, 1593]).toContain(created.json().drop.id);
+
+      const friendPasture = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/pasture?mod=cgi_enter&uId=${ownerFlashId}`,
+        headers: { cookie: visitor.cookie }
+      });
+      expect(friendPasture.statusCode, friendPasture.body).toBe(200);
+      expect(friendPasture.json().beast.drop).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: created.json().drop.id, num: 1, type: 12 })
+      ]));
+
+      const adopted = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_adopt_animal",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `id=${created.json().drop.id}&ownerId=${ownerFlashId}`
+      });
+      expect(adopted.statusCode, adopted.body).toBe(200);
+      expect(adopted.json()).toEqual({ bit_flag: 1, code: 1, ecode: 0 });
+      expect(instance.repository.getManorV7State(owner.userId)?.seasonal.animalDrops).toEqual([]);
+      expect(instance.repository.getManorV7State(visitor.userId)?.pasture.cubInventory).toEqual(
+        expect.arrayContaining([{ sourceId: created.json().drop.id, quantity: 1 }])
+      );
+
+      const cookieSprites = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=xiaoyoucgi_farm_get_halloweenseed",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(cookieSprites.statusCode, cookieSprites.body).toBe(200);
+      expect(cookieSprites.json()).toEqual({ code: 1, id: 1037, num: 3 });
+
+      const offered = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_putin",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(offered.statusCode, offered.body).toBe(200);
+      expect([1, 2]).toContain(offered.json().num);
+      expect(instance.repository.getManorV7State(owner.userId)?.seasonal).toMatchObject({
+        halloweenCookies: 1,
+        cookieOfferedByUserIds: [visitor.userId]
+      });
+
+      const currentOwner = instance.repository.getManorV7State(owner.userId);
+      if (!currentOwner) throw new Error("Seasonal owner state missing before exchange");
+      const exchangeReady: ManorV7State = structuredClone(currentOwner);
+      exchangeReady.seasonal.halloweenCookies = 5;
+      exchangeReady.revision += 1;
+      exchangeReady.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, currentOwner.revision, exchangeReady);
+      const exchanged = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_activity",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "actid=1&op=1"
+      });
+      expect(exchanged.statusCode, exchanged.body).toBe(200);
+      expect(exchanged.json()).toEqual({ code: 1 });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        seasonal: { halloweenCookies: 0 },
+        pasture: { cubInventory: expect.arrayContaining([{ sourceId: 1537, quantity: 1 }]) }
+      });
+
+      const springStatus = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_pasture_checkbitmap",
+        headers: { cookie: owner.cookie }
+      });
+      expect(springStatus.json()).toMatchObject({ anim_num: 0, code: 1, farm_num: 0, flag: 0 });
+      const springGift = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_pasture_chunjie",
+        headers: { cookie: owner.cookie }
+      });
+      expect(springGift.statusCode, springGift.body).toBe(200);
+      expect(springGift.json()).toEqual({ code: 1, vip: 1 });
+      const claimedSpringStatus = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_pasture_checkbitmap",
+        headers: { cookie: owner.cookie }
+      });
+      expect(claimedSpringStatus.json()).toMatchObject({ anim_num: 4, code: 1, farm_num: 4, flag: 1 });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("does not expose manor test mutation routes", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-no-test-routes-"));
     const instance = await createApp({
