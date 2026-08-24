@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -euo pipefail
 
 if [[ $# -ne 4 ]]; then
   echo "usage: deploy-server.sh <root> <old-commit> <new-commit> <release-dir>" >&2
@@ -21,6 +21,7 @@ backup_dir="$root/data-backups/pre-$short_commit-$timestamp"
 source_applied=0
 backup_ready=0
 service_stopped=0
+rollback_started=0
 old_image_id=""
 
 export GIT_NO_LAZY_FETCH=1
@@ -72,6 +73,11 @@ restore_source() {
 
 rollback() {
   local exit_code=$?
+  if [[ $rollback_started -eq 1 ]]; then
+    echo "rollback encountered an additional error" >&2
+    return 0
+  fi
+  rollback_started=1
   trap - ERR
   set +e
   echo "deployment failed; starting rollback" >&2
@@ -105,6 +111,10 @@ cd "$root"
 [[ $(git symbolic-ref --short HEAD) == main ]] || fail "server worktree is not on main"
 [[ $(git rev-parse HEAD) == "$old_commit" ]] || fail "server HEAD does not match release base"
 [[ $(git rev-parse refs/remotes/origin/main) == "$old_commit" ]] || fail "server origin/main does not match release base"
+
+# Partial clones may have a complete worktree while older blob objects are still promisor-only.
+# Materialize the current tracked files locally so validation and rollback never reach GitHub.
+git -c core.quotepath=false ls-files | git hash-object -w --stdin-paths > /dev/null
 git diff --quiet || fail "server worktree has unstaged tracked changes"
 git diff --cached --quiet || fail "server index has staged changes"
 
