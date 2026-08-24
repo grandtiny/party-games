@@ -15,6 +15,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -36,6 +38,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -57,6 +61,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -78,6 +84,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -99,6 +107,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -120,6 +130,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -141,6 +153,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -162,6 +176,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       21600,
@@ -183,6 +199,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       25200,
@@ -204,6 +222,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -225,6 +245,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -246,6 +268,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       32400,
@@ -267,6 +291,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -288,6 +314,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       46800,
@@ -309,6 +337,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       36000,
@@ -330,6 +360,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -351,6 +383,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -372,6 +406,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -393,6 +429,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -414,6 +452,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       54000,
@@ -435,6 +475,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -456,11 +498,36 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       64800,
       93600,
+      126000
+    ]
+  },
+  {
+    "id": 25,
+    "name": "银杏树苗",
+    "originalLevel": 14,
+    "cropType": 1,
+    "seedPrice": 1587,
+    "salePrice": 40,
+    "baseYield": 26,
+    "experience": 23,
+    "growthSeconds": 126000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      43200,
+      72000,
+      97200,
       126000
     ]
   },
@@ -477,6 +544,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       39600,
       82800,
@@ -498,12 +567,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       43200,
       90000,
       136800,
       183600,
       230400
+    ]
+  },
+  {
+    "id": 28,
+    "name": "营养果粒",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 600,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -519,12 +613,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       75600,
       115200,
       154800,
       198000
+    ]
+  },
+  {
+    "id": 30,
+    "name": "星之愿",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 678,
+    "salePrice": 30,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -540,12 +659,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       39600,
       82800,
       126000,
       172800,
       219600
+    ]
+  },
+  {
+    "id": 32,
+    "name": "彩钻果",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 600,
+    "salePrice": 27,
+    "baseYield": 25,
+    "experience": 22,
+    "growthSeconds": 100800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      86400,
+      108000
     ]
   },
   {
@@ -561,6 +705,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       46800,
       97200,
@@ -582,6 +728,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       50400,
       100800,
@@ -603,6 +751,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       54000,
       108000,
@@ -624,6 +774,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -645,6 +797,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       46800,
@@ -666,6 +820,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -687,6 +843,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -708,6 +866,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -729,6 +889,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -750,6 +912,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -771,6 +935,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -792,12 +958,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
       93600,
       129600,
       165600
+    ]
+  },
+  {
+    "id": 46,
+    "name": "爱心果",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 4000,
+    "salePrice": 100,
+    "baseYield": 24,
+    "experience": 27,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
     ]
   },
   {
@@ -813,6 +1004,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -834,6 +1027,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -855,6 +1050,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -876,6 +1073,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -897,12 +1096,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
       28800,
       43200,
       57600
+    ]
+  },
+  {
+    "id": 52,
+    "name": "金针菇",
+    "originalLevel": 19,
+    "cropType": 1,
+    "seedPrice": 1200,
+    "salePrice": 38,
+    "baseYield": 25,
+    "experience": 25,
+    "growthSeconds": 151200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
     ]
   },
   {
@@ -918,6 +1142,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -939,6 +1165,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -960,12 +1188,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
       86400,
       118800,
       151200
+    ]
+  },
+  {
+    "id": 56,
+    "name": "哈密瓜",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 2873,
+    "salePrice": 39,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
     ]
   },
   {
@@ -981,6 +1234,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1002,6 +1257,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1023,6 +1280,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -1044,6 +1303,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -1065,12 +1326,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
       25200,
       36000,
       50400
+    ]
+  },
+  {
+    "id": 62,
+    "name": "四叶草",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 640,
+    "salePrice": 24,
+    "baseYield": 24,
+    "experience": 17,
+    "growthSeconds": 82800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      46800,
+      64800,
+      82800
     ]
   },
   {
@@ -1086,12 +1372,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       61200,
       86400,
       111600
+    ]
+  },
+  {
+    "id": 64,
+    "name": "大葱",
+    "originalLevel": 1,
+    "cropType": 1,
+    "seedPrice": 125,
+    "salePrice": 19,
+    "baseYield": 17,
+    "experience": 15,
+    "growthSeconds": 39600,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      14400,
+      25200,
+      39600,
+      39600
     ]
   },
   {
@@ -1107,12 +1418,60 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
       25200,
       36000,
       50400
+    ]
+  },
+  {
+    "id": 66,
+    "name": "鲜姜",
+    "originalLevel": 3,
+    "cropType": 1,
+    "seedPrice": 125,
+    "salePrice": 20,
+    "baseYield": 17,
+    "experience": 15,
+    "growthSeconds": 39600,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      14400,
+      25200,
+      25200,
+      39600
+    ]
+  },
+  {
+    "id": 67,
+    "name": "香瓜",
+    "originalLevel": 23,
+    "cropType": 1,
+    "seedPrice": 1587,
+    "salePrice": 38,
+    "baseYield": 26,
+    "experience": 22,
+    "growthSeconds": 126000,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      68400,
+      97200,
+      126000
     ]
   },
   {
@@ -1128,12 +1487,83 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       61200,
       86400,
       111600
+    ]
+  },
+  {
+    "id": 69,
+    "name": "莴笋",
+    "originalLevel": 19,
+    "cropType": 1,
+    "seedPrice": 3720,
+    "salePrice": 65,
+    "baseYield": 27,
+    "experience": 32,
+    "growthSeconds": 198000,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      36000,
+      75600,
+      115200,
+      154800,
+      198000
+    ]
+  },
+  {
+    "id": 70,
+    "name": "黄豆",
+    "originalLevel": 11,
+    "cropType": 1,
+    "seedPrice": 708,
+    "salePrice": 29,
+    "baseYield": 27,
+    "experience": 23,
+    "growthSeconds": 100800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ]
+  },
+  {
+    "id": 71,
+    "name": "小白菜",
+    "originalLevel": 4,
+    "cropType": 1,
+    "seedPrice": 135,
+    "salePrice": 21,
+    "baseYield": 18,
+    "experience": 15,
+    "growthSeconds": 39600,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      14400,
+      25200,
+      39600,
+      39600
     ]
   },
   {
@@ -1149,12 +1579,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
       93600,
       129600,
       165600
+    ]
+  },
+  {
+    "id": 73,
+    "name": "菠菜",
+    "originalLevel": 9,
+    "cropType": 1,
+    "seedPrice": 366,
+    "salePrice": 29,
+    "baseYield": 24,
+    "experience": 21,
+    "growthSeconds": 61200,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      10800,
+      25200,
+      43200,
+      43200,
+      61200
     ]
   },
   {
@@ -1170,6 +1625,31 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 75,
+    "name": "桑葚",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 2976,
+    "salePrice": 39,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1191,6 +1671,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1212,6 +1694,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1233,6 +1717,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1254,12 +1740,83 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       61200,
       86400,
       111600
+    ]
+  },
+  {
+    "id": 80,
+    "name": "月柿",
+    "originalLevel": 24,
+    "cropType": 1,
+    "seedPrice": 2350,
+    "salePrice": 38,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 81,
+    "name": "圣诞树",
+    "originalLevel": 0,
+    "cropType": 1,
+    "seedPrice": 163,
+    "salePrice": 20,
+    "baseYield": 16,
+    "experience": 14,
+    "growthSeconds": 46800,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      14400,
+      25200,
+      36000,
+      46800
+    ]
+  },
+  {
+    "id": 82,
+    "name": "摇钱树",
+    "originalLevel": 14,
+    "cropType": 1,
+    "seedPrice": 1587,
+    "salePrice": 41,
+    "baseYield": 26,
+    "experience": 25,
+    "growthSeconds": 133200,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      75600,
+      104400,
+      133200
     ]
   },
   {
@@ -1275,6 +1832,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       46800,
@@ -1296,6 +1855,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -1317,6 +1878,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       43200,
@@ -1338,6 +1901,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -1359,6 +1924,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -1380,6 +1947,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -1401,6 +1970,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -1422,12 +1993,106 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
       57600,
       82800,
       108000
+    ]
+  },
+  {
+    "id": 91,
+    "name": "山楂",
+    "originalLevel": 9,
+    "cropType": 1,
+    "seedPrice": 325,
+    "salePrice": 30,
+    "baseYield": 25,
+    "experience": 27,
+    "growthSeconds": 79200,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      10800,
+      25200,
+      43200,
+      57600,
+      79200
+    ]
+  },
+  {
+    "id": 92,
+    "name": "稀世琉璃果",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3522,
+    "salePrice": 75,
+    "baseYield": 27,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 93,
+    "name": "炫舞之星",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 750,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 94,
+    "name": "海洋之心",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 750,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -1443,12 +2108,382 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       36000,
       54000,
       72000,
       90000
+    ]
+  },
+  {
+    "id": 101,
+    "name": "薰衣草",
+    "originalLevel": 17,
+    "cropType": 1,
+    "seedPrice": 2521,
+    "salePrice": 58,
+    "baseYield": 33,
+    "experience": 39,
+    "growthSeconds": 219600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      39600,
+      82800,
+      126000,
+      172800,
+      219600
+    ]
+  },
+  {
+    "id": 102,
+    "name": "马蹄莲",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 103,
+    "name": "天香百合",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 296,
+    "salePrice": 28,
+    "baseYield": 24,
+    "experience": 25,
+    "growthSeconds": 72000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      10800,
+      25200,
+      39600,
+      54000,
+      72000
+    ]
+  },
+  {
+    "id": 104,
+    "name": "非洲菊",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 105,
+    "name": "小雏菊",
+    "originalLevel": 6,
+    "cropType": 1,
+    "seedPrice": 251,
+    "salePrice": 26,
+    "baseYield": 21,
+    "experience": 22,
+    "growthSeconds": 61200,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      18000,
+      32400,
+      46800,
+      61200
+    ]
+  },
+  {
+    "id": 106,
+    "name": "郁金香",
+    "originalLevel": 16,
+    "cropType": 1,
+    "seedPrice": 2425,
+    "salePrice": 54,
+    "baseYield": 30,
+    "experience": 34,
+    "growthSeconds": 187200,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      36000,
+      72000,
+      108000,
+      147600,
+      187200
+    ]
+  },
+  {
+    "id": 107,
+    "name": "仙人掌",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 1360,
+    "salePrice": 35,
+    "baseYield": 24,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 108,
+    "name": "铃兰",
+    "originalLevel": 22,
+    "cropType": 1,
+    "seedPrice": 2150,
+    "salePrice": 43,
+    "baseYield": 25,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 109,
+    "name": "蝴蝶兰",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 110,
+    "name": "满天星",
+    "originalLevel": 7,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 10,
+    "baseYield": 37,
+    "experience": 19,
+    "growthSeconds": 90000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 111,
+    "name": "粉玫瑰",
+    "originalLevel": 11,
+    "cropType": 1,
+    "seedPrice": 708,
+    "salePrice": 29,
+    "baseYield": 27,
+    "experience": 23,
+    "growthSeconds": 100800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ]
+  },
+  {
+    "id": 112,
+    "name": "风信子",
+    "originalLevel": 13,
+    "cropType": 1,
+    "seedPrice": 1120,
+    "salePrice": 42,
+    "baseYield": 28,
+    "experience": 25,
+    "growthSeconds": 111600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 113,
+    "name": "栀子花",
+    "originalLevel": 14,
+    "cropType": 1,
+    "seedPrice": 1587,
+    "salePrice": 41,
+    "baseYield": 26,
+    "experience": 25,
+    "growthSeconds": 133200,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      25200,
+      50400,
+      75600,
+      104400,
+      133200
+    ]
+  },
+  {
+    "id": 114,
+    "name": "蓝玫瑰",
+    "originalLevel": 19,
+    "cropType": 1,
+    "seedPrice": 1200,
+    "salePrice": 38,
+    "baseYield": 25,
+    "experience": 25,
+    "growthSeconds": 151200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      57600,
+      86400,
+      118800,
+      151200
+    ]
+  },
+  {
+    "id": 117,
+    "name": "康乃馨",
+    "originalLevel": 26,
+    "cropType": 1,
+    "seedPrice": 2100,
+    "salePrice": 40,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 118,
+    "name": "水仙花",
+    "originalLevel": 13,
+    "cropType": 1,
+    "seedPrice": 1130,
+    "salePrice": 42,
+    "baseYield": 28,
+    "experience": 25,
+    "growthSeconds": 111600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
     ]
   },
   {
@@ -1464,12 +2499,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       61200,
       86400,
       111600
+    ]
+  },
+  {
+    "id": 121,
+    "name": "蔷薇",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 1978,
+    "salePrice": 47,
+    "baseYield": 29,
+    "experience": 30,
+    "growthSeconds": 165600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
     ]
   },
   {
@@ -1485,6 +2545,54 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 123,
+    "name": "海棠花",
+    "originalLevel": 23,
+    "cropType": 1,
+    "seedPrice": 6588,
+    "salePrice": 86,
+    "baseYield": 34,
+    "experience": 44,
+    "growthSeconds": 277200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      54000,
+      108000,
+      165600,
+      219600,
+      277200
+    ]
+  },
+  {
+    "id": 125,
+    "name": "太阳花",
+    "originalLevel": 28,
+    "cropType": 1,
+    "seedPrice": 2873,
+    "salePrice": 42,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1506,6 +2614,31 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      25200,
+      50400,
+      75600,
+      100800,
+      126000
+    ]
+  },
+  {
+    "id": 128,
+    "name": "茉莉花",
+    "originalLevel": 14,
+    "cropType": 1,
+    "seedPrice": 1495,
+    "salePrice": 41,
+    "baseYield": 24,
+    "experience": 23,
+    "growthSeconds": 126000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -1527,6 +2660,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -1548,12 +2683,60 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       32400,
       50400,
       82800,
       97200
+    ]
+  },
+  {
+    "id": 134,
+    "name": "绿牡丹",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 22,
+    "experience": 15,
+    "growthSeconds": 72000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      72000
+    ]
+  },
+  {
+    "id": 135,
+    "name": "火绒草",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 528,
+    "salePrice": 24,
+    "baseYield": 22,
+    "experience": 15,
+    "growthSeconds": 72000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      72000
     ]
   },
   {
@@ -1569,6 +2752,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -1590,12 +2775,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       54000,
       108000,
       162000,
       216000,
       270000
+    ]
+  },
+  {
+    "id": 138,
+    "name": "车神之恋",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 648,
+    "salePrice": 27,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 82800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      46800,
+      64800,
+      82800
     ]
   },
   {
@@ -1611,6 +2821,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -1632,6 +2844,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -1653,6 +2867,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -1674,6 +2890,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       28800,
@@ -1695,6 +2913,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       21600,
@@ -1716,12 +2936,405 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
       61200,
       86400,
       111600
+    ]
+  },
+  {
+    "id": 145,
+    "name": "向日葵",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 146,
+    "name": "冰爽之星",
+    "originalLevel": 5,
+    "cropType": 1,
+    "seedPrice": 237,
+    "salePrice": 25,
+    "baseYield": 20,
+    "experience": 21,
+    "growthSeconds": 57600,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      18000,
+      28800,
+      43200,
+      57600
+    ]
+  },
+  {
+    "id": 147,
+    "name": "牵牛花",
+    "originalLevel": 7,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 10,
+    "baseYield": 37,
+    "experience": 19,
+    "growthSeconds": 90000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 148,
+    "name": "炫舞璀璨",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 576,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 151,
+    "name": "幻想彩虹树",
+    "originalLevel": 11,
+    "cropType": 1,
+    "seedPrice": 708,
+    "salePrice": 29,
+    "baseYield": 27,
+    "experience": 23,
+    "growthSeconds": 100800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      54000,
+      75600,
+      100800
+    ]
+  },
+  {
+    "id": 153,
+    "name": "月亮果",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 20,
+    "baseYield": 30,
+    "experience": 25,
+    "growthSeconds": 90000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 154,
+    "name": "月桂花",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 20,
+    "baseYield": 30,
+    "experience": 25,
+    "growthSeconds": 90000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 158,
+    "name": "银鹭花生",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 605,
+    "salePrice": 27,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 82800,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      28800,
+      46800,
+      64800,
+      82800
+    ]
+  },
+  {
+    "id": 159,
+    "name": "幻世天缘果",
+    "originalLevel": 12,
+    "cropType": 1,
+    "seedPrice": 240,
+    "salePrice": 15,
+    "baseYield": 20,
+    "experience": 25,
+    "growthSeconds": 111600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 160,
+    "name": "彩灯果",
+    "originalLevel": 36,
+    "cropType": 1,
+    "seedPrice": 4200,
+    "salePrice": 48,
+    "baseYield": 28,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 161,
+    "name": "秋菊（黄色）",
+    "originalLevel": 7,
+    "cropType": 1,
+    "seedPrice": 585,
+    "salePrice": 10,
+    "baseYield": 37,
+    "experience": 19,
+    "growthSeconds": 90000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 162,
+    "name": "秋菊（红色）",
+    "originalLevel": 7,
+    "cropType": 1,
+    "seedPrice": 585,
+    "salePrice": 10,
+    "baseYield": 37,
+    "experience": 19,
+    "growthSeconds": 90000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
+    ]
+  },
+  {
+    "id": 164,
+    "name": "万圣南瓜",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 2873,
+    "salePrice": 30,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      90000,
+      111600
+    ]
+  },
+  {
+    "id": 165,
+    "name": "茱萸",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 1360,
+    "salePrice": 35,
+    "baseYield": 24,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 166,
+    "name": "七彩果",
+    "originalLevel": 50,
+    "cropType": 1,
+    "seedPrice": 6014,
+    "salePrice": 63,
+    "baseYield": 30,
+    "experience": 21,
+    "growthSeconds": 169200,
+    "harvestCycles": 7,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      36000,
+      68400,
+      104400,
+      140400,
+      169200
+    ]
+  },
+  {
+    "id": 167,
+    "name": "糖果",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 14,
+    "salePrice": 20,
+    "baseYield": 2,
+    "experience": 29,
+    "growthSeconds": 86400,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      50400,
+      68400,
+      86400
+    ]
+  },
+  {
+    "id": 168,
+    "name": "魔法士爱心树",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 631,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -1737,6 +3350,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -1758,6 +3373,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -1779,6 +3396,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -1800,6 +3419,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1821,6 +3442,31 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 174,
+    "name": "晚香玉",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 1443,
+    "salePrice": 31,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1842,6 +3488,31 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 176,
+    "name": "金银花",
+    "originalLevel": 24,
+    "cropType": 1,
+    "seedPrice": 2131,
+    "salePrice": 30,
+    "baseYield": 27,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1863,6 +3534,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       36000,
@@ -1884,12 +3557,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
       93600,
       136800,
       165600
+    ]
+  },
+  {
+    "id": 179,
+    "name": "家园挚爱花",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 550,
+    "salePrice": 25,
+    "baseYield": 24,
+    "experience": 18,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -1905,6 +3603,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       32400,
@@ -1926,6 +3626,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -1947,6 +3649,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -1968,6 +3672,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -1989,6 +3695,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       36000,
@@ -2010,6 +3718,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -2031,6 +3741,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       32400,
@@ -2052,6 +3764,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       36000,
@@ -2073,6 +3787,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -2094,6 +3810,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2115,6 +3833,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -2136,6 +3856,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -2157,6 +3879,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2178,6 +3902,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       54000,
@@ -2199,6 +3925,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2220,6 +3948,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2241,6 +3971,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       68400,
@@ -2262,6 +3994,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2283,6 +4017,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       36000,
@@ -2304,6 +4040,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2325,6 +4063,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -2346,6 +4086,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -2367,6 +4109,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2388,6 +4132,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       54000,
       108000,
@@ -2409,6 +4155,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       68400,
@@ -2430,6 +4178,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -2451,6 +4201,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -2472,6 +4224,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -2493,6 +4247,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2514,12 +4270,83 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
       86400,
       115200,
       144000
+    ]
+  },
+  {
+    "id": 231,
+    "name": "人参娃",
+    "originalLevel": 61,
+    "cropType": 1,
+    "seedPrice": 5648,
+    "salePrice": 73,
+    "baseYield": 49,
+    "experience": 22,
+    "growthSeconds": 144000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      54000,
+      82800,
+      115200,
+      144000
+    ]
+  },
+  {
+    "id": 232,
+    "name": "七色花",
+    "originalLevel": 62,
+    "cropType": 1,
+    "seedPrice": 5375,
+    "salePrice": 74,
+    "baseYield": 46,
+    "experience": 19,
+    "growthSeconds": 126000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      25200,
+      50400,
+      75600,
+      100800,
+      126000
+    ]
+  },
+  {
+    "id": 233,
+    "name": "宝莲灯",
+    "originalLevel": 63,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 75,
+    "baseYield": 53,
+    "experience": 24,
+    "growthSeconds": 162000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      32400,
+      64800,
+      97200,
+      129600,
+      162000
     ]
   },
   {
@@ -2535,12 +4362,152 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       54000,
       82800,
       111600,
       136800
+    ]
+  },
+  {
+    "id": 236,
+    "name": "橙葫芦",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 672,
+    "salePrice": 28,
+    "baseYield": 48,
+    "experience": 25,
+    "growthSeconds": 72000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      10800,
+      25200,
+      39600,
+      54000,
+      72000
+    ]
+  },
+  {
+    "id": 237,
+    "name": "黄葫芦",
+    "originalLevel": 12,
+    "cropType": 1,
+    "seedPrice": 1856,
+    "salePrice": 32,
+    "baseYield": 58,
+    "experience": 25,
+    "growthSeconds": 111600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 238,
+    "name": "绿葫芦",
+    "originalLevel": 16,
+    "cropType": 1,
+    "seedPrice": 2425,
+    "salePrice": 54,
+    "baseYield": 60,
+    "experience": 34,
+    "growthSeconds": 187200,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      36000,
+      72000,
+      108000,
+      147600,
+      187200
+    ]
+  },
+  {
+    "id": 239,
+    "name": "青葫芦",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 1360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 240,
+    "name": "蓝葫芦",
+    "originalLevel": 24,
+    "cropType": 1,
+    "seedPrice": 4772,
+    "salePrice": 38,
+    "baseYield": 54,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 241,
+    "name": "紫葫芦",
+    "originalLevel": 28,
+    "cropType": 1,
+    "seedPrice": 5345,
+    "salePrice": 42,
+    "baseYield": 56,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
     ]
   },
   {
@@ -2556,6 +4523,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -2577,6 +4546,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -2598,12 +4569,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
       97200,
       129600,
       162000
+    ]
+  },
+  {
+    "id": 245,
+    "name": "红葫芦",
+    "originalLevel": 4,
+    "cropType": 1,
+    "seedPrice": 188,
+    "salePrice": 24,
+    "baseYield": 36,
+    "experience": 20,
+    "growthSeconds": 54000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      14400,
+      25200,
+      39600,
+      54000
     ]
   },
   {
@@ -2619,6 +4615,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2640,6 +4638,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2661,6 +4661,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2682,6 +4684,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 8,
     "landRequirement": 1,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -2703,6 +4707,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -2724,6 +4730,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -2745,6 +4753,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       21600,
@@ -2766,6 +4776,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2787,6 +4799,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       68400,
@@ -2808,6 +4822,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -2829,6 +4845,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -2850,12 +4868,175 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
       32400,
       46800,
       61200
+    ]
+  },
+  {
+    "id": 309,
+    "name": "雪梅花",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 20336,
+    "salePrice": 82,
+    "baseYield": 62,
+    "experience": 16,
+    "growthSeconds": 126000,
+    "harvestCycles": 8,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      25200,
+      50400,
+      75600,
+      100800,
+      126000
+    ]
+  },
+  {
+    "id": 310,
+    "name": "雪人",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3150,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 311,
+    "name": "星星圣诞树",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 82,
+    "baseYield": 10,
+    "experience": 30,
+    "growthSeconds": 86400,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      50400,
+      68400,
+      86400
+    ]
+  },
+  {
+    "id": 312,
+    "name": "姜饼人圣诞树",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 82,
+    "baseYield": 10,
+    "experience": 30,
+    "growthSeconds": 86400,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      50400,
+      68400,
+      86400
+    ]
+  },
+  {
+    "id": 313,
+    "name": "拐杖圣诞树",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 300,
+    "salePrice": 82,
+    "baseYield": 10,
+    "experience": 30,
+    "growthSeconds": 86400,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      14400,
+      32400,
+      50400,
+      68400,
+      86400
+    ]
+  },
+  {
+    "id": 314,
+    "name": "金色圣诞树",
+    "originalLevel": 50,
+    "cropType": 1,
+    "seedPrice": 6200,
+    "salePrice": 62,
+    "baseYield": 29,
+    "experience": 21,
+    "growthSeconds": 169200,
+    "harvestCycles": 7,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      32400,
+      68400,
+      104400,
+      136800,
+      169200
+    ]
+  },
+  {
+    "id": 315,
+    "name": "幸福平安果",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 19367,
+    "salePrice": 82,
+    "baseYield": 62,
+    "experience": 16,
+    "growthSeconds": 126000,
+    "harvestCycles": 8,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      25200,
+      50400,
+      75600,
+      100800,
+      126000
     ]
   },
   {
@@ -2871,6 +5052,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -2892,6 +5075,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -2913,6 +5098,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -2934,6 +5121,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -2955,6 +5144,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -2976,12 +5167,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       21600,
       32400,
       46800,
       64800
+    ]
+  },
+  {
+    "id": 326,
+    "name": "黄钻之星",
+    "originalLevel": 50,
+    "cropType": 1,
+    "seedPrice": 4790,
+    "salePrice": 62,
+    "baseYield": 29,
+    "experience": 21,
+    "growthSeconds": 169200,
+    "harvestCycles": 7,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      32400,
+      68400,
+      104400,
+      136800,
+      169200
     ]
   },
   {
@@ -2997,6 +5213,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3018,6 +5236,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3039,6 +5259,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3060,6 +5282,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -3081,6 +5305,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -3102,6 +5328,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -3123,12 +5351,129 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
       28800,
       43200,
       57600
+    ]
+  },
+  {
+    "id": 335,
+    "name": "&符号",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 336,
+    "name": "爱心符号",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 337,
+    "name": "五角星符号",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 338,
+    "name": "问号",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
+    ]
+  },
+  {
+    "id": 339,
+    "name": "感叹符号",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 578,
+    "salePrice": 24,
+    "baseYield": 23,
+    "experience": 18,
+    "growthSeconds": 75600,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      75600
     ]
   },
   {
@@ -3144,12 +5489,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       46800,
       64800,
       90000,
       118800
+    ]
+  },
+  {
+    "id": 367,
+    "name": "金条树",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 100,
+    "salePrice": 10,
+    "baseYield": 7,
+    "experience": 20,
+    "growthSeconds": 90000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      36000,
+      54000,
+      72000,
+      90000
     ]
   },
   {
@@ -3165,12 +5535,290 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
       68400,
       93600,
       126000
+    ]
+  },
+  {
+    "id": 382,
+    "name": "摩羯座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 383,
+    "name": "水瓶座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 384,
+    "name": "双鱼座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 385,
+    "name": "白羊座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 386,
+    "name": "金牛座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 387,
+    "name": "双子座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 388,
+    "name": "巨蟹座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 389,
+    "name": "狮子座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 390,
+    "name": "处女座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 391,
+    "name": "天秤座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 392,
+    "name": "天蝎座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 393,
+    "name": "射手座作物",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
     ]
   },
   {
@@ -3186,12 +5834,83 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
       57600,
       79200,
       104400
+    ]
+  },
+  {
+    "id": 402,
+    "name": "疯狂摇滚猫",
+    "originalLevel": 16,
+    "cropType": 1,
+    "seedPrice": 1470,
+    "salePrice": 49,
+    "baseYield": 20,
+    "experience": 19,
+    "growthSeconds": 108000,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      86400,
+      108000
+    ]
+  },
+  {
+    "id": 403,
+    "name": "河马新娘",
+    "originalLevel": 24,
+    "cropType": 1,
+    "seedPrice": 5600,
+    "salePrice": 80,
+    "baseYield": 28,
+    "experience": 26,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 405,
+    "name": "绵羊海盗",
+    "originalLevel": 8,
+    "cropType": 1,
+    "seedPrice": 336,
+    "salePrice": 28,
+    "baseYield": 24,
+    "experience": 25,
+    "growthSeconds": 72000,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": true,
+    "isVip": false,
+    "stageSeconds": [
+      10800,
+      25200,
+      39600,
+      54000,
+      72000
     ]
   },
   {
@@ -3207,6 +5926,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       36000,
@@ -3228,12 +5949,60 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
       93600,
       129600,
       165600
+    ]
+  },
+  {
+    "id": 445,
+    "name": "汽车人",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 600,
+    "salePrice": 24,
+    "baseYield": 22,
+    "experience": 15,
+    "growthSeconds": 72000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      72000
+    ]
+  },
+  {
+    "id": 446,
+    "name": "金色飞贼",
+    "originalLevel": 10,
+    "cropType": 1,
+    "seedPrice": 600,
+    "salePrice": 24,
+    "baseYield": 22,
+    "experience": 15,
+    "growthSeconds": 72000,
+    "harvestCycles": 2,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      14400,
+      28800,
+      43200,
+      57600,
+      72000
     ]
   },
   {
@@ -3249,6 +6018,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -3270,6 +6041,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3291,6 +6064,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3312,6 +6087,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3333,6 +6110,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3354,6 +6133,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3375,6 +6156,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -3396,12 +6179,1256 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
       93600,
       129600,
       165600
+    ]
+  },
+  {
+    "id": 501,
+    "name": "酷酷有型表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 502,
+    "name": "心动跳跳表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 503,
+    "name": "呲牙笑笑表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 504,
+    "name": "郁闷表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 505,
+    "name": "可爱咪咪笑表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 507,
+    "name": "难过表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 508,
+    "name": "鬼脸吓吓表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 509,
+    "name": "疑惑表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 510,
+    "name": "困啊困表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 511,
+    "name": "囧",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 512,
+    "name": "尴尬一笑",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 513,
+    "name": "号啕大哭",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 514,
+    "name": "亲亲表情",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 515,
+    "name": "大惊失色",
+    "originalLevel": 18,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
+    ]
+  },
+  {
+    "id": 516,
+    "name": "航海鼠",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 517,
+    "name": "制造牛",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 518,
+    "name": "剑士虎",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 519,
+    "name": "公主兔",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 520,
+    "name": "考古龙",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 521,
+    "name": "美女蛇",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 522,
+    "name": "厨师马",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 523,
+    "name": "护士羊",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 524,
+    "name": "冒险猴",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 525,
+    "name": "弹弓鸡",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 526,
+    "name": "提琴狗",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 527,
+    "name": "啤酒猪",
+    "originalLevel": 25,
+    "cropType": 1,
+    "seedPrice": 7000,
+    "salePrice": 82,
+    "baseYield": 29,
+    "experience": 27,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 528,
+    "name": "傲慢表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 529,
+    "name": "糗表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 530,
+    "name": "委屈表情",
+    "originalLevel": 15,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 533,
+    "name": "我",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 534,
+    "name": "爱",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 535,
+    "name": "你",
+    "originalLevel": 40,
+    "cropType": 1,
+    "seedPrice": 4056,
+    "salePrice": 52,
+    "baseYield": 26,
+    "experience": 16,
+    "growthSeconds": 104400,
+    "harvestCycles": 6,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      39600,
+      57600,
+      79200,
+      104400
+    ]
+  },
+  {
+    "id": 557,
+    "name": "俄罗斯方块作物一",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 558,
+    "name": "俄罗斯方块作物二",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 559,
+    "name": "俄罗斯方块作物三",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 560,
+    "name": "俄罗斯方块作物四",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 561,
+    "name": "俄罗斯方块作物五",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 562,
+    "name": "俄罗斯方块作物六",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 563,
+    "name": "俄罗斯方块作物七",
+    "originalLevel": 30,
+    "cropType": 1,
+    "seedPrice": 3038,
+    "salePrice": 44,
+    "baseYield": 28,
+    "experience": 18,
+    "growthSeconds": 111600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 564,
+    "name": "夏日紫色贝壳",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 566,
+    "name": "夏日紫色海螺",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 568,
+    "name": "夏日紫色海星",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 571,
+    "name": "夏日Y字凉拖",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 573,
+    "name": "夏日鸡尾酒",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 574,
+    "name": "桃心潜水镜",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 575,
+    "name": "五星潜水镜",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 576,
+    "name": "魅惑热带鱼",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 577,
+    "name": "酷酷小丑鱼",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 578,
+    "name": "夏威夷游泳圈",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 579,
+    "name": "海军救生圈",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 580,
+    "name": "紫妖珊瑚",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 581,
+    "name": "红仔珊瑚",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3360,
+    "salePrice": 35,
+    "baseYield": 48,
+    "experience": 19,
+    "growthSeconds": 115200,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      21600,
+      43200,
+      64800,
+      90000,
+      115200
+    ]
+  },
+  {
+    "id": 583,
+    "name": "求包养",
+    "originalLevel": 24,
+    "cropType": 1,
+    "seedPrice": 6590,
+    "salePrice": 80,
+    "baseYield": 28,
+    "experience": 26,
+    "growthSeconds": 165600,
+    "harvestCycles": 5,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 584,
+    "name": "花好月圆",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 4300,
+    "salePrice": 71,
+    "baseYield": 30,
+    "experience": 36,
+    "growthSeconds": 219600,
+    "harvestCycles": 4,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      39600,
+      82800,
+      126000,
+      172800,
+      219600
     ]
   },
   {
@@ -3417,6 +7444,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -3438,6 +7467,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3459,6 +7490,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -3480,6 +7513,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 2,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       36000,
       72000,
@@ -3501,6 +7536,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3522,6 +7559,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3543,6 +7582,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3564,6 +7605,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3585,6 +7628,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3606,6 +7651,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3627,6 +7674,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3648,6 +7697,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3669,6 +7720,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3690,6 +7743,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       54000,
@@ -3711,6 +7766,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3732,6 +7789,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       14400,
       32400,
@@ -3753,6 +7812,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3774,6 +7835,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 2,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -3795,6 +7858,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3816,6 +7881,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       54000,
@@ -3837,6 +7904,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       57600,
@@ -3858,6 +7927,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       28800,
       61200,
@@ -3879,6 +7950,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 4,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3900,6 +7973,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       43200,
@@ -3921,6 +7996,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3942,6 +8019,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3963,6 +8042,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -3984,6 +8065,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4005,6 +8088,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4026,6 +8111,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4047,6 +8134,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4068,6 +8157,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4089,6 +8180,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4110,6 +8203,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4131,6 +8226,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4152,6 +8249,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4173,6 +8272,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4194,6 +8295,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4215,6 +8318,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4236,6 +8341,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4257,6 +8364,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4278,6 +8387,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4299,6 +8410,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4320,6 +8433,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4341,6 +8456,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4362,6 +8479,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4383,6 +8502,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4404,6 +8525,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4425,6 +8548,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4446,6 +8571,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4467,6 +8594,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4488,6 +8617,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4509,6 +8640,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4530,6 +8663,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4551,6 +8686,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4572,6 +8709,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4593,6 +8732,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4614,6 +8755,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       21600,
       39600,
@@ -4635,6 +8778,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -4656,6 +8801,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -4677,6 +8824,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -4698,6 +8847,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       18000,
@@ -4719,6 +8870,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       10800,
       25200,
@@ -4740,6 +8893,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 6,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       25200,
       50400,
@@ -4761,6 +8916,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 5,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       18000,
       39600,
@@ -4782,6 +8939,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 9,
     "landRequirement": 0,
     "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
@@ -4803,6 +8962,8 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 1,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       7200,
       14400,
@@ -4824,12 +8985,37 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 7,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
     "stageSeconds": [
       32400,
       64800,
       97200,
       129600,
       162000
+    ]
+  },
+  {
+    "id": 1054,
+    "name": "卡通：懒羊羊",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 230400,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      43200,
+      90000,
+      136800,
+      183600,
+      230400
     ]
   },
   {
@@ -4845,6 +9031,238 @@ export const MANOR_V7_CROPS = [
     "harvestCycles": 3,
     "landRequirement": 0,
     "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1056,
+    "name": "卡通：小灰灰",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1057,
+    "name": "卡通：狸猫桃子",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1058,
+    "name": "卡通：机器猫",
+    "originalLevel": 20,
+    "cropType": 1,
+    "seedPrice": 3480,
+    "salePrice": 62,
+    "baseYield": 35,
+    "experience": 40,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1202,
+    "name": "动感喜羊羊",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1203,
+    "name": "动感灰太狼",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1204,
+    "name": "动感老村长",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1205,
+    "name": "动感红太狼",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1206,
+    "name": "动感懒羊羊",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1207,
+    "name": "动感美羊羊",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
+    "stageSeconds": [
+      18000,
+      39600,
+      61200,
+      86400,
+      111600
+    ]
+  },
+  {
+    "id": 1208,
+    "name": "动感沸羊羊",
+    "originalLevel": 31,
+    "cropType": 1,
+    "seedPrice": 2130,
+    "salePrice": 50,
+    "baseYield": 24,
+    "experience": 20,
+    "growthSeconds": 111600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": true,
     "stageSeconds": [
       18000,
       39600,
@@ -4862,6 +9280,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸡蛋",
     "house": "hutch",
     "originalLevel": 0,
+    "isVip": false,
     "purchasePrice": 700,
     "productPrice": 860,
     "byproductPrice": 17,
@@ -4883,6 +9302,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "兔子崽",
     "house": "hutch",
     "originalLevel": 1,
+    "isVip": false,
     "purchasePrice": 1200,
     "productPrice": 1460,
     "byproductPrice": 39,
@@ -4904,6 +9324,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鹅蛋",
     "house": "hutch",
     "originalLevel": 3,
+    "isVip": false,
     "purchasePrice": 900,
     "productPrice": 1850,
     "byproductPrice": 19,
@@ -4925,6 +9346,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "猫崽",
     "house": "hutch",
     "originalLevel": 5,
+    "isVip": false,
     "purchasePrice": 3200,
     "productPrice": 4060,
     "byproductPrice": 56,
@@ -4946,6 +9368,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "孔雀崽",
     "house": "hutch",
     "originalLevel": 7,
+    "isVip": false,
     "purchasePrice": 5000,
     "productPrice": 6060,
     "byproductPrice": 35,
@@ -4967,6 +9390,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "企鹅崽",
     "house": "hutch",
     "originalLevel": 9,
+    "isVip": false,
     "purchasePrice": 10000,
     "productPrice": 11860,
     "byproductPrice": 68,
@@ -4988,6 +9412,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小乌龟",
     "house": "hutch",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11000,
     "productPrice": 12000,
     "byproductPrice": 69,
@@ -5009,6 +9434,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "松鼠崽",
     "house": "hutch",
     "originalLevel": 12,
+    "isVip": false,
     "purchasePrice": 12640,
     "productPrice": 14570,
     "byproductPrice": 71,
@@ -5030,6 +9456,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "波斯猫崽",
     "house": "hutch",
     "originalLevel": 13,
+    "isVip": false,
     "purchasePrice": 13000,
     "productPrice": 14790,
     "byproductPrice": 72,
@@ -5051,6 +9478,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "仓鼠崽",
     "house": "hutch",
     "originalLevel": 17,
+    "isVip": false,
     "purchasePrice": 14100,
     "productPrice": 16940,
     "byproductPrice": 78,
@@ -5072,6 +9500,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "刺猬崽",
     "house": "hutch",
     "originalLevel": 21,
+    "isVip": false,
     "purchasePrice": 15230,
     "productPrice": 18000,
     "byproductPrice": 72,
@@ -5093,6 +9522,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸭蛋",
     "house": "hutch",
     "originalLevel": 14,
+    "isVip": false,
     "purchasePrice": 13200,
     "productPrice": 14910,
     "byproductPrice": 73,
@@ -5114,6 +9544,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鼹鼠崽",
     "house": "hutch",
     "originalLevel": 18,
+    "isVip": false,
     "purchasePrice": 14200,
     "productPrice": 17030,
     "byproductPrice": 78,
@@ -5135,6 +9566,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "挪威森林猫崽",
     "house": "hutch",
     "originalLevel": 22,
+    "isVip": false,
     "purchasePrice": 15550,
     "productPrice": 18100,
     "byproductPrice": 73,
@@ -5156,6 +9588,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "乌骨鸡蛋",
     "house": "hutch",
     "originalLevel": 14,
+    "isVip": false,
     "purchasePrice": 13100,
     "productPrice": 14890,
     "byproductPrice": 72,
@@ -5177,6 +9610,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "美国短毛猫崽",
     "house": "hutch",
     "originalLevel": 24,
+    "isVip": false,
     "purchasePrice": 16300,
     "productPrice": 18210,
     "byproductPrice": 74,
@@ -5198,6 +9632,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "炫舞龟崽",
     "house": "hutch",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11500,
     "productPrice": 12190,
     "byproductPrice": 70,
@@ -5219,6 +9654,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "穿山甲崽",
     "house": "hutch",
     "originalLevel": 28,
+    "isVip": false,
     "purchasePrice": 17300,
     "productPrice": 18890,
     "byproductPrice": 78,
@@ -5240,6 +9676,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "紫貂崽",
     "house": "hutch",
     "originalLevel": 32,
+    "isVip": false,
     "purchasePrice": 18560,
     "productPrice": 19100,
     "byproductPrice": 82,
@@ -5261,6 +9698,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "雪貂崽",
     "house": "hutch",
     "originalLevel": 33,
+    "isVip": false,
     "purchasePrice": 18650,
     "productPrice": 19190,
     "byproductPrice": 83,
@@ -5282,6 +9720,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "考拉崽",
     "house": "hutch",
     "originalLevel": 34,
+    "isVip": false,
     "purchasePrice": 18690,
     "productPrice": 19290,
     "byproductPrice": 84,
@@ -5303,6 +9742,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "绿尾虹雉崽",
     "house": "hutch",
     "originalLevel": 36,
+    "isVip": false,
     "purchasePrice": 18750,
     "productPrice": 19380,
     "byproductPrice": 86,
@@ -5324,6 +9764,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "冠企鹅崽",
     "house": "hutch",
     "originalLevel": 36,
+    "isVip": false,
     "purchasePrice": 18750,
     "productPrice": 19390,
     "byproductPrice": 87,
@@ -5345,6 +9786,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "山魈崽",
     "house": "hutch",
     "originalLevel": 40,
+    "isVip": false,
     "purchasePrice": 19000,
     "productPrice": 19850,
     "byproductPrice": 91,
@@ -5366,6 +9808,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "龙猫崽",
     "house": "hutch",
     "originalLevel": 42,
+    "isVip": false,
     "purchasePrice": 19240,
     "productPrice": 20000,
     "byproductPrice": 93,
@@ -5387,6 +9830,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "旱獭崽",
     "house": "hutch",
     "originalLevel": 18,
+    "isVip": false,
     "purchasePrice": 18750,
     "productPrice": 17110,
     "byproductPrice": 63,
@@ -5408,6 +9852,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "橙宝石",
     "house": "hutch",
     "originalLevel": 51,
+    "isVip": false,
     "purchasePrice": 35000,
     "productPrice": 42000,
     "byproductPrice": 140,
@@ -5429,6 +9874,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "袋熊崽",
     "house": "hutch",
     "originalLevel": 44,
+    "isVip": false,
     "purchasePrice": 19490,
     "productPrice": 21050,
     "byproductPrice": 95,
@@ -5450,6 +9896,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "月兔崽",
     "house": "hutch",
     "originalLevel": 8,
+    "isVip": false,
     "purchasePrice": 8500,
     "productPrice": 10500,
     "byproductPrice": 64,
@@ -5471,6 +9918,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "月光玉",
     "house": "hutch",
     "originalLevel": 8,
+    "isVip": false,
     "purchasePrice": 8500,
     "productPrice": 10500,
     "byproductPrice": 64,
@@ -5492,6 +9940,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "暹罗猫崽",
     "house": "hutch",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 24200,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -5513,6 +9962,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "长寿玉",
     "house": "hutch",
     "originalLevel": 20,
+    "isVip": false,
     "purchasePrice": 25550,
     "productPrice": 17890,
     "byproductPrice": 73,
@@ -5534,6 +9984,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "食蚁兽崽",
     "house": "hutch",
     "originalLevel": 46,
+    "isVip": false,
     "purchasePrice": 19600,
     "productPrice": 21350,
     "byproductPrice": 97,
@@ -5555,6 +10006,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "银宝石",
     "house": "hutch",
     "originalLevel": 57,
+    "isVip": false,
     "purchasePrice": 47000,
     "productPrice": 55000,
     "byproductPrice": 146,
@@ -5576,6 +10028,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "大耳猬崽",
     "house": "hutch",
     "originalLevel": 15,
+    "isVip": false,
     "purchasePrice": 26550,
     "productPrice": 15020,
     "byproductPrice": 77,
@@ -5597,6 +10050,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "肉鸡崽",
     "house": "hutch",
     "originalLevel": 3,
+    "isVip": false,
     "purchasePrice": 600,
     "productPrice": 125,
     "byproductPrice": 23,
@@ -5618,6 +10072,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "肉鸭崽",
     "house": "hutch",
     "originalLevel": 4,
+    "isVip": false,
     "purchasePrice": 800,
     "productPrice": 125,
     "byproductPrice": 28,
@@ -5639,6 +10094,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "炫兰宝石",
     "house": "hutch",
     "originalLevel": 55,
+    "isVip": false,
     "purchasePrice": 45000,
     "productPrice": 50000,
     "byproductPrice": 144,
@@ -5660,6 +10116,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "琴鸟尾羽",
     "house": "hutch",
     "originalLevel": 47,
+    "isVip": false,
     "purchasePrice": 19630,
     "productPrice": 21500,
     "byproductPrice": 98,
@@ -5681,6 +10138,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "丝光鸡蛋",
     "house": "hutch",
     "originalLevel": 16,
+    "isVip": false,
     "purchasePrice": 12500,
     "productPrice": 15110,
     "byproductPrice": 77,
@@ -5702,6 +10160,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "犰狳崽",
     "house": "hutch",
     "originalLevel": 12,
+    "isVip": false,
     "purchasePrice": 12640,
     "productPrice": 14570,
     "byproductPrice": 71,
@@ -5723,6 +10182,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "浮云",
     "house": "hutch",
     "originalLevel": 50,
+    "isVip": false,
     "purchasePrice": 30000,
     "productPrice": 32000,
     "byproductPrice": 100,
@@ -5744,6 +10204,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "白鸽蛋",
     "house": "hutch",
     "originalLevel": 9,
+    "isVip": false,
     "purchasePrice": 10000,
     "productPrice": 11860,
     "byproductPrice": 68,
@@ -5765,6 +10226,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸿运鞭炮",
     "house": "hutch",
     "originalLevel": 8,
+    "isVip": false,
     "purchasePrice": 10000,
     "productPrice": 11000,
     "byproductPrice": 65,
@@ -5786,6 +10248,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "袋食蚁兽崽",
     "house": "hutch",
     "originalLevel": 43,
+    "isVip": false,
     "purchasePrice": 19350,
     "productPrice": 21000,
     "byproductPrice": 94,
@@ -5807,6 +10270,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金火石",
     "house": "hutch",
     "originalLevel": 53,
+    "isVip": false,
     "purchasePrice": 43000,
     "productPrice": 46500,
     "byproductPrice": 142,
@@ -5828,6 +10292,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "春燕蛋",
     "house": "hutch",
     "originalLevel": 11,
+    "isVip": false,
     "purchasePrice": 12500,
     "productPrice": 14000,
     "byproductPrice": 70,
@@ -5849,6 +10314,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "橙果子",
     "house": "hutch",
     "originalLevel": 7,
+    "isVip": false,
     "purchasePrice": 4300,
     "productPrice": 5800,
     "byproductPrice": 59,
@@ -5870,6 +10336,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "雅利果",
     "house": "hutch",
     "originalLevel": 21,
+    "isVip": false,
     "purchasePrice": 15230,
     "productPrice": 18000,
     "byproductPrice": 72,
@@ -5891,6 +10358,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "火鸡蛋",
     "house": "hutch",
     "originalLevel": 13,
+    "isVip": false,
     "purchasePrice": 13050,
     "productPrice": 14820,
     "byproductPrice": 72,
@@ -5912,6 +10380,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "天竺鼠崽",
     "house": "hutch",
     "originalLevel": 23,
+    "isVip": false,
     "purchasePrice": 15940,
     "productPrice": 18120,
     "byproductPrice": 73,
@@ -5933,6 +10402,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸭嘴兽崽",
     "house": "hutch",
     "originalLevel": 33,
+    "isVip": false,
     "purchasePrice": 18570,
     "productPrice": 19150,
     "byproductPrice": 82,
@@ -5954,6 +10424,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "兔宝宝",
     "house": "hutch",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11500,
     "productPrice": 12190,
     "byproductPrice": 70,
@@ -5975,6 +10446,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸡宝宝",
     "house": "hutch",
     "originalLevel": 15,
+    "isVip": false,
     "purchasePrice": 11500,
     "productPrice": 14910,
     "byproductPrice": 73,
@@ -5996,6 +10468,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "花色羽毛",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16330,
     "productPrice": 18250,
     "byproductPrice": 73,
@@ -6017,6 +10490,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "微博精灵果",
     "house": "hutch",
     "originalLevel": 35,
+    "isVip": false,
     "purchasePrice": 18700,
     "productPrice": 19390,
     "byproductPrice": 88,
@@ -6038,6 +10512,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "白菜小妖",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 72,
@@ -6059,6 +10534,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "香蕉小妖",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16330,
     "productPrice": 18250,
     "byproductPrice": 73,
@@ -6080,6 +10556,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "西红柿妖果",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16680,
     "productPrice": 18650,
     "byproductPrice": 75,
@@ -6101,6 +10578,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "芒妖果",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16330,
     "productPrice": 18250,
     "byproductPrice": 73,
@@ -6122,6 +10600,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "魔法喇叭花",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16220,
     "productPrice": 18260,
     "byproductPrice": 70,
@@ -6143,6 +10622,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金旭蛋",
     "house": "hutch",
     "originalLevel": 50,
+    "isVip": false,
     "purchasePrice": 31600,
     "productPrice": 33600,
     "byproductPrice": 73,
@@ -6164,6 +10644,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小果果",
     "house": "hutch",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11200,
     "productPrice": 15568,
     "byproductPrice": 70,
@@ -6185,6 +10666,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小熊猫崽",
     "house": "hutch",
     "originalLevel": 29,
+    "isVip": false,
     "purchasePrice": 17990,
     "productPrice": 18930,
     "byproductPrice": 79,
@@ -6206,6 +10688,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "魔法竹笋",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16220,
     "productPrice": 18260,
     "byproductPrice": 70,
@@ -6227,6 +10710,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "毛丹妖果",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16430,
     "productPrice": 18250,
     "byproductPrice": 75,
@@ -6248,6 +10732,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "山竹妖果",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -6269,6 +10754,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "跳鼠崽",
     "house": "hutch",
     "originalLevel": 49,
+    "isVip": false,
     "purchasePrice": 20000,
     "productPrice": 21700,
     "byproductPrice": 100,
@@ -6290,6 +10776,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "雷鸟蛋",
     "house": "hutch",
     "originalLevel": 26,
+    "isVip": false,
     "purchasePrice": 16390,
     "productPrice": 18450,
     "byproductPrice": 75,
@@ -6311,6 +10798,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "白玉羽毛",
     "house": "hutch",
     "originalLevel": 5,
+    "isVip": false,
     "purchasePrice": 1200,
     "productPrice": 1460,
     "byproductPrice": 39,
@@ -6332,6 +10820,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "桃心",
     "house": "hutch",
     "originalLevel": 36,
+    "isVip": true,
     "purchasePrice": 18760,
     "productPrice": 19390,
     "byproductPrice": 87,
@@ -6353,6 +10842,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸿雁崽",
     "house": "hutch",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -6374,6 +10864,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金玉良缘",
     "house": "hutch",
     "originalLevel": 30,
+    "isVip": false,
     "purchasePrice": 1000,
     "productPrice": 6000,
     "byproductPrice": 80,
@@ -6395,6 +10886,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小彩鹊",
     "house": "hutch",
     "originalLevel": 20,
+    "isVip": false,
     "purchasePrice": 14860,
     "productPrice": 17890,
     "byproductPrice": 73,
@@ -6416,6 +10908,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小巨嘴鸟",
     "house": "hutch",
     "originalLevel": 32,
+    "isVip": false,
     "purchasePrice": 18560,
     "productPrice": 19100,
     "byproductPrice": 82,
@@ -6432,11 +10925,78 @@ export const MANOR_V7_ANIMALS = [
     "lifecycleSeconds": 273600
   },
   {
+    "id": 1096,
+    "name": "暖洋洋麋鹿",
+    "byproductName": "暖洋洋毛",
+    "house": "hutch",
+    "originalLevel": 30,
+    "isVip": false,
+    "purchasePrice": 18000,
+    "productPrice": 19000,
+    "byproductPrice": 80,
+    "animalHarvestExperience": 18,
+    "byproductHarvestExperience": 15,
+    "baseYield": 12,
+    "consume": 3,
+    "cubSeconds": 28800,
+    "maturitySeconds": 57600,
+    "productionSeconds": 291600,
+    "productionCycleSeconds": 32400,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 32385,
+    "lifecycleSeconds": 349200
+  },
+  {
+    "id": 1097,
+    "name": "机器牛",
+    "byproductName": "小机器牛",
+    "house": "hutch",
+    "originalLevel": 36,
+    "isVip": false,
+    "purchasePrice": 18700,
+    "productPrice": 22000,
+    "byproductPrice": 100,
+    "animalHarvestExperience": 18,
+    "byproductHarvestExperience": 15,
+    "baseYield": 14,
+    "consume": 3,
+    "cubSeconds": 18000,
+    "maturitySeconds": 36000,
+    "productionSeconds": 259200,
+    "productionCycleSeconds": 28800,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 28785,
+    "lifecycleSeconds": 295200
+  },
+  {
+    "id": 1098,
+    "name": "彩虹独角兽",
+    "byproductName": "彩虹马鬃",
+    "house": "hutch",
+    "originalLevel": 43,
+    "isVip": false,
+    "purchasePrice": 19000,
+    "productPrice": 26000,
+    "byproductPrice": 120,
+    "animalHarvestExperience": 18,
+    "byproductHarvestExperience": 15,
+    "baseYield": 17,
+    "consume": 3,
+    "cubSeconds": 32400,
+    "maturitySeconds": 64800,
+    "productionSeconds": 396000,
+    "productionCycleSeconds": 39600,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 39585,
+    "lifecycleSeconds": 460800
+  },
+  {
     "id": 1497,
     "name": "北极熊",
     "byproductName": "北极熊崽",
     "house": "hutch",
     "originalLevel": 60,
+    "isVip": false,
     "purchasePrice": 5000,
     "productPrice": 6060,
     "byproductPrice": 35,
@@ -6458,6 +11018,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "小花母猪崽",
     "house": "hutch",
     "originalLevel": 60,
+    "isVip": false,
     "purchasePrice": 5000,
     "productPrice": 6060,
     "byproductPrice": 35,
@@ -6479,6 +11040,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "孔雀蛋",
     "house": "hutch",
     "originalLevel": 1,
+    "isVip": false,
     "purchasePrice": 5000,
     "productPrice": 6060,
     "byproductPrice": 35,
@@ -6500,6 +11062,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "羊毛",
     "house": "shed",
     "originalLevel": 2,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 2860,
     "byproductPrice": 29,
@@ -6521,6 +11084,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "牛崽",
     "house": "shed",
     "originalLevel": 4,
+    "isVip": false,
     "purchasePrice": 3000,
     "productPrice": 4260,
     "byproductPrice": 55,
@@ -6542,6 +11106,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "猴子崽",
     "house": "shed",
     "originalLevel": 6,
+    "isVip": false,
     "purchasePrice": 4000,
     "productPrice": 5260,
     "byproductPrice": 58,
@@ -6563,6 +11128,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "袋鼠崽",
     "house": "shed",
     "originalLevel": 8,
+    "isVip": false,
     "purchasePrice": 8000,
     "productPrice": 9860,
     "byproductPrice": 64,
@@ -6584,6 +11150,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "梅花鹿崽",
     "house": "shed",
     "originalLevel": 11,
+    "isVip": false,
     "purchasePrice": 12000,
     "productPrice": 13330,
     "byproductPrice": 70,
@@ -6605,6 +11172,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "羚羊崽",
     "house": "shed",
     "originalLevel": 15,
+    "isVip": false,
     "purchasePrice": 13470,
     "productPrice": 15020,
     "byproductPrice": 77,
@@ -6626,6 +11194,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸵鸟蛋",
     "house": "shed",
     "originalLevel": 19,
+    "isVip": false,
     "purchasePrice": 14430,
     "productPrice": 17610,
     "byproductPrice": 79,
@@ -6647,6 +11216,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "浣熊崽",
     "house": "shed",
     "originalLevel": 23,
+    "isVip": false,
     "purchasePrice": 15940,
     "productPrice": 18120,
     "byproductPrice": 73,
@@ -6668,6 +11238,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "长颈鹿崽",
     "house": "shed",
     "originalLevel": 16,
+    "isVip": false,
     "purchasePrice": 13630,
     "productPrice": 15110,
     "byproductPrice": 77,
@@ -6689,6 +11260,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "丹顶鹤崽",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -6710,6 +11282,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "红宝石",
     "house": "shed",
     "originalLevel": 50,
+    "isVip": false,
     "purchasePrice": 30000,
     "productPrice": 32000,
     "byproductPrice": 100,
@@ -6731,6 +11304,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "双峰驼崽",
     "house": "shed",
     "originalLevel": 26,
+    "isVip": false,
     "purchasePrice": 16450,
     "productPrice": 18660,
     "byproductPrice": 76,
@@ -6752,6 +11326,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "犀牛崽",
     "house": "shed",
     "originalLevel": 27,
+    "isVip": false,
     "purchasePrice": 16780,
     "productPrice": 18880,
     "byproductPrice": 77,
@@ -6773,6 +11348,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "猩猩崽",
     "house": "shed",
     "originalLevel": 29,
+    "isVip": false,
     "purchasePrice": 17990,
     "productPrice": 18930,
     "byproductPrice": 79,
@@ -6794,6 +11370,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "河马崽",
     "house": "shed",
     "originalLevel": 30,
+    "isVip": false,
     "purchasePrice": 18280,
     "productPrice": 18950,
     "byproductPrice": 80,
@@ -6815,6 +11392,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "火烈鸟崽",
     "house": "shed",
     "originalLevel": 31,
+    "isVip": false,
     "purchasePrice": 18290,
     "productPrice": 19090,
     "byproductPrice": 81,
@@ -6836,6 +11414,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "牦牛毛",
     "house": "shed",
     "originalLevel": 20,
+    "isVip": false,
     "purchasePrice": 14860,
     "productPrice": 17890,
     "byproductPrice": 73,
@@ -6857,6 +11436,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "喜马拉雅麝",
     "house": "shed",
     "originalLevel": 35,
+    "isVip": false,
     "purchasePrice": 18700,
     "productPrice": 19350,
     "byproductPrice": 85,
@@ -6878,6 +11458,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "汗血宝马崽",
     "house": "shed",
     "originalLevel": 37,
+    "isVip": false,
     "purchasePrice": 18780,
     "productPrice": 19480,
     "byproductPrice": 88,
@@ -6899,6 +11480,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "驴仔",
     "house": "shed",
     "originalLevel": 4,
+    "isVip": false,
     "purchasePrice": 1200,
     "productPrice": 2200,
     "byproductPrice": 20,
@@ -6920,6 +11502,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "斑马崽",
     "house": "shed",
     "originalLevel": 33,
+    "isVip": false,
     "purchasePrice": 18570,
     "productPrice": 19150,
     "byproductPrice": 82,
@@ -6941,6 +11524,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金丝猴崽",
     "house": "shed",
     "originalLevel": 38,
+    "isVip": false,
     "purchasePrice": 18800,
     "productPrice": 19600,
     "byproductPrice": 89,
@@ -6962,6 +11546,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "海狗崽",
     "house": "shed",
     "originalLevel": 41,
+    "isVip": false,
     "purchasePrice": 19190,
     "productPrice": 19960,
     "byproductPrice": 92,
@@ -6983,6 +11568,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "大象崽",
     "house": "shed",
     "originalLevel": 43,
+    "isVip": false,
     "purchasePrice": 19350,
     "productPrice": 21000,
     "byproductPrice": 94,
@@ -7004,6 +11590,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "中美貘崽",
     "house": "shed",
     "originalLevel": 39,
+    "isVip": false,
     "purchasePrice": 18900,
     "productPrice": 19750,
     "byproductPrice": 90,
@@ -7025,6 +11612,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金宝石",
     "house": "shed",
     "originalLevel": 60,
+    "isVip": false,
     "purchasePrice": 38000,
     "productPrice": 40000,
     "byproductPrice": 135,
@@ -7046,6 +11634,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "黄金宝宝崽",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11200,
     "productPrice": 12100,
     "byproductPrice": 69,
@@ -7067,6 +11656,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "乐乐崽",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11300,
     "productPrice": 12150,
     "byproductPrice": 70,
@@ -7088,6 +11678,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "营养舒化奶",
     "house": "shed",
     "originalLevel": 2,
+    "isVip": false,
     "purchasePrice": 2500,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -7109,6 +11700,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "蓝宝石",
     "house": "shed",
     "originalLevel": 70,
+    "isVip": false,
     "purchasePrice": 37000,
     "productPrice": 38000,
     "byproductPrice": 120,
@@ -7130,6 +11722,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "羊驼崽",
     "house": "shed",
     "originalLevel": 45,
+    "isVip": false,
     "purchasePrice": 19550,
     "productPrice": 21140,
     "byproductPrice": 96,
@@ -7151,6 +11744,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "爱心果",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 20550,
     "productPrice": 12100,
     "byproductPrice": 69,
@@ -7172,6 +11766,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "肉羊崽",
     "house": "shed",
     "originalLevel": 5,
+    "isVip": false,
     "purchasePrice": 3800,
     "productPrice": 125,
     "byproductPrice": 57,
@@ -7193,6 +11788,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "肉牛崽",
     "house": "shed",
     "originalLevel": 6,
+    "isVip": false,
     "purchasePrice": 4300,
     "productPrice": 125,
     "byproductPrice": 59,
@@ -7214,6 +11810,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "短尾猫崽",
     "house": "shed",
     "originalLevel": 31,
+    "isVip": false,
     "purchasePrice": 18290,
     "productPrice": 19090,
     "byproductPrice": 81,
@@ -7235,6 +11832,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "流光溢彩",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11500,
     "productPrice": 12190,
     "byproductPrice": 70,
@@ -7256,6 +11854,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鸿福灯笼",
     "house": "shed",
     "originalLevel": 68,
+    "isVip": false,
     "purchasePrice": 36500,
     "productPrice": 50000,
     "byproductPrice": 130,
@@ -7277,6 +11876,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "火焰石",
     "house": "shed",
     "originalLevel": 52,
+    "isVip": false,
     "purchasePrice": 42000,
     "productPrice": 45000,
     "byproductPrice": 141,
@@ -7298,6 +11898,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "狐猴崽",
     "house": "shed",
     "originalLevel": 48,
+    "isVip": false,
     "purchasePrice": 19800,
     "productPrice": 21600,
     "byproductPrice": 99,
@@ -7319,6 +11920,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "奥卡狓崽",
     "house": "shed",
     "originalLevel": 49,
+    "isVip": false,
     "purchasePrice": 20000,
     "productPrice": 21700,
     "byproductPrice": 100,
@@ -7340,6 +11942,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "瓜瓜果",
     "house": "shed",
     "originalLevel": 18,
+    "isVip": false,
     "purchasePrice": 14250,
     "productPrice": 63,
     "byproductPrice": 63,
@@ -7361,6 +11964,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "辣辣果",
     "house": "shed",
     "originalLevel": 14,
+    "isVip": false,
     "purchasePrice": 13200,
     "productPrice": 14910,
     "byproductPrice": 73,
@@ -7382,6 +11986,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "赤宝石",
     "house": "shed",
     "originalLevel": 56,
+    "isVip": false,
     "purchasePrice": 46000,
     "productPrice": 54000,
     "byproductPrice": 145,
@@ -7403,6 +12008,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "绿松宝石",
     "house": "shed",
     "originalLevel": 58,
+    "isVip": false,
     "purchasePrice": 48000,
     "productPrice": 56000,
     "byproductPrice": 147,
@@ -7424,6 +12030,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金玛瑙石",
     "house": "shed",
     "originalLevel": 50,
+    "isVip": false,
     "purchasePrice": 900,
     "productPrice": 48000,
     "byproductPrice": 136,
@@ -7445,6 +12052,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "白鹤崽",
     "house": "shed",
     "originalLevel": 32,
+    "isVip": false,
     "purchasePrice": 37440,
     "productPrice": 19100,
     "byproductPrice": 86,
@@ -7466,6 +12074,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "鲸头鹳崽",
     "house": "shed",
     "originalLevel": 35,
+    "isVip": false,
     "purchasePrice": 18700,
     "productPrice": 19350,
     "byproductPrice": 85,
@@ -7487,6 +12096,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "金松宝石",
     "house": "shed",
     "originalLevel": 54,
+    "isVip": false,
     "purchasePrice": 44000,
     "productPrice": 49000,
     "byproductPrice": 143,
@@ -7508,6 +12118,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "葫芦小妖",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18260,
     "byproductPrice": 72,
@@ -7529,6 +12140,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "萝卜小妖",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16220,
     "productPrice": 18350,
     "byproductPrice": 70,
@@ -7550,6 +12162,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "羊宝宝",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 11500,
     "productPrice": 12190,
     "byproductPrice": 70,
@@ -7571,6 +12184,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "牛宝宝",
     "house": "shed",
     "originalLevel": 20,
+    "isVip": false,
     "purchasePrice": 14860,
     "productPrice": 17890,
     "byproductPrice": 73,
@@ -7592,6 +12206,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "紫魔菇",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16220,
     "productPrice": 18260,
     "byproductPrice": 70,
@@ -7613,6 +12228,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "食人花妖仔",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16680,
     "productPrice": 18650,
     "byproductPrice": 75,
@@ -7634,6 +12250,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "树小妖",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 72,
@@ -7655,6 +12272,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "向日葵妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16330,
     "productPrice": 18250,
     "byproductPrice": 73,
@@ -7676,6 +12294,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "洋葱头小妖",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16680,
     "productPrice": 18650,
     "byproductPrice": 75,
@@ -7697,6 +12316,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "蓝晶石",
     "house": "shed",
     "originalLevel": 50,
+    "isVip": false,
     "purchasePrice": 900,
     "productPrice": 48000,
     "byproductPrice": 136,
@@ -7718,6 +12338,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "白晶石",
     "house": "shed",
     "originalLevel": 63,
+    "isVip": false,
     "purchasePrice": 40000,
     "productPrice": 46000,
     "byproductPrice": 140,
@@ -7739,6 +12360,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "玉狮佩",
     "house": "shed",
     "originalLevel": 63,
+    "isVip": false,
     "purchasePrice": 40000,
     "productPrice": 46000,
     "byproductPrice": 140,
@@ -7760,6 +12382,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "火龙妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -7781,6 +12404,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "榴莲妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -7802,6 +12426,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "椰子妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": false,
     "purchasePrice": 16330,
     "productPrice": 18250,
     "byproductPrice": 73,
@@ -7823,6 +12448,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "闪晶石",
     "house": "shed",
     "originalLevel": 60,
+    "isVip": false,
     "purchasePrice": 39000,
     "productPrice": 42000,
     "byproductPrice": 136,
@@ -7844,6 +12470,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "马蹄莲妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -7865,6 +12492,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "玫瑰妖果",
     "house": "shed",
     "originalLevel": 25,
+    "isVip": true,
     "purchasePrice": 16430,
     "productPrice": 18350,
     "byproductPrice": 75,
@@ -7886,6 +12514,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "月光马羽",
     "house": "shed",
     "originalLevel": 57,
+    "isVip": false,
     "purchasePrice": 47000,
     "productPrice": 50000,
     "byproductPrice": 146,
@@ -7907,6 +12536,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "爱情符",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -7928,6 +12558,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "财富符",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -7949,6 +12580,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "灵性符",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -7970,6 +12602,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "事业符",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -7991,6 +12624,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "学业符",
     "house": "shed",
     "originalLevel": 10,
+    "isVip": false,
     "purchasePrice": 2000,
     "productPrice": 3000,
     "byproductPrice": 30,
@@ -8007,11 +12641,34 @@ export const MANOR_V7_ANIMALS = [
     "lifecycleSeconds": 226800
   },
   {
+    "id": 1598,
+    "name": "巨角龙",
+    "byproductName": "巨角龙崽",
+    "house": "shed",
+    "originalLevel": 33,
+    "isVip": false,
+    "purchasePrice": 18500,
+    "productPrice": 20000,
+    "byproductPrice": 90,
+    "animalHarvestExperience": 20,
+    "byproductHarvestExperience": 12,
+    "baseYield": 13,
+    "consume": 3,
+    "cubSeconds": 18000,
+    "maturitySeconds": 36000,
+    "productionSeconds": 291600,
+    "productionCycleSeconds": 32400,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 32385,
+    "lifecycleSeconds": 327600
+  },
+  {
     "id": 1599,
     "name": "爱心驴",
     "byproductName": "情果",
     "house": "shed",
     "originalLevel": 5,
+    "isVip": false,
     "purchasePrice": 1999,
     "productPrice": 39999,
     "byproductPrice": 199,
@@ -8028,11 +12685,56 @@ export const MANOR_V7_ANIMALS = [
     "lifecycleSeconds": 273600
   },
   {
+    "id": 1600,
+    "name": "冰龙",
+    "byproductName": "冰龙崽",
+    "house": "shed",
+    "originalLevel": 47,
+    "isVip": false,
+    "purchasePrice": 19500,
+    "productPrice": 27000,
+    "byproductPrice": 130,
+    "animalHarvestExperience": 20,
+    "byproductHarvestExperience": 12,
+    "baseYield": 18,
+    "consume": 3,
+    "cubSeconds": 36000,
+    "maturitySeconds": 72000,
+    "productionSeconds": 360000,
+    "productionCycleSeconds": 36000,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 35985,
+    "lifecycleSeconds": 432000
+  },
+  {
+    "id": 1601,
+    "name": "暴龙",
+    "byproductName": "暴龙崽",
+    "house": "shed",
+    "originalLevel": 39,
+    "isVip": false,
+    "purchasePrice": 18900,
+    "productPrice": 25000,
+    "byproductPrice": 110,
+    "animalHarvestExperience": 20,
+    "byproductHarvestExperience": 12,
+    "baseYield": 15,
+    "consume": 3,
+    "cubSeconds": 18000,
+    "maturitySeconds": 36000,
+    "productionSeconds": 360000,
+    "productionCycleSeconds": 36000,
+    "productionActionSeconds": 15,
+    "productionCooldownSeconds": 35985,
+    "lifecycleSeconds": 396000
+  },
+  {
     "id": 6291,
     "name": "长颈龙",
     "byproductName": "长颈龙宝宝",
     "house": "shed",
     "originalLevel": 56,
+    "isVip": false,
     "purchasePrice": 46000,
     "productPrice": 54000,
     "byproductPrice": 145,
@@ -8054,6 +12756,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "熊猫宝宝",
     "house": "shed",
     "originalLevel": 59,
+    "isVip": false,
     "purchasePrice": 50000,
     "productPrice": 58000,
     "byproductPrice": 149,
@@ -8075,6 +12778,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "五星黄钻",
     "house": "shed",
     "originalLevel": 80,
+    "isVip": false,
     "purchasePrice": 430000,
     "productPrice": 60000,
     "byproductPrice": 160,
@@ -8096,6 +12800,7 @@ export const MANOR_V7_ANIMALS = [
     "byproductName": "老虎崽",
     "house": "shed",
     "originalLevel": 51,
+    "isVip": false,
     "purchasePrice": 39150,
     "productPrice": 46980,
     "byproductPrice": 145,
@@ -8122,6 +12827,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 400,
     "premiumPrice": 0,
     "effectSeconds": 3600,
+    "isVip": false,
     "available": true
   },
   {
@@ -8132,6 +12838,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 1000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8142,6 +12849,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 10,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8152,6 +12860,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 4,
     "effectSeconds": 7200,
+    "isVip": false,
     "available": true
   },
   {
@@ -8162,6 +12871,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 10,
     "effectSeconds": 9000,
+    "isVip": false,
     "available": true
   },
   {
@@ -8172,6 +12882,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 8000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8182,6 +12893,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 15,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8192,6 +12904,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 10,
     "effectSeconds": 18000,
+    "isVip": false,
     "available": true
   },
   {
@@ -8202,6 +12915,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 19800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8212,6 +12926,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 5000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8222,6 +12937,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8232,6 +12948,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8242,6 +12959,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 10000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8252,6 +12970,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 500,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8262,6 +12981,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 24,
     "effectSeconds": 36000,
+    "isVip": false,
     "available": true
   },
   {
@@ -8272,6 +12992,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 12000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8282,6 +13003,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 800,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8292,6 +13014,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 15000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8302,6 +13025,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 1200,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8312,6 +13036,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8322,6 +13047,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 20000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8332,6 +13058,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8342,6 +13069,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 100,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8352,6 +13080,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 40,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8362,6 +13091,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8372,6 +13102,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 45,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8382,6 +13113,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8392,6 +13124,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 40,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8402,6 +13135,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 50,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8412,6 +13146,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 40,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8422,6 +13157,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 40,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8432,6 +13168,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 5,
     "effectSeconds": 3600,
+    "isVip": false,
     "available": true
   },
   {
@@ -8442,6 +13179,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 12,
     "effectSeconds": 9000,
+    "isVip": false,
     "available": true
   },
   {
@@ -8452,6 +13190,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 24,
     "effectSeconds": 19800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8462,6 +13201,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 36,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8472,6 +13212,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 40,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8482,6 +13223,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 55000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8492,6 +13234,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 50000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8502,6 +13245,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 25000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8512,6 +13256,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 25000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8522,6 +13267,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 25000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8532,6 +13278,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8542,6 +13289,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 20000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8552,6 +13300,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8562,6 +13311,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8572,6 +13322,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8582,6 +13333,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 4,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8592,6 +13344,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8602,6 +13355,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 50,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8612,6 +13366,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 100,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8622,6 +13377,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 150,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8632,6 +13388,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 60,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8642,6 +13399,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 120,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8652,6 +13410,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 180,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8662,6 +13421,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 10,
     "effectSeconds": 10800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8672,6 +13432,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 10000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8682,6 +13443,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 10,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8692,6 +13454,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8702,6 +13465,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 15000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8712,6 +13476,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 15,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8722,6 +13487,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 43200,
+    "isVip": false,
     "available": true
   },
   {
@@ -8732,6 +13498,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 15000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8742,6 +13509,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8752,6 +13520,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 4,
     "effectSeconds": 3600,
+    "isVip": false,
     "available": true
   },
   {
@@ -8762,6 +13531,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 18000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8772,6 +13542,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 500,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8782,6 +13553,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 20000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8792,6 +13564,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 800,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8802,6 +13575,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 19000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8812,6 +13586,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 1200,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8822,6 +13597,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 19000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8832,6 +13608,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 30,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8842,6 +13619,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 21000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8852,6 +13630,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 23000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8862,6 +13641,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 25000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8872,6 +13652,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 50,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8882,6 +13663,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 100,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8892,6 +13674,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 50,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8902,6 +13685,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 100,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8912,6 +13696,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8922,6 +13707,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "effectSeconds": 0,
+    "isVip": false,
     "available": true
   },
   {
@@ -8932,6 +13718,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 5,
     "effectSeconds": 3600,
+    "isVip": false,
     "available": true
   },
   {
@@ -8942,6 +13729,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 12,
     "effectSeconds": 10800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8952,6 +13740,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 23,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8962,6 +13751,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 36,
     "effectSeconds": 43200,
+    "isVip": false,
     "available": true
   },
   {
@@ -8972,6 +13762,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 5,
     "effectSeconds": 3600,
+    "isVip": false,
     "available": true
   },
   {
@@ -8982,6 +13773,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 12,
     "effectSeconds": 10800,
+    "isVip": false,
     "available": true
   },
   {
@@ -8992,6 +13784,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 23,
     "effectSeconds": 28800,
+    "isVip": false,
     "available": true
   },
   {
@@ -9002,6 +13795,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 36,
     "effectSeconds": 43200,
+    "isVip": false,
     "available": true
   },
   {
@@ -9012,6 +13806,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 4,
     "effectSeconds": 86400,
+    "isVip": false,
     "available": true
   },
   {
@@ -9022,6 +13817,7 @@ export const MANOR_V7_TOOLS = [
     "coinPrice": 0,
     "premiumPrice": 20,
     "effectSeconds": 604800,
+    "isVip": false,
     "available": true
   }
 ] as const satisfies readonly ManorV7ToolDefinition[];
@@ -14837,6 +19633,150 @@ export const MANOR_V7_DECORATIONS = [
   },
   {
     "area": "farm",
+    "id": 900,
+    "name": "时间科技\\t",
+    "setName": "时间科技\\t",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 901,
+    "name": "时光小屋",
+    "setName": "时光小屋",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 500,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 902,
+    "name": "科技栅栏",
+    "setName": "科技栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 903,
+    "name": "科技小窝",
+    "setName": "科技小窝",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 904,
+    "name": "桃园三结义",
+    "setName": "桃园三结义",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 100,
+    "experience": 800,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 905,
+    "name": "桃园结义台",
+    "setName": "桃园结义台",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 83,
+    "experience": 660,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 906,
+    "name": "桃园栅栏",
+    "setName": "桃园栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 38,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 907,
+    "name": "结义酒坛",
+    "setName": "结义酒坛",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 28,
+    "experience": 220,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 908,
+    "name": "招财猫",
+    "setName": "招财猫",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 909,
+    "name": "招财小屋",
+    "setName": "招财小屋",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 600,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 910,
+    "name": "护财栅栏",
+    "setName": "护财栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 911,
+    "name": "守财狗窝",
+    "setName": "守财狗窝",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
     "id": 912,
     "name": "神秘森林",
     "setName": "神秘森林",
@@ -14881,6 +19821,198 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 916,
+    "name": "圣诞工厂",
+    "setName": "圣诞工厂",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 917,
+    "name": "礼物小屋",
+    "setName": "礼物小屋",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 600,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 918,
+    "name": "圣诞小栅栏",
+    "setName": "圣诞小栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 919,
+    "name": "礼物盒狗舍",
+    "setName": "礼物盒狗舍",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 920,
+    "name": "新年快乐",
+    "setName": "新年快乐",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 921,
+    "name": "玉龙客栈",
+    "setName": "玉龙客栈",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 600,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 922,
+    "name": "雕刻栅栏",
+    "setName": "雕刻栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 923,
+    "name": "红鼓狗窝",
+    "setName": "红鼓狗窝",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 924,
+    "name": "瑞雪迎春",
+    "setName": "瑞雪迎春",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 925,
+    "name": "雪人屋",
+    "setName": "雪人屋",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 600,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 926,
+    "name": "迎春栅栏",
+    "setName": "迎春栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 927,
+    "name": "爆竹小窝",
+    "setName": "爆竹小窝",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 928,
+    "name": "云海深处",
+    "setName": "云海深处",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 90,
+    "experience": 720,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 929,
+    "name": "宫廷小楼",
+    "setName": "宫廷小楼",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 75,
+    "experience": 600,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 930,
+    "name": "宫廷栅栏",
+    "setName": "宫廷栅栏",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 35,
+    "experience": 300,
+    "validSeconds": 2678400
+  },
+  {
+    "area": "farm",
+    "id": 931,
+    "name": "宫廷小窝",
+    "setName": "宫廷小窝",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 240,
     "validSeconds": 2678400
   },
   {

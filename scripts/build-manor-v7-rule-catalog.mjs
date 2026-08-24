@@ -102,7 +102,11 @@ const crops = entries(config.crops).map(({ key, body }) => {
   const hidden = hiddenCrops.has(id);
   const vipOnly = field(body, "isvip", "0") === "1";
   const assetStatus = foundFiles.length === 0 ? "missing" : foundFiles.length === expectedFiles.length ? "complete-six-files" : "partial";
-  const integrationPolicy = hidden ? "excluded-hidden" : vipOnly ? "excluded-monetization" : assetStatus === "complete-six-files" ? "core-candidate" : "blocked-assets";
+  const integrationPolicy = hidden
+    ? "excluded-hidden"
+    : assetStatus === "complete-six-files" || (vipOnly && foundFiles.length >= 4)
+      ? "core-candidate"
+      : "blocked-assets";
   return {
     source_id: id,
     name: field(body, "cName"),
@@ -160,6 +164,7 @@ const animals = entries(config.animals).map(({ key, body }) => {
     production_seconds: Number(field(body, "procreation", "0")),
     production_cycle_seconds: Number(field(body, "cycle", "0")),
     production_action_seconds: Number(field(body, "productime", "0")),
+    vip_only: field(body, "isvip", "0") === "1",
     hidden,
     has_icon: animalIconFiles.has(`a${id}.png`),
     has_product_asset: animalProductFiles.has(`p${id}.swf`),
@@ -219,7 +224,7 @@ function decorations(path, area, hiddenSet) {
       experience: Number(field(body, "exp", "0")),
       valid_seconds: Number(field(body, "itemValidTime", "0")),
       hidden,
-      integration_policy: hidden ? "excluded-hidden" : coinPrice <= 0 && premiumPrice > 0 ? "excluded-monetization" : "deferred-cosmetic",
+      integration_policy: hidden ? "excluded-hidden" : "deferred-cosmetic",
     };
   });
 }
@@ -239,7 +244,7 @@ function tools(path, area) {
       effect_seconds: Number(field(body, "effect", "0")),
       vip_only: vipOnly,
       available: field(body, "status", "1") !== "0",
-      integration_policy: vipOnly ? "excluded-monetization" : "core-candidate",
+      integration_policy: "core-candidate",
     };
   });
 }

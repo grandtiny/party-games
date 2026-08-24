@@ -2,7 +2,7 @@
 "source_version","7.0 Beta1 Build 20120209.1000"
 "config_bundle_sha256","5499669caf6dc73ebf881e21bb03b5984a67e09f4fc1c5094b09420007b7f22d"
 "crop_rows","589"
-"crop_core_candidates","219"
+"crop_core_candidates","303"
 "animal_rows","178"
 "animal_core_candidates","153"
 "fish_rows","17"

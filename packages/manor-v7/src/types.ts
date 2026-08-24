@@ -29,6 +29,8 @@ export interface ManorV7CropDefinition {
   harvestCycles: number;
   landRequirement: number;
   isFlower: boolean;
+  isHidden: boolean;
+  isVip: boolean;
   stageSeconds: readonly number[];
 }
 
@@ -38,6 +40,7 @@ export interface ManorV7AnimalDefinition {
   byproductName: string;
   house: ManorV7AnimalHouse;
   originalLevel: number;
+  isVip: boolean;
   purchasePrice: number;
   productPrice: number;
   byproductPrice: number;
@@ -62,6 +65,7 @@ export interface ManorV7ToolDefinition {
   coinPrice: number;
   premiumPrice: number;
   effectSeconds: number;
+  isVip: boolean;
   available: boolean;
 }
 
