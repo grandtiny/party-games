@@ -485,6 +485,9 @@ export type ManorV7Action =
 
 export type ManorV7FriendAction =
   | { type: "water"; landId: number }
+  | { type: "generate-seasonal-animal-drop" }
+  | { type: "adopt-seasonal-animal"; animalId: number }
+  | { type: "offer-halloween-cookie" }
   | { type: "remove-weeds"; landId: number }
   | { type: "remove-pests"; landId: number }
   | { type: "steal-crop"; landId: number }

@@ -115,6 +115,81 @@ describe("QQ Farm V7 domain", () => {
       .toThrow("今日春节礼包已经领取");
   });
 
+  it("adopts all three seasonal animals with the original atomic costs", () => {
+    const now = 7_000;
+    let visitor = createManorV7State(now);
+    let owner = createManorV7State(now);
+    visitor.coins = 3_000;
+    visitor.pasture.wild.moralExperience = 200;
+    visitor.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 15 }];
+    owner.seasonal.animalDrops = [
+      { serial: 1, animalId: 1085, createdAt: now },
+      { serial: 2, animalId: 1086, createdAt: now },
+      { serial: 3, animalId: 1593, createdAt: now }
+    ];
+    owner.seasonal.nextAnimalDropSerial = 4;
+
+    for (const animalId of [1085, 1086, 1593]) {
+      const result = transitionManorV7FriendStates(
+        visitor,
+        owner,
+        "visitor",
+        "访客",
+        "owner",
+        "主人",
+        { type: "adopt-seasonal-animal", animalId },
+        now
+      );
+      visitor = result.visitor;
+      owner = result.owner;
+    }
+
+    expect(visitor.coins).toBe(1_000);
+    expect(inventoryQuantity(visitor.pasture.wild.crystalInventory, 1)).toBe(0);
+    expect(visitor.pasture.wild.moralExperience).toBe(200);
+    expect(visitor.pasture.cubInventory).toEqual(expect.arrayContaining([
+      { sourceId: 1085, quantity: 1 },
+      { sourceId: 1086, quantity: 1 },
+      { sourceId: 1593, quantity: 1 }
+    ]));
+    expect(owner.seasonal.animalDrops).toEqual([]);
+  });
+
+  it("offers one cookie per friend and returns one or two cookie sprites", () => {
+    const now = 7_500;
+    const visitor = createManorV7State(now);
+    const owner = createManorV7State(now);
+    visitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 1 }];
+
+    const result = transitionManorV7FriendStates(
+      visitor,
+      owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-cookie" },
+      now
+    );
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeGreaterThanOrEqual(1);
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeLessThanOrEqual(2);
+    expect(result.visitor.seasonal.cookieOfferingsRemaining).toBe(MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT - 1);
+    expect(result.owner.seasonal).toMatchObject({
+      halloweenCookies: 1,
+      cookieOfferedByUserIds: ["visitor"]
+    });
+    expect(() => transitionManorV7FriendStates(
+      result.visitor,
+      result.owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-cookie" },
+      now
+    )).toThrow("今天已经给这位好友投放过饼干");
+  });
+
   it("keeps activity rewards out of ordinary purchases", () => {
     const initial = createManorV7State(5_500);
     initial.coins = 1_000_000;

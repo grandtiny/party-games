@@ -5,6 +5,8 @@ import {
   drawManorV7Random,
   MANOR_V7_GRASS_CAPACITY,
   MANOR_V7_GRASS_PRICE,
+  MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT,
+  MANOR_V7_SEASONAL_ANIMAL_IDS,
   manorV7EffectiveYield,
   setInventoryQuantity,
   validateManorV7State,
@@ -41,6 +43,75 @@ export function transitionManorV7FriendStates(
   let message: string;
 
   if (owner.friendFilterUserIds.includes(visitorUserId)) throw new Error("对方暂未允许你进入庄园");
+
+  if (action.type === "generate-seasonal-animal-drop") {
+    if (owner.seasonal.animalDrops.length < MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT) {
+      const animalId = MANOR_V7_SEASONAL_ANIMAL_IDS[
+        Math.floor(drawManorV7Random(owner) * MANOR_V7_SEASONAL_ANIMAL_IDS.length)
+      ] ?? MANOR_V7_SEASONAL_ANIMAL_IDS[0];
+      owner.seasonal.animalDrops.push({
+        serial: owner.seasonal.nextAnimalDropSerial,
+        animalId,
+        createdAt: now
+      });
+      owner.seasonal.nextAnimalDropSerial += 1;
+      message = `在${ownerDisplayName}的牧场发现了${manorV7Animal(animalId).name}`;
+      addManorV7Activity(owner, "pasture", `${visitorDisplayName}来访时发现了${manorV7Animal(animalId).name}`, now);
+    } else {
+      message = `${ownerDisplayName}的活动动物位置已满`;
+    }
+    return finish(currentVisitor, currentOwner, visitor, owner, message, now);
+  }
+
+  if (action.type === "adopt-seasonal-animal") {
+    const dropIndex = owner.seasonal.animalDrops.findIndex((drop) => drop.animalId === action.animalId);
+    const drop = owner.seasonal.animalDrops[dropIndex];
+    if (!drop) throw new Error("下手慢了，这只动物已经被领养");
+    if (drop.animalId === 1085) {
+      if (visitor.coins < 2_000) throw new Error("领养苹果酒小兔需要 2000 金币");
+      visitor.coins -= 2_000;
+    } else if (drop.animalId === 1086) {
+      const crystals = inventoryQuantity(visitor.pasture.wild.crystalInventory, 1);
+      if (crystals < 15) throw new Error("领养糖果小松鼠需要 15 个蓝水晶");
+      setInventoryQuantity(visitor.pasture.wild.crystalInventory, 1, crystals - 15);
+    } else {
+      if (visitor.pasture.wild.moralExperience < 200) throw new Error("领养南瓜派小熊需要 200 人品值");
+    }
+    owner.seasonal.animalDrops.splice(dropIndex, 1);
+    setInventoryQuantity(
+      visitor.pasture.cubInventory,
+      drop.animalId,
+      inventoryQuantity(visitor.pasture.cubInventory, drop.animalId) + 1
+    );
+    const animal = manorV7Animal(drop.animalId);
+    message = `从${ownerDisplayName}的牧场领养了${animal.name}`;
+    addManorV7Activity(visitor, "pasture", message, now);
+    addManorV7Activity(owner, "pasture", `${visitorDisplayName}领养了${animal.name}`, now);
+    return finish(currentVisitor, currentOwner, visitor, owner, message, now);
+  }
+
+  if (action.type === "offer-halloween-cookie") {
+    const available = inventoryQuantity(visitor.pasture.cubInventory, 1037);
+    if (available < 1) throw new Error("没有饼干精灵可以投放");
+    if (visitor.seasonal.cookieOfferingsRemaining < 1) throw new Error("今天已经投放饼干 10 次");
+    if (owner.seasonal.cookieOfferedByUserIds.includes(visitorUserId)) {
+      throw new Error("今天已经给这位好友投放过饼干");
+    }
+    setInventoryQuantity(visitor.pasture.cubInventory, 1037, available - 1);
+    const returned = 1 + Math.floor(drawManorV7Random(visitor) * 2);
+    setInventoryQuantity(
+      visitor.pasture.cubInventory,
+      1037,
+      inventoryQuantity(visitor.pasture.cubInventory, 1037) + returned
+    );
+    visitor.seasonal.cookieOfferingsRemaining -= 1;
+    owner.seasonal.halloweenCookies += 1;
+    owner.seasonal.cookieOfferedByUserIds.push(visitorUserId);
+    message = `向${ownerDisplayName}投放了饼干，返还 ${returned} 只饼干精灵`;
+    addManorV7Activity(visitor, "pasture", message, now);
+    addManorV7Activity(owner, "pasture", `${visitorDisplayName}向活动盒投放了 1 个饼干`, now);
+    return finish(currentVisitor, currentOwner, visitor, owner, message, now);
+  }
 
   if (action.type === "send-flower") {
     const flower = manorV7Flower(action.flowerId);
