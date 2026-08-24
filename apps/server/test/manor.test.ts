@@ -1,9 +1,12 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { brotliCompressSync } from "node:zlib";
 import {
   MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  MANOR_V7_LOVESDAY_ANIMAL_ID,
+  MANOR_V7_LOVESDAY_CROP_ID,
+  MANOR_V7_LOVESDAY_SALE_MULTIPLIER,
   manorV7Animal,
   manorV7Crop,
   manorV7DayKey,
@@ -16,6 +19,21 @@ import { createApp } from "../src/app.js";
 import { stableFlashUserId } from "../src/manor-v7-flash-adapter.js";
 
 describe("QQ Farm V7 account persistence", () => {
+  it("keeps the locally completable Lovesday modules inside an active time window", () => {
+    const farmConfig = readFileSync(
+      new URL("../../web/public/assets/manor/v7-swf/config/addon_v_20120209.xml", import.meta.url),
+      "utf8"
+    );
+    const pastureConfig = readFileSync(
+      new URL("../../web/public/assets/manor/v7-swf/config/mcini_main_v_20120209.xml", import.meta.url),
+      "utf8"
+    );
+    expect(farmConfig).toContain("<missionBeginTime>2000-01-01 00:00:00</missionBeginTime>");
+    expect(farmConfig).toContain("<missionEndTime>2099-12-31 23:59:59</missionEndTime>");
+    expect(pastureConfig).toContain('name="lovesday"');
+    expect(pastureConfig).toContain('start="1/1/2000 00:00:00" end="12/31/2099 23:59:59"');
+  });
+
   it("reports unsupported Flash protocols once without request or account data", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-protocol-monitor-test-"));
     const events: Array<{ area: string; module: string; action: string | null }> = [];
@@ -666,6 +684,80 @@ describe("QQ Farm V7 account persistence", () => {
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
         coins: 100 + revenue,
         pasture: { productInventory: [], harvestedAnimalInventory: [] }
+      });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps Lovesday shop prices and 99-item Flash sale rewards consistent", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-lovesday-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Farm V7 state missing before Lovesday test");
+      const stocked: ManorV7State = structuredClone(current);
+      stocked.coins = 1_000;
+      stocked.farmExperience = manorV7ExperienceForLevel(5);
+      stocked.farm.produceInventory = [{ sourceId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 197 }];
+      stocked.pasture.productInventory = [{ sourceId: MANOR_V7_LOVESDAY_ANIMAL_ID, quantity: 197 }];
+      Object.assign(stocked.tasks.find((task) => task.key === "sell")!, {
+        progress: 10,
+        completed: true,
+        claimed: true
+      });
+      stocked.revision += 1;
+      stocked.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, stocked);
+
+      const seedShop = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=repertory&act=getSeedInfo",
+        headers: { cookie: owner.cookie }
+      });
+      expect(seedShop.statusCode, seedShop.body).toBe(200);
+      expect(seedShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: MANOR_V7_LOVESDAY_CROP_ID, price: 99, sale: 99 })
+      ]));
+
+      const produce = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=repertory&act=getUserCrop",
+        headers: { cookie: owner.cookie }
+      });
+      expect(produce.statusCode, produce.body).toBe(200);
+      expect(produce.json().crop).toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: MANOR_V7_LOVESDAY_CROP_ID, amount: 197, price: 99 })
+      ]));
+
+      const crop = manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID);
+      const soldCrop = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=repertory&act=sale",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `cId=${crop.id}&number=99`
+      });
+      const cropRevenue = crop.salePrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER;
+      expect(soldCrop.statusCode, soldCrop.body).toBe(200);
+      expect(soldCrop.json()).toMatchObject({ cId: crop.id, code: 1, money: cropRevenue });
+
+      const animal = manorV7Animal(MANOR_V7_LOVESDAY_ANIMAL_ID);
+      const soldProduct = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_sale_product",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `cId=${animal.id}&num=99`
+      });
+      const productRevenue = animal.byproductPrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER;
+      expect(soldProduct.statusCode, soldProduct.body).toBe(200);
+      expect(soldProduct.json()).toMatchObject({ cId: animal.id, money: productRevenue });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 1_000 + cropRevenue + productRevenue,
+        farm: { produceInventory: [{ sourceId: crop.id, quantity: 98 }] },
+        pasture: { productInventory: [{ sourceId: animal.id, quantity: 98 }] }
       });
     } finally {
       await instance.app.close();

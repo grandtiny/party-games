@@ -1,6 +1,6 @@
 import {
   MANOR_V7_ANIMALS,
-  MANOR_V7_CROPS,
+  MANOR_V7_CROPS as MANOR_V7_GENERATED_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,
@@ -15,6 +15,16 @@ import type {
   ManorV7LandTier,
   ManorV7ToolDefinition
 } from "./types.js";
+import {
+  manorV7EffectiveCropSalePrice,
+  manorV7EffectiveCropSeedPrice
+} from "./seasonal.js";
+
+export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERATED_CROPS.map((crop) => ({
+  ...crop,
+  seedPrice: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
+  salePrice: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
+}));
 
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
@@ -100,7 +110,6 @@ export function manorV7LandUpgrade(tier: Exclude<ManorV7LandTier, "normal">, upg
 
 export {
   MANOR_V7_ANIMALS,
-  MANOR_V7_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,

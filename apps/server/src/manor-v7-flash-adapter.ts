@@ -17,6 +17,8 @@ import {
   manorV7LevelReward,
   manorV7MaxProductionCount,
   manorV7DailySignInReward,
+  manorV7EffectiveCropSalePrice,
+  manorV7EffectiveCropSeedPrice,
   manorV7PastureGuard,
   manorV7RedeemCode,
   manorV7StreakSignInReward,
@@ -3276,14 +3278,14 @@ function flashSeedShop(view: ManorV7View) {
       cName: crop.name,
       cType: crop.cropType,
       cropExp: crop.experience,
-      expect: crop.baseYield * crop.salePrice * crop.harvestCycles,
+      expect: crop.baseYield * manorV7EffectiveCropSalePrice(crop.id, crop.salePrice) * crop.harvestCycles,
       growthCycle: crop.growthSeconds,
       high_sale: 0,
       maturingTime: crop.harvestCycles,
       output: crop.baseYield,
-      price: crop.isVip ? 0 : crop.seedPrice,
+      price: crop.isVip ? 0 : manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
       ...(crop.isVip ? { isvip: 1 } : {}),
-      sale: crop.salePrice
+      sale: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
     }));
 }
 
@@ -3423,7 +3425,7 @@ function flashProduceInventory(view: ManorV7View) {
         isLock: Number(Boolean(entry.locked)),
         lock: Number(Boolean(entry.locked)),
         level: crop?.originalLevel ?? 0,
-        price: crop?.salePrice ?? 0,
+        price: crop ? manorV7EffectiveCropSalePrice(crop.id, crop.salePrice) : 0,
         type: crop?.cropType ?? 1
       };
     }),

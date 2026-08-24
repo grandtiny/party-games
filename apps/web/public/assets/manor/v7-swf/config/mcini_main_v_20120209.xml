@@ -44,7 +44,7 @@
   <submodule>
     <module name="monthbegin" month="12月" url="__MANOR_ORIGIN__/module/mc/submodule/monthBegin_v_0.swf" shareImg="__MANOR_ORIGIN__/module/icon/monthbegin/feed.png" start="12/12/2011 00:00:00" end="12/19/2011 00:00:00" />
     <module name="firecracker" url="__MANOR_ORIGIN__/module/mc/module/pasturefirecraker2012_v_0.swf" />
-    <module name="lovesday" url="__MANOR_ORIGIN__/module/mc/submodule/Lovesday_v_0.swf" start="2/8/2012 00:00:00" end="2/24/2012 00:00:00" speaking="活动产物可翻9倍哦！" tip="2012“情人节”活动">
+    <module name="lovesday" url="__MANOR_ORIGIN__/module/mc/submodule/Lovesday_v_0.swf" start="1/1/2000 00:00:00" end="12/31/2099 23:59:59" speaking="活动产物可翻9倍哦！" tip="情人节活动">
       <material name="lovesdayNPC" url="__MANOR_ORIGIN__/module/ui/npc/lovesdayNPC_v_0.swf" />
       <material name="lovesdayWindow" url="__MANOR_ORIGIN__/module/ui/npc/lovesdayWin_v_0.swf" />
     </module>

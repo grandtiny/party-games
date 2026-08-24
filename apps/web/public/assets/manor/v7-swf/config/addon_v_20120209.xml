@@ -51,8 +51,8 @@
 	  <NPCSpeaking>活动果实可翻9倍哦！</NPCSpeaking>
 	  <NPCTitle>情人节活动</NPCTitle>
           <WarehouseEmpty>材料仓库空空的，赶紧去好友的农场寻找、驱赶野生动物获得水晶吧！</WarehouseEmpty>       
-	  <missionBeginTime>2012-02-08 00:00:00</missionBeginTime>
-	  <missionEndTime>2012-02-24 00:00:00</missionEndTime>
+	  <missionBeginTime>2000-01-01 00:00:00</missionBeginTime>
+	  <missionEndTime>2099-12-31 23:59:59</missionEndTime>
 
 	  <YearEndSharePic><![CDATA[__MANOR_ORIGIN__/module/ui/icons/yearend/icon2.jpg]]></YearEndSharePic>
 	  	  

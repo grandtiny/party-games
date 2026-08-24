@@ -11,6 +11,9 @@ import {
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
   MANOR_V7_LAND_COUNT,
+  MANOR_V7_LOVESDAY_ANIMAL_ID,
+  MANOR_V7_LOVESDAY_CROP_ID,
+  MANOR_V7_LOVESDAY_SALE_MULTIPLIER,
   MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT,
   MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT,
   MANOR_V7_RESEARCH_RULES,
@@ -583,6 +586,80 @@ describe("QQ Farm V7 domain", () => {
     expect(sold.coins).toBe(50 + manorV7Crop(1).salePrice * 3 + manorV7Crop(6).salePrice * 2);
     expect(sold.farm.produceInventory).toEqual([]);
     expect(sold.activities[0]?.message).toContain("卖出全部");
+  });
+
+  it("uses the original Lovesday prices and 99-item sale multiplier", () => {
+    const now = 2_050;
+    const initial = createManorV7State(now);
+    initial.coins = 1_000;
+    initial.farmExperience = manorV7ExperienceForLevel(5);
+    initial.farm.produceInventory = [{ sourceId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 197 }];
+    initial.pasture.productInventory = [{ sourceId: MANOR_V7_LOVESDAY_ANIMAL_ID, quantity: 197 }];
+    Object.assign(initial.tasks.find((task) => task.key === "sell")!, {
+      progress: 10,
+      completed: true,
+      claimed: true
+    });
+
+    expect(manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID)).toMatchObject({ seedPrice: 99, salePrice: 99 });
+    const bought = transitionManorV7State(
+      initial,
+      { type: "buy-seed", cropId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 1 },
+      now
+    );
+    expect(bought.coins).toBe(901);
+
+    const crop = manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID);
+    const soldCropBatch = transitionManorV7State(
+      bought,
+      { type: "sell-produce", cropId: crop.id, quantity: 99 },
+      now
+    );
+    expect(soldCropBatch.coins - bought.coins).toBe(crop.salePrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER);
+    const soldCropRemainder = transitionManorV7State(
+      soldCropBatch,
+      { type: "sell-produce", cropId: crop.id, quantity: 98 },
+      now
+    );
+    expect(soldCropRemainder.coins - soldCropBatch.coins).toBe(crop.salePrice * 98);
+
+    const animal = manorV7Animal(MANOR_V7_LOVESDAY_ANIMAL_ID);
+    const soldProductBatch = transitionManorV7State(
+      soldCropRemainder,
+      { type: "sell-animal-product", animalId: animal.id, quantity: 99 },
+      now
+    );
+    expect(soldProductBatch.coins - soldCropRemainder.coins)
+      .toBe(animal.byproductPrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER);
+    const soldProductRemainder = transitionManorV7State(
+      soldProductBatch,
+      { type: "sell-animal-product", animalId: animal.id, quantity: 98 },
+      now
+    );
+    expect(soldProductRemainder.coins - soldProductBatch.coins).toBe(animal.byproductPrice * 98);
+    expect(soldProductRemainder.activities.some((activity) => activity.message.includes("情人节 9 倍收益"))).toBe(true);
+
+    const bulk = createManorV7State(now);
+    bulk.coins = 50;
+    bulk.farm.produceInventory = [
+      { sourceId: crop.id, quantity: 99 },
+      { sourceId: 1, quantity: 2 }
+    ];
+    bulk.pasture.productInventory = [{ sourceId: animal.id, quantity: 99 }];
+    bulk.pasture.harvestedAnimalInventory = [{ sourceId: animal.id, quantity: 1 }];
+    Object.assign(bulk.tasks.find((task) => task.key === "sell")!, {
+      progress: 10,
+      completed: true,
+      claimed: true
+    });
+    const soldAllCrops = transitionManorV7State(bulk, { type: "sell-all-produce" }, now);
+    expect(soldAllCrops.coins).toBe(
+      50 + crop.salePrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER + manorV7Crop(1).salePrice * 2
+    );
+    const soldAllProducts = transitionManorV7State(soldAllCrops, { type: "sell-all-pasture-products" }, now);
+    expect(soldAllProducts.coins - soldAllCrops.coins).toBe(
+      animal.byproductPrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER + animal.productPrice
+    );
   });
 
   it("persists produce locks and excludes locked entries from every sale path", () => {
