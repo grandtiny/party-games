@@ -61,10 +61,10 @@ function ShopWindow({ scene, view, busy, onAction }: ManorV7WindowPanelProps) {
   const [search, setSearch] = useState("");
   const query = search.trim().toLocaleLowerCase("zh-CN");
   const crops = useMemo(() => view.catalogs.crops.filter((crop) =>
-    crop.seedPrice > 0 && crop.originalLevel <= view.farmLevel && crop.name.toLocaleLowerCase("zh-CN").includes(query)
+    !crop.isHidden && crop.seedPrice > 0 && crop.originalLevel <= view.farmLevel && crop.name.toLocaleLowerCase("zh-CN").includes(query)
   ).slice(0, 80), [query, view.catalogs.crops, view.farmLevel]);
   const animals = useMemo(() => view.catalogs.animals.filter((animal) =>
-    animal.purchasePrice > 0 && animal.originalLevel <= view.pastureLevel && animal.name.toLocaleLowerCase("zh-CN").includes(query)
+    !animal.isHidden && animal.purchasePrice > 0 && animal.originalLevel <= view.pastureLevel && animal.name.toLocaleLowerCase("zh-CN").includes(query)
   ).slice(0, 80), [query, view.catalogs.animals, view.pastureLevel]);
   const tools = useMemo(() => view.catalogs.tools.filter((tool) =>
     tool.area === scene && tool.available && tool.coinPrice > 0 && tool.name.toLocaleLowerCase("zh-CN").includes(query)

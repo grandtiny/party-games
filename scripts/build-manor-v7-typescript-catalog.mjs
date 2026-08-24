@@ -48,7 +48,24 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
-const specialAnimalIds = new Set([1055, 1056, 1096, 1097, 1098, 1598, 1600, 1601]);
+const specialCropIds = new Set([448, 450]);
+const specialAnimalIds = new Set([
+  1037,
+  1055,
+  1056,
+  1085,
+  1086,
+  1096,
+  1097,
+  1098,
+  1537,
+  1546,
+  1593,
+  1598,
+  1600,
+  1601
+]);
+const specialFishIds = new Set([15]);
 const timings = new Map(
   parseCsv("catalog-timings.csv")
     .filter((row) => row.domain === "farm")
@@ -57,6 +74,7 @@ const timings = new Map(
 const crops = parseCsv("catalog-crops.csv")
   .filter((row) =>
     row.integration_policy === "core-candidate" ||
+    specialCropIds.has(number(row.source_id)) ||
     (bool(row.hidden) && number(row.asset_files) >= 4) ||
     (
       row.integration_policy === "blocked-assets" &&
@@ -98,6 +116,7 @@ const animals = parseCsv("catalog-animals.csv")
       byproductName: row.byproduct_name,
       house: row.house,
       originalLevel: number(row.original_level),
+      isHidden: bool(row.hidden),
       isVip: bool(row.vip_only),
       purchasePrice: number(row.purchase_price),
       productPrice: number(row.product_price),
@@ -154,7 +173,7 @@ const landUpgrades = parseCsv("catalog-land-upgrades.csv").map((row) => ({
 }));
 
 const fish = parseCsv("catalog-fish.csv")
-  .filter((row) => row.integration_policy === "core-candidate")
+  .filter((row) => row.integration_policy === "core-candidate" || specialFishIds.has(number(row.source_id)))
   .map((row) => ({
     id: number(row.source_id),
     name: row.name,
@@ -166,6 +185,7 @@ const fish = parseCsv("catalog-fish.csv")
     matureHours: number(row.mature_hours),
     baseYield: number(row.base_yield),
     poolSize: Math.max(1, number(row.pool_size)),
+    isHidden: bool(row.hidden),
     seedPrice: number(row.seed_price),
     salePrice: number(row.sale_price)
   }));

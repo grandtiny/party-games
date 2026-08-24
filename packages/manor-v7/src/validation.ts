@@ -77,6 +77,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "show-research-guide":
     case "clear-activities":
     case "claim-vip-return-gift":
+    case "generate-seasonal-animal-drop":
+    case "claim-cookie-sprites":
+    case "exchange-halloween-cookie-baby":
+    case "claim-spring-festival-gift":
+    case "claim-reunion-fish-gift":
       return { type };
     case "redeem-code":
       return { type, code: boundedText(input.code, 64) };
@@ -140,6 +145,11 @@ export function parseManorV7FriendAction(value: unknown): ManorV7FriendAction {
   const input = record(value);
   const type = text(input.type, "操作类型");
   switch (type) {
+    case "generate-seasonal-animal-drop":
+    case "offer-halloween-cookie":
+      return { type };
+    case "adopt-seasonal-animal":
+      return { type, animalId: integer(input.animalId) };
     case "water":
     case "remove-weeds":
     case "remove-pests":

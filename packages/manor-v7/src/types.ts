@@ -41,6 +41,7 @@ export interface ManorV7AnimalDefinition {
   byproductName: string;
   house: ManorV7AnimalHouse;
   originalLevel: number;
+  isHidden: boolean;
   isVip: boolean;
   purchasePrice: number;
   productPrice: number;
@@ -108,6 +109,7 @@ export interface ManorV7FishDefinition {
   matureHours: number;
   baseYield: number;
   poolSize: number;
+  isHidden: boolean;
   seedPrice: number;
   salePrice: number;
 }
@@ -282,6 +284,24 @@ export interface ManorV7FishState {
   fedStage: number;
 }
 
+export interface ManorV7SeasonalAnimalDropState {
+  serial: number;
+  animalId: number;
+  createdAt: number;
+}
+
+export interface ManorV7SeasonalState {
+  animalDrops: ManorV7SeasonalAnimalDropState[];
+  nextAnimalDropSerial: number;
+  cookieSpritesClaimed: boolean;
+  halloweenCookies: number;
+  cookieOfferingDay: string | null;
+  cookieOfferingsRemaining: number;
+  cookieOfferedByUserIds: string[];
+  springFestivalClaimDay: string | null;
+  reunionFishGiftClaimed: boolean;
+}
+
 export interface ManorV7Activity {
   id: number;
   area: ManorV7Area;
@@ -348,6 +368,7 @@ export interface ManorV7State {
     selectedDecorationIds: number[];
     wild: ManorV7WildState;
   };
+  seasonal: ManorV7SeasonalState;
   ownedDecorationIds: number[];
   decorationOwnerships: ManorV7DecorationOwnership[];
   rewardClaims: {
@@ -425,6 +446,11 @@ export type ManorV7Action =
   | { type: "show-research-guide" }
   | { type: "clear-activities" }
   | { type: "claim-vip-return-gift" }
+  | { type: "generate-seasonal-animal-drop" }
+  | { type: "claim-cookie-sprites" }
+  | { type: "exchange-halloween-cookie-baby" }
+  | { type: "claim-spring-festival-gift" }
+  | { type: "claim-reunion-fish-gift" }
   | { type: "redeem-code"; code: string }
   | { type: "start-production"; serial: number }
   | { type: "collect-product"; serial: number }
@@ -461,6 +487,9 @@ export type ManorV7Action =
 
 export type ManorV7FriendAction =
   | { type: "water"; landId: number }
+  | { type: "generate-seasonal-animal-drop" }
+  | { type: "adopt-seasonal-animal"; animalId: number }
+  | { type: "offer-halloween-cookie" }
   | { type: "remove-weeds"; landId: number }
   | { type: "remove-pests"; landId: number }
   | { type: "steal-crop"; landId: number }
@@ -574,6 +603,7 @@ export interface ManorV7View {
     selectedDecorationIds: number[];
     wild: ManorV7WildState;
   };
+  seasonal: ManorV7SeasonalState;
   ownedDecorationIds: number[];
   decorationOwnerships: ManorV7DecorationOwnership[];
   rewardClaims: ManorV7State["rewardClaims"];

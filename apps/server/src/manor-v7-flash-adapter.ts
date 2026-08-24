@@ -194,6 +194,12 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_fetch_strategy_rules") return this.#researchGuide(user, params, now);
     if (moduleName === "cgi_clear_log") return this.#clearActivityLog(user, now);
     if (moduleName === "cgi_return_gift") return this.#vipReturnGift(user, params, now);
+    if (moduleName === "cgi_pasture_chunjie") return this.#claimSpringFestivalGift(user, now);
+    if (moduleName === "cgi_fetch_package_flags") return this.#ceremonyPackageStatus(user, now);
+    if (moduleName === "cgi_farm_ceremony_package") return this.#claimCeremonyPackage(user, params, now);
+    if (moduleName === "cgi_pasture_checkbitmap" || moduleName === "cgi_farm_checkbitmap") {
+      return this.#springFestivalStatus(user, now);
+    }
     if (moduleName === "market" && actionName === "change") return this.#redeemCode(user, params, now);
     if (moduleName === "hydra_feeds_select") {
       return { data: flashActivityLog(this.service.getView(user, now)), ecode: 0 };
@@ -699,7 +705,19 @@ export class ManorV7FlashAdapter {
       return flashDailyPackage(after, now, true);
     }
     if (moduleName === "cgi_pasture_checkbitmap" || moduleName === "cgi_farm_checkbitmap") {
-      return { bitmap: 0, code: 1, ecode: 0, timestamp: Math.floor(now / 1000) };
+      return this.#springFestivalStatus(user, now);
+    }
+    if (moduleName === "cgi_pasture_chunjie") return this.#claimSpringFestivalGift(user, now);
+    if (moduleName === "cgi_pasture_create_animal") return this.#createSeasonalAnimalDrop(user, params, now);
+    if (moduleName === "cgi_pasture_adopt_animal") return this.#adoptSeasonalAnimal(user, params, now);
+    if (["cgi_farm_get_halloweenseed", "xiaoyoucgi_farm_get_halloweenseed"].includes(moduleName)) {
+      return this.#claimCookieSprites(user, now);
+    }
+    if (["cgi_pasture_activity", "xiaoyoucgi_pasture_activity"].includes(moduleName)) {
+      return this.#halloweenActivity(user, params, now);
+    }
+    if (["cgi_putin", "xiaoyoucgi_putin"].includes(moduleName)) {
+      return this.#offerHalloweenCookie(user, params, now);
     }
 
     if (moduleName === "cgi_buy_animal") return this.#buyAnimal(user, params, now);
@@ -840,6 +858,117 @@ export class ManorV7FlashAdapter {
     const slotId = nonNegativeInteger(params.slotid, "槽位编号");
     const { before, after } = this.service.performActionWithPrevious(user, { type: "open-wild-slot", slotId }, now);
     return { ecode: 0, money: after.coins - before.coins, maxslotid: after.pasture.wild.maxSlotId };
+  }
+
+  #createSeasonalAnimalDrop(user: AccountUserView, params: FlashParams, now: number) {
+    const ownerId = integer(params.ownerId) ?? stableFlashUserId(user.id);
+    const ownId = stableFlashUserId(user.id);
+    const before = ownerId === ownId
+      ? this.service.getView(user, now)
+      : this.#friendViewByFlashId(user, ownerId, now);
+    const after = ownerId === ownId
+      ? this.service.performAction(user, { type: "generate-seasonal-animal-drop" }, now)
+      : (() => {
+          const friend = this.#friendByFlashId(user, ownerId, now);
+          return this.service.performFriendAction(
+            user,
+            friend.userId,
+            { type: "generate-seasonal-animal-drop" },
+            now
+          ).owner;
+        })();
+    const previousSerials = new Set(before.seasonal.animalDrops.map((drop) => drop.serial));
+    const drop = after.seasonal.animalDrops.find((candidate) => !previousSerials.has(candidate.serial));
+    return { code: 1, drop: drop ? flashSeasonalAnimalDrop(drop) : null, ecode: 0 };
+  }
+
+  #adoptSeasonalAnimal(user: AccountUserView, params: FlashParams, now: number) {
+    const animalId = positiveInteger(params.id, "活动动物编号");
+    const ownerId = positiveInteger(params.ownerId, "好友编号");
+    const friend = this.#friendByFlashId(user, ownerId, now);
+    this.service.performFriendAction(
+      user,
+      friend.userId,
+      { type: "adopt-seasonal-animal", animalId },
+      now
+    );
+    return { bit_flag: 1, code: 1, ecode: 0 };
+  }
+
+  #claimCookieSprites(user: AccountUserView, now: number) {
+    this.service.performAction(user, { type: "claim-cookie-sprites" }, now);
+    return { code: 1, id: 1037, num: 3 };
+  }
+
+  #halloweenActivity(user: AccountUserView, params: FlashParams, now: number) {
+    const activityId = integer(params.actid) ?? 1;
+    const operation = integer(params.op) ?? 0;
+    if (activityId !== 1) throw new Error("该活动礼包未接入");
+    const view = this.service.getView(user, now);
+    if (operation === 0) {
+      if (view.seasonal.halloweenCookies < 5) {
+        return {
+          errorContent: "对不起，您还没有满足兑换条件，无法兑换礼包。",
+          errorType: "logic",
+          limit: [{ id: 2, num: 5 - view.seasonal.halloweenCookies }]
+        };
+      }
+      return { code: 1 };
+    }
+    if (operation !== 1) throw new Error("活动礼包操作无效");
+    this.service.performAction(user, { type: "exchange-halloween-cookie-baby" }, now);
+    return { code: 1 };
+  }
+
+  #offerHalloweenCookie(user: AccountUserView, params: FlashParams, now: number) {
+    const ownerId = positiveInteger(params.uId, "好友编号");
+    const friend = this.#friendByFlashId(user, ownerId, now);
+    const before = this.service.getView(user, now);
+    const result = this.service.performFriendAction(
+      user,
+      friend.userId,
+      { type: "offer-halloween-cookie" },
+      now
+    );
+    const beforeQuantity = before.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
+    const afterQuantity = result.visitor.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
+    return { code: 1, num: afterQuantity - beforeQuantity + 1 };
+  }
+
+  #claimSpringFestivalGift(user: AccountUserView, now: number) {
+    this.service.performAction(user, { type: "claim-spring-festival-gift" }, now);
+    return { code: 1, vip: 1 };
+  }
+
+  #springFestivalStatus(user: AccountUserView, now: number) {
+    const view = this.service.getView(user, now);
+    return {
+      anim_num: view.pasture.cubInventory.find((entry) => entry.sourceId === 1546)?.quantity ?? 0,
+      code: 1,
+      farm_num: view.farm.seedInventory.find((entry) => entry.sourceId === 367)?.quantity ?? 0,
+      flag: Number(view.seasonal.springFestivalClaimDay === manorV7DayKey(now))
+    };
+  }
+
+  #ceremonyPackageStatus(user: AccountUserView, now: number) {
+    const view = this.service.getView(user, now);
+    return {
+      _qz: 1,
+      _wb: 1,
+      bpck: Number(!view.seasonal.reunionFishGiftClaimed),
+      code: 1,
+      ecode: 0,
+      mcnt: view.farm.produceInventory.find((entry) => entry.sourceId === 450)?.quantity ?? 0,
+      thxpck: 0,
+      ypck: 0
+    };
+  }
+
+  #claimCeremonyPackage(user: AccountUserView, params: FlashParams, now: number) {
+    const type = positiveInteger(params.type, "典礼礼包类型");
+    if (type !== 3) throw new Error("该典礼礼包未接入");
+    this.service.performAction(user, { type: "claim-reunion-fish-gift" }, now);
+    return { code: 1, ecode: 0, type };
   }
 
   #adoptWildAnimal(user: AccountUserView, params: FlashParams, now: number) {
@@ -2560,7 +2689,10 @@ function flashWildBeastBase(
   playerView: ManorV7View = view
 ) {
   return {
-    drop: view.pasture.wild.crystalDrops.map(flashWildDrop),
+    drop: [
+      ...view.pasture.wild.crystalDrops.map(flashWildDrop),
+      ...view.seasonal.animalDrops.map(flashSeasonalAnimalDrop)
+    ],
     info: view.pasture.wild.incomingAnimals
       .filter((animal) => animal.area === area)
       .map((animal) => flashWildIncoming(animal)),
@@ -2619,6 +2751,10 @@ function flashWildSlot(
 
 function flashWildDrop(drop: ManorV7View["pasture"]["wild"]["crystalDrops"][number]) {
   return { type: 9, id: drop.crystalId, num: drop.quantity, time: Math.floor(drop.createdAt / 1_000) };
+}
+
+function flashSeasonalAnimalDrop(drop: ManorV7View["seasonal"]["animalDrops"][number]) {
+  return { type: 12, id: drop.animalId, num: 1, time: Math.floor(drop.createdAt / 1_000) };
 }
 
 function flashWildInventoryDelta(before: ManorV7View, after: ManorV7View) {
@@ -2685,7 +2821,7 @@ function flashPastureFriendSummary(userId: string, displayName: string, view: Ma
 
 function flashAnimalShop(view: ManorV7View) {
   return [...view.catalogs.animals]
-    .filter((animal) => !MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
+    .filter((animal) => !animal.isHidden && !MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
       animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
     ) && !PASTURE_RESEARCH_ANIMAL_IDS.has(animal.id))
     .sort((left, right) => left.originalLevel - right.originalLevel || left.id - right.id)
@@ -3061,7 +3197,7 @@ function flashReclaimQuery(view: ManorV7View) {
 
 function flashFishShop(view: ManorV7View) {
   const unlocked = new Set(view.farm.fishPool.unlockedFishIds);
-  return view.catalogs.fish.map((fish) => ({
+  return view.catalogs.fish.filter((fish) => !fish.isHidden).map((fish) => ({
     fid: fish.id,
     lock: unlocked.has(fish.id) ? 1 : 2,
     type: 23

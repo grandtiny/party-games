@@ -19,6 +19,8 @@ import {
   MANOR_V7_FISH_POOL_CAPACITY,
   MANOR_V7_RECLAIM_RULES,
   MANOR_V7_RESEARCH_RULES,
+  MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT,
+  MANOR_V7_SEASONAL_ANIMAL_IDS,
   addManorV7Activity,
   drawManorV7Random,
   inventoryQuantity,
@@ -61,11 +63,15 @@ export const MANOR_V7_HIDDEN_SEED_IDS = MANOR_V7_CROPS
   .filter((crop) => crop.isHidden)
   .map((crop) => crop.id);
 
+const MANOR_V7_REUNION_DECORATION_IDS = [377, 378, 379, 380, 381, 382, 383, 384] as const;
+const MANOR_V7_REUNION_DECORATION_SECONDS = 16_070_400;
+
 export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, now: number): void {
   switch (action.type) {
     case "buy-seed": {
       requirePositiveInteger(action.quantity);
       const crop = manorV7Crop(action.cropId);
+      if (crop.isHidden) throw new Error("该种子只能通过活动获得");
       if (manorV7LevelForExperience(state.farmExperience) < crop.originalLevel) throw new Error(`${crop.name}需要农场达到 ${crop.originalLevel} 级`);
       if (crop.seedPrice <= 0 && !crop.isVip) throw new Error("该种子不是金币商店商品");
       charge(state, (crop.isVip ? 0 : crop.seedPrice) * action.quantity);
@@ -333,6 +339,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "unlock-fish": {
       const fish = manorV7Fish(action.fishId);
+      if (fish.isHidden) throw new Error("该鱼种只能通过活动获得");
       if (state.farm.fishPool.unlockedFishIds.includes(fish.id)) throw new Error("该鱼种已经解锁");
       charge(state, fish.unlockCoins);
       state.farm.fishPool.unlockedFishIds.push(fish.id);
@@ -374,6 +381,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-fish-seed": {
       requirePositiveInteger(action.quantity);
       const fish = manorV7Fish(action.fishId);
+      if (fish.isHidden) throw new Error("该鱼苗只能通过活动获得");
       if (!state.farm.fishPool.unlockedFishIds.includes(fish.id)) throw new Error("请先解锁该鱼种");
       charge(state, fish.seedPrice * action.quantity);
       setInventoryQuantity(
@@ -466,6 +474,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-animal": {
       requirePositiveInteger(action.quantity);
       const animal = manorV7Animal(action.animalId);
+      if (animal.isHidden) throw new Error("该动物只能通过活动获得");
       if (MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS.includes(
         animal.id as (typeof MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS)[number]
       )) throw new Error("该动物只能通过签到奖励获得");
@@ -715,6 +724,93 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       }
       state.rewardClaims.vipReturnGiftClaimed = true;
       addManorV7Activity(state, "farm", "领取了 VIP 回归礼包", now);
+      break;
+    }
+    case "generate-seasonal-animal-drop": {
+      if (state.seasonal.animalDrops.length >= MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT) break;
+      const animalId = MANOR_V7_SEASONAL_ANIMAL_IDS[
+        Math.floor(drawManorV7Random(state) * MANOR_V7_SEASONAL_ANIMAL_IDS.length)
+      ] ?? MANOR_V7_SEASONAL_ANIMAL_IDS[0];
+      state.seasonal.animalDrops.push({
+        serial: state.seasonal.nextAnimalDropSerial,
+        animalId,
+        createdAt: now
+      });
+      state.seasonal.nextAnimalDropSerial += 1;
+      addManorV7Activity(state, "pasture", `发现了一只等待好友领养的${manorV7Animal(animalId).name}`, now);
+      break;
+    }
+    case "claim-cookie-sprites": {
+      if (state.seasonal.cookieSpritesClaimed) throw new Error("饼干精灵已经领取");
+      state.seasonal.cookieSpritesClaimed = true;
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1037,
+        inventoryQuantity(state.pasture.cubInventory, 1037) + 3
+      );
+      addManorV7Activity(state, "pasture", "领取了 3 只饼干精灵", now);
+      break;
+    }
+    case "exchange-halloween-cookie-baby": {
+      if (state.seasonal.halloweenCookies < 5) throw new Error("兑换万圣宝宝需要 5 个好友投放的饼干");
+      state.seasonal.halloweenCookies -= 5;
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1537,
+        inventoryQuantity(state.pasture.cubInventory, 1537) + 1
+      );
+      addManorV7Activity(state, "pasture", "用 5 个饼干兑换了 1 只万圣宝宝", now);
+      break;
+    }
+    case "claim-spring-festival-gift": {
+      const day = manorV7DayKey(now);
+      if (state.seasonal.springFestivalClaimDay === day) throw new Error("今日春节礼包已经领取");
+      state.seasonal.springFestivalClaimDay = day;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        367,
+        inventoryQuantity(state.farm.seedInventory, 367) + 4
+      );
+      setInventoryQuantity(
+        state.pasture.cubInventory,
+        1546,
+        inventoryQuantity(state.pasture.cubInventory, 1546) + 4
+      );
+      addManorV7Activity(state, "pasture", "领取了春节 VIP 礼包：4 个金条树种子和 4 只金兔子", now);
+      break;
+    }
+    case "claim-reunion-fish-gift": {
+      if (state.seasonal.reunionFishGiftClaimed) throw new Error("团圆鱼礼包已经领取");
+      const materials = inventoryQuantity(state.farm.produceInventory, 450);
+      if (materials < 1_999) throw new Error("领取团圆鱼礼包需要 1999 个火舞草产物");
+      state.seasonal.reunionFishGiftClaimed = true;
+      setInventoryQuantity(state.farm.produceInventory, 450, materials - 1_999);
+      state.coins += 99_999;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        448,
+        inventoryQuantity(state.farm.seedInventory, 448) + 5
+      );
+      setInventoryQuantity(
+        state.farm.fishPool.seedInventory,
+        15,
+        inventoryQuantity(state.farm.fishPool.seedInventory, 15) + 2
+      );
+      if (!state.farm.fishPool.unlockedFishIds.includes(15)) {
+        state.farm.fishPool.unlockedFishIds.push(15);
+        state.farm.fishPool.unlockedFishIds.sort((left, right) => left - right);
+      }
+      for (const decorationId of MANOR_V7_REUNION_DECORATION_IDS) {
+        const ownership = decorationOwnership(state, "farm", decorationId);
+        const extension = MANOR_V7_REUNION_DECORATION_SECONDS * 1_000;
+        if (ownership) {
+          if (ownership.validUntil !== 0) ownership.validUntil = Math.max(now, ownership.validUntil) + extension;
+        } else {
+          state.decorationOwnerships.push({ area: "farm", decorationId, validUntil: now + extension });
+        }
+        addOwnedDecorationId(state, decorationId);
+      }
+      addManorV7Activity(state, "farm", "兑换了团圆鱼典礼礼包", now);
       break;
     }
     case "redeem-code": {
