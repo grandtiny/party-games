@@ -83,6 +83,7 @@ export class ManorV7Service {
     const account = this.repository.findManorAccount(ownerUserId);
     if (!account) throw new Error("好友账号不存在");
     const state = this.#loadAndAdvance(account.id, now);
+    if (state.friendFilterUserIds.includes(visitor.id)) throw new Error("对方暂未允许你进入庄园");
     return toManorV7View(state, { userId: account.id, displayName: account.displayName }, now);
   }
 
