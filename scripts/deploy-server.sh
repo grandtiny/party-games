@@ -37,7 +37,7 @@ audit_database() {
   local directory=$2
   local file_name=$3
   docker run --rm \
-    -v "$directory:/audit:ro" \
+    -v "$directory:/audit" \
     "$image" \
     node --input-type=module -e '
       import { createHash } from "node:crypto";
