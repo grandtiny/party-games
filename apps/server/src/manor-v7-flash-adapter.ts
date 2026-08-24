@@ -25,6 +25,7 @@ import {
   manorV7WildCrystal,
   wildAttackDamage,
   type ManorV7AnimalView,
+  type ManorV7Area,
   type ManorV7DecorationDefinition,
   type ManorV7FriendSummary,
   type ManorV7LandView,
@@ -35,6 +36,13 @@ import type { AccountUserView, ManorGuestbookView } from "@party-games/shared";
 import type { ManorV7Service } from "./manor-v7-service.js";
 
 type FlashParams = Record<string, string>;
+
+function halloweenStarterArea(params: FlashParams, fallback: ManorV7Area): ManorV7Area {
+  const name = (params.name ?? "").toLowerCase();
+  if (name === "farmflag") return "farm";
+  if (name === "pastureflag") return "pasture";
+  return fallback;
+}
 
 export interface ManorV7UnsupportedProtocolEvent {
   area: "farm" | "pasture";
@@ -194,6 +202,15 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_fetch_strategy_rules") return this.#researchGuide(user, params, now);
     if (moduleName === "cgi_clear_log") return this.#clearActivityLog(user, now);
     if (moduleName === "cgi_return_gift") return this.#vipReturnGift(user, params, now);
+    if (["cgi_farm_halloween", "xiaoyoucgi_farm_halloween"].includes(moduleName)) {
+      return this.#halloweenStarterStatus(user, params, "farm", now);
+    }
+    if (["cgi_farm_get_halloweenseed", "xiaoyoucgi_farm_get_halloweenseed"].includes(moduleName)) {
+      return this.#claimHalloweenStarter(user, params, "farm", now);
+    }
+    if (["cgi_putin", "xiaoyoucgi_putin"].includes(moduleName)) {
+      return this.#offerHalloweenCandy(user, params, now);
+    }
     if (moduleName === "cgi_pasture_chunjie") return this.#claimSpringFestivalGift(user, now);
     if (moduleName === "cgi_fetch_package_flags") return this.#ceremonyPackageStatus(user, now);
     if (moduleName === "cgi_farm_ceremony_package") return this.#claimCeremonyPackage(user, params, now);
@@ -710,8 +727,11 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_pasture_chunjie") return this.#claimSpringFestivalGift(user, now);
     if (moduleName === "cgi_pasture_create_animal") return this.#createSeasonalAnimalDrop(user, params, now);
     if (moduleName === "cgi_pasture_adopt_animal") return this.#adoptSeasonalAnimal(user, params, now);
+    if (["cgi_farm_halloween", "xiaoyoucgi_farm_halloween"].includes(moduleName)) {
+      return this.#halloweenStarterStatus(user, params, "pasture", now);
+    }
     if (["cgi_farm_get_halloweenseed", "xiaoyoucgi_farm_get_halloweenseed"].includes(moduleName)) {
-      return this.#claimCookieSprites(user, now);
+      return this.#claimHalloweenStarter(user, params, "pasture", now);
     }
     if (["cgi_pasture_activity", "xiaoyoucgi_pasture_activity"].includes(moduleName)) {
       return this.#halloweenActivity(user, params, now);
@@ -895,7 +915,29 @@ export class ManorV7FlashAdapter {
     return { bit_flag: 1, code: 1, ecode: 0 };
   }
 
-  #claimCookieSprites(user: AccountUserView, now: number) {
+  #halloweenStarterStatus(
+    user: AccountUserView,
+    params: FlashParams,
+    defaultArea: ManorV7Area,
+    now: number
+  ) {
+    const area = halloweenStarterArea(params, defaultArea);
+    const seasonal = this.service.getView(user, now).seasonal;
+    const claimed = area === "farm" ? seasonal.candySeedsClaimed : seasonal.cookieSpritesClaimed;
+    return { code: 1, exchange_flag: Number(claimed) };
+  }
+
+  #claimHalloweenStarter(
+    user: AccountUserView,
+    params: FlashParams,
+    defaultArea: ManorV7Area,
+    now: number
+  ) {
+    const area = halloweenStarterArea(params, defaultArea);
+    if (area === "farm") {
+      this.service.performAction(user, { type: "claim-halloween-candy-seeds" }, now);
+      return { code: 1, id: 167, num: 3 };
+    }
     this.service.performAction(user, { type: "claim-cookie-sprites" }, now);
     return { code: 1, id: 1037, num: 3 };
   }
@@ -932,6 +974,21 @@ export class ManorV7FlashAdapter {
     );
     const beforeQuantity = before.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
     const afterQuantity = result.visitor.pasture.cubInventory.find((entry) => entry.sourceId === 1037)?.quantity ?? 0;
+    return { code: 1, num: afterQuantity - beforeQuantity };
+  }
+
+  #offerHalloweenCandy(user: AccountUserView, params: FlashParams, now: number) {
+    const ownerId = positiveInteger(params.uId, "好友编号");
+    const friend = this.#friendByFlashId(user, ownerId, now);
+    const before = this.service.getView(user, now);
+    const result = this.service.performFriendAction(
+      user,
+      friend.userId,
+      { type: "offer-halloween-candy" },
+      now
+    );
+    const beforeQuantity = before.farm.seedInventory.find((entry) => entry.sourceId === 167)?.quantity ?? 0;
+    const afterQuantity = result.visitor.farm.seedInventory.find((entry) => entry.sourceId === 167)?.quantity ?? 0;
     return { code: 1, num: afterQuantity - beforeQuantity };
   }
 

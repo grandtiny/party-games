@@ -293,6 +293,11 @@ export interface ManorV7SeasonalAnimalDropState {
 export interface ManorV7SeasonalState {
   animalDrops: ManorV7SeasonalAnimalDropState[];
   nextAnimalDropSerial: number;
+  candySeedsClaimed: boolean;
+  halloweenCandies: number;
+  candyOfferingDay: string | null;
+  candyOfferingsRemaining: number;
+  candyOfferedByUserIds: string[];
   cookieSpritesClaimed: boolean;
   halloweenCookies: number;
   cookieOfferingDay: string | null;
@@ -447,6 +452,7 @@ export type ManorV7Action =
   | { type: "clear-activities" }
   | { type: "claim-vip-return-gift" }
   | { type: "generate-seasonal-animal-drop" }
+  | { type: "claim-halloween-candy-seeds" }
   | { type: "claim-cookie-sprites" }
   | { type: "exchange-halloween-cookie-baby" }
   | { type: "claim-spring-festival-gift" }
@@ -489,6 +495,7 @@ export type ManorV7FriendAction =
   | { type: "water"; landId: number }
   | { type: "generate-seasonal-animal-drop" }
   | { type: "adopt-seasonal-animal"; animalId: number }
+  | { type: "offer-halloween-candy" }
   | { type: "offer-halloween-cookie" }
   | { type: "remove-weeds"; landId: number }
   | { type: "remove-pests"; landId: number }

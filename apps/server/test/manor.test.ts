@@ -2550,10 +2550,39 @@ describe("QQ Farm V7 account persistence", () => {
         expect.arrayContaining([{ sourceId: created.json().drop.id, quantity: 1 }])
       );
 
+      const candyStatus = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=xiaoyoucgi_farm_halloween&name=farmFlag",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(candyStatus.statusCode, candyStatus.body).toBe(200);
+      expect(candyStatus.json()).toEqual({ code: 1, exchange_flag: 0 });
+
+      const candySeeds = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_get_halloweenseed",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "name=farmFlag"
+      });
+      expect(candySeeds.statusCode, candySeeds.body).toBe(200);
+      expect(candySeeds.json()).toEqual({ code: 1, id: 167, num: 3 });
+      expect(instance.repository.getManorV7State(visitor.userId)).toMatchObject({
+        farm: { seedInventory: expect.arrayContaining([{ sourceId: 167, quantity: 3 }]) },
+        seasonal: { candySeedsClaimed: true }
+      });
+
+      const claimedCandyStatus = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_farm_halloween&name=farmFlag",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(claimedCandyStatus.json()).toEqual({ code: 1, exchange_flag: 1 });
+
       const cookieSprites = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=xiaoyoucgi_farm_get_halloweenseed",
-        headers: { cookie: visitor.cookie }
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "name=pastureFlag"
       });
       expect(cookieSprites.statusCode, cookieSprites.body).toBe(200);
       expect(cookieSprites.json()).toEqual({ code: 1, id: 1037, num: 3 });
@@ -2567,13 +2596,43 @@ describe("QQ Farm V7 account persistence", () => {
       expect(offeredWithoutCookie.statusCode, offeredWithoutCookie.body).toBe(200);
       expect(offeredWithoutCookie.json()).toMatchObject({ code: 0, direction: "没有饼干可以投放" });
 
+      const offeredWithoutCandy = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_putin",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(offeredWithoutCandy.statusCode, offeredWithoutCandy.body).toBe(200);
+      expect(offeredWithoutCandy.json()).toMatchObject({ code: 0, direction: "没有糖果可以投放" });
+
       const cookieVisitor = instance.repository.getManorV7State(visitor.userId);
       if (!cookieVisitor) throw new Error("Seasonal visitor state missing before cookie offering");
       const visitorWithCookie: ManorV7State = structuredClone(cookieVisitor);
+      visitorWithCookie.farm.produceInventory = [{ sourceId: 167, quantity: 1 }];
       visitorWithCookie.pasture.productInventory = [{ sourceId: 1037, quantity: 1 }];
       visitorWithCookie.revision += 1;
       visitorWithCookie.updatedAt = Date.now();
       instance.repository.updateManorV7State(visitor.userId, cookieVisitor.revision, visitorWithCookie);
+
+      const offeredCandy = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=xiaoyoucgi_putin",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(offeredCandy.statusCode, offeredCandy.body).toBe(200);
+      expect([1, 2]).toContain(offeredCandy.json().num);
+      const visitorAfterCandyOffering = instance.repository.getManorV7State(visitor.userId);
+      expect(visitorAfterCandyOffering?.farm.produceInventory).not.toEqual(
+        expect.arrayContaining([{ sourceId: 167, quantity: expect.any(Number) }])
+      );
+      expect(visitorAfterCandyOffering?.farm.seedInventory).toEqual(
+        expect.arrayContaining([{ sourceId: 167, quantity: 3 + offeredCandy.json().num }])
+      );
+      expect(instance.repository.getManorV7State(owner.userId)?.seasonal).toMatchObject({
+        halloweenCandies: 1,
+        candyOfferedByUserIds: [visitor.userId]
+      });
 
       const offered = await instance.app.inject({
         method: "POST",

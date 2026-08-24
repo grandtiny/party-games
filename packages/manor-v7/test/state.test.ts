@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MANOR_V7_ANIMALS,
   MANOR_V7_BAD_ACTION_DAILY_LIMIT,
+  MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_CROPS,
   MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
   MANOR_V7_DECORATIONS,
@@ -70,6 +71,11 @@ describe("QQ Farm V7 domain", () => {
     expect(initial.seasonal).toEqual({
       animalDrops: [],
       nextAnimalDropSerial: 1,
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "2026-08-22",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieSpritesClaimed: false,
       halloweenCookies: 0,
       cookieOfferingDay: "2026-08-22",
@@ -79,10 +85,15 @@ describe("QQ Farm V7 domain", () => {
       reunionFishGiftClaimed: false
     });
 
+    initial.seasonal.candyOfferingsRemaining = 0;
+    initial.seasonal.candyOfferedByUserIds = ["farm-friend"];
     initial.seasonal.cookieOfferingsRemaining = 0;
     initial.seasonal.cookieOfferedByUserIds = ["friend"];
     const nextDay = advanceManorV7State(initial, now + 24 * 60 * 60 * 1_000);
     expect(nextDay.seasonal).toMatchObject({
+      candyOfferingDay: "2026-08-23",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieOfferingDay: "2026-08-23",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: []
@@ -98,6 +109,11 @@ describe("QQ Farm V7 domain", () => {
     expect(state.seasonal.animalDrops).toHaveLength(3);
     expect(state.seasonal.animalDrops.every((drop) => [1085, 1086, 1593].includes(drop.animalId))).toBe(true);
     expect(state.seasonal.nextAnimalDropSerial).toBe(4);
+
+    state = transitionManorV7State(state, { type: "claim-halloween-candy-seeds" }, now);
+    expect(inventoryQuantity(state.farm.seedInventory, 167)).toBe(3);
+    expect(() => transitionManorV7State(state, { type: "claim-halloween-candy-seeds" }, now))
+      .toThrow("糖果种子已经领取");
 
     state = transitionManorV7State(state, { type: "claim-cookie-sprites" }, now);
     expect(inventoryQuantity(state.pasture.cubInventory, 1037)).toBe(3);
@@ -224,6 +240,79 @@ describe("QQ Farm V7 domain", () => {
       { type: "offer-halloween-cookie" },
       now
     )).toThrow("没有饼干可以投放");
+  });
+
+  it("offers one candy per friend and returns one or two candy seeds", () => {
+    const now = 7_600;
+    let visitor = createManorV7State(now);
+    visitor.farm.produceInventory = [{ sourceId: 167, quantity: 11 }];
+
+    for (let index = 0; index < MANOR_V7_CANDY_OFFERING_DAILY_LIMIT; index += 1) {
+      const result = transitionManorV7FriendStates(
+        visitor,
+        createManorV7State(now),
+        "visitor",
+        "访客",
+        `owner-${index}`,
+        `主人${index}`,
+        { type: "offer-halloween-candy" },
+        now
+      );
+      visitor = result.visitor;
+      expect(result.owner.seasonal).toMatchObject({
+        halloweenCandies: 1,
+        candyOfferedByUserIds: ["visitor"]
+      });
+    }
+
+    expect(inventoryQuantity(visitor.farm.produceInventory, 167)).toBe(1);
+    expect(inventoryQuantity(visitor.farm.seedInventory, 167)).toBeGreaterThanOrEqual(10);
+    expect(inventoryQuantity(visitor.farm.seedInventory, 167)).toBeLessThanOrEqual(20);
+    expect(visitor.seasonal.candyOfferingsRemaining).toBe(0);
+    expect(() => transitionManorV7FriendStates(
+      visitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner-limit",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("今天已经投放糖果 10 次");
+
+    const oneCandyVisitor = createManorV7State(now);
+    oneCandyVisitor.farm.produceInventory = [{ sourceId: 167, quantity: 1 }];
+    const first = transitionManorV7FriendStates(
+      oneCandyVisitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    );
+    expect(() => transitionManorV7FriendStates(
+      { ...first.visitor, farm: { ...first.visitor.farm, produceInventory: [{ sourceId: 167, quantity: 1 }] } },
+      first.owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("今天已经给这位好友投放过糖果");
+
+    expect(() => transitionManorV7FriendStates(
+      createManorV7State(now),
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("没有糖果可以投放");
   });
 
   it("keeps activity rewards out of ordinary purchases", () => {
@@ -888,6 +977,11 @@ describe("QQ Farm V7 domain", () => {
     expect(migrated.seasonal).toEqual({
       animalDrops: [],
       nextAnimalDropSerial: 1,
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "1970-01-01",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieSpritesClaimed: false,
       halloweenCookies: 0,
       cookieOfferingDay: "1970-01-01",
@@ -899,6 +993,29 @@ describe("QQ Farm V7 domain", () => {
     expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });
     expect(migrated.pasture.animals[1]).toMatchObject({ productionActive: false, productionCount: 0 });
+  });
+
+  it("adds independent candy activity fields to existing seasonal saves", () => {
+    const legacy = createManorV7State(8_100);
+    legacy.seasonal.cookieSpritesClaimed = true;
+    legacy.seasonal.halloweenCookies = 2;
+    const seasonal = legacy.seasonal as Partial<ManorV7State["seasonal"]>;
+    delete seasonal.candySeedsClaimed;
+    delete seasonal.halloweenCandies;
+    delete seasonal.candyOfferingDay;
+    delete seasonal.candyOfferingsRemaining;
+    delete seasonal.candyOfferedByUserIds;
+
+    const migrated = migrateManorV7State(legacy, 8_100);
+    expect(migrated.seasonal).toMatchObject({
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "1970-01-01",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
+      cookieSpritesClaimed: true,
+      halloweenCookies: 2
+    });
   });
 
   it("migrates weather, yield, flowers, friend filters and workshop materials", () => {

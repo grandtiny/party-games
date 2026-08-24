@@ -61,6 +61,7 @@ export const MANOR_V7_GRASS_PRICE = 30;
 export const MANOR_V7_GUARD_INITIAL_WAGE_SECONDS = 7 * 24 * 60 * 60;
 export const MANOR_V7_FISH_POOL_CAPACITY = 6;
 export const MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT = 3;
+export const MANOR_V7_CANDY_OFFERING_DAILY_LIMIT = 10;
 export const MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT = 10;
 export const MANOR_V7_SEASONAL_ANIMAL_IDS = [1593, 1086, 1085] as const;
 export const MANOR_V7_ACTIVITY_LIMIT = 50;
@@ -334,6 +335,11 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
   state.seasonal ??= createManorV7SeasonalState(now);
   state.seasonal.animalDrops ??= [];
   state.seasonal.nextAnimalDropSerial ??= Math.max(0, ...state.seasonal.animalDrops.map((drop) => drop.serial)) + 1;
+  state.seasonal.candySeedsClaimed ??= false;
+  state.seasonal.halloweenCandies ??= 0;
+  state.seasonal.candyOfferingDay ??= manorV7DayKey(now);
+  state.seasonal.candyOfferingsRemaining ??= MANOR_V7_CANDY_OFFERING_DAILY_LIMIT;
+  state.seasonal.candyOfferedByUserIds ??= [];
   state.seasonal.cookieSpritesClaimed ??= false;
   state.seasonal.halloweenCookies ??= 0;
   state.seasonal.cookieOfferingDay ??= manorV7DayKey(now);
@@ -518,6 +524,7 @@ export function toManorV7View(
     seasonal: {
       ...state.seasonal,
       animalDrops: state.seasonal.animalDrops.map((drop) => ({ ...drop })),
+      candyOfferedByUserIds: [...state.seasonal.candyOfferedByUserIds],
       cookieOfferedByUserIds: [...state.seasonal.cookieOfferedByUserIds]
     },
     ownedDecorationIds: [...state.ownedDecorationIds],
@@ -856,6 +863,12 @@ function validSeasonalState(state: ManorV7State): boolean {
     !Array.isArray(seasonal.animalDrops) ||
     seasonal.animalDrops.length > MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT ||
     !Number.isInteger(seasonal.nextAnimalDropSerial) || seasonal.nextAnimalDropSerial < 1 ||
+    typeof seasonal.candySeedsClaimed !== "boolean" ||
+    !Number.isSafeInteger(seasonal.halloweenCandies) || seasonal.halloweenCandies < 0 ||
+    !validClaimDay(seasonal.candyOfferingDay) ||
+    !Number.isInteger(seasonal.candyOfferingsRemaining) || seasonal.candyOfferingsRemaining < 0 ||
+    seasonal.candyOfferingsRemaining > MANOR_V7_CANDY_OFFERING_DAILY_LIMIT ||
+    !validUserIdList(seasonal.candyOfferedByUserIds) ||
     typeof seasonal.cookieSpritesClaimed !== "boolean" ||
     !Number.isSafeInteger(seasonal.halloweenCookies) || seasonal.halloweenCookies < 0 ||
     !validClaimDay(seasonal.cookieOfferingDay) ||
@@ -968,6 +981,11 @@ function createManorV7SeasonalState(now: number): ManorV7State["seasonal"] {
   return {
     animalDrops: [],
     nextAnimalDropSerial: 1,
+    candySeedsClaimed: false,
+    halloweenCandies: 0,
+    candyOfferingDay: manorV7DayKey(now),
+    candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+    candyOfferedByUserIds: [],
     cookieSpritesClaimed: false,
     halloweenCookies: 0,
     cookieOfferingDay: manorV7DayKey(now),
@@ -991,6 +1009,11 @@ function resetDailyCounters(state: ManorV7State, now: number): void {
   if (state.pasture.specialFeed.day !== day) state.pasture.specialFeed = { day, remaining: MANOR_V7_SPECIAL_FEED_DAILY_LIMIT };
   if (state.pasture.mosquitoActions.day !== day) {
     state.pasture.mosquitoActions = { day, remaining: MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT };
+  }
+  if (state.seasonal.candyOfferingDay !== day) {
+    state.seasonal.candyOfferingDay = day;
+    state.seasonal.candyOfferingsRemaining = MANOR_V7_CANDY_OFFERING_DAILY_LIMIT;
+    state.seasonal.candyOfferedByUserIds = [];
   }
   if (state.seasonal.cookieOfferingDay !== day) {
     state.seasonal.cookieOfferingDay = day;

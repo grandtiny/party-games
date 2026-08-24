@@ -740,6 +740,17 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       addManorV7Activity(state, "pasture", `发现了一只等待好友领养的${manorV7Animal(animalId).name}`, now);
       break;
     }
+    case "claim-halloween-candy-seeds": {
+      if (state.seasonal.candySeedsClaimed) throw new Error("糖果种子已经领取");
+      state.seasonal.candySeedsClaimed = true;
+      setInventoryQuantity(
+        state.farm.seedInventory,
+        167,
+        inventoryQuantity(state.farm.seedInventory, 167) + 3
+      );
+      addManorV7Activity(state, "farm", "领取了 3 个糖果种子", now);
+      break;
+    }
     case "claim-cookie-sprites": {
       if (state.seasonal.cookieSpritesClaimed) throw new Error("饼干精灵已经领取");
       state.seasonal.cookieSpritesClaimed = true;

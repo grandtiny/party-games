@@ -78,6 +78,7 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "clear-activities":
     case "claim-vip-return-gift":
     case "generate-seasonal-animal-drop":
+    case "claim-halloween-candy-seeds":
     case "claim-cookie-sprites":
     case "exchange-halloween-cookie-baby":
     case "claim-spring-festival-gift":
@@ -146,6 +147,7 @@ export function parseManorV7FriendAction(value: unknown): ManorV7FriendAction {
   const type = text(input.type, "操作类型");
   switch (type) {
     case "generate-seasonal-animal-drop":
+    case "offer-halloween-candy":
     case "offer-halloween-cookie":
       return { type };
     case "adopt-seasonal-animal":
