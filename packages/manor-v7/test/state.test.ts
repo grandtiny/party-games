@@ -44,9 +44,14 @@ import {
   type ManorV7State
 } from "../src/index.js";
 
+const MANOR_V7_EXCLUDED_CROP_IDS = [
+  262, 567, 570, 572,
+  2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+] as const;
+
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
-    expect(MANOR_V7_CROPS).toHaveLength(405);
+    expect(MANOR_V7_CROPS).toHaveLength(577);
     expect(MANOR_V7_ANIMALS).toHaveLength(167);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(631);
@@ -59,7 +64,11 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
+    expect(manorV7Crop(9)).toMatchObject({ name: "辣椒", seedPrice: 296, harvestCycles: 1 });
     expect(manorV7Crop(450)).toMatchObject({ name: "火舞草", originalLevel: 5, seedPrice: 210 });
+    for (const cropId of MANOR_V7_EXCLUDED_CROP_IDS) {
+      expect(() => manorV7Crop(cropId)).toThrow("作物不存在或未接入 V7 素材");
+    }
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
       house: "hutch",
@@ -617,6 +626,21 @@ describe("QQ Farm V7 domain", () => {
     };
     const planted = transitionManorV7State(withSeed, { type: "plant", landId: 1, cropId: 2 }, 1_001_000);
     expect(planted.farm.lands[0]?.cropId).toBe(2);
+  });
+
+  it("closes the purchase, planting and harvest loop for a partial-stage source crop", () => {
+    const now = 2_000;
+    const crop = manorV7Crop(9);
+    let state = createManorV7State(now);
+    state.coins = crop.seedPrice;
+    state.farmExperience = manorV7ExperienceForLevel(crop.originalLevel);
+
+    state = transitionManorV7State(state, { type: "buy-seed", cropId: crop.id, quantity: 1 }, now);
+    state = transitionManorV7State(state, { type: "plant", landId: 5, cropId: crop.id }, now);
+    state.farm.lands[4]!.growthSeconds = crop.growthSeconds;
+    state = transitionManorV7State(state, { type: "harvest", landId: 5 }, now);
+
+    expect(inventoryQuantity(state.farm.produceInventory, crop.id)).toBe(crop.baseYield);
   });
 
   it("sells every produce entry atomically at its own catalog price", () => {

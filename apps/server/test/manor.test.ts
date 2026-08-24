@@ -208,7 +208,7 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(seedShop.statusCode, seedShop.body).toBe(200);
-      expect(seedShop.json()).toHaveLength(317);
+      expect(seedShop.json()).toHaveLength(489);
       expect(seedShop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ cId: 1, cName: "草莓", price: 605, sale: 27 }),
         expect.objectContaining({ cId: 450, cName: "火舞草", price: 210, sale: 15 }),
@@ -2126,11 +2126,27 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(initial.json().farm.lands).toHaveLength(24);
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
-      expect(initial.json().catalogs.crops).toHaveLength(405);
+      expect(initial.json().catalogs.crops).toHaveLength(577);
       expect(initial.json().catalogs.crops.filter((crop: { isHidden?: boolean }) => crop.isHidden)).toHaveLength(88);
       expect(initial.json().catalogs.animals).toHaveLength(167);
       expect(initial.json().catalogs.tools).toHaveLength(91);
       expect(initial.json().catalogs.decorations).toHaveLength(631);
+
+      const seedShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=repertory&act=getSeedInfo",
+        headers: { cookie }
+      });
+      expect(seedShop.statusCode, seedShop.body).toBe(200);
+      expect(seedShop.json()).toHaveLength(489);
+      expect(seedShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 9, cName: "辣椒", price: 296 }),
+        expect.objectContaining({ cId: 1017, cName: "茶树" })
+      ]));
+      expect(seedShop.json()).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 262 }),
+        expect.objectContaining({ cId: 2001 })
+      ]));
 
       const cared = await first.app.inject({
         method: "POST",

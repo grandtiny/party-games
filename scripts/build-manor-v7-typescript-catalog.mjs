@@ -48,7 +48,6 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
-const specialCropIds = new Set([448, 450]);
 const specialAnimalIds = new Set([
   1037,
   1055,
@@ -72,17 +71,8 @@ const timings = new Map(
     .map((row) => [number(row.source_id), row.values.split(";").map(number).slice(0, 5)])
 );
 const crops = parseCsv("catalog-crops.csv")
-  .filter((row) =>
-    row.integration_policy === "core-candidate" ||
-    specialCropIds.has(number(row.source_id)) ||
-    (bool(row.hidden) && number(row.asset_files) >= 4) ||
-    (
-      row.integration_policy === "blocked-assets" &&
-      number(row.asset_files) >= 4 &&
-      (number(row.land_requirement) === 2 || bool(row.vip_only)) &&
-      !bool(row.hidden)
-    )
-  )
+  // The original SWF runtime supports crops without optional sprout or withered assets.
+  .filter((row) => number(row.crop_type) === 1 && number(row.asset_files) >= 4)
   .map((row) => ({
     id: number(row.source_id),
     name: row.name,
