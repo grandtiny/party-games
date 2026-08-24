@@ -194,14 +194,6 @@ package mc.view.main.window.shop
             this.confirmButton.textColor = 16777215;
             this.confirmButton.addEventListener(MouseEvent.CLICK,this.confirmButtonClick);
             addChild(this.confirmButton);
-            this.vipButton = new Sprite();
-            this.vipButton.buttonMode = true;
-            this.vipButton.addEventListener(MouseEvent.CLICK,this.vipButtonClick);
-            _loc5_ = new Bitmap(_loc4_.vipBtn.bitmapData);
-            this.vipButton.addChild(_loc5_);
-            addChild(this.vipButton);
-            this.vipButton.x = width / 2 - this.confirmButton.width / 2 - this.vipButton.width - 10;
-            this.vipButton.y = height - 51;
             _loc3_ = new LipiButton();
             _loc3_.bgAlpha = 0;
             _loc3_.bgSkin = new LipiSkin(MaterialLib.getInstance().getClass("ButtonBlue"));
@@ -280,7 +272,6 @@ package mc.view.main.window.shop
       
       private function vipButtonClick(param1:MouseEvent = null) : void
       {
-         navigateToURL(new URLRequest("tools.php?mod=vip"),"_blank");
       }
       
       private function setData() : void

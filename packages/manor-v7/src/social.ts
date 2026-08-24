@@ -5,6 +5,7 @@ import {
   drawManorV7Random,
   MANOR_V7_GRASS_CAPACITY,
   MANOR_V7_GRASS_PRICE,
+  MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT,
   MANOR_V7_SEASONAL_ANIMAL_IDS,
   manorV7EffectiveYield,
@@ -91,13 +92,13 @@ export function transitionManorV7FriendStates(
   }
 
   if (action.type === "offer-halloween-cookie") {
-    const available = inventoryQuantity(visitor.pasture.cubInventory, 1037);
-    if (available < 1) throw new Error("没有饼干精灵可以投放");
+    const available = inventoryQuantity(visitor.pasture.productInventory, 1037);
+    if (available < 1) throw new Error("没有饼干可以投放");
     if (visitor.seasonal.cookieOfferingsRemaining < 1) throw new Error("今天已经投放饼干 10 次");
     if (owner.seasonal.cookieOfferedByUserIds.includes(visitorUserId)) {
       throw new Error("今天已经给这位好友投放过饼干");
     }
-    setInventoryQuantity(visitor.pasture.cubInventory, 1037, available - 1);
+    setInventoryQuantity(visitor.pasture.productInventory, 1037, available - 1);
     const returned = 1 + Math.floor(drawManorV7Random(visitor) * 2);
     setInventoryQuantity(
       visitor.pasture.cubInventory,
@@ -110,6 +111,31 @@ export function transitionManorV7FriendStates(
     message = `向${ownerDisplayName}投放了饼干，返还 ${returned} 只饼干精灵`;
     addManorV7Activity(visitor, "pasture", message, now);
     addManorV7Activity(owner, "pasture", `${visitorDisplayName}向活动盒投放了 1 个饼干`, now);
+    return finish(currentVisitor, currentOwner, visitor, owner, message, now);
+  }
+
+  if (action.type === "offer-halloween-candy") {
+    const available = inventoryQuantity(visitor.farm.produceInventory, 167);
+    if (available < 1) throw new Error("没有糖果可以投放");
+    if (visitor.seasonal.candyOfferingsRemaining < 1) {
+      throw new Error(`今天已经投放糖果 ${MANOR_V7_CANDY_OFFERING_DAILY_LIMIT} 次`);
+    }
+    if (owner.seasonal.candyOfferedByUserIds.includes(visitorUserId)) {
+      throw new Error("今天已经给这位好友投放过糖果");
+    }
+    setInventoryQuantity(visitor.farm.produceInventory, 167, available - 1);
+    const returned = 1 + Math.floor(drawManorV7Random(visitor) * 2);
+    setInventoryQuantity(
+      visitor.farm.seedInventory,
+      167,
+      inventoryQuantity(visitor.farm.seedInventory, 167) + returned
+    );
+    visitor.seasonal.candyOfferingsRemaining -= 1;
+    owner.seasonal.halloweenCandies += 1;
+    owner.seasonal.candyOfferedByUserIds.push(visitorUserId);
+    message = `向${ownerDisplayName}投放了糖果，返还 ${returned} 个糖果种子`;
+    addManorV7Activity(visitor, "farm", message, now);
+    addManorV7Activity(owner, "farm", `${visitorDisplayName}向活动盒投放了 1 个糖果`, now);
     return finish(currentVisitor, currentOwner, visitor, owner, message, now);
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MANOR_V7_ANIMALS,
   MANOR_V7_BAD_ACTION_DAILY_LIMIT,
+  MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_CROPS,
   MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
   MANOR_V7_DECORATIONS,
@@ -9,7 +10,11 @@ import {
   MANOR_V7_FISH,
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
+  MANOR_V7_HOUSE_UPGRADES,
   MANOR_V7_LAND_COUNT,
+  MANOR_V7_LOVESDAY_ANIMAL_ID,
+  MANOR_V7_LOVESDAY_CROP_ID,
+  MANOR_V7_LOVESDAY_SALE_MULTIPLIER,
   MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT,
   MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT,
   MANOR_V7_RESEARCH_RULES,
@@ -21,14 +26,17 @@ import {
   manorV7Animal,
   manorV7Crop,
   manorV7Decoration,
+  manorV7DecorationCoinPrice,
   manorV7ExperienceForLevel,
   manorV7Fish,
   manorV7HouseCapacity,
   manorV7LevelForExperience,
+  manorV7LandUpgrade,
   manorV7MaxProductionCount,
   manorV7PastureGuard,
   manorV7ProductionCycleDuration,
   manorV7SpecialFeedCropId,
+  manorV7ToolCoinPrice,
   migrateManorV7State,
   toManorV7View,
   transitionManorV7FriendStates,
@@ -70,19 +78,30 @@ describe("QQ Farm V7 domain", () => {
     expect(initial.seasonal).toEqual({
       animalDrops: [],
       nextAnimalDropSerial: 1,
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "2026-08-22",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieSpritesClaimed: false,
       halloweenCookies: 0,
       cookieOfferingDay: "2026-08-22",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
       springFestivalClaimDay: null,
       reunionFishGiftClaimed: false
     });
 
+    initial.seasonal.candyOfferingsRemaining = 0;
+    initial.seasonal.candyOfferedByUserIds = ["farm-friend"];
     initial.seasonal.cookieOfferingsRemaining = 0;
     initial.seasonal.cookieOfferedByUserIds = ["friend"];
     const nextDay = advanceManorV7State(initial, now + 24 * 60 * 60 * 1_000);
     expect(nextDay.seasonal).toMatchObject({
+      candyOfferingDay: "2026-08-23",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieOfferingDay: "2026-08-23",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: []
@@ -99,15 +118,60 @@ describe("QQ Farm V7 domain", () => {
     expect(state.seasonal.animalDrops.every((drop) => [1085, 1086, 1593].includes(drop.animalId))).toBe(true);
     expect(state.seasonal.nextAnimalDropSerial).toBe(4);
 
+    state = transitionManorV7State(state, { type: "claim-halloween-candy-seeds" }, now);
+    expect(inventoryQuantity(state.farm.seedInventory, 167)).toBe(3);
+    expect(() => transitionManorV7State(state, { type: "claim-halloween-candy-seeds" }, now))
+      .toThrow("糖果种子已经领取");
+
     state = transitionManorV7State(state, { type: "claim-cookie-sprites" }, now);
     expect(inventoryQuantity(state.pasture.cubInventory, 1037)).toBe(3);
     expect(() => transitionManorV7State(state, { type: "claim-cookie-sprites" }, now))
       .toThrow("饼干精灵已经领取");
 
-    state.seasonal.halloweenCookies = 5;
+    const insufficientCarnival = createManorV7State(now);
+    insufficientCarnival.seasonal.halloweenCandies = 55;
+    insufficientCarnival.seasonal.halloweenCookies = 54;
+    expect(() => transitionManorV7State(
+      insufficientCarnival,
+      { type: "exchange-halloween-carnival-gift" },
+      now
+    )).toThrow("兑换万圣狂欢礼包需要 55 个糖果和 55 个饼干");
+    expect(insufficientCarnival.seasonal).toMatchObject({ halloweenCandies: 55, halloweenCookies: 54 });
+
+    state.seasonal.halloweenCandies = 60;
+    state.seasonal.halloweenCookies = 60;
+    const coinsBeforeHalloween = state.coins;
+    state = transitionManorV7State(state, { type: "exchange-halloween-candy-pumpkin" }, now);
+    expect(state.seasonal.halloweenCandies).toBe(55);
+    expect(inventoryQuantity(state.farm.seedInventory, 164)).toBe(1);
+
     state = transitionManorV7State(state, { type: "exchange-halloween-cookie-baby" }, now);
-    expect(state.seasonal.halloweenCookies).toBe(0);
+    expect(state.seasonal.halloweenCookies).toBe(55);
     expect(inventoryQuantity(state.pasture.cubInventory, 1537)).toBe(1);
+
+    state = transitionManorV7State(state, { type: "exchange-halloween-carnival-gift" }, now);
+    expect(state.seasonal).toMatchObject({
+      halloweenCandies: 0,
+      halloweenCookies: 0,
+      halloweenCarnivalGiftClaimed: true
+    });
+    expect(state.coins).toBe(coinsBeforeHalloween + 20_000);
+    expect(inventoryQuantity(state.pasture.cubInventory, 1038)).toBe(1);
+    expect(inventoryQuantity(state.farm.seedInventory, 166)).toBe(1);
+    expect(state.decorationOwnerships).toEqual(expect.arrayContaining([
+      ...[665, 666, 667, 668].map((decorationId) => ({
+        area: "farm",
+        decorationId,
+        validUntil: now + manorV7Decoration("farm", decorationId).validSeconds * 1_000
+      })),
+      {
+        area: "pasture",
+        decorationId: 135,
+        validUntil: now + manorV7Decoration("pasture", 135).validSeconds * 1_000
+      }
+    ]));
+    expect(() => transitionManorV7State(state, { type: "exchange-halloween-carnival-gift" }, now))
+      .toThrow("万圣狂欢礼包已经兑换");
 
     state = transitionManorV7State(state, { type: "claim-spring-festival-gift" }, now);
     expect(state.seasonal.springFestivalClaimDay).toBe("2026-08-22");
@@ -180,7 +244,8 @@ describe("QQ Farm V7 domain", () => {
     const now = 7_500;
     const visitor = createManorV7State(now);
     const owner = createManorV7State(now);
-    visitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 1 }];
+    visitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 4 }];
+    visitor.pasture.productInventory = [{ sourceId: 1037, quantity: 2 }];
 
     const result = transitionManorV7FriendStates(
       visitor,
@@ -192,8 +257,9 @@ describe("QQ Farm V7 domain", () => {
       { type: "offer-halloween-cookie" },
       now
     );
-    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeGreaterThanOrEqual(1);
-    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeLessThanOrEqual(2);
+    expect(inventoryQuantity(result.visitor.pasture.productInventory, 1037)).toBe(1);
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeGreaterThanOrEqual(5);
+    expect(inventoryQuantity(result.visitor.pasture.cubInventory, 1037)).toBeLessThanOrEqual(6);
     expect(result.visitor.seasonal.cookieOfferingsRemaining).toBe(MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT - 1);
     expect(result.owner.seasonal).toMatchObject({
       halloweenCookies: 1,
@@ -209,6 +275,92 @@ describe("QQ Farm V7 domain", () => {
       { type: "offer-halloween-cookie" },
       now
     )).toThrow("今天已经给这位好友投放过饼干");
+
+    const noCookieVisitor = createManorV7State(now);
+    noCookieVisitor.pasture.cubInventory = [{ sourceId: 1037, quantity: 3 }];
+    expect(() => transitionManorV7FriendStates(
+      noCookieVisitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-cookie" },
+      now
+    )).toThrow("没有饼干可以投放");
+  });
+
+  it("offers one candy per friend and returns one or two candy seeds", () => {
+    const now = 7_600;
+    let visitor = createManorV7State(now);
+    visitor.farm.produceInventory = [{ sourceId: 167, quantity: 11 }];
+
+    for (let index = 0; index < MANOR_V7_CANDY_OFFERING_DAILY_LIMIT; index += 1) {
+      const result = transitionManorV7FriendStates(
+        visitor,
+        createManorV7State(now),
+        "visitor",
+        "访客",
+        `owner-${index}`,
+        `主人${index}`,
+        { type: "offer-halloween-candy" },
+        now
+      );
+      visitor = result.visitor;
+      expect(result.owner.seasonal).toMatchObject({
+        halloweenCandies: 1,
+        candyOfferedByUserIds: ["visitor"]
+      });
+    }
+
+    expect(inventoryQuantity(visitor.farm.produceInventory, 167)).toBe(1);
+    expect(inventoryQuantity(visitor.farm.seedInventory, 167)).toBeGreaterThanOrEqual(10);
+    expect(inventoryQuantity(visitor.farm.seedInventory, 167)).toBeLessThanOrEqual(20);
+    expect(visitor.seasonal.candyOfferingsRemaining).toBe(0);
+    expect(() => transitionManorV7FriendStates(
+      visitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner-limit",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("今天已经投放糖果 10 次");
+
+    const oneCandyVisitor = createManorV7State(now);
+    oneCandyVisitor.farm.produceInventory = [{ sourceId: 167, quantity: 1 }];
+    const first = transitionManorV7FriendStates(
+      oneCandyVisitor,
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    );
+    expect(() => transitionManorV7FriendStates(
+      { ...first.visitor, farm: { ...first.visitor.farm, produceInventory: [{ sourceId: 167, quantity: 1 }] } },
+      first.owner,
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("今天已经给这位好友投放过糖果");
+
+    expect(() => transitionManorV7FriendStates(
+      createManorV7State(now),
+      createManorV7State(now),
+      "visitor",
+      "访客",
+      "owner",
+      "主人",
+      { type: "offer-halloween-candy" },
+      now
+    )).toThrow("没有糖果可以投放");
   });
 
   it("keeps activity rewards out of ordinary purchases", () => {
@@ -241,6 +393,48 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7HouseCapacity("hutch", 3)).toBe(5);
     expect(manorV7HouseCapacity("shed", 0)).toBe(0);
     expect(manorV7HouseCapacity("shed", 4)).toBe(6);
+  });
+
+  it("keeps all 13 original house levels and charges their original coin prices", () => {
+    expect(MANOR_V7_HOUSE_UPGRADES.hutch).toHaveLength(13);
+    expect(MANOR_V7_HOUSE_UPGRADES.shed).toHaveLength(13);
+    expect(MANOR_V7_HOUSE_UPGRADES.hutch[12]).toEqual({
+      level: 13,
+      requiredLevel: 54,
+      coins: 1_200_000,
+      premiumPrice: 90
+    });
+    expect(MANOR_V7_HOUSE_UPGRADES.shed[12]).toEqual({
+      level: 13,
+      requiredLevel: 57,
+      coins: 1_250_000,
+      premiumPrice: 95
+    });
+
+    const initial = createManorV7State(4_500);
+    initial.coins = 1_700_000;
+    initial.pastureExperience = manorV7ExperienceForLevel(60);
+    initial.pasture.hutchLevel = 8;
+    initial.pasture.shedLevel = 8;
+    const upgraded = transitionManorV7State(
+      initial,
+      { type: "upgrade-house", house: "hutch", useVip: true },
+      4_500
+    );
+    expect(upgraded.coins).toBe(901_000);
+    expect(upgraded.pasture.hutchLevel).toBe(9);
+
+    const paid = transitionManorV7State(upgraded, { type: "upgrade-house", house: "shed" }, 4_500);
+    expect(paid.coins).toBe(51_000);
+    expect(paid.pasture.shedLevel).toBe(9);
+
+    const underleveled = createManorV7State(4_500);
+    underleveled.pasture.hutchLevel = 8;
+    expect(() => transitionManorV7State(
+      underleveled,
+      { type: "upgrade-house", house: "hutch", useVip: true },
+      4_500
+    )).toThrow("升级需要牧场达到 30 级");
   });
 
   it("runs the original tutorial sequence separately from cumulative tasks", () => {
@@ -440,6 +634,80 @@ describe("QQ Farm V7 domain", () => {
     expect(sold.activities[0]?.message).toContain("卖出全部");
   });
 
+  it("uses the original Lovesday prices and 99-item sale multiplier", () => {
+    const now = 2_050;
+    const initial = createManorV7State(now);
+    initial.coins = 1_000;
+    initial.farmExperience = manorV7ExperienceForLevel(5);
+    initial.farm.produceInventory = [{ sourceId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 197 }];
+    initial.pasture.productInventory = [{ sourceId: MANOR_V7_LOVESDAY_ANIMAL_ID, quantity: 197 }];
+    Object.assign(initial.tasks.find((task) => task.key === "sell")!, {
+      progress: 10,
+      completed: true,
+      claimed: true
+    });
+
+    expect(manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID)).toMatchObject({ seedPrice: 99, salePrice: 99 });
+    const bought = transitionManorV7State(
+      initial,
+      { type: "buy-seed", cropId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 1 },
+      now
+    );
+    expect(bought.coins).toBe(901);
+
+    const crop = manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID);
+    const soldCropBatch = transitionManorV7State(
+      bought,
+      { type: "sell-produce", cropId: crop.id, quantity: 99 },
+      now
+    );
+    expect(soldCropBatch.coins - bought.coins).toBe(crop.salePrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER);
+    const soldCropRemainder = transitionManorV7State(
+      soldCropBatch,
+      { type: "sell-produce", cropId: crop.id, quantity: 98 },
+      now
+    );
+    expect(soldCropRemainder.coins - soldCropBatch.coins).toBe(crop.salePrice * 98);
+
+    const animal = manorV7Animal(MANOR_V7_LOVESDAY_ANIMAL_ID);
+    const soldProductBatch = transitionManorV7State(
+      soldCropRemainder,
+      { type: "sell-animal-product", animalId: animal.id, quantity: 99 },
+      now
+    );
+    expect(soldProductBatch.coins - soldCropRemainder.coins)
+      .toBe(animal.byproductPrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER);
+    const soldProductRemainder = transitionManorV7State(
+      soldProductBatch,
+      { type: "sell-animal-product", animalId: animal.id, quantity: 98 },
+      now
+    );
+    expect(soldProductRemainder.coins - soldProductBatch.coins).toBe(animal.byproductPrice * 98);
+    expect(soldProductRemainder.activities.some((activity) => activity.message.includes("情人节 9 倍收益"))).toBe(true);
+
+    const bulk = createManorV7State(now);
+    bulk.coins = 50;
+    bulk.farm.produceInventory = [
+      { sourceId: crop.id, quantity: 99 },
+      { sourceId: 1, quantity: 2 }
+    ];
+    bulk.pasture.productInventory = [{ sourceId: animal.id, quantity: 99 }];
+    bulk.pasture.harvestedAnimalInventory = [{ sourceId: animal.id, quantity: 1 }];
+    Object.assign(bulk.tasks.find((task) => task.key === "sell")!, {
+      progress: 10,
+      completed: true,
+      claimed: true
+    });
+    const soldAllCrops = transitionManorV7State(bulk, { type: "sell-all-produce" }, now);
+    expect(soldAllCrops.coins).toBe(
+      50 + crop.salePrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER + manorV7Crop(1).salePrice * 2
+    );
+    const soldAllProducts = transitionManorV7State(soldAllCrops, { type: "sell-all-pasture-products" }, now);
+    expect(soldAllProducts.coins - soldAllCrops.coins).toBe(
+      animal.byproductPrice * 99 * MANOR_V7_LOVESDAY_SALE_MULTIPLIER + animal.productPrice
+    );
+  });
+
   it("persists produce locks and excludes locked entries from every sale path", () => {
     const initial = createManorV7State(2_100);
     initial.coins = 50;
@@ -598,11 +866,11 @@ describe("QQ Farm V7 domain", () => {
 
   it("persists an active pasture guard and consumes its included wage over time", () => {
     const initial = createManorV7State(6_200);
-    initial.coins = 20_000;
+    initial.coins = 40_000;
     const guard = manorV7PastureGuard(1);
 
     const bought = transitionManorV7State(initial, { type: "buy-pasture-guard", guardId: guard.id }, 6_200);
-    expect(bought.coins).toBe(20_000 - guard.coinPrice);
+    expect(bought.coins).toBe(40_000 - guard.coinPrice);
     expect(bought.pasture.guards).toEqual([{
       id: guard.id,
       remainingSeconds: 7 * 24 * 60 * 60,
@@ -630,6 +898,7 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(paid.pasture.guards[0]!.remainingSeconds - restored.pasture.guards[0]!.remainingSeconds)
       .toBe(7 * 24 * 60 * 60);
+    expect(paid.coins).toBe(10_000);
 
     const owner = structuredClone(paid);
     owner.randomState = 0;
@@ -873,17 +1142,48 @@ describe("QQ Farm V7 domain", () => {
     expect(migrated.seasonal).toEqual({
       animalDrops: [],
       nextAnimalDropSerial: 1,
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "1970-01-01",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
       cookieSpritesClaimed: false,
       halloweenCookies: 0,
       cookieOfferingDay: "1970-01-01",
       cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
       cookieOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
       springFestivalClaimDay: null,
       reunionFishGiftClaimed: false
     });
     expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });
     expect(migrated.pasture.animals[1]).toMatchObject({ productionActive: false, productionCount: 0 });
+  });
+
+  it("adds independent candy activity fields to existing seasonal saves", () => {
+    const legacy = createManorV7State(8_100);
+    legacy.seasonal.cookieSpritesClaimed = true;
+    legacy.seasonal.halloweenCookies = 2;
+    const seasonal = legacy.seasonal as Partial<ManorV7State["seasonal"]>;
+    delete seasonal.candySeedsClaimed;
+    delete seasonal.halloweenCandies;
+    delete seasonal.candyOfferingDay;
+    delete seasonal.candyOfferingsRemaining;
+    delete seasonal.candyOfferedByUserIds;
+    delete seasonal.halloweenCarnivalGiftClaimed;
+
+    const migrated = migrateManorV7State(legacy, 8_100);
+    expect(migrated.seasonal).toMatchObject({
+      candySeedsClaimed: false,
+      halloweenCandies: 0,
+      candyOfferingDay: "1970-01-01",
+      candyOfferingsRemaining: MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
+      candyOfferedByUserIds: [],
+      halloweenCarnivalGiftClaimed: false,
+      cookieSpritesClaimed: true,
+      halloweenCookies: 2
+    });
   });
 
   it("migrates weather, yield, flowers, friend filters and workshop materials", () => {
@@ -1218,7 +1518,7 @@ describe("QQ Farm V7 domain", () => {
   it("keeps cans, hourglasses and weapons in dedicated inventories and completes research", () => {
     const now = 70_000;
     let state = createManorV7State(now);
-    state.coins = 100_000;
+    state.coins = 1_000_000;
     state = transitionManorV7State(state, {
       type: "buy-tool", area: "pasture", toolId: 1, itemType: 7, quantity: 2, useVip: true
     }, now);
@@ -1233,6 +1533,7 @@ describe("QQ Farm V7 domain", () => {
       { sourceId: 43, quantity: 1 }
     ]);
     expect(state.pasture.weaponInventory).toEqual([{ sourceId: 7, quantity: 1 }]);
+    expect(state.coins).toBe(914_000);
 
     const rule = MANOR_V7_RESEARCH_RULES.hutch[0];
     const started = transitionManorV7State(
@@ -1255,6 +1556,25 @@ describe("QQ Farm V7 domain", () => {
     expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeGreaterThanOrEqual(1);
     expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeLessThanOrEqual(2);
     expect(collected.pasture.research.hutch).toEqual({ animalId: null, remainingSeconds: 0 });
+  });
+
+  it("cleans one manure sprite per action even after the daily reward limit is reached", () => {
+    const now = 75_000;
+    const initial = createManorV7State(now);
+    initial.pasture.manure = 2;
+    initial.farm.manureCollection.remaining = 1;
+
+    const first = transitionManorV7State(initial, { type: "collect-manure" }, now);
+    expect(first.pasture.manure).toBe(1);
+    expect(first.farm.manureCollection.remaining).toBe(0);
+    expect(inventoryQuantity(first.pasture.materialInventory, 1506)).toBe(1);
+
+    const second = transitionManorV7State(first, { type: "collect-manure" }, now);
+    expect(second.pasture.manure).toBe(0);
+    expect(second.farm.manureCollection.remaining).toBe(0);
+    expect(inventoryQuantity(second.pasture.materialInventory, 1506)).toBe(1);
+    expect(() => transitionManorV7State(second, { type: "collect-manure" }, now))
+      .toThrow("没有可清理的便便");
   });
 
   it("applies friend special feed, manure, mosquito and mouse actions to both saves", () => {
@@ -1483,10 +1803,10 @@ describe("QQ Farm V7 domain", () => {
     expect(reset.pasture.mosquitoActions.remaining).toBe(MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT);
   });
 
-  it("supports cub sales, animal donation, parade persistence and free VIP goods", () => {
+  it("supports cub sales, animal donation, parade persistence and coin-priced VIP goods", () => {
     const now = 90_000;
     let state = createManorV7State(now);
-    state.coins = 1_000;
+    state.coins = 2_000_000;
     state.farmExperience = manorV7ExperienceForLevel(60);
     state.pastureExperience = manorV7ExperienceForLevel(60);
     state.pasture.shedLevel = 8;
@@ -1519,11 +1839,30 @@ describe("QQ Farm V7 domain", () => {
     vip = transitionManorV7State(vip, {
       type: "buy-decoration", area: "farm", decorationId: 45, useVip: true
     }, now);
-    expect(vip.coins).toBe(paraded.coins);
+    vip = transitionManorV7State(vip, {
+      type: "upgrade-land", landId: 5, tier: "red", useVip: true
+    }, now);
+    vip = transitionManorV7State(vip, {
+      type: "upgrade-land", landId: 5, tier: "black", useVip: true
+    }, now);
+    const tool = MANOR_V7_TOOLS.find((item) => item.area === "farm" && item.id === 2 && item.itemType === 3)!;
+    const decoration = manorV7Decoration("farm", 45);
+    const redLand = manorV7LandUpgrade("red", 0);
+    const blackLand = manorV7LandUpgrade("black", 0);
+    expect(vip.coins).toBe(
+      paraded.coins
+      - vipCrop.seedPrice
+      - vipAnimal.purchasePrice
+      - manorV7ToolCoinPrice(tool)
+      - manorV7DecorationCoinPrice(decoration)
+      - redLand.coins
+      - blackLand.coins
+    );
     expect(inventoryQuantity(vip.farm.seedInventory, vipCrop.id)).toBe(1);
     expect(vip.pasture.animals).toEqual([expect.objectContaining({ animalId: vipAnimal.id })]);
     expect(inventoryQuantity(vip.farm.toolInventory, 2)).toBe(1);
     expect(vip.ownedDecorationIds).toContain(45);
+    expect(vip.farm.lands[4]).toMatchObject({ tier: "black" });
   });
 
   it("closes the wild-animal adoption, release, return and crystal loop", () => {

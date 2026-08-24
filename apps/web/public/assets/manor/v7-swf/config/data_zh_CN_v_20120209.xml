@@ -8,7 +8,7 @@
 		<postUrl_xy_qq url="__MANOR_ORIGIN__/api/manor/flash/farm?" />
 		<fbRequest url="mod=gb_buy" />
 		<!-- <cftRequest url="mod=gb_buy" /> -->
-		<vipIntroduce url="__MANOR_ORIGIN__/tools.php?mod=vip" />
+		<vipIntroduce url="" />
 		<defaultPhoto url="" />
 		<speedReport url="nmc.php?" />
 		<items maxid="90012" />

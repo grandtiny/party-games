@@ -34,18 +34,39 @@ $farmConfigPath = Join-Path $projectRoot "apps\web\public\assets\manor\v7-swf\co
 $pastureConfigPath = Join-Path $projectRoot "apps\web\public\assets\manor\v7-swf\config\mcini_main_v_20120209.xml"
 $patchSource = Join-Path $projectRoot "patches\manor-v7\scripts\wild\com\comm\ModuleManager.as"
 $shopSeedPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopSeedWindow.as"
+$shopSeedTilePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopSeedTile.as"
+$shopToolPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopToolWindow.as"
+$shopTinPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopTinWindow.as"
+$shopDiyPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopDiyWindow.as"
+$pastureSelectPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\farm\packBar\SelectWindow.as"
+$pastureNameTextPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\head\NameText.as"
+$pastureFlopGiftPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\FlopGift\FlopGiftWindow.as"
 $leftInfoPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\LeftInfo.as"
 $pastureGiftIconPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\MyIconBar.as"
+$pastureGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\GiftWindow.as"
+$pastureMainCommandPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\control\MainCommand.as"
 $dailyPackagePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-VT§.as"
+$farmProfileBarPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-PB§.as"
 $dailyPackageModelPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-VB§\§_-2S§.as"
+$farmGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\GiftWindow.as"
+$farmVipReturnGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\VipReturnGiftWindow.as"
 $farmFriendPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-OE§.as"
 $profileWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-42§\§_-1D§.as"
 $bagControllerPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 $warehouseModulePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\warehouse\ModuleWarehouse.as"
+$farmShopPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\shop\§_-OZ§.as"
+$farmApplicationPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\FarmApplication.as"
+$farmBuyItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyItemWindow.as"
+$farmBuyDiyPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyDiyWindow.as"
+$farmBuySeedPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuySeedWindow.as"
+$farmTileBasePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\framework\base\§_-Eh§.as"
+$farmSeedTilePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\§_-Qq§.as"
+$farmLandWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\§_-LI§.as"
+$farmFriendVipPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-Zk§.as"
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $shopSeedTilePatchSource, $shopToolPatchSource, $shopTinPatchSource, $shopDiyPatchSource, $pastureSelectPatchSource, $pastureNameTextPatchSource, $pastureFlopGiftPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureGiftWindowPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $farmProfileBarPatchSource, $dailyPackageModelPatchSource, $farmGiftWindowPatchSource, $farmVipReturnGiftWindowPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmBuySeedPatchSource, $farmTileBasePatchSource, $farmSeedTilePatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -61,10 +82,28 @@ $arguments = @(
   $patchSource,
   "mc.view.main.window.shop.ShopSeedWindow",
   $shopSeedPatchSource,
+  "mc.view.main.window.shop.ShopSeedTile",
+  $shopSeedTilePatchSource,
+  "mc.view.main.window.shop.ShopToolWindow",
+  $shopToolPatchSource,
+  "mc.view.main.window.shop.ShopTinWindow",
+  $shopTinPatchSource,
+  "mc.view.main.window.shop.ShopDiyWindow",
+  $shopDiyPatchSource,
+  "mc.view.farm.packBar.SelectWindow",
+  $pastureSelectPatchSource,
+  "mc.view.main.head.NameText",
+  $pastureNameTextPatchSource,
+  "mc.view.main.leftInfo.FlopGift.FlopGiftWindow",
+  $pastureFlopGiftPatchSource,
   "mc.view.main.leftInfo.LeftInfo",
   $leftInfoPatchSource,
   "mc.view.main.leftInfo.MyIconBar",
-  $pastureGiftIconPatchSource
+  $pastureGiftIconPatchSource,
+  "mc.view.main.leftInfo.GiftWindow",
+  $pastureGiftWindowPatchSource,
+  "mc.control.MainCommand",
+  $pastureMainCommandPatchSource
 )
 $farmArguments = @(
   "-jar",
@@ -74,8 +113,14 @@ $farmArguments = @(
   $temporaryFarmSwf,
   "§_-Gt§.§_-VT§",
   $dailyPackagePatchSource,
+  "§_-Gt§.§_-PB§",
+  $farmProfileBarPatchSource,
   "§_-VB§.§_-2S§",
   $dailyPackageModelPatchSource,
+  "common.view.window.GiftWindow",
+  $farmGiftWindowPatchSource,
+  "common.view.window.VipReturnGiftWindow",
+  $farmVipReturnGiftWindowPatchSource,
   "module.friend.§_-OE§",
   $farmFriendPatchSource,
   "§_-42§.§_-1D§",
@@ -83,7 +128,25 @@ $farmArguments = @(
   "§_-1T§.§_-D3§",
   $bagControllerPatchSource,
   "module.warehouse.ModuleWarehouse",
-  $warehouseModulePatchSource
+  $warehouseModulePatchSource,
+  "module.shop.§_-OZ§",
+  $farmShopPatchSource,
+  "module.FarmApplication",
+  $farmApplicationPatchSource,
+  "§_-W§.BuyItemWindow",
+  $farmBuyItemPatchSource,
+  "§_-W§.BuyDiyWindow",
+  $farmBuyDiyPatchSource,
+  "§_-W§.BuySeedWindow",
+  $farmBuySeedPatchSource,
+  "framework.base.§_-Eh§",
+  $farmTileBasePatchSource,
+  "§_-W§.§_-Qq§",
+  $farmSeedTilePatchSource,
+  "common.view.window.§_-LI§",
+  $farmLandWindowPatchSource,
+  "module.friend.§_-Zk§",
+  $farmFriendVipPatchSource
 )
 
 try {

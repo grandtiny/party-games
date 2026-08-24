@@ -21,7 +21,7 @@
   <security host="192.168.1.121" port="3333" />
   <moduleList>
     <!-- 模块列表 -->
-    <module name="main" url="__MANOR_ORIGIN__/module/Master2_v_86.swf?v=fbef069ab666" statusText="加载主文件...">
+    <module name="main" url="__MANOR_ORIGIN__/module/Master2_v_86.swf?v=9d057dc13758" statusText="加载主文件...">
       <material url="__MANOR_ORIGIN__/module/mc/main/farmui1_v_40.swf" statusText="加载UI素材..." />
       <material url="__MANOR_ORIGIN__/module/mc/main/farmui2_v_35.swf" statusText="加载UI素材..." />
       <material url="__MANOR_ORIGIN__/module/mc/main/commonui_v_10.swf" statusText="加载UI素材..." />
@@ -44,7 +44,7 @@
   <submodule>
     <module name="monthbegin" month="12月" url="__MANOR_ORIGIN__/module/mc/submodule/monthBegin_v_0.swf" shareImg="__MANOR_ORIGIN__/module/icon/monthbegin/feed.png" start="12/12/2011 00:00:00" end="12/19/2011 00:00:00" />
     <module name="firecracker" url="__MANOR_ORIGIN__/module/mc/module/pasturefirecraker2012_v_0.swf" />
-    <module name="lovesday" url="__MANOR_ORIGIN__/module/mc/submodule/Lovesday_v_0.swf" start="2/8/2012 00:00:00" end="2/24/2012 00:00:00" speaking="活动产物可翻9倍哦！" tip="2012“情人节”活动">
+    <module name="lovesday" url="__MANOR_ORIGIN__/module/mc/submodule/Lovesday_v_0.swf" start="1/1/2000 00:00:00" end="12/31/2099 23:59:59" speaking="活动产物可翻9倍哦！" tip="情人节活动">
       <material name="lovesdayNPC" url="__MANOR_ORIGIN__/module/ui/npc/lovesdayNPC_v_0.swf" />
       <material name="lovesdayWindow" url="__MANOR_ORIGIN__/module/ui/npc/lovesdayWin_v_0.swf" />
     </module>
@@ -64,11 +64,11 @@
     <mission className="fifthTime" str="2010-12-30 14:00:00" />
   </missonList>
   <vipRenewal>
-    <tips><![CDATA[您的VIP还有<font color = '#FF0000'><b>&nbsp;{expireDays}&nbsp;</b></font>天到期。我们温馨提醒您及时<br>VIP贵族每月可领取最高<font color = '#FF0000'><b>&nbsp;420&nbsp;</b></font>Q币农牧场礼包。]]></tips>
-    <link><![CDATA[tools.php?mod=vip]]></link>
+    <tips><![CDATA[本站账号已默认启用 VIP 7级权益，无需续费。]]></tips>
+    <link><![CDATA[]]></link>
   </vipRenewal>
   <vipReturn>
-    <vipReturnLink><![CDATA[tools.php?mod=vip]]></vipReturnLink>
+    <vipReturnLink><![CDATA[]]></vipReturnLink>
     <vipReturnButton><![CDATA[__MANOR_ORIGIN__/module/ui/buttons/vipReturnButton.png]]></vipReturnButton>
   </vipReturn>
   <hunter>

@@ -14,7 +14,12 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "reclaim-land":
       return { type, landId: integer(input.landId) };
     case "fertilize": return { type, landId: integer(input.landId), toolId: integer(input.toolId) };
-    case "upgrade-land": return { type, landId: integer(input.landId), tier: landTier(input.tier) };
+    case "upgrade-land": return {
+      type,
+      landId: integer(input.landId),
+      tier: landTier(input.tier),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "sell-produce": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-seed": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-selected-seeds": return { type, cropIds: integerArray(input.cropIds) };
@@ -58,7 +63,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "buy-grass":
     case "buy-grass-to-inventory":
       return { type, quantity: quantity(input.quantity) };
-    case "buy-pasture-guard": return { type, guardId: integer(input.guardId) };
+    case "buy-pasture-guard": return {
+      type,
+      guardId: integer(input.guardId),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "set-pasture-guard-active": return { type, guardId: integer(input.guardId), active: boolean(input.active) };
     case "pay-pasture-guard": return { type, guardId: integer(input.guardId), days: quantity(input.days) };
     case "feed-grass-from-inventory": return { type, quantity: quantity(input.quantity) };
@@ -78,8 +87,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "clear-activities":
     case "claim-vip-return-gift":
     case "generate-seasonal-animal-drop":
+    case "claim-halloween-candy-seeds":
     case "claim-cookie-sprites":
+    case "exchange-halloween-candy-pumpkin":
     case "exchange-halloween-cookie-baby":
+    case "exchange-halloween-carnival-gift":
     case "claim-spring-festival-gift":
     case "claim-reunion-fish-gift":
       return { type };
@@ -101,7 +113,11 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "sell-harvested-animal":
       return { type, animalId: integer(input.animalId), quantity: quantity(input.quantity) };
     case "collect-manure": return { type };
-    case "upgrade-house": return { type, house: animalHouse(input.house) };
+    case "upgrade-house": return {
+      type,
+      house: animalHouse(input.house),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "start-research": return { type, house: animalHouse(input.house), animalId: integer(input.animalId) };
     case "collect-research": return { type, house: animalHouse(input.house) };
     case "use-research-hourglass": return { type, house: animalHouse(input.house), toolId: integer(input.toolId) };
@@ -146,6 +162,7 @@ export function parseManorV7FriendAction(value: unknown): ManorV7FriendAction {
   const type = text(input.type, "操作类型");
   switch (type) {
     case "generate-seasonal-animal-drop":
+    case "offer-halloween-candy":
     case "offer-halloween-cookie":
       return { type };
     case "adopt-seasonal-animal":

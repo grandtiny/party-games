@@ -347,32 +347,14 @@ package §_-Gt§
       
       private function showYellowPackage(param1:Boolean) : void
       {
-         var _loc5_:String = null;
-         var _loc6_:String = null;
-         var _loc7_:String = null;
-         var _loc2_:Session = Session.getInstance();
-         var _loc3_:String = "";
-         if(CommonData.getKey != null)
+         var _loc1_:Object = this.m_controller.model.§_-QA§();
+         if(_loc1_ == null)
          {
-            _loc3_ = CommonData.getKey();
+            return;
          }
-         var _loc4_:String = CommonData.serverTime.toString();
-         if(Settings.getInstance().mode == "")
-         {
-            _loc6_ = §_-Vz§.§_-Uv§;
-            _loc7_ = _loc2_.§_-9P§;
-         }
-         _loc5_ = "farmKey=" + _loc3_ + "&farmTime=" + _loc4_ + "&uIdx=" + _loc2_.hostId + "&uinX=" + _loc6_ + "&uinY=" + _loc7_;
-         CommonData.addCallBackProxy("getGiftBack",this.setGiftData);
-         var _loc8_:Player = _loc2_.host;
-         if(_loc8_._yellowstatus != 0)
-         {
-            QzoneJSAPI.showVIPPackage(§_-Ac§.§_-8k§,param1 == true ? false : true,_loc5_,_loc8_._yellowstatus,_loc8_._yellowlevel);
-         }
-         else
-         {
-            QzoneJSAPI.showVIPPackage(§_-Ac§.§_-8k§,false,_loc5_,_loc8_._yellowstatus,_loc8_._yellowlevel);
-         }
+         _loc1_["big"] = false;
+         _loc1_["confirmHandler"] = _loc1_["claimed"] == true ? null : this.giftWindowConfirmHandler;
+         this.m_controller.openWindow(§_-Ac§.§_-LP§,_loc1_);
       }
       
       private function onOfflineDataMessageLoaded(param1:§_-Yj§) : void

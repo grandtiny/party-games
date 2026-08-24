@@ -1,6 +1,6 @@
 import {
   MANOR_V7_ANIMALS,
-  MANOR_V7_CROPS,
+  MANOR_V7_CROPS as MANOR_V7_GENERATED_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,
@@ -15,6 +15,16 @@ import type {
   ManorV7LandTier,
   ManorV7ToolDefinition
 } from "./types.js";
+import {
+  manorV7EffectiveCropSalePrice,
+  manorV7EffectiveCropSeedPrice
+} from "./seasonal.js";
+
+export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERATED_CROPS.map((crop) => ({
+  ...crop,
+  seedPrice: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
+  salePrice: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
+}));
 
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
@@ -66,6 +76,20 @@ export function manorV7ToolByType(area: ManorV7Area, id: number, itemType: numbe
   return item;
 }
 
+export function manorV7LocalCoinPrice(coinPrice: number, premiumPrice: number): number {
+  if (coinPrice > 0) return coinPrice;
+  if (premiumPrice > 0) return premiumPrice * 1_000;
+  return 0;
+}
+
+export function manorV7ToolCoinPrice(tool: ManorV7ToolDefinition): number {
+  return manorV7LocalCoinPrice(tool.coinPrice, tool.premiumPrice);
+}
+
+export function manorV7DecorationCoinPrice(decoration: ManorV7DecorationDefinition): number {
+  return manorV7LocalCoinPrice(decoration.coinPrice, decoration.premiumPrice);
+}
+
 export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
   const item = MANOR_V7_TOOLS.find((candidate) => (
     candidate.area === "pasture" && candidate.itemType === 106 && candidate.id === id
@@ -100,7 +124,6 @@ export function manorV7LandUpgrade(tier: Exclude<ManorV7LandTier, "normal">, upg
 
 export {
   MANOR_V7_ANIMALS,
-  MANOR_V7_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,

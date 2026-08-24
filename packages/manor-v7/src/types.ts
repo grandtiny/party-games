@@ -293,11 +293,17 @@ export interface ManorV7SeasonalAnimalDropState {
 export interface ManorV7SeasonalState {
   animalDrops: ManorV7SeasonalAnimalDropState[];
   nextAnimalDropSerial: number;
+  candySeedsClaimed: boolean;
+  halloweenCandies: number;
+  candyOfferingDay: string | null;
+  candyOfferingsRemaining: number;
+  candyOfferedByUserIds: string[];
   cookieSpritesClaimed: boolean;
   halloweenCookies: number;
   cookieOfferingDay: string | null;
   cookieOfferingsRemaining: number;
   cookieOfferedByUserIds: string[];
+  halloweenCarnivalGiftClaimed: boolean;
   springFestivalClaimDay: string | null;
   reunionFishGiftClaimed: boolean;
 }
@@ -405,7 +411,7 @@ export type ManorV7Action =
   | { type: "harvest"; landId: number }
   | { type: "clear-land"; landId: number }
   | { type: "reclaim-land"; landId: number }
-  | { type: "upgrade-land"; landId: number; tier: Exclude<ManorV7LandTier, "normal"> }
+  | { type: "upgrade-land"; landId: number; tier: Exclude<ManorV7LandTier, "normal">; useVip?: boolean }
   | { type: "sell-produce"; cropId: number; quantity: number }
   | { type: "sell-seed"; cropId: number; quantity: number }
   | { type: "sell-selected-seeds"; cropIds: number[] }
@@ -433,7 +439,7 @@ export type ManorV7Action =
   | { type: "buy-grass"; quantity: number }
   | { type: "buy-grass-to-inventory"; quantity: number }
   | { type: "feed-grass-from-inventory"; quantity: number }
-  | { type: "buy-pasture-guard"; guardId: number }
+  | { type: "buy-pasture-guard"; guardId: number; useVip?: boolean }
   | { type: "set-pasture-guard-active"; guardId: number; active: boolean }
   | { type: "pay-pasture-guard"; guardId: number; days: number }
   | { type: "claim-daily-package" }
@@ -447,8 +453,11 @@ export type ManorV7Action =
   | { type: "clear-activities" }
   | { type: "claim-vip-return-gift" }
   | { type: "generate-seasonal-animal-drop" }
+  | { type: "claim-halloween-candy-seeds" }
   | { type: "claim-cookie-sprites" }
+  | { type: "exchange-halloween-candy-pumpkin" }
   | { type: "exchange-halloween-cookie-baby" }
+  | { type: "exchange-halloween-carnival-gift" }
   | { type: "claim-spring-festival-gift" }
   | { type: "claim-reunion-fish-gift" }
   | { type: "redeem-code"; code: string }
@@ -464,7 +473,7 @@ export type ManorV7Action =
   | { type: "sell-harvested-animal"; animalId: number; quantity: number }
   | { type: "sell-all-pasture-products" }
   | { type: "collect-manure" }
-  | { type: "upgrade-house"; house: ManorV7AnimalHouse }
+  | { type: "upgrade-house"; house: ManorV7AnimalHouse; useVip?: boolean }
   | { type: "start-research"; house: ManorV7AnimalHouse; animalId: number }
   | { type: "collect-research"; house: ManorV7AnimalHouse }
   | { type: "use-research-hourglass"; house: ManorV7AnimalHouse; toolId: number }
@@ -489,6 +498,7 @@ export type ManorV7FriendAction =
   | { type: "water"; landId: number }
   | { type: "generate-seasonal-animal-drop" }
   | { type: "adopt-seasonal-animal"; animalId: number }
+  | { type: "offer-halloween-candy" }
   | { type: "offer-halloween-cookie" }
   | { type: "remove-weeds"; landId: number }
   | { type: "remove-pests"; landId: number }
