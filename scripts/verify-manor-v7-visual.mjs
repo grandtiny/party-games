@@ -27,6 +27,7 @@ const consoleMessages = [];
 const runtimeExceptions = [];
 let feedQaReport = null;
 let regressionQaReport = null;
+let snapshotQaReport = null;
 
 await mkdir(chromeProfile, { recursive: true });
 const debuggingPort = await availablePort();
@@ -79,6 +80,7 @@ try {
     await setViewport(cdp, { width: 1440, height: 900, mobile: false });
     await navigate(cdp, `${baseUrl}/`);
     await authenticate(cdp);
+    await completeTutorialForVisualQa(cdp);
     if (feedQa) await prepareFeedQa(cdp);
 
     const reports = [];
@@ -94,6 +96,7 @@ try {
       await delay(15_000);
       reports.push(await captureScene(cdp, viewport.name, "farm"));
       if (viewport.name === "desktop" && !wildQa) {
+        snapshotQaReport = await verifyLocalSnapshot(cdp);
         if (regressionQa) {
           regressionQaReport = await verifySceneNavigationRegression(cdp);
         }
@@ -267,12 +270,12 @@ try {
     const knownRuffleErrors = ruffleErrors.filter(isKnownRuffleError);
     const unexpectedRuffleErrors = ruffleErrors.filter((message) => !isKnownRuffleError(message));
     const reportPath = resolve(outputDirectory, "report.json");
-    const report = { baseUrl, reports, interactionReports, feedQaReport, regressionQaReport, wildQa, wildRequestObserved, decorationRequestObserved, seedShopRequestObserved, pastureBootstrapObserved, pastureShopRequestObserved, pastureWarehouseRequestObserved, pastureDecorationRequestObserved, responses, failedResponses, failedLoads, consoleErrors, consoleMessages, runtimeExceptions, knownRuffleErrors, unexpectedRuffleErrors };
+    const report = { baseUrl, reports, interactionReports, feedQaReport, regressionQaReport, snapshotQaReport, wildQa, wildRequestObserved, decorationRequestObserved, seedShopRequestObserved, pastureBootstrapObserved, pastureShopRequestObserved, pastureWarehouseRequestObserved, pastureDecorationRequestObserved, responses, failedResponses, failedLoads, consoleErrors, consoleMessages, runtimeExceptions, knownRuffleErrors, unexpectedRuffleErrors };
     await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
     if (failedResponses.length || failedLoads.length || consoleErrors.length || runtimeExceptions.length || unexpectedRuffleErrors.length || (!wildQa && (!decorationRequestObserved || !seedShopRequestObserved)) || !pastureBootstrapObserved || !pastureShopRequestObserved || !pastureWarehouseRequestObserved || !pastureDecorationRequestObserved || (wildQa && !wildRequestObserved) || [...reports, ...interactionReports].some((item) => !item.canvasIsColorful)) {
       throw new Error(`Manor V7 visual QA failed; see ${reportPath}`);
     }
-    process.stdout.write(`${JSON.stringify({ reportPath, reports, interactionReports, feedQaReport, regressionQaReport, wildQa, wildRequestObserved, decorationRequestObserved, seedShopRequestObserved, pastureBootstrapObserved, pastureShopRequestObserved, pastureWarehouseRequestObserved, pastureDecorationRequestObserved, requestCount: responses.length, failedResponses, failedLoads, consoleErrors: consoleErrors.length, runtimeExceptions: runtimeExceptions.length, knownRuffleErrors: knownRuffleErrors.length, unexpectedRuffleErrors: unexpectedRuffleErrors.length }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify({ reportPath, reports, interactionReports, feedQaReport, regressionQaReport, snapshotQaReport, wildQa, wildRequestObserved, decorationRequestObserved, seedShopRequestObserved, pastureBootstrapObserved, pastureShopRequestObserved, pastureWarehouseRequestObserved, pastureDecorationRequestObserved, requestCount: responses.length, failedResponses, failedLoads, consoleErrors: consoleErrors.length, runtimeExceptions: runtimeExceptions.length, knownRuffleErrors: knownRuffleErrors.length, unexpectedRuffleErrors: unexpectedRuffleErrors.length }, null, 2)}\n`);
   } finally {
     cdp.close();
   }
@@ -346,6 +349,74 @@ async function captureScene(cdp, viewportName, scene) {
     ...page,
     canvasIsColorful: Boolean(page.pixelSample?.opaque > 1000 && page.pixelSample?.colorful > 1000)
   };
+}
+
+async function verifyLocalSnapshot(cdp) {
+  const result = await evaluate(cdp, `(async () => {
+    const button = document.querySelector('.manor-snapshot-button');
+    if (!(button instanceof HTMLButtonElement) || button.disabled) {
+      throw new Error('庄园截图按钮不可用');
+    }
+    const originalClick = HTMLAnchorElement.prototype.click;
+    let capturePromise = null;
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download.endsWith('.png') && this.href.startsWith('blob:')) {
+        capturePromise = (async () => {
+          const blob = await fetch(this.href).then((response) => response.blob());
+          const bitmap = await createImageBitmap(blob);
+          const sample = document.createElement('canvas');
+          sample.width = bitmap.width;
+          sample.height = bitmap.height;
+          const context = sample.getContext('2d', { willReadFrequently: true });
+          if (!context) throw new Error('庄园截图像素检查不可用');
+          context.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+          let opaque = 0;
+          let colorful = 0;
+          const stride = Math.max(4, Math.floor(pixels.length / 40000 / 4) * 4);
+          for (let index = 0; index < pixels.length; index += stride) {
+            if (pixels[index + 3] > 0) opaque += 1;
+            if (Math.max(pixels[index], pixels[index + 1], pixels[index + 2]) - Math.min(pixels[index], pixels[index + 1], pixels[index + 2]) > 12) colorful += 1;
+          }
+          return {
+            fileName: this.download,
+            type: blob.type,
+            size: blob.size,
+            width: sample.width,
+            height: sample.height,
+            opaque,
+            colorful
+          };
+        })();
+        return;
+      }
+      return originalClick.call(this);
+    };
+    try {
+      button.click();
+      for (let attempt = 0; attempt < 100 && !capturePromise; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      if (!capturePromise) throw new Error('庄园截图没有触发本地 PNG 下载');
+      const report = await capturePromise;
+      if (
+        report.type !== 'image/png' ||
+        !/^qq-farm-\\d{8}-\\d{6}\\.png$/.test(report.fileName) ||
+        report.size < 10_000 ||
+        report.width < 100 ||
+        report.height < 100 ||
+        report.opaque < 1_000 ||
+        report.colorful < 1_000
+      ) {
+        throw new Error('庄园截图 PNG 内容无效：' + JSON.stringify(report));
+      }
+      return report;
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+    }
+  })()`);
+  return result;
 }
 
 async function sampleScreenshot(cdp, pngBase64, stage) {
@@ -542,6 +613,38 @@ async function authenticate(cdp) {
     return status;
   })()`);
   if (!result.authenticated) throw new Error("Visual QA account authentication failed");
+}
+
+async function completeTutorialForVisualQa(cdp) {
+  const tutorialTaskCount = 10;
+  const result = await evaluate(cdp, `(async () => {
+    let view = await fetch('/api/manor', { credentials: 'same-origin' }).then((response) => {
+      if (!response.ok) throw new Error('庄园视觉验收存档初始化失败');
+      return response.json();
+    });
+    for (let step = 0; step < 20 && view.tutorialTask.taskId < ${tutorialTaskCount}; step += 1) {
+      if (!view.tutorialTask.accepted) {
+        const accepted = await fetch('/api/manor/actions', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'accept-tutorial-task' })
+        });
+        if (!accepted.ok) throw new Error(await accepted.text());
+        view = await accepted.json();
+      }
+      const completed = await fetch('/api/manor/actions', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'complete-tutorial-task' })
+      });
+      if (!completed.ok) throw new Error(await completed.text());
+      view = await completed.json();
+    }
+    return view.tutorialTask;
+  })()`);
+  if (result.taskId < tutorialTaskCount) throw new Error(`庄园视觉验收教程未完成：${JSON.stringify(result)}`);
 }
 
 async function prepareFeedQa(cdp) {
