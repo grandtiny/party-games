@@ -151,6 +151,12 @@ try {
         await clickStage(cdp, 974, 39);
         await delay(2_500);
         interactionReports.push(await captureScene(cdp, "desktop-shop", "farm"));
+        await clickStage(cdp, 365, 170);
+        await delay(2_500);
+        interactionReports.push(await captureScene(cdp, "desktop-shop-fish", "farm"));
+        await clickStage(cdp, 452, 170);
+        await delay(2_500);
+        interactionReports.push(await captureScene(cdp, "desktop-shop-decoration", "farm"));
         await navigate(cdp, `${baseUrl}/manor`);
         await waitForManor(cdp);
         await delay(5_000);

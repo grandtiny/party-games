@@ -186,7 +186,7 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_fish_list") return flashFishShop(this.service.getView(user, now));
     if (moduleName === "cgi_fish_unlock") return this.#unlockFish(user, params, now);
     if (moduleName === "cgi_fish_buy") return this.#buyFish(user, params, now);
-    if (moduleName === "cgi_fish_index") return flashFishPool(this.service.getView(user, now));
+    if (moduleName === "cgi_fish_index") return this.#fishPool(user, params, now);
     if (moduleName === "cgi_fish_plant") return this.#plantFish(user, params, now);
     if (moduleName === "cgi_fish_harvest") return this.#harvestFish(user, params, now);
     if (moduleName === "cgi_fish_output") return flashFishOutput(this.service.getView(user, now), params);
@@ -636,6 +636,14 @@ export class ManorV7FlashAdapter {
       name: sales.length === 1 ? sales[0]!.definition.name : "全部成鱼",
       number: sales.reduce((total, sale) => total + sale.quantity, 0)
     };
+  }
+
+  #fishPool(user: AccountUserView, params: FlashParams, now: number) {
+    const ownerId = integer(params.ownerId);
+    const view = ownerId && ownerId !== stableFlashUserId(user.id)
+      ? this.#friendViewByFlashId(user, ownerId, now)
+      : this.service.getView(user, now);
+    return flashFishPool(view);
   }
 
   #stealFish(user: AccountUserView, params: FlashParams, now: number) {

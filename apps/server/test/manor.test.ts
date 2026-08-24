@@ -528,6 +528,58 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("returns the selected friend's fish pond instead of the visitor's pond", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-friend-fish-pool-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+
+      const ownerState = instance.repository.getManorV7State(owner.userId);
+      const visitorState = instance.repository.getManorV7State(visitor.userId);
+      if (!ownerState || !visitorState) throw new Error("Friend fish pond V7 state missing");
+
+      const ownerWithFish: ManorV7State = structuredClone(ownerState);
+      ownerWithFish.farm.fishPool.opened = true;
+      ownerWithFish.farm.fishPool.fish = [
+        { serial: 41, fishId: 16, growthSeconds: 0, stolen: 0, thiefUserIds: [], fedStage: 0 }
+      ];
+      ownerWithFish.revision += 1;
+      ownerWithFish.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, ownerState.revision, ownerWithFish);
+
+      const visitorWithFish: ManorV7State = structuredClone(visitorState);
+      visitorWithFish.farm.fishPool.opened = true;
+      visitorWithFish.farm.fishPool.fish = [
+        { serial: 72, fishId: 2, growthSeconds: 0, stolen: 0, thiefUserIds: [], fedStage: 0 }
+      ];
+      visitorWithFish.revision += 1;
+      visitorWithFish.updatedAt = Date.now();
+      instance.repository.updateManorV7State(visitor.userId, visitorState.revision, visitorWithFish);
+
+      const ownPool = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_fish_index",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(ownPool.statusCode, ownPool.body).toBe(200);
+      expect(ownPool.json()).toMatchObject({ fish: [{ fid: 2, i: 72 }], open: 1 });
+
+      const friendPool = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/farm?mod=cgi_fish_index&ownerId=${stableFlashUserId(owner.userId)}`,
+        headers: { cookie: visitor.cookie }
+      });
+      expect(friendPool.statusCode, friendPool.body).toBe(200);
+      expect(friendPool.json()).toMatchObject({ fish: [{ fid: 16, i: 41 }], open: 1 });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("returns original action fields for immediate harvest updates and buys coin decorations through the SWF route", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-action-protocol-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
