@@ -1760,6 +1760,19 @@ describe("QQ Farm V7 account persistence", () => {
         ecode: 0,
         info: [expect.objectContaining({ cId: 1, cName: "蓝水晶", amount: 1, type: 9 })]
       });
+      const soldCrystal = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_sell_crystal",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "id=1&num=1"
+      });
+      expect(soldCrystal.json()).toMatchObject({ code: 1, ecode: 0, money: 10 });
+      const crystalsAfterSale = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_get_usercrystal&type=9",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(crystalsAfterSale.json()).toEqual({ ecode: 0, info: [] });
 
       const releasedState = instance.repository.getManorV7State(owner.userId);
       if (!releasedState) throw new Error("Released wild state missing");

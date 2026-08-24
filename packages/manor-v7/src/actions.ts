@@ -1091,6 +1091,18 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       attackIncomingWildAnimal(state, action.serial, action.attackType, action.weaponId, "本场主人", now);
       break;
     }
+    case "sell-wild-crystal": {
+      requirePositiveInteger(action.quantity);
+      const crystal = manorV7WildCrystal(action.crystalId);
+      const inventory = state.pasture.wild.crystalInventory;
+      const current = inventoryQuantity(inventory, crystal.id);
+      if (current < action.quantity) throw new Error("水晶库存不足");
+      setInventoryQuantity(inventory, crystal.id, current - action.quantity);
+      const income = crystal.salePrice * action.quantity;
+      state.coins += income;
+      addManorV7Activity(state, "pasture", `出售了 ${action.quantity} 颗${crystal.name}，获得 ${income} 金币`, now);
+      break;
+    }
     case "pickup-wild-crystal": {
       const index = state.pasture.wild.crystalDrops.findIndex((drop) => drop.serial === action.serial);
       const drop = state.pasture.wild.crystalDrops[index];

@@ -126,6 +126,8 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
         attackType: text(input.attackType, "驱赶方式"),
         weaponId: integer(input.weaponId)
       };
+    case "sell-wild-crystal":
+      return { type, crystalId: integer(input.crystalId), quantity: quantity(input.quantity) };
     case "pickup-wild-crystal": return { type, serial: integer(input.serial) };
     default:
       throw new Error("不支持的 V7 庄园操作");

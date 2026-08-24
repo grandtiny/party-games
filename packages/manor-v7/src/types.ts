@@ -455,6 +455,7 @@ export type ManorV7Action =
   | { type: "claim-wild-return"; slotId: number }
   | { type: "donate-wild-animal"; slotId: number }
   | { type: "attack-wild-animal"; serial: number; attackType: string; weaponId: number }
+  | { type: "sell-wild-crystal"; crystalId: number; quantity: number }
   | { type: "pickup-wild-crystal"; serial: number };
 
 export type ManorV7FriendAction =

@@ -1387,6 +1387,26 @@ describe("QQ Farm V7 domain", () => {
     const rested = advanceManorV7State(claimed, returnedAt + 300_000);
     expect(rested.pasture.wild.slots[0]).toMatchObject({ status: 1, restUntil: null });
   });
+
+  it("sells wild crystals for their audited coin value", () => {
+    const now = 41_000;
+    const initial = createManorV7State(now);
+    initial.coins = 100;
+    initial.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 3 }];
+
+    const sold = transitionManorV7State(
+      initial,
+      { type: "sell-wild-crystal", crystalId: 1, quantity: 2 },
+      now
+    );
+    expect(sold.coins).toBe(120);
+    expect(sold.pasture.wild.crystalInventory).toEqual([{ sourceId: 1, quantity: 1 }]);
+    expect(() => transitionManorV7State(
+      sold,
+      { type: "sell-wild-crystal", crystalId: 1, quantity: 2 },
+      now
+    )).toThrow("水晶库存不足");
+  });
 });
 
 function expectSignInRewardApplied(before: ManorV7State, after: ManorV7State, rewardId: number): void {

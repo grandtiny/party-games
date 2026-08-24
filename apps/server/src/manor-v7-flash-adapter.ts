@@ -752,6 +752,7 @@ export class ManorV7FlashAdapter {
     if (moduleName === "fcg_ws_get_costfeeds") return { code: 1, cost: [] };
     if (moduleName === "cgi_farm_getusercrop") return flashPastureMaterialInventory(view);
     if (moduleName === "cgi_farm_get_usercrystal") return this.#wildInventory(user, params, now);
+    if (moduleName === "cgi_farm_sell_crystal") return this.#sellWildCrystal(user, params, now);
     if (moduleName === "cgi_get_items") return flashPastureDecorationShop(view);
     if (moduleName === "cgi_get_useritem") return flashPastureDecorationInventory(view);
     if (moduleName === "cgi_get_userguard") return flashPastureGuards(view);
@@ -956,6 +957,24 @@ export class ManorV7FlashAdapter {
         price: manorV7WildCrystal(entry.sourceId).salePrice,
         type: 9
       }))
+    };
+  }
+
+  #sellWildCrystal(user: AccountUserView, params: FlashParams, now: number) {
+    const crystalId = positiveInteger(params.id, "水晶编号");
+    const quantity = positiveInteger(params.num, "出售数量");
+    const crystal = manorV7WildCrystal(crystalId);
+    const { before, after } = this.service.performActionWithPrevious(
+      user,
+      { type: "sell-wild-crystal", crystalId, quantity },
+      now
+    );
+    const income = after.coins - before.coins;
+    return {
+      code: 1,
+      direction: `成功卖出<font color="#0099FF"> <b>${quantity}</b> </font>个${crystal.name}，得到金币<font color="#FF6600"> <b>${income}</b> </font>`,
+      ecode: 0,
+      money: income
     };
   }
 
