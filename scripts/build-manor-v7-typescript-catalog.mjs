@@ -48,6 +48,7 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
+const specialCropIds = new Set([448, 450]);
 const specialAnimalIds = new Set([
   1037,
   1055,
@@ -73,6 +74,7 @@ const timings = new Map(
 const crops = parseCsv("catalog-crops.csv")
   .filter((row) =>
     row.integration_policy === "core-candidate" ||
+    specialCropIds.has(number(row.source_id)) ||
     (bool(row.hidden) && number(row.asset_files) >= 4) ||
     (
       row.integration_policy === "blocked-assets" &&

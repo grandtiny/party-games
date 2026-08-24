@@ -170,9 +170,10 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(seedShop.statusCode, seedShop.body).toBe(200);
-      expect(seedShop.json()).toHaveLength(315);
+      expect(seedShop.json()).toHaveLength(317);
       expect(seedShop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ cId: 1, cName: "草莓", price: 605, sale: 27 }),
+        expect.objectContaining({ cId: 450, cName: "火舞草", price: 210, sale: 15 }),
         expect.objectContaining({ cId: 460, cName: "园艺熊猫" }),
         expect.objectContaining({ cId: 601, cName: "园艺海星" })
       ]));
@@ -1629,7 +1630,7 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(initial.json().farm.lands).toHaveLength(24);
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
-      expect(initial.json().catalogs.crops).toHaveLength(403);
+      expect(initial.json().catalogs.crops).toHaveLength(405);
       expect(initial.json().catalogs.crops.filter((crop: { isHidden?: boolean }) => crop.isHidden)).toHaveLength(88);
       expect(initial.json().catalogs.animals).toHaveLength(167);
       expect(initial.json().catalogs.tools).toHaveLength(91);

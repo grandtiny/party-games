@@ -6006,6 +6006,52 @@ export const MANOR_V7_CROPS = [
     ]
   },
   {
+    "id": 448,
+    "name": "天娇",
+    "originalLevel": 63,
+    "cropType": 1,
+    "seedPrice": 5678,
+    "salePrice": 75,
+    "baseYield": 53,
+    "experience": 32,
+    "growthSeconds": 165600,
+    "harvestCycles": 3,
+    "landRequirement": 0,
+    "isFlower": true,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      28800,
+      61200,
+      93600,
+      129600,
+      165600
+    ]
+  },
+  {
+    "id": 450,
+    "name": "火舞草",
+    "originalLevel": 5,
+    "cropType": 1,
+    "seedPrice": 210,
+    "salePrice": 15,
+    "baseYield": 20,
+    "experience": 25,
+    "growthSeconds": 100800,
+    "harvestCycles": 1,
+    "landRequirement": 0,
+    "isFlower": false,
+    "isHidden": false,
+    "isVip": false,
+    "stageSeconds": [
+      7200,
+      25200,
+      57600,
+      82800,
+      100800
+    ]
+  },
+  {
     "id": 460,
     "name": "园艺熊猫",
     "originalLevel": 46,

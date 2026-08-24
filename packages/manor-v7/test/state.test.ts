@@ -38,7 +38,7 @@ import {
 
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
-    expect(MANOR_V7_CROPS).toHaveLength(403);
+    expect(MANOR_V7_CROPS).toHaveLength(405);
     expect(MANOR_V7_ANIMALS).toHaveLength(167);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(631);
@@ -51,6 +51,7 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
+    expect(manorV7Crop(450)).toMatchObject({ name: "火舞草", originalLevel: 5, seedPrice: 210 });
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
       house: "hutch",
