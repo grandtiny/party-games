@@ -14,7 +14,12 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "reclaim-land":
       return { type, landId: integer(input.landId) };
     case "fertilize": return { type, landId: integer(input.landId), toolId: integer(input.toolId) };
-    case "upgrade-land": return { type, landId: integer(input.landId), tier: landTier(input.tier) };
+    case "upgrade-land": return {
+      type,
+      landId: integer(input.landId),
+      tier: landTier(input.tier),
+      ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
+    };
     case "sell-produce": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-seed": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-selected-seeds": return { type, cropIds: integerArray(input.cropIds) };

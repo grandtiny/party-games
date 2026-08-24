@@ -70,16 +70,16 @@
 
 	  <snsAdAllowLvl>999</snsAdAllowLvl>
       <showShopMillTab>0</showShopMillTab>
-	  <everyDayGiftTip><![CDATA[您的黄钻还有<font color = '#FF0000'><b>&nbsp;{expireDays}&nbsp;</b></font>天到期。我们温馨提醒您及时<br>黄钻贵族每月可领取最高<font color = '#FF0000'><b>&nbsp;420&nbsp;</b></font>Q币农牧场礼包。]]></everyDayGiftTip>
-	  <vipRenewal><![CDATA[http://pay.qq.com/qzone/index.shtml?ch=self&aid= farm.gifts]]></vipRenewal>
+	  <everyDayGiftTip><![CDATA[本站账号已默认启用 VIP 7级权益，无需续费。]]></everyDayGiftTip>
+	  <vipRenewal><![CDATA[]]></vipRenewal>
 	  <pickupGiftFunny><![CDATA[恭喜您，翻地时挖到<font color="#339933"><b>&nbsp;@num&nbsp;</b></font>颗@name种子，可以在农场里组合各种图案。后续还将推出数字、字母等趣味景观树，敬请期待！<a href="event:http://blog.qq.com/qzone/1006666001/1292920220.htm"><u><font color="#26BBE9">查看样例</font></u></a>]]></pickupGiftFunny>
       <useNewFeeds>1</useNewFeeds>
-      <vipReturn><![CDATA[http://pay.qq.com/qzone/index.shtml?ch=self&aid=farm.backhzf&paytime=year]]></vipReturn>
+      <vipReturn><![CDATA[]]></vipReturn>
       <newScroungeCGI>9999</newScroungeCGI>
-      <vipSeedLink><![CDATA[http://pay.qq.com/qzone/index.shtml?cm=mobile&aid=farm.zzop]]></vipSeedLink>
+      <vipSeedLink><![CDATA[]]></vipSeedLink>
 
-      <CardsGameOpenVip><![CDATA[http://pay.qq.com/qzone/index.shtml?cm=mobile&aid=farm.qdkt]]></CardsGameOpenVip>
-<CardsGameRenewalVip><![CDATA[http://pay.qq.com/qzone/index.shtml?cm=mobile&aid=farm.qdxf]]></CardsGameRenewalVip>
+      <CardsGameOpenVip><![CDATA[]]></CardsGameOpenVip>
+<CardsGameRenewalVip><![CDATA[]]></CardsGameRenewalVip>
 <CardsGameAllowLvl>0</CardsGameAllowLvl>
 	  <ForceOpenPostWindowStr>为了保证奖品顺利邮寄</ForceOpenPostWindowStr>
           <zhaohuiOpen>1</zhaohuiOpen>

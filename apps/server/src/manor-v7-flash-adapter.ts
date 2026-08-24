@@ -75,6 +75,10 @@ export class ManorV7FlashAdapter {
 
     if (moduleName === "shop_verify") return { code: 1, open: "0" };
     if (moduleName === "gb_buy") return this.#premiumPurchase(user, "farm", params, now);
+    if (moduleName === "cgi_farm_tool_vip") return this.#farmVipToolPurchase(user, params, now);
+    if (moduleName === "cgi_farm_item_vip") return this.#farmVipDecorationPurchase(user, params, now);
+    if (moduleName === "cgi_farm_shop_verify") return this.#farmShopVerify(user, params, now);
+    if (moduleName === "cgi_farm_shop_pay") return this.#farmShopPurchase(user, params, now);
     if (moduleName === "user" && actionName === "run") {
       return this.#farmBootstrap(user, params, now);
     }
@@ -2040,6 +2044,245 @@ export class ManorV7FlashAdapter {
     };
   }
 
+  #farmVipToolPurchase(user: AccountUserView, params: FlashParams, now: number) {
+    const itemId = positiveInteger(params.itemId, "VIP 工具编号");
+    const quantity = positiveInteger(params.itemNum, "VIP 工具数量");
+    const tool = this.#farmShopTool(user, itemId, 3, now);
+    if (tool.id !== 1) throw new Error("只有普通化肥属于 VIP 免费权益");
+    const before = this.service.getView(user, now);
+    const after = this.service.performAction(user, {
+      type: "buy-tool",
+      area: "farm",
+      toolId: itemId,
+      itemType: 3,
+      quantity,
+      useVip: true
+    }, now);
+    return {
+      code: 1,
+      direction: "年费 VIP 免费工具领取成功",
+      FB: 0,
+      itemId,
+      itemNum: quantity,
+      money: after.coins - before.coins,
+      num: quantity,
+      tId: itemId,
+      tName: tool.name,
+      type: 3
+    };
+  }
+
+  #farmVipDecorationPurchase(user: AccountUserView, params: FlashParams, now: number) {
+    const itemId = positiveInteger(params.itemId, "VIP 装扮编号");
+    const item = manorV7Decoration("farm", itemId);
+    this.service.performAction(user, {
+      type: "buy-decoration",
+      area: "farm",
+      decorationId: itemId,
+      useVip: true
+    }, now);
+    this.service.performAction(user, {
+      type: "equip-decoration",
+      area: "farm",
+      decorationId: itemId
+    }, now);
+    return {
+      code: 1,
+      direction: "免费装饰成功",
+      exp: item.experience,
+      itemId,
+      itemName: item.name,
+      money: 0
+    };
+  }
+
+  #farmShopVerify(user: AccountUserView, params: FlashParams, now: number) {
+    const shopType = positiveInteger(params.shopType, "商店类型");
+    if ([12, 13].includes(shopType)) {
+      return this.#farmLandShopVerify(user, params, shopType === 13 ? "red" : "black", now);
+    }
+    const item = this.#farmShopItem(user, params, now);
+    return {
+      code: 1,
+      direction: "",
+      ecode: 0,
+      itemId: item.itemId,
+      itemNum: item.quantity,
+      itemType: item.itemType,
+      shopType: item.shopType
+    };
+  }
+
+  #farmShopPurchase(user: AccountUserView, params: FlashParams, now: number) {
+    const shopType = positiveInteger(params.shopType, "商店类型");
+    if ([12, 13].includes(shopType)) {
+      return this.#farmLandShopPurchase(user, params, shopType === 13 ? "red" : "black", now);
+    }
+    const item = this.#farmShopItem(user, params, now);
+    const payType = positiveInteger(params.payType, "支付类型");
+    if (![1, 2].includes(payType)) throw new Error("支付类型无效");
+    const before = this.service.getView(user, now);
+    if (item.shopType === 2) {
+      const decoration = manorV7Decoration("farm", item.itemId);
+      this.service.performAction(user, {
+        type: "buy-decoration",
+        area: "farm",
+        decorationId: item.itemId,
+        useVip: true
+      }, now);
+      const after = this.service.performAction(user, {
+        type: "equip-decoration",
+        area: "farm",
+        decorationId: item.itemId
+      }, now);
+      return {
+        code: 1,
+        direction: "本站 VIP 权益购买成功",
+        exp: decoration.experience,
+        itemId: item.itemId,
+        itemNum: item.quantity,
+        itemType: item.itemType,
+        local: 1,
+        money: after.coins - before.coins,
+        payType,
+        shopType: item.shopType,
+        url_params: ""
+      };
+    }
+
+    const actionParams = {
+      id: String(item.itemId),
+      tId: String(item.itemId),
+      number: String(item.quantity),
+      type: String(item.itemType)
+    };
+    if ([3, 24].includes(item.itemType)) {
+      this.service.performAction(user, {
+        type: "buy-tool",
+        area: "farm",
+        toolId: item.itemId,
+        itemType: item.itemType,
+        quantity: item.quantity,
+        useVip: true
+      }, now);
+    } else if (item.itemType === 4) {
+      if (item.quantity !== 1) throw new Error("看门动物每次只能购买一只");
+      this.service.performAction(user, { type: "buy-farm-dog", dogId: item.itemId }, now);
+    } else if (item.itemType === 909090) {
+      const days = item.itemId === 9002 ? 7 : item.itemId === 9001 ? 1 : null;
+      if (days === null) throw new Error("狗粮不存在");
+      for (let index = 0; index < item.quantity; index += 1) {
+        this.service.performAction(user, { type: "buy-dog-food", days }, now);
+      }
+    } else if (item.itemType === 10) {
+      this.#buyPastureWeapon(user, actionParams, now);
+    }
+    const after = this.service.getView(user, now);
+    const tool = this.#farmShopTool(user, item.itemId, item.itemType, now);
+    return {
+      code: 1,
+      direction: "本站 VIP 权益购买成功",
+      FB: 0,
+      itemId: item.itemId,
+      itemNum: item.quantity,
+      itemType: item.itemType,
+      local: 1,
+      money: after.coins - before.coins,
+      num: item.quantity,
+      payType,
+      shopType: item.shopType,
+      tId: item.itemId,
+      tName: tool.name,
+      type: item.itemType,
+      url_params: ""
+    };
+  }
+
+  #farmShopItem(user: AccountUserView, params: FlashParams, now: number) {
+    const shopType = positiveInteger(params.shopType, "商店类型");
+    const itemType = positiveInteger(params.itemType, "商品类型");
+    const itemId = positiveInteger(params.itemId, "商品编号");
+    const quantity = positiveInteger(params.itemNum, "商品数量");
+    if (shopType === 2) {
+      const decoration = manorV7Decoration("farm", itemId);
+      if (quantity !== 1 || itemType !== decoration.itemType) throw new Error("装扮商品参数无效");
+      return { itemId, itemType, quantity, shopType };
+    }
+    const expectedShopType = itemType === 4
+      ? 7
+      : itemType === 909090
+        ? 4
+        : [10, 24].includes(itemType)
+          ? itemType
+          : 3;
+    if (shopType !== expectedShopType || ![3, 4, 10, 24, 909090].includes(itemType)) {
+      throw new Error("站内商品参数无效");
+    }
+    this.#farmShopTool(user, itemId, itemType, now);
+    return { itemId, itemType, quantity, shopType };
+  }
+
+  #farmLandShopVerify(
+    user: AccountUserView,
+    params: FlashParams,
+    tier: "red" | "black",
+    now: number
+  ) {
+    const itemType = positiveInteger(params.itemType, "土地商品类型");
+    const itemId = nonNegativeInteger(params.itemId, "土地编号");
+    const quantity = positiveInteger(params.itemNum, "购买数量");
+    const shopType = tier === "red" ? 13 : 12;
+    if (itemType !== shopType || quantity !== 1) throw new Error("土地升级商品参数无效");
+    const view = this.service.getView(user, now);
+    const query = flashLandUpgradeQuery(view, tier);
+    const target = view.farm.lands[query.place];
+    const sourceTier = tier === "red" ? "normal" : "red";
+    if (!target || !target.unlocked || target.tier !== sourceTier || target.crop) throw new Error(query.direction);
+    if (view.farmLevel < query.level) throw new Error(query.direction);
+    if (itemId !== query.place) throw new Error("只能升级当前可用土地");
+    return { ...query, direction: "", ecode: 0, itemId, itemNum: 1, itemType, shopType };
+  }
+
+  #farmLandShopPurchase(
+    user: AccountUserView,
+    params: FlashParams,
+    tier: "red" | "black",
+    now: number
+  ) {
+    const verified = this.#farmLandShopVerify(user, params, tier, now);
+    const payType = positiveInteger(params.payType, "支付类型");
+    if (![1, 2].includes(payType)) throw new Error("支付类型无效");
+    const before = this.service.getView(user, now);
+    const after = this.service.performAction(user, {
+      type: "upgrade-land",
+      landId: verified.place + 1,
+      tier,
+      useVip: true
+    }, now);
+    return {
+      code: 1,
+      direction: "本站 VIP 权益升级成功",
+      ecode: 0,
+      itemId: verified.itemId,
+      itemNum: 1,
+      itemType: verified.itemType,
+      local: 1,
+      money: after.coins - before.coins,
+      payType,
+      place: verified.place,
+      shopType: verified.shopType,
+      url_params: ""
+    };
+  }
+
+  #farmShopTool(user: AccountUserView, itemId: number, itemType: number, now: number) {
+    const tool = this.service.getView(user, now).catalogs.tools.find((candidate) => (
+      candidate.area === "farm" && candidate.id === itemId && candidate.itemType === itemType && candidate.available
+    ));
+    if (!tool) throw new Error("农场工具不存在");
+    return tool;
+  }
+
   #userTool(user: AccountUserView, action: string, params: FlashParams, now: number): unknown {
     const view = this.service.getView(user, now);
     if (action === "getseedinfo") return flashSeedShop(view);
@@ -3360,7 +3603,7 @@ function flashToolShop(view: ManorV7View) {
       YFBPrice: 0,
       depict: "",
       effect: tool.effectSeconds,
-      is_vip: Number(tool.isVip || tool.premiumPrice > 0),
+      is_vip: Number(tool.itemType === 3 && tool.id === 1),
       price: tool.coinPrice,
       saleOut: false,
       shortage: 0,

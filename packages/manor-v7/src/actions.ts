@@ -482,7 +482,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         : state.farm.lands.filter((item) => item.tier === "black").length;
       const rule = manorV7LandUpgrade(action.tier, upgradedCount);
       if (manorV7LevelForExperience(state.farmExperience) < rule.level) throw new Error(`升级需要农场达到 ${rule.level} 级`);
-      charge(state, rule.coins);
+      charge(state, action.useVip ? 0 : rule.coins);
       land.tier = action.tier;
       addManorV7Activity(state, "farm", `第 ${land.id} 块土地升级为${action.tier === "red" ? "红土地" : "黑土地"}`, now);
       break;

@@ -1295,6 +1295,208 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("persists original farm VIP and local shop purchases without Tencent payment", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-vip-protocol-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Farm V7 state missing before VIP protocol test");
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.farmExperience = manorV7ExperienceForLevel(40);
+      prepared.revision += 1;
+      prepared.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
+
+      const tools = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=usertool&act=getTools",
+        headers: { cookie: owner.cookie }
+      });
+      expect(tools.statusCode, tools.body).toBe(200);
+      expect(tools.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ is_vip: 1, tId: 1, tName: "普通化肥", type: 3 }),
+        expect.objectContaining({ is_vip: 0, tId: 2, tName: "高速化肥", type: 3 }),
+        expect.objectContaining({ is_vip: 0, tId: 3, tName: "极速化肥", type: 3 })
+      ]));
+
+      const vipTool = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_tool_vip",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "itemId=1&itemNum=2"
+      });
+      expect(vipTool.statusCode, vipTool.body).toBe(200);
+      expect(vipTool.json()).toMatchObject({
+        code: 1,
+        itemId: 1,
+        itemNum: 2,
+        money: 0,
+        tId: 1,
+        type: 3
+      });
+
+      const vipDecoration = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_item_vip",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "itemId=45"
+      });
+      expect(vipDecoration.statusCode, vipDecoration.body).toBe(200);
+      expect(vipDecoration.json()).toMatchObject({ code: 1, itemId: 45, money: 0 });
+
+      const beforeVerify = instance.repository.getManorV7State(owner.userId);
+      const verify = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_verify",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=3&itemType=3&itemId=3&itemNum=1"
+      });
+      expect(verify.statusCode, verify.body).toBe(200);
+      expect(verify.json()).toEqual({
+        code: 1,
+        direction: "",
+        ecode: 0,
+        itemId: 3,
+        itemNum: 1,
+        itemType: 3,
+        shopType: 3
+      });
+      const afterVerify = instance.repository.getManorV7State(owner.userId);
+      expect(afterVerify?.coins).toBe(beforeVerify?.coins);
+      expect(afterVerify?.farm.toolInventory).toEqual(beforeVerify?.farm.toolInventory);
+      expect(afterVerify?.ownedDecorationIds).toEqual(beforeVerify?.ownedDecorationIds);
+
+      const rejectedVipTool = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_tool_vip",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "itemId=2&itemNum=1"
+      });
+      expect(rejectedVipTool.statusCode, rejectedVipTool.body).toBe(200);
+      expect(rejectedVipTool.json()).toMatchObject({
+        code: 0,
+        direction: "只有普通化肥属于 VIP 免费权益"
+      });
+
+      const boughtTool = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=3&itemType=3&itemId=3&itemNum=1&payType=2"
+      });
+      expect(boughtTool.statusCode, boughtTool.body).toBe(200);
+      expect(boughtTool.json()).toMatchObject({
+        code: 1,
+        itemId: 3,
+        itemNum: 1,
+        itemType: 3,
+        local: 1,
+        money: 0,
+        payType: 2,
+        url_params: ""
+      });
+
+      const boughtDecoration = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=2&itemType=2&itemId=46&itemNum=1&payType=2"
+      });
+      expect(boughtDecoration.statusCode, boughtDecoration.body).toBe(200);
+      expect(boughtDecoration.json()).toMatchObject({
+        code: 1,
+        itemId: 46,
+        itemNum: 1,
+        itemType: 2,
+        local: 1,
+        money: 0,
+        shopType: 2,
+        url_params: ""
+      });
+
+      const boughtDogFood = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=4&itemType=909090&itemId=9001&itemNum=2&payType=2"
+      });
+      expect(boughtDogFood.statusCode, boughtDogFood.body).toBe(200);
+      expect(boughtDogFood.json()).toMatchObject({
+        code: 1,
+        itemId: 9001,
+        itemNum: 2,
+        itemType: 909090,
+        local: 1,
+        money: 0,
+        shopType: 4,
+        url_params: ""
+      });
+
+      const verifyRedLand = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_verify",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=13&itemType=13&itemId=4&itemNum=1"
+      });
+      expect(verifyRedLand.statusCode, verifyRedLand.body).toBe(200);
+      expect(verifyRedLand.json()).toMatchObject({ code: 1, ecode: 0, itemId: 4, place: 4, shopType: 13 });
+
+      const boughtRedLand = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=13&itemType=13&itemId=4&itemNum=1&payType=1"
+      });
+      expect(boughtRedLand.statusCode, boughtRedLand.body).toBe(200);
+      expect(boughtRedLand.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        local: 1,
+        money: 0,
+        place: 4,
+        shopType: 13,
+        url_params: ""
+      });
+
+      const boughtBlackLand = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_shop_pay",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "shopType=12&itemType=12&itemId=4&itemNum=1&payType=1"
+      });
+      expect(boughtBlackLand.statusCode, boughtBlackLand.body).toBe(200);
+      expect(boughtBlackLand.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        local: 1,
+        money: 0,
+        place: 4,
+        shopType: 12,
+        url_params: ""
+      });
+
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 0,
+        farm: {
+          toolInventory: [
+            { sourceId: 1, quantity: 2 },
+            { sourceId: 3, quantity: 1 }
+          ],
+          dog: { feedSeconds: expect.any(Number) },
+          lands: expect.arrayContaining([expect.objectContaining({ id: 5, tier: "black" })]),
+          selectedDecorationIds: expect.arrayContaining([46])
+        },
+        ownedDecorationIds: expect.arrayContaining([45, 46])
+      });
+      expect(instance.repository.getManorV7State(owner.userId)?.farm.dog.feedSeconds).toBeGreaterThan(172_790);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("charges the displayed catalog price when buying an animal and persists the balance", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-animal-price-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });

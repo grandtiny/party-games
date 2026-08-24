@@ -1772,11 +1772,18 @@ describe("QQ Farm V7 domain", () => {
     vip = transitionManorV7State(vip, {
       type: "buy-decoration", area: "farm", decorationId: 45, useVip: true
     }, now);
+    vip = transitionManorV7State(vip, {
+      type: "upgrade-land", landId: 5, tier: "red", useVip: true
+    }, now);
+    vip = transitionManorV7State(vip, {
+      type: "upgrade-land", landId: 5, tier: "black", useVip: true
+    }, now);
     expect(vip.coins).toBe(paraded.coins);
     expect(inventoryQuantity(vip.farm.seedInventory, vipCrop.id)).toBe(1);
     expect(vip.pasture.animals).toEqual([expect.objectContaining({ animalId: vipAnimal.id })]);
     expect(inventoryQuantity(vip.farm.toolInventory, 2)).toBe(1);
     expect(vip.ownedDecorationIds).toContain(45);
+    expect(vip.farm.lands[4]).toMatchObject({ tier: "black" });
   });
 
   it("closes the wild-animal adoption, release, return and crystal loop", () => {

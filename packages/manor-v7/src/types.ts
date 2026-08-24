@@ -411,7 +411,7 @@ export type ManorV7Action =
   | { type: "harvest"; landId: number }
   | { type: "clear-land"; landId: number }
   | { type: "reclaim-land"; landId: number }
-  | { type: "upgrade-land"; landId: number; tier: Exclude<ManorV7LandTier, "normal"> }
+  | { type: "upgrade-land"; landId: number; tier: Exclude<ManorV7LandTier, "normal">; useVip?: boolean }
   | { type: "sell-produce"; cropId: number; quantity: number }
   | { type: "sell-seed"; cropId: number; quantity: number }
   | { type: "sell-selected-seeds"; cropIds: number[] }

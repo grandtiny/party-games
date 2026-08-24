@@ -42,10 +42,16 @@ $farmFriendPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module
 $profileWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-42§\§_-1D§.as"
 $bagControllerPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 $warehouseModulePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\warehouse\ModuleWarehouse.as"
+$farmShopPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\shop\§_-OZ§.as"
+$farmApplicationPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\FarmApplication.as"
+$farmBuyItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyItemWindow.as"
+$farmBuyDiyPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\BuyDiyWindow.as"
+$farmLandWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\§_-LI§.as"
+$farmFriendVipPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-Zk§.as"
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $dailyPackagePatchSource, $dailyPackageModelPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -83,7 +89,19 @@ $farmArguments = @(
   "§_-1T§.§_-D3§",
   $bagControllerPatchSource,
   "module.warehouse.ModuleWarehouse",
-  $warehouseModulePatchSource
+  $warehouseModulePatchSource,
+  "module.shop.§_-OZ§",
+  $farmShopPatchSource,
+  "module.FarmApplication",
+  $farmApplicationPatchSource,
+  "§_-W§.BuyItemWindow",
+  $farmBuyItemPatchSource,
+  "§_-W§.BuyDiyWindow",
+  $farmBuyDiyPatchSource,
+  "common.view.window.§_-LI§",
+  $farmLandWindowPatchSource,
+  "module.friend.§_-Zk§",
+  $farmFriendVipPatchSource
 )
 
 try {

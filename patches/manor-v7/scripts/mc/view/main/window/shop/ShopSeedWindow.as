@@ -280,7 +280,6 @@ package mc.view.main.window.shop
       
       private function vipButtonClick(param1:MouseEvent = null) : void
       {
-         navigateToURL(new URLRequest("tools.php?mod=vip"),"_blank");
       }
       
       private function setData() : void
