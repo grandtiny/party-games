@@ -450,6 +450,13 @@ package mc.view.main.window.shop
             this.cftBuybutton.enable = false;
             this.errorText.x = this.width / 2 - this.errorText.width / 2;
          }
+         if(data["p"] != 0)
+         {
+            this.qdBuyButton.label = "用金币购买";
+            this.cftBuybutton.visible = false;
+            this.qdBuyButton.x = this.width / 2 - this.qdBuyButton.width * 2 + 80;
+            this.cancelButton.x = this.width / 2 + 10;
+         }
          if(data["t"] == 106)
          {
             this.qdBuyButton.label = "用金币购买";
@@ -467,7 +474,7 @@ package mc.view.main.window.shop
             this.qdBuyButton.x = this.width / 2 - this.qdBuyButton.width * 2 + 80;
             this.cancelButton.x = this.width / 2 + 10;
          }
-         if(StaticTextTip.getInstance().showYellowTool(data["n"]))
+         if(data["p"] == 0 && StaticTextTip.getInstance().showYellowTool(data["n"]))
          {
             this.freeGetArrows(data["n"]);
             this.qdBuyButton.y = height - 55;

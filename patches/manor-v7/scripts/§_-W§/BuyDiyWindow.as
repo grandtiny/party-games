@@ -323,33 +323,19 @@ package §_-W§
          this.§_-62§.selected = false;
          this.rbtnQB.selected = false;
          this.§_-8A§.selected = false;
-         if(this.§_-TK§.parent == null)
-         {
-            addChild(this.§_-TK§);
-         }
          if(this.§_-62§.parent == null)
          {
             addChild(this.§_-62§);
          }
-         this.§_-CQ§.addTarget(this.§_-TK§);
          this.§_-CQ§.addTarget(this.§_-62§);
          this.linkText = new TextField();
-         this.linkText.htmlText = "<font size=\"12\" color=\"#FF6600\">已启用 VIP 权益</font>";
+         this.linkText.htmlText = "";
          this.linkText.x = _loc3_.width + this.§_-TK§.width + 20;
          this.linkText.y = this.height - 115;
-         addChild(this.linkText);
+         this.linkText.visible = false;
          var _loc5_:Boolean = false;
          var _loc6_:Boolean = false;
-         if(_loc1_._yellowstatus >= 1 && _loc1_._yellowlevel >= _loc4_)
-         {
-            this.§_-TK§.enabled = true;
-            this.§_-CQ§.selectedTarget = this.§_-TK§;
-            this.§_-TK§.selected = true;
-         }
-         else
-         {
-            this.§_-TK§.enabled = false;
-         }
+         this.§_-TK§.enabled = false;
          if(_loc1_._money < _loc2_._price)
          {
             _loc5_ = true;
@@ -422,7 +408,7 @@ package §_-W§
             this.§_-a5§.visible = false;
             this.§_-2g§.y = 40;
          }
-         if(_loc1_._yellowlevel < _loc4_ && _loc2_._fb == 0 && _loc5_)
+         if(_loc5_)
          {
             this.§_-Fz§.enabled = false;
          }

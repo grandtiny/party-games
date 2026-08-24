@@ -76,6 +76,20 @@ export function manorV7ToolByType(area: ManorV7Area, id: number, itemType: numbe
   return item;
 }
 
+export function manorV7LocalCoinPrice(coinPrice: number, premiumPrice: number): number {
+  if (coinPrice > 0) return coinPrice;
+  if (premiumPrice > 0) return premiumPrice * 1_000;
+  return 0;
+}
+
+export function manorV7ToolCoinPrice(tool: ManorV7ToolDefinition): number {
+  return manorV7LocalCoinPrice(tool.coinPrice, tool.premiumPrice);
+}
+
+export function manorV7DecorationCoinPrice(decoration: ManorV7DecorationDefinition): number {
+  return manorV7LocalCoinPrice(decoration.coinPrice, decoration.premiumPrice);
+}
+
 export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
   const item = MANOR_V7_TOOLS.find((candidate) => (
     candidate.area === "pasture" && candidate.itemType === 106 && candidate.id === id

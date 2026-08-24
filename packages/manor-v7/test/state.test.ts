@@ -26,14 +26,17 @@ import {
   manorV7Animal,
   manorV7Crop,
   manorV7Decoration,
+  manorV7DecorationCoinPrice,
   manorV7ExperienceForLevel,
   manorV7Fish,
   manorV7HouseCapacity,
   manorV7LevelForExperience,
+  manorV7LandUpgrade,
   manorV7MaxProductionCount,
   manorV7PastureGuard,
   manorV7ProductionCycleDuration,
   manorV7SpecialFeedCropId,
+  manorV7ToolCoinPrice,
   migrateManorV7State,
   toManorV7View,
   transitionManorV7FriendStates,
@@ -392,7 +395,7 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7HouseCapacity("shed", 4)).toBe(6);
   });
 
-  it("keeps all 13 original house levels and only waives coins for local VIP upgrades", () => {
+  it("keeps all 13 original house levels and charges their original coin prices", () => {
     expect(MANOR_V7_HOUSE_UPGRADES.hutch).toHaveLength(13);
     expect(MANOR_V7_HOUSE_UPGRADES.shed).toHaveLength(13);
     expect(MANOR_V7_HOUSE_UPGRADES.hutch[12]).toEqual({
@@ -409,7 +412,7 @@ describe("QQ Farm V7 domain", () => {
     });
 
     const initial = createManorV7State(4_500);
-    initial.coins = 900_000;
+    initial.coins = 1_700_000;
     initial.pastureExperience = manorV7ExperienceForLevel(60);
     initial.pasture.hutchLevel = 8;
     initial.pasture.shedLevel = 8;
@@ -863,11 +866,11 @@ describe("QQ Farm V7 domain", () => {
 
   it("persists an active pasture guard and consumes its included wage over time", () => {
     const initial = createManorV7State(6_200);
-    initial.coins = 20_000;
+    initial.coins = 40_000;
     const guard = manorV7PastureGuard(1);
 
     const bought = transitionManorV7State(initial, { type: "buy-pasture-guard", guardId: guard.id }, 6_200);
-    expect(bought.coins).toBe(20_000 - guard.coinPrice);
+    expect(bought.coins).toBe(40_000 - guard.coinPrice);
     expect(bought.pasture.guards).toEqual([{
       id: guard.id,
       remainingSeconds: 7 * 24 * 60 * 60,
@@ -895,6 +898,7 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(paid.pasture.guards[0]!.remainingSeconds - restored.pasture.guards[0]!.remainingSeconds)
       .toBe(7 * 24 * 60 * 60);
+    expect(paid.coins).toBe(10_000);
 
     const owner = structuredClone(paid);
     owner.randomState = 0;
@@ -1514,7 +1518,7 @@ describe("QQ Farm V7 domain", () => {
   it("keeps cans, hourglasses and weapons in dedicated inventories and completes research", () => {
     const now = 70_000;
     let state = createManorV7State(now);
-    state.coins = 100_000;
+    state.coins = 1_000_000;
     state = transitionManorV7State(state, {
       type: "buy-tool", area: "pasture", toolId: 1, itemType: 7, quantity: 2, useVip: true
     }, now);
@@ -1529,6 +1533,7 @@ describe("QQ Farm V7 domain", () => {
       { sourceId: 43, quantity: 1 }
     ]);
     expect(state.pasture.weaponInventory).toEqual([{ sourceId: 7, quantity: 1 }]);
+    expect(state.coins).toBe(914_000);
 
     const rule = MANOR_V7_RESEARCH_RULES.hutch[0];
     const started = transitionManorV7State(
@@ -1798,10 +1803,10 @@ describe("QQ Farm V7 domain", () => {
     expect(reset.pasture.mosquitoActions.remaining).toBe(MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT);
   });
 
-  it("supports cub sales, animal donation, parade persistence and free VIP goods", () => {
+  it("supports cub sales, animal donation, parade persistence and coin-priced VIP goods", () => {
     const now = 90_000;
     let state = createManorV7State(now);
-    state.coins = 1_000;
+    state.coins = 2_000_000;
     state.farmExperience = manorV7ExperienceForLevel(60);
     state.pastureExperience = manorV7ExperienceForLevel(60);
     state.pasture.shedLevel = 8;
@@ -1840,7 +1845,19 @@ describe("QQ Farm V7 domain", () => {
     vip = transitionManorV7State(vip, {
       type: "upgrade-land", landId: 5, tier: "black", useVip: true
     }, now);
-    expect(vip.coins).toBe(paraded.coins);
+    const tool = MANOR_V7_TOOLS.find((item) => item.area === "farm" && item.id === 2 && item.itemType === 3)!;
+    const decoration = manorV7Decoration("farm", 45);
+    const redLand = manorV7LandUpgrade("red", 0);
+    const blackLand = manorV7LandUpgrade("black", 0);
+    expect(vip.coins).toBe(
+      paraded.coins
+      - vipCrop.seedPrice
+      - vipAnimal.purchasePrice
+      - manorV7ToolCoinPrice(tool)
+      - manorV7DecorationCoinPrice(decoration)
+      - redLand.coins
+      - blackLand.coins
+    );
     expect(inventoryQuantity(vip.farm.seedInventory, vipCrop.id)).toBe(1);
     expect(vip.pasture.animals).toEqual([expect.objectContaining({ animalId: vipAnimal.id })]);
     expect(inventoryQuantity(vip.farm.toolInventory, 2)).toBe(1);

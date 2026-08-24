@@ -428,7 +428,7 @@ package §_-W§
          §_-Bn§.removeChild(this,this.§_-8A§);
          §_-Bn§.removeChild(this,this.linkText);
          this.§_-CQ§ = new §_-KB§();
-         if(_loc1_._vip == 1 && _loc3_ == §_-Ac§.§_-Ux§)
+         if(_loc1_._vip == 1 && _loc1_._price == 0 && _loc3_ == §_-Ac§.§_-Ux§)
          {
             this.§_-D4§.selected = false;
             this.rbtnQB.selected = false;
@@ -604,7 +604,7 @@ package §_-W§
          {
             return;
          }
-         if(_loc2_._vip == 1 && _loc2_._type.toString() == §_-Ac§.§_-Ux§)
+         if(_loc2_._vip == 1 && _loc2_._price == 0 && _loc2_._type.toString() == §_-Ac§.§_-Ux§)
          {
             if(this.§_-CQ§.selectedTarget == this.rbtnQB)
             {

@@ -578,7 +578,9 @@ describe("QQ Farm V7 account persistence", () => {
         (candidate) => candidate.price > 0
       );
       expect(item).toBeDefined();
-      expect(shop.json()).toEqual(expect.arrayContaining([expect.objectContaining({ price: 0, FBPrice: expect.any(Number) })]));
+      expect(shop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ itemId: 45, price: 42_199, FBPrice: 0 })
+      ]));
 
       const bought = await instance.app.inject({
         method: "POST",
@@ -1211,12 +1213,19 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
-  it("persists free VIP tools and decorations through the original gb_buy protocol", async () => {
+  it("charges local coin prices through the original gb_buy protocol", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-vip-buy-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
     try {
       const owner = await bootstrapOwner(instance.app);
       await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Manor V7 state missing before original purchase protocol test");
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = 300_000;
+      prepared.revision += 1;
+      prepared.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
 
       const verify = await instance.app.inject({
         method: "POST",
@@ -1274,7 +1283,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(pastureDecoration.json()).toMatchObject({ code: 0, post_data: { itemId: 106, exp: 180 } });
 
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: 0,
+        coins: 74_801,
         farm: {
           toolInventory: [{ sourceId: 2, quantity: 2 }],
           selectedDecorationIds: expect.arrayContaining([45])
@@ -1295,7 +1304,7 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
-  it("completes original pasture local purchases without external payment or coin charges", async () => {
+  it("completes original pasture purchases with local coin charges", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-pasture-local-shop-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
     try {
@@ -1304,7 +1313,7 @@ describe("QQ Farm V7 account persistence", () => {
       const current = instance.repository.getManorV7State(owner.userId);
       if (!current) throw new Error("Pasture V7 state missing before local shop test");
       const prepared: ManorV7State = structuredClone(current);
-      prepared.coins = 12_345;
+      prepared.coins = 3_000_000;
       prepared.pastureExperience = manorV7ExperienceForLevel(60);
       prepared.pasture.hutchLevel = 8;
       prepared.pasture.shedLevel = 8;
@@ -1354,11 +1363,11 @@ describe("QQ Farm V7 account persistence", () => {
         return response.json();
       };
 
-      await buy("60109-1-%E4%B9%A1%E6%9D%91%E8%AE%B0%E5%BF%86");
-      await buy("70002-2-%E9%AB%98%E9%80%9A%E7%BD%90%E5%A4%B4", 2);
-      await buy("120040-1-%E8%BF%B7%E4%BD%A0%E6%B2%99%E6%BC%8F");
-      await buy("1060001-1-%E7%8C%8E%E4%BA%BA");
-      await buy("50101-1-%E6%99%AE%E9%80%9A%E5%B7%A5%E8%B5%84");
+      await buy("60109-1-%E4%B9%A1%E6%9D%91%E8%AE%B0%E5%BF%86", 1, -1);
+      await buy("70002-2-%E9%AB%98%E9%80%9A%E7%BD%90%E5%A4%B4", 2, -40_000);
+      await buy("120040-1-%E8%BF%B7%E4%BD%A0%E6%B2%99%E6%BC%8F", 1, -5_000);
+      await buy("1060001-1-%E7%8C%8E%E4%BA%BA", 1, -10_000);
+      await buy("50101-1-%E6%99%AE%E9%80%9A%E5%B7%A5%E8%B5%84", 1, -4_000);
 
       const crossVerify = await instance.app.inject({
         method: "POST",
@@ -1376,15 +1385,15 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "shopType=10&itemType=10&itemId=4&itemNum=1&payType=2"
       });
       expect(crossPurchase.statusCode, crossPurchase.body).toBe(200);
-      expect(crossPurchase.json()).toMatchObject({ code: 1, itemId: 4, local: 1, money: 0, url_params: "" });
+      expect(crossPurchase.json()).toMatchObject({ code: 1, itemId: 4, local: 1, money: -500, url_params: "" });
 
-      const hutch = await buy("130009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, 1_000);
+      const hutch = await buy("130009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, -799_000);
       expect(hutch).toMatchObject({ 2: { id: 102, lv: 9 }, itemId: 9, itemType: 13 });
-      const shed = await buy("140009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7");
+      const shed = await buy("140009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, -850_000);
       expect(shed).toMatchObject({ 3: { id: 103, lv: 9 }, itemId: 9, itemType: 14 });
 
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: 13_345,
+        coins: 1_291_499,
         ownedDecorationIds: expect.arrayContaining([109]),
         pasture: {
           guards: [expect.objectContaining({ id: 1, active: true })],
@@ -1413,7 +1422,7 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
-  it("persists original farm VIP and local shop purchases without Tencent payment", async () => {
+  it("persists original farm shop purchases with local coin prices", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-vip-protocol-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
     try {
@@ -1422,6 +1431,7 @@ describe("QQ Farm V7 account persistence", () => {
       const current = instance.repository.getManorV7State(owner.userId);
       if (!current) throw new Error("Farm V7 state missing before VIP protocol test");
       const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = 2_000_000;
       prepared.farmExperience = manorV7ExperienceForLevel(40);
       prepared.revision += 1;
       prepared.updatedAt = Date.now();
@@ -1434,9 +1444,9 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(tools.statusCode, tools.body).toBe(200);
       expect(tools.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ is_vip: 1, tId: 1, tName: "普通化肥", type: 3 }),
-        expect.objectContaining({ is_vip: 0, tId: 2, tName: "高速化肥", type: 3 }),
-        expect.objectContaining({ is_vip: 0, tId: 3, tName: "极速化肥", type: 3 })
+        expect.objectContaining({ is_vip: 1, price: 400, tId: 1, tName: "普通化肥", type: 3 }),
+        expect.objectContaining({ is_vip: 0, price: 10_000, tId: 2, tName: "高速化肥", type: 3 }),
+        expect.objectContaining({ is_vip: 0, price: 20_000, tId: 3, tName: "极速化肥", type: 3 })
       ]));
 
       const vipTool = await instance.app.inject({
@@ -1450,7 +1460,7 @@ describe("QQ Farm V7 account persistence", () => {
         code: 1,
         itemId: 1,
         itemNum: 2,
-        money: 0,
+        money: -800,
         tId: 1,
         type: 3
       });
@@ -1462,7 +1472,7 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "itemId=45"
       });
       expect(vipDecoration.statusCode, vipDecoration.body).toBe(200);
-      expect(vipDecoration.json()).toMatchObject({ code: 1, itemId: 45, money: 0 });
+      expect(vipDecoration.json()).toMatchObject({ code: 1, itemId: 45, money: -42_199 });
 
       const beforeVerify = instance.repository.getManorV7State(owner.userId);
       const verify = await instance.app.inject({
@@ -1495,7 +1505,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(rejectedVipTool.statusCode, rejectedVipTool.body).toBe(200);
       expect(rejectedVipTool.json()).toMatchObject({
         code: 0,
-        direction: "只有普通化肥属于 VIP 免费权益"
+        direction: "该入口只支持普通化肥"
       });
 
       const boughtTool = await instance.app.inject({
@@ -1511,7 +1521,7 @@ describe("QQ Farm V7 account persistence", () => {
         itemNum: 1,
         itemType: 3,
         local: 1,
-        money: 0,
+        money: -20_000,
         payType: 2,
         url_params: ""
       });
@@ -1529,7 +1539,7 @@ describe("QQ Farm V7 account persistence", () => {
         itemNum: 1,
         itemType: 2,
         local: 1,
-        money: 0,
+        money: -29_888,
         shopType: 2,
         url_params: ""
       });
@@ -1547,7 +1557,7 @@ describe("QQ Farm V7 account persistence", () => {
         itemNum: 2,
         itemType: 909090,
         local: 1,
-        money: 0,
+        money: -8_000,
         shopType: 4,
         url_params: ""
       });
@@ -1572,7 +1582,7 @@ describe("QQ Farm V7 account persistence", () => {
         code: 1,
         ecode: 0,
         local: 1,
-        money: 0,
+        money: -200_000,
         place: 4,
         shopType: 13,
         url_params: ""
@@ -1589,14 +1599,14 @@ describe("QQ Farm V7 account persistence", () => {
         code: 1,
         ecode: 0,
         local: 1,
-        money: 0,
+        money: -500_000,
         place: 4,
         shopType: 12,
         url_params: ""
       });
 
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: 0,
+        coins: 1_199_113,
         farm: {
           toolInventory: [
             { sourceId: 1, quantity: 2 },
@@ -1825,7 +1835,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(shop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ cId: 1002, cName: "兔子", bName: "兔子崽", cType: 0, price: 1200 }),
         expect.objectContaining({ cId: 1040, cType: 4, expect: 7 }),
-        expect.objectContaining({ cId: 1066, isvip: 1 })
+        expect.objectContaining({ cId: 1066, isvip: 1, price: 16_430 })
       ]));
       const activityAnimalIds = new Set([1037, 1085, 1086, 1537, 1546, 1593]);
       expect((shop.json() as Array<{ cId: number }>).some((animal) => activityAnimalIds.has(animal.cId))).toBe(false);
@@ -1837,7 +1847,9 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(toolShop.statusCode, toolShop.body).toBe(200);
       const toolItems = toolShop.json() as Array<{ appid?: number; attacksucc?: number; type: number }>;
-      expect(toolShop.json()).toEqual(expect.arrayContaining([expect.objectContaining({ price: 0, qdprice: 0 })]));
+      expect(toolShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 1, price: 10_000, qdprice: 0, type: 7 })
+      ]));
       expect(toolItems.some((item) => item.type !== 10 && item.appid === undefined)).toBe(true);
       expect(toolItems.some((item) => item.type === 10 && item.appid === 353 && item.attacksucc === 100)).toBe(true);
 
@@ -2580,7 +2592,7 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "itemId=45&useFB=1"
       });
-      expect(renewed.json()).toMatchObject({ code: 1, direction: "续期成功。", itemId: 45, money: 0 });
+      expect(renewed.json()).toMatchObject({ code: 1, direction: "续期成功。", itemId: 45, money: -42_199 });
       expect(renewed.json().itemValidTime).toBeGreaterThan(Math.floor(Date.now() / 1_000));
 
       const redeemed = await instance.app.inject({
@@ -2662,6 +2674,7 @@ describe("QQ Farm V7 account persistence", () => {
       const current = instance.repository.getManorV7State(owner.userId);
       if (!current) throw new Error("V7 original protocol state missing");
       const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = Math.max(prepared.coins, 10_000);
       const crop = manorV7Crop(1);
       const land = prepared.farm.lands[0]!;
       land.cropId = crop.id;

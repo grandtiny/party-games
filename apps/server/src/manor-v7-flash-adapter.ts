@@ -12,6 +12,7 @@ import {
   isManorV7RewardAvailable,
   manorV7DayKey,
   manorV7Decoration,
+  manorV7DecorationCoinPrice,
   manorV7Fish,
   manorV7LandUpgrade,
   manorV7LevelReward,
@@ -23,6 +24,7 @@ import {
   manorV7RedeemCode,
   manorV7StreakSignInReward,
   manorV7TutorialTask,
+  manorV7ToolCoinPrice,
   manorV7WildAnimal,
   manorV7WildCrystal,
   wildAttackDamage,
@@ -1411,7 +1413,7 @@ export class ManorV7FlashAdapter {
       toolId,
       itemType,
       quantity,
-      useVip: integer(params.useVip) === 1 || tool.coinPrice === 0
+      useVip: false
     }, now);
     return { code: 1, direction: "购买成功", ecode: 0, id: toolId, money: after.coins - before.coins, number: quantity, type: itemType };
   }
@@ -1792,7 +1794,7 @@ export class ManorV7FlashAdapter {
       type: "buy-decoration",
       area: "pasture",
       decorationId: itemId,
-      useVip: item.premiumPrice > 0 || (params.useFB ?? "").toLowerCase() === "true" || integer(params.useFB) === 1 || item.coinPrice === 0
+      useVip: false
     }, now);
     const after = this.service.performAction(user, { type: "equip-decoration", area: "pasture", decorationId: itemId }, now);
     return {
@@ -1816,7 +1818,7 @@ export class ManorV7FlashAdapter {
       type: "renew-decoration",
       area: "pasture",
       decorationId: itemId,
-      useVip: item.premiumPrice > 0 || (params.useFB ?? "").toLowerCase() === "true" || integer(params.useFB) === 1 || item.coinPrice === 0
+      useVip: false
     }, now);
     const ownership = after.decorationOwnerships.find((candidate) => (
       candidate.area === "pasture" && candidate.decorationId === itemId
@@ -2196,7 +2198,7 @@ export class ManorV7FlashAdapter {
     const itemId = positiveInteger(params.itemId, "VIP 工具编号");
     const quantity = positiveInteger(params.itemNum, "VIP 工具数量");
     const tool = this.#farmShopTool(user, itemId, 3, now);
-    if (tool.id !== 1) throw new Error("只有普通化肥属于 VIP 免费权益");
+    if (tool.id !== 1) throw new Error("该入口只支持普通化肥");
     const before = this.service.getView(user, now);
     const after = this.service.performAction(user, {
       type: "buy-tool",
@@ -2208,7 +2210,7 @@ export class ManorV7FlashAdapter {
     }, now);
     return {
       code: 1,
-      direction: "年费 VIP 免费工具领取成功",
+      direction: "购买成功",
       FB: 0,
       itemId,
       itemNum: quantity,
@@ -2223,24 +2225,25 @@ export class ManorV7FlashAdapter {
   #farmVipDecorationPurchase(user: AccountUserView, params: FlashParams, now: number) {
     const itemId = positiveInteger(params.itemId, "VIP 装扮编号");
     const item = manorV7Decoration("farm", itemId);
+    const before = this.service.getView(user, now);
     this.service.performAction(user, {
       type: "buy-decoration",
       area: "farm",
       decorationId: itemId,
       useVip: true
     }, now);
-    this.service.performAction(user, {
+    const after = this.service.performAction(user, {
       type: "equip-decoration",
       area: "farm",
       decorationId: itemId
     }, now);
     return {
       code: 1,
-      direction: "免费装饰成功",
+      direction: "购买成功",
       exp: item.experience,
       itemId,
       itemName: item.name,
-      money: 0
+      money: after.coins - before.coins
     };
   }
 
@@ -2285,7 +2288,7 @@ export class ManorV7FlashAdapter {
       }, now);
       return {
         code: 1,
-        direction: "本站 VIP 权益购买成功",
+        direction: "本站金币购买成功",
         exp: decoration.experience,
         itemId: item.itemId,
         itemNum: item.quantity,
@@ -2330,7 +2333,7 @@ export class ManorV7FlashAdapter {
     const tool = this.#farmShopTool(user, item.itemId, item.itemType, now);
     return {
       code: 1,
-      direction: "本站 VIP 权益购买成功",
+      direction: "本站金币购买成功",
       FB: 0,
       itemId: item.itemId,
       itemNum: item.quantity,
@@ -2410,7 +2413,7 @@ export class ManorV7FlashAdapter {
     }, now);
     return {
       code: 1,
-      direction: "本站 VIP 权益升级成功",
+      direction: "本站金币升级成功",
       ecode: 0,
       itemId: verified.itemId,
       itemNum: 1,
@@ -2472,7 +2475,7 @@ export class ManorV7FlashAdapter {
         type: "renew-decoration",
         area: "farm",
         decorationId: itemId,
-        useVip: item.premiumPrice > 0 || Boolean(integer(params.useFB)) || item.coinPrice === 0
+        useVip: false
       }, now);
       const ownership = after.decorationOwnerships.find((candidate) => (
         candidate.area === "farm" && candidate.decorationId === itemId
@@ -2531,7 +2534,7 @@ export class ManorV7FlashAdapter {
         type: "buy-decoration",
         area: "farm",
         decorationId: itemId,
-        useVip: item.premiumPrice > 0 || Boolean(integer(params.useFB)) || item.coinPrice === 0
+        useVip: false
       }, now);
       const after = this.service.performAction(user, { type: "equip-decoration", area: "farm", decorationId: itemId }, now);
       return {
@@ -3345,7 +3348,7 @@ function flashAnimalShop(view: ManorV7View) {
       productime: animal.productionActionSeconds,
       productprice: animal.productPrice,
       msprice: 0,
-      ...(animal.isVip ? { isvip: 1, price: 0 } : {}),
+      ...(animal.isVip ? { isvip: 1 } : {}),
       sinfo: ""
     }));
 }
@@ -3381,7 +3384,7 @@ function flashPastureToolShop(view: ManorV7View) {
       left: 100,
       name: tool.name,
       order: index + 1,
-      price: tool.coinPrice,
+      price: manorV7ToolCoinPrice(tool),
       qdprice: 0,
       shortage: 0,
       status: 1,
@@ -3456,7 +3459,7 @@ function flashPastureDecorationShop(view: ManorV7View) {
       itemId: item.id,
       itemName: item.name,
       itemType: item.itemType,
-      price: item.premiumPrice > 0 ? 0 : item.coinPrice,
+      price: manorV7DecorationCoinPrice(item),
       FBPrice: 0,
       YFBPrice: 0,
       exp: item.experience,
@@ -3685,7 +3688,7 @@ function flashSeedShop(view: ManorV7View) {
       high_sale: 0,
       maturingTime: crop.harvestCycles,
       output: crop.baseYield,
-      price: crop.isVip ? 0 : manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
+      price: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
       ...(crop.isVip ? { isvip: 1 } : {}),
       sale: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
     }));
@@ -3759,7 +3762,7 @@ function flashToolShop(view: ManorV7View) {
       depict: "",
       effect: tool.effectSeconds,
       is_vip: Number(tool.itemType === 3 && tool.id === 1),
-      price: tool.coinPrice,
+      price: manorV7ToolCoinPrice(tool),
       saleOut: false,
       shortage: 0,
       tId: tool.id,
@@ -3862,7 +3865,7 @@ function flashDecorationInventory(view: ManorV7View) {
       status: Number(view.farm.dog.activeId === dogId),
       id: dogId,
       itemName: dog?.name ?? `看门动物 ${dogId}`,
-      price: dog?.coinPrice ?? 0,
+      price: dog ? manorV7ToolCoinPrice(dog) : 0,
       exp: 0
     });
   }
@@ -3884,7 +3887,7 @@ function flashDecorationShop(view: ManorV7View) {
       itemDesc: item.setName,
       itemType: item.itemType,
       itemValidTime: item.validSeconds,
-      price: item.premiumPrice > 0 ? 0 : item.coinPrice,
+      price: manorV7DecorationCoinPrice(item),
       FBPrice: 0,
       YFBPrice: 0,
       exp: item.experience,
@@ -3901,7 +3904,7 @@ function flashDecorationItem(item: ManorV7DecorationDefinition, active: boolean,
     status: Number(active),
     id: item.id,
     itemName: item.name,
-    price: item.coinPrice,
+    price: manorV7DecorationCoinPrice(item),
     exp: item.experience
   };
 }

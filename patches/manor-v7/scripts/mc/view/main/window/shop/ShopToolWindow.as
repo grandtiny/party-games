@@ -179,7 +179,7 @@ package mc.view.main.window.shop
             }
          }
          this.priceText.htmlText = "金币价：<font color=\'#FF6600\'><b>" + _loc2_.toString() + "</b></font> 金币";
-         this.halfMoneyText.htmlText = "<font color=\'#895313\'>特惠价：VIP </font><font color=\'#FF6600\'><b>" + _loc2_ / 2 + "</b></font><font color=\'#895313\'> 金币 (节省 </font><font color=\'#FF6600\'><b>" + _loc2_ / 2 + "</b></font><font color=\'#895313\'> 金币)</font>";
+         this.halfMoneyText.htmlText = "";
          this.overflow(this.numbericStepper.get_num);
       }
       
@@ -360,13 +360,7 @@ package mc.view.main.window.shop
       
       private function getRealPrice(param1:int) : int
       {
-         var _loc2_:int = param1;
-         var _loc3_:MainData = MData.getInstance().mainData;
-         if(_loc3_.host["yellowstatus"] != undefined && _loc3_.host["yellowstatus"] >= 1)
-         {
-            _loc2_ = param1 / 2;
-         }
-         return _loc2_;
+         return param1;
       }
       
       private function cbChange(param1:Event) : void
@@ -400,7 +394,7 @@ package mc.view.main.window.shop
             _loc2_ = new TextFormat();
             _loc2_.leading = 4;
             _loc2_.color = 16737792;
-            this.tipText.htmlText = "VIP半价买牧草，每天罐头送不停！ ";
+            this.tipText.htmlText = "道具统一使用金币购买。";
             this.tipText.setTextFormat(_loc2_);
          }
          if(this.priceText != null)
@@ -409,7 +403,7 @@ package mc.view.main.window.shop
             {
                this.priceText.defaultTextFormat = new TextFormat("Verdana",12,8999699);
                this.priceText.htmlText = "金币价：<font color=\'#FF6600\'><b>" + data["price"] + "</b></font> 金币";
-               this.halfMoneyText.htmlText = "<font color=\'#895313\'>特惠价：VIP </font><font color=\'#FF6600\'><b>" + Number(data["price"]) / 2 + "</b></font><font color=\'#895313\'> 金币 (节省 </font><font color=\'#FF6600\'><b>" + Number(data["price"]) / 2 + "</b></font><font color=\'#895313\'> 金币)</font>";
+               this.halfMoneyText.htmlText = "";
                if(this.diamondPriceText)
                {
                   this.diamondPriceText.visible = false;
@@ -454,7 +448,7 @@ package mc.view.main.window.shop
          {
             _loc5_ = data["price"] * this.numbericStepper.get_num;
             this.priceText.htmlText = "金币价：<font color=\'#FF6600\'><b>" + _loc5_.toString() + "</b></font> 金币";
-            this.halfMoneyText.htmlText = "<font color=\'#895313\'>特惠价：VIP </font><font color=\'#FF6600\'><b>" + _loc5_ / 2 + "</b></font><font color=\'#895313\'> 金币 (节省 </font><font color=\'#FF6600\'><b>" + _loc5_ / 2 + "</b></font><font color=\'#895313\'> 金币)</font>";
+            this.halfMoneyText.htmlText = "";
          }
       }
    }

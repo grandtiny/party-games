@@ -4,10 +4,12 @@ import {
   manorV7Board,
   manorV7Crop,
   manorV7Decoration,
+  manorV7DecorationCoinPrice,
   manorV7Fish,
   manorV7LandUpgrade,
   manorV7PastureGuard,
   manorV7Tool,
+  manorV7ToolCoinPrice,
   manorV7ToolByType
 } from "./catalog.js";
 import {
@@ -81,7 +83,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (crop.isHidden) throw new Error("该种子只能通过活动获得");
       if (manorV7LevelForExperience(state.farmExperience) < crop.originalLevel) throw new Error(`${crop.name}需要农场达到 ${crop.originalLevel} 级`);
       if (crop.seedPrice <= 0 && !crop.isVip) throw new Error("该种子不是金币商店商品");
-      charge(state, (crop.isVip ? 0 : manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice)) * action.quantity);
+      charge(state, manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice) * action.quantity);
       setInventoryQuantity(state.farm.seedInventory, crop.id, inventoryQuantity(state.farm.seedInventory, crop.id) + action.quantity);
       addManorV7Activity(state, "farm", `购买了 ${action.quantity} 份${crop.name}种子`, now);
       break;
@@ -147,7 +149,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         : manorV7ToolByType(action.area, action.toolId, action.itemType);
       if (!tool.available) throw new Error("该工具当前不可购买");
       if (tool.coinPrice <= 0 && tool.premiumPrice <= 0) throw new Error("该工具没有有效价格");
-      charge(state, (action.useVip ? 0 : tool.coinPrice) * action.quantity);
+      charge(state, manorV7ToolCoinPrice(tool) * action.quantity);
       const inventory = tool.area === "farm" && tool.itemType === 24
         ? state.farm.fishPool.toolInventory
         : tool.area === "farm" && tool.itemType === 3
@@ -165,7 +167,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "buy-farm-dog": {
       const dog = manorV7ToolByType("farm", action.dogId, 4);
       if (state.farm.dog.ownedIds.includes(dog.id)) throw new Error("已经拥有这只看门动物");
-      charge(state, dog.coinPrice);
+      charge(state, manorV7ToolCoinPrice(dog));
       state.farm.dog.ownedIds.push(dog.id);
       state.farm.dog.ownedIds.sort((left, right) => left - right);
       state.farm.dog.activeId = dog.id;
@@ -174,7 +176,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "buy-dog-food": {
       const foodId = action.days === 7 ? 9002 : 9001;
-      manorV7ToolByType("farm", foodId, 909090);
+      const food = manorV7ToolByType("farm", foodId, 909090);
+      charge(state, manorV7ToolCoinPrice(food));
       state.farm.dog.feedSeconds += action.days * MANOR_V7_DOG_FOOD_DAY_SECONDS;
       addManorV7Activity(state, "farm", `补充了 ${action.days} 天狗粮`, now);
       break;
@@ -482,7 +485,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         : state.farm.lands.filter((item) => item.tier === "black").length;
       const rule = manorV7LandUpgrade(action.tier, upgradedCount);
       if (manorV7LevelForExperience(state.farmExperience) < rule.level) throw new Error(`升级需要农场达到 ${rule.level} 级`);
-      charge(state, action.useVip ? 0 : rule.coins);
+      charge(state, rule.coins);
       land.tier = action.tier;
       addManorV7Activity(state, "farm", `第 ${land.id} 块土地升级为${action.tier === "red" ? "红土地" : "黑土地"}`, now);
       break;
@@ -502,7 +505,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const houseLevel = animal.house === "hutch" ? state.pasture.hutchLevel : state.pasture.shedLevel;
       const occupied = state.pasture.animals.filter((item) => manorV7Animal(item.animalId).house === animal.house).length;
       if (occupied + action.quantity > manorV7HouseCapacity(animal.house, houseLevel)) throw new Error(`${animal.house === "hutch" ? "窝" : "棚"}的空位不足`);
-      charge(state, (animal.isVip ? 0 : animal.purchasePrice) * action.quantity);
+      charge(state, animal.purchasePrice * action.quantity);
       for (let index = 0; index < action.quantity; index += 1) {
         state.pasture.animals.push({ serial: state.pasture.nextAnimalSerial, animalId: animal.id, growthSeconds: 0, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] });
         state.pasture.nextAnimalSerial += 1;
@@ -579,7 +582,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (state.pasture.guards.some((guard) => guard.id === definition.id)) {
         throw new Error("已经拥有该看守员");
       }
-      charge(state, action.useVip ? 0 : definition.coinPrice);
+      charge(state, manorV7ToolCoinPrice(definition));
       for (const guard of state.pasture.guards) guard.active = false;
       state.pasture.guards.push({
         id: definition.id,
@@ -605,7 +608,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const salary = action.days >= 7
         ? manorV7ToolByType("pasture", 102, 5)
         : manorV7ToolByType("pasture", 101, 5);
-      guard.remainingSeconds += salary.effectSeconds * (action.days >= 7 ? Math.ceil(action.days / 7) : action.days);
+      const salaryUnits = action.days >= 7 ? Math.ceil(action.days / 7) : action.days;
+      charge(state, manorV7ToolCoinPrice(salary) * salaryUnits);
+      guard.remainingSeconds += salary.effectSeconds * salaryUnits;
       addManorV7Activity(state, "pasture", `为看守员续了 ${action.days} 天工资`, now);
       break;
     }
@@ -1052,7 +1057,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "upgrade-house": {
-      upgradeHouse(state, action.house, action.useVip ?? false, now);
+      upgradeHouse(state, action.house, now);
       break;
     }
     case "start-research": {
@@ -1134,7 +1139,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (manorV7LevelForExperience(action.area === "farm" ? state.farmExperience : state.pastureExperience) < decoration.originalLevel) throw new Error("等级不足");
       const existing = decorationOwnership(state, action.area, decoration.id);
       if (existing && (existing.validUntil === 0 || existing.validUntil > now)) throw new Error("已经拥有该装扮");
-      charge(state, action.useVip ? 0 : decoration.coinPrice);
+      charge(state, manorV7DecorationCoinPrice(decoration));
       const validUntil = now + decoration.validSeconds * 1_000;
       if (existing) existing.validUntil = validUntil;
       else state.decorationOwnerships.push({ area: action.area, decorationId: decoration.id, validUntil });
@@ -1149,7 +1154,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const ownership = decorationOwnership(state, action.area, decoration.id);
       if (!ownership) throw new Error("尚未拥有该装扮");
       if (ownership.validUntil === 0) throw new Error("永久装扮无需续期");
-      charge(state, action.useVip ? 0 : decoration.coinPrice);
+      charge(state, manorV7DecorationCoinPrice(decoration));
       ownership.validUntil = Math.max(now, ownership.validUntil) + decoration.validSeconds * 1_000;
       addOwnedDecorationId(state, decoration.id);
       addManorV7Activity(state, action.area, `续期了装扮“${decoration.name}”`, now);
@@ -1490,12 +1495,12 @@ function addOwnedDecorationId(state: ManorV7State, decorationId: number): void {
   state.ownedDecorationIds.sort((left, right) => left - right);
 }
 
-function upgradeHouse(state: ManorV7State, house: ManorV7AnimalHouse, useVip: boolean, now: number): void {
+function upgradeHouse(state: ManorV7State, house: ManorV7AnimalHouse, now: number): void {
   const current = house === "hutch" ? state.pasture.hutchLevel : state.pasture.shedLevel;
   const upgrade = MANOR_V7_HOUSE_UPGRADES[house].find((item) => item.level === current + 1);
   if (!upgrade) throw new Error("该建筑已经达到当前接入的最高等级");
   if (manorV7LevelForExperience(state.pastureExperience) < upgrade.requiredLevel) throw new Error(`升级需要牧场达到 ${upgrade.requiredLevel} 级`);
-  charge(state, useVip ? 0 : upgrade.coins);
+  charge(state, upgrade.coins);
   if (house === "hutch") state.pasture.hutchLevel = upgrade.level;
   else state.pasture.shedLevel = upgrade.level;
   progressManorV7Task(state, "house", 1);
