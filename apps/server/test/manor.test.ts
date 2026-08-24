@@ -15,6 +15,44 @@ import { createApp } from "../src/app.js";
 import { stableFlashUserId } from "../src/manor-v7-flash-adapter.js";
 
 describe("QQ Farm V7 account persistence", () => {
+  it("reports unsupported Flash protocols once without request or account data", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-protocol-monitor-test-"));
+    const events: Array<{ area: string; module: string; action: string | null }> = [];
+    const instance = await createApp({
+      databasePath: join(directory, "test.sqlite"),
+      logger: false,
+      manorUnsupportedProtocolHandler: (event) => events.push(event)
+    });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const response = await instance.app.inject({
+          method: "POST",
+          url: "/api/manor/flash/farm?mod=task&act=not-supported%3Ftoken%3Dsecret",
+          headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+          payload: "password=must-not-be-logged"
+        });
+        expect(response.json()).toMatchObject({ code: 0 });
+      }
+      const pasture = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_future_feature",
+        headers: { cookie: owner.cookie }
+      });
+      expect(pasture.json()).toMatchObject({ code: 0 });
+      expect(events).toEqual([
+        { area: "farm", module: "task", action: "invalid" },
+        { area: "pasture", module: "cgi_future_feature", action: null }
+      ]);
+      expect(JSON.stringify(events)).not.toContain("secret");
+      expect(JSON.stringify(events)).not.toContain("password");
+      expect(JSON.stringify(events)).not.toContain(owner.userId);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("serves origin-bound Flash configuration and the original module URL alias", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-static-test-"));
     const webDistPath = join(directory, "web");

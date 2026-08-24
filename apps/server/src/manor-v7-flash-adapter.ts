@@ -36,11 +36,22 @@ import type { ManorV7Service } from "./manor-v7-service.js";
 
 type FlashParams = Record<string, string>;
 
+export interface ManorV7UnsupportedProtocolEvent {
+  area: "farm" | "pasture";
+  module: string;
+  action: string | null;
+}
+
+export type ManorV7UnsupportedProtocolReporter = (event: ManorV7UnsupportedProtocolEvent) => void;
+
 const FLASH_VIP_LEVEL = 7;
 const FLASH_VIP_STATUS = 2;
 
 export class ManorV7FlashAdapter {
-  constructor(private readonly service: ManorV7Service) {}
+  constructor(
+    private readonly service: ManorV7Service,
+    private readonly reportUnsupported: ManorV7UnsupportedProtocolReporter = () => undefined
+  ) {}
 
   handleFarm(
     user: AccountUserView,
@@ -201,7 +212,12 @@ export class ManorV7FlashAdapter {
     if (moduleName === "feeds" || moduleName === "hydra_feeds" || moduleName === "sysmsg") {
       return [];
     }
-    return flashFailure(`该原版功能尚未接入：${moduleName || "unknown"}${actionName ? `/${actionName}` : ""}`);
+    return this.#unsupported(
+      "farm",
+      moduleName,
+      actionName,
+      `该原版功能尚未接入：${moduleName || "unknown"}${actionName ? `/${actionName}` : ""}`
+    );
   }
 
   #upgradeFarmLand(
@@ -298,7 +314,7 @@ export class ManorV7FlashAdapter {
         }
       };
     }
-    return flashFailure(`任务功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "task", action, `任务功能尚未接入：${action || "unknown"}`);
   }
 
   #dogProtocol(user: AccountUserView, action: string, now: number) {
@@ -313,7 +329,7 @@ export class ManorV7FlashAdapter {
         money: 0
       };
     }
-    return flashFailure(`看门动物功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "dog", action, `看门动物功能尚未接入：${action || "unknown"}`);
   }
 
   #userProtocol(user: AccountUserView, action: string, params: FlashParams, now: number) {
@@ -366,7 +382,7 @@ export class ManorV7FlashAdapter {
         poptype: 0
       };
     }
-    return flashFailure(`用户功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "user", action, `用户功能尚未接入：${action || "unknown"}`);
   }
 
   #tutorialTask(user: AccountUserView, params: FlashParams, now: number) {
@@ -772,7 +788,12 @@ export class ManorV7FlashAdapter {
     if (moduleName === "sysmsg_select") return flashSystemMessages(view, params);
     if (moduleName === "cgi_get_parade") return flashParade(view);
     if (moduleName === "cgi_get_notice") return [];
-    return flashFailure(`该原版牧场功能尚未接入：${moduleName || "unknown"}`);
+    return this.#unsupported(
+      "pasture",
+      moduleName,
+      actionName,
+      `该原版牧场功能尚未接入：${moduleName || "unknown"}`
+    );
   }
 
   #wildSlots(user: AccountUserView, now: number) {
@@ -1683,7 +1704,7 @@ export class ManorV7FlashAdapter {
       );
       return { code: 1, direction: "", money: after.coins - before.coins };
     }
-    return flashFailure(`仓库功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "repertory", action, `仓库功能尚未接入：${action || "unknown"}`);
   }
 
   #setProduceLock(user: AccountUserView, params: FlashParams, now: number): unknown {
@@ -1811,7 +1832,7 @@ export class ManorV7FlashAdapter {
         type
       };
     }
-    return flashFailure(`工具商店功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "usertool", action, `工具商店功能尚未接入：${action || "unknown"}`);
   }
 
   #item(user: AccountUserView, action: string, params: FlashParams, now: number): unknown {
@@ -1899,7 +1920,7 @@ export class ManorV7FlashAdapter {
         num: 1
       };
     }
-    return flashFailure(`装扮功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "item", action, `装扮功能尚未接入：${action || "unknown"}`);
   }
 
   #qqShow(user: AccountUserView, action: string, params: FlashParams, now: number): unknown {
@@ -1912,7 +1933,7 @@ export class ManorV7FlashAdapter {
       this.service.performAction(user, { type: "set-avatar", avatarId: null }, now);
       return { code: "1", id: 0 };
     }
-    return flashFailure(`农场形象功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "qqshow", action, `农场形象功能尚未接入：${action || "unknown"}`);
   }
 
   #farmlandAction(user: AccountUserView, action: string, params: FlashParams, now: number): unknown {
@@ -1981,7 +2002,23 @@ export class ManorV7FlashAdapter {
       const land = requireLand(view, place);
       return { farmlandIndex: place, code: 1, tId: toolId, status: flashLandStatus(land, now) };
     }
-    return flashFailure(`土地功能尚未接入：${action || "unknown"}`);
+    return this.#unsupported("farm", "farmlandstatus", action, `土地功能尚未接入：${action || "unknown"}`);
+  }
+
+  #unsupported(
+    area: ManorV7UnsupportedProtocolEvent["area"],
+    moduleName: string,
+    actionName: string,
+    direction: string
+  ): unknown {
+    const module = flashProtocolIdentifier(moduleName);
+    const action = actionName ? flashProtocolIdentifier(actionName) : null;
+    try {
+      this.reportUnsupported({ area, module, action });
+    } catch {
+      // Monitoring must never interrupt the original client fallback response.
+    }
+    return flashFailure(direction);
   }
 
   #careLand(user: AccountUserView, params: FlashParams, action: "water", now: number) {
@@ -3324,4 +3361,9 @@ function requireLand(view: ManorV7View, place: number): ManorV7LandView {
 
 function flashFailure(direction: string) {
   return { code: 0, poptype: 1, direction };
+}
+
+function flashProtocolIdentifier(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return /^[a-z][a-z0-9_]{0,63}$/u.test(normalized) ? normalized : "invalid";
 }

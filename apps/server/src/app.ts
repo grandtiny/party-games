@@ -36,7 +36,10 @@ import { AccountService } from "./account-service.js";
 import { AdminService } from "./admin-service.js";
 import { createGameRegistry } from "./games/index.js";
 import { ModelTurtleSoupAiAdapter } from "./games/turtle-soup-ai.js";
-import { ManorV7FlashAdapter } from "./manor-v7-flash-adapter.js";
+import {
+  ManorV7FlashAdapter,
+  type ManorV7UnsupportedProtocolEvent
+} from "./manor-v7-flash-adapter.js";
 import { ManorV7Service } from "./manor-v7-service.js";
 import { PresenceTracker } from "./presence.js";
 import { SqliteRoomRepository } from "./repository.js";
@@ -50,6 +53,7 @@ export interface AppOptions {
   logger?: boolean;
   rulesAssistant?: RulesAssistant;
   environment?: NodeJS.ProcessEnv;
+  manorUnsupportedProtocolHandler?: (event: ManorV7UnsupportedProtocolEvent) => void;
 }
 
 export async function createApp(options: AppOptions) {
@@ -84,7 +88,17 @@ export async function createApp(options: AppOptions) {
   const manorService = new ManorV7Service(repository, {
     timeScale: positiveNumber(environment.MANOR_TIME_SCALE, 1)
   });
-  const manorFlashAdapter = new ManorV7FlashAdapter(manorService);
+  const reportedUnsupportedManorProtocols = new Set<string>();
+  const manorFlashAdapter = new ManorV7FlashAdapter(manorService, (event) => {
+    const key = `${event.area}:${event.module}:${event.action ?? ""}`;
+    if (reportedUnsupportedManorProtocols.has(key)) return;
+    reportedUnsupportedManorProtocols.add(key);
+    if (options.manorUnsupportedProtocolHandler) {
+      options.manorUnsupportedProtocolHandler(event);
+      return;
+    }
+    app.log.warn({ manorFlashProtocol: event }, "Unsupported manor Flash protocol");
+  });
   const rulesAssistant =
     options.rulesAssistant ?? new RulesAssistant(adminService.createLanguageModelAdapter());
   const rulesQuestionWindows = new Map<string, { startedAt: number; count: number }>();
@@ -1090,6 +1104,7 @@ export async function createApp(options: AppOptions) {
     rulesQuestionWindows.clear();
     adminLoginWindows.clear();
     accountLoginWindows.clear();
+    reportedUnsupportedManorProtocols.clear();
   });
 
   return {
