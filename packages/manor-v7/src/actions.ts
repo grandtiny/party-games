@@ -191,6 +191,14 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       addManorV7Activity(state, "farm", "加工坊制作了 1 袋极速化肥", now);
       break;
     }
+    case "delete-received-flowers": {
+      if (action.giftIds.length === 0) throw new Error("花束记录不存在");
+      const giftIds = new Set(action.giftIds);
+      const remaining = state.receivedFlowers.filter((gift) => !giftIds.has(gift.id));
+      if (remaining.length === state.receivedFlowers.length) throw new Error("花束记录不存在");
+      state.receivedFlowers = remaining;
+      break;
+    }
     case "block-friend": {
       if (state.friendFilterUserIds.includes(action.userId)) throw new Error("该好友已经在拦截名单中");
       state.friendFilterUserIds.push(action.userId);

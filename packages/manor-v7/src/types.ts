@@ -403,6 +403,7 @@ export type ManorV7Action =
   | { type: "buy-dog-food"; days: 1 | 7 }
   | { type: "set-active-dog"; dogId: number | null }
   | { type: "process-manure-fertilizer" }
+  | { type: "delete-received-flowers"; giftIds: number[] }
   | { type: "block-friend"; userId: string }
   | { type: "unblock-friend"; userId: string }
   | { type: "buy-animal"; animalId: number; quantity: number }

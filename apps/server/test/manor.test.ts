@@ -2330,6 +2330,26 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(card.json()).toEqual({ code: 1, time: flower.time, uid: flower.fromId, word: "祝你开心" });
+      const deleted = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=user&act=del",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uid=${flower.fromId}&time=${flower.time}`
+      });
+      expect(deleted.json()).toEqual({
+        cardId: flower.time,
+        code: 1,
+        direction: "ok",
+        ecode: 1,
+        friendUin: flower.fromId
+      });
+      const afterDelete = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=user&act=received",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: ""
+      });
+      expect(afterDelete.json()).toMatchObject({ code: 1, myFlower: [] });
 
       const processed = await instance.app.inject({
         method: "POST",

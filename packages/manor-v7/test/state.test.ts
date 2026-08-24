@@ -1198,6 +1198,28 @@ describe("QQ Farm V7 domain", () => {
     expect(result.owner.nextFlowerGiftId).toBe(2);
   });
 
+  it("deletes only the selected received flower records", () => {
+    const now = 83_500;
+    const initial = createManorV7State(now);
+    initial.receivedFlowers = [
+      { id: 1, flowerId: 12, fromUserId: "friend-a", fromDisplayName: "好友甲", message: "第一束", sentAt: now },
+      { id: 2, flowerId: 12, fromUserId: "friend-b", fromDisplayName: "好友乙", message: "第二束", sentAt: now + 1_000 }
+    ];
+    initial.nextFlowerGiftId = 3;
+
+    const deleted = transitionManorV7State(
+      initial,
+      { type: "delete-received-flowers", giftIds: [1] },
+      now
+    );
+    expect(deleted.receivedFlowers).toEqual([expect.objectContaining({ id: 2, message: "第二束" })]);
+    expect(() => transitionManorV7State(
+      deleted,
+      { type: "delete-received-flowers", giftIds: [1] },
+      now
+    )).toThrow("花束记录不存在");
+  });
+
   it("blocks friend visits until the owner removes the visitor from the filter", () => {
     const now = 84_000;
     const visitor = createManorV7State(now);

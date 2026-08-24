@@ -72,7 +72,7 @@ export class ManorV7FlashAdapter {
     if (moduleName === "user" && actionName === "qqshow") {
       return flashQShowProfile(this.service.getView(user, now));
     }
-    if (moduleName === "user" && ["received", "send", "card", "case", "exchange"].includes(actionName)) {
+    if (moduleName === "user" && ["received", "send", "card", "del", "case", "exchange"].includes(actionName)) {
       return this.#userProtocol(user, actionName, params, now);
     }
     if (moduleName === "cgi_get_user_info") return this.#profile(user, "farm", params, now);
@@ -340,6 +340,18 @@ export class ManorV7FlashAdapter {
         stableFlashUserId(item.fromUserId) === fromId && Math.floor(item.sentAt / 1_000) === time
       ));
       return gift ? { code: 1, time, uid: fromId, word: gift.message } : {};
+    }
+    if (action === "del") {
+      const view = this.service.getView(user, now);
+      const fromId = positiveInteger(params.uid, "好友编号");
+      const time = positiveInteger(params.time, "赠送时间");
+      const giftIds = view.receivedFlowers
+        .filter((item) => (
+          stableFlashUserId(item.fromUserId) === fromId && Math.floor(item.sentAt / 1_000) === time
+        ))
+        .map((item) => item.id);
+      this.service.performAction(user, { type: "delete-received-flowers", giftIds }, now);
+      return { cardId: time, code: 1, direction: "ok", ecode: 1, friendUin: fromId };
     }
     if (action === "case") {
       const { before, after } = this.service.performActionWithPrevious(

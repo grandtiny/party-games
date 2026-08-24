@@ -26,6 +26,8 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "sell-all-cubs":
     case "process-manure-fertilizer":
       return { type };
+    case "delete-received-flowers":
+      return { type, giftIds: integerArray(input.giftIds) };
     case "set-fish-lock": return { type, fishId: integer(input.fishId), locked: boolean(input.locked) };
     case "fertilize-fish": return { type, serial: integer(input.serial), toolId: integer(input.toolId) };
     case "buy-fish-seed":
