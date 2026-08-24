@@ -3,6 +3,7 @@ import {
   MANOR_V7_ANIMALS,
   MANOR_V7_BAD_ACTION_DAILY_LIMIT,
   MANOR_V7_CROPS,
+  MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
   MANOR_V7_DECORATIONS,
   MANOR_V7_DAILY_SIGN_IN_LIMIT,
   MANOR_V7_FISH,
@@ -60,6 +61,30 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
     expect(manorV7Fish(2)).toMatchObject({ name: "小丑鱼", seedPrice: 650, salePrice: 90 });
     expect(manorV7Decoration("farm", 1)).toMatchObject({ name: "田园风光", itemType: 1 });
+  });
+
+  it("initializes and resets the persisted seasonal activity state", () => {
+    const now = Date.UTC(2026, 7, 22, 2, 0, 0);
+    const initial = createManorV7State(now);
+    expect(initial.seasonal).toEqual({
+      animalDrops: [],
+      nextAnimalDropSerial: 1,
+      cookieSpritesClaimed: false,
+      halloweenCookies: 0,
+      cookieOfferingDay: "2026-08-22",
+      cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
+      cookieOfferedByUserIds: [],
+      springFestivalClaimDay: null
+    });
+
+    initial.seasonal.cookieOfferingsRemaining = 0;
+    initial.seasonal.cookieOfferedByUserIds = ["friend"];
+    const nextDay = advanceManorV7State(initial, now + 24 * 60 * 60 * 1_000);
+    expect(nextDay.seasonal).toMatchObject({
+      cookieOfferingDay: "2026-08-23",
+      cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
+      cookieOfferedByUserIds: []
+    });
   });
 
   it("keeps activity rewards out of ordinary purchases", () => {
@@ -680,6 +705,7 @@ describe("QQ Farm V7 domain", () => {
         wild?: ManorV7State["pasture"]["wild"];
       };
       rewardClaims?: ManorV7State["rewardClaims"];
+      seasonal?: ManorV7State["seasonal"];
       decorationOwnerships?: ManorV7State["decorationOwnerships"];
       redeemedCodes?: ManorV7State["redeemedCodes"];
     };
@@ -692,6 +718,7 @@ describe("QQ Farm V7 domain", () => {
     delete legacy.pasture.guards;
     delete legacy.pasture.wild;
     delete legacy.rewardClaims;
+    delete legacy.seasonal;
     delete legacy.decorationOwnerships;
     delete legacy.redeemedCodes;
     for (const animal of legacy.pasture.animals) {
@@ -718,6 +745,16 @@ describe("QQ Farm V7 domain", () => {
       signInStreak: 0,
       signInStreakRewardDays: [],
       vipReturnGiftClaimed: false
+    });
+    expect(migrated.seasonal).toEqual({
+      animalDrops: [],
+      nextAnimalDropSerial: 1,
+      cookieSpritesClaimed: false,
+      halloweenCookies: 0,
+      cookieOfferingDay: "1970-01-01",
+      cookieOfferingsRemaining: MANOR_V7_COOKIE_OFFERING_DAILY_LIMIT,
+      cookieOfferedByUserIds: [],
+      springFestivalClaimDay: null
     });
     expect(migrated.pasture).toMatchObject({ cubInventory: [], toolInventory: [] });
     expect(migrated.pasture.animals[0]).toMatchObject({ productionActive: false, productionCount: 5 });

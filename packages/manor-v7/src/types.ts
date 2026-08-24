@@ -284,6 +284,23 @@ export interface ManorV7FishState {
   fedStage: number;
 }
 
+export interface ManorV7SeasonalAnimalDropState {
+  serial: number;
+  animalId: number;
+  createdAt: number;
+}
+
+export interface ManorV7SeasonalState {
+  animalDrops: ManorV7SeasonalAnimalDropState[];
+  nextAnimalDropSerial: number;
+  cookieSpritesClaimed: boolean;
+  halloweenCookies: number;
+  cookieOfferingDay: string | null;
+  cookieOfferingsRemaining: number;
+  cookieOfferedByUserIds: string[];
+  springFestivalClaimDay: string | null;
+}
+
 export interface ManorV7Activity {
   id: number;
   area: ManorV7Area;
@@ -350,6 +367,7 @@ export interface ManorV7State {
     selectedDecorationIds: number[];
     wild: ManorV7WildState;
   };
+  seasonal: ManorV7SeasonalState;
   ownedDecorationIds: number[];
   decorationOwnerships: ManorV7DecorationOwnership[];
   rewardClaims: {
@@ -576,6 +594,7 @@ export interface ManorV7View {
     selectedDecorationIds: number[];
     wild: ManorV7WildState;
   };
+  seasonal: ManorV7SeasonalState;
   ownedDecorationIds: number[];
   decorationOwnerships: ManorV7DecorationOwnership[];
   rewardClaims: ManorV7State["rewardClaims"];
