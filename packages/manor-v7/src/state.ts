@@ -14,6 +14,7 @@ import {
   manorV7PastureGuard,
   manorV7Tool
 } from "./catalog.js";
+import { grantManorV7Coins, manorV7RewardAmount } from "./economy.js";
 import type {
   ManorV7Action,
   ManorV7Activity,
@@ -615,11 +616,11 @@ export function grantLandExpansionFundIfEligible(state: ManorV7State, now: numbe
     return false;
   }
   state.rewardClaims.landExpansionFundClaimed = true;
-  state.coins += MANOR_V7_LAND_EXPANSION_FUND_COINS;
+  const rewardCoins = grantManorV7Coins(state, MANOR_V7_LAND_EXPANSION_FUND_COINS);
   addManorV7Activity(
     state,
     "farm",
-    `达到 ${MANOR_V7_LAND_EXPANSION_FUND_LEVEL} 级，获得土地扩建基金 ${MANOR_V7_LAND_EXPANSION_FUND_COINS} 金币`,
+    `达到 ${MANOR_V7_LAND_EXPANSION_FUND_LEVEL} 级，获得土地扩建基金 ${rewardCoins} 金币`,
     now
   );
   return true;
@@ -652,7 +653,7 @@ export function progressManorV7Task(state: ManorV7State, key: string, amount: nu
   if (task.progress >= definition.target) {
     task.completed = true;
     task.claimed = true;
-    state.coins += definition.rewardCoins;
+    grantManorV7Coins(state, definition.rewardCoins);
   }
 }
 
@@ -1307,7 +1308,7 @@ function toTaskViews(tasks: readonly ManorV7TaskState[]): ManorV7TaskView[] {
   return tasks.map((task) => {
     const definition = MANOR_V7_TASK_DEFINITIONS.find((item) => item.key === task.key);
     if (!definition) throw new Error("V7 任务定义不存在");
-    return { ...task, ...definition };
+    return { ...task, ...definition, rewardCoins: manorV7RewardAmount(definition.rewardCoins) };
   });
 }
 
