@@ -1272,7 +1272,22 @@ export class ManorV7FlashAdapter {
     if (integer(params.type) === 10) {
       return {
         ecode: 0,
-        info: [4, 5, 6].map((id) => ({ id, cId: id, cName: ["水拔子", "青铜飞刀", "白银飞刀"][id - 4], num: 99, type: 10 }))
+        info: view.pasture.weaponInventory.map((entry) => {
+          const weapon = view.catalogs.tools.find((item) => (
+            item.area === "pasture" && item.id === entry.sourceId && item.itemType === 10
+          ));
+          const name = weapon?.name ?? `武器 ${entry.sourceId}`;
+          const desc = `可减少野生动物体力${wildAttackDamage("Gun", entry.sourceId)}点，并获得更多水晶奖励。`;
+          return {
+            id: entry.sourceId,
+            name,
+            desc,
+            num: entry.quantity,
+            type: 10,
+            cId: entry.sourceId,
+            cName: name
+          };
+        })
       };
     }
     return {

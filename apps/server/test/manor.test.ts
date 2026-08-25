@@ -2820,6 +2820,24 @@ describe("QQ Farm V7 account persistence", () => {
       reversedMixedAreaState.updatedAt = Date.now();
       instance.repository.updateManorV7State(visitor.userId, mixedAreaState.revision, reversedMixedAreaState);
 
+      const weapons = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_get_usercrystal&type=10&phpye=phpye",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(weapons.json()).toEqual({
+        ecode: 0,
+        info: [{
+          cId: 7,
+          cName: "黄金飞刀",
+          desc: "可减少野生动物体力35点，并获得更多水晶奖励。",
+          id: 7,
+          name: "黄金飞刀",
+          num: 1,
+          type: 10
+        }]
+      });
+
       const attacked = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_farm_attack_beast",
