@@ -804,8 +804,12 @@ function synchronizeDecorationOwnerships(state: ManorV7State, now: number): void
     ownership.validUntil === 0 || ownership.validUntil > now
   ));
   const activeKeys = new Set(current.map((ownership) => `${ownership.area}:${ownership.decorationId}`));
-  state.farm.selectedDecorationIds = state.farm.selectedDecorationIds.filter((id) => activeKeys.has(`farm:${id}`));
-  state.pasture.selectedDecorationIds = state.pasture.selectedDecorationIds.filter((id) => activeKeys.has(`pasture:${id}`));
+  state.farm.selectedDecorationIds = state.farm.selectedDecorationIds.filter((id) => (
+    activeKeys.has(`farm:${id}`) && manorV7Decoration("farm", id).isRenderable
+  ));
+  state.pasture.selectedDecorationIds = state.pasture.selectedDecorationIds.filter((id) => (
+    activeKeys.has(`pasture:${id}`) && manorV7Decoration("pasture", id).isRenderable
+  ));
   state.ownedDecorationIds = [...new Set(current.map((ownership) => ownership.decorationId))]
     .sort((left, right) => left - right);
 }

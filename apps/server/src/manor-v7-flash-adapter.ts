@@ -2155,6 +2155,8 @@ export class ManorV7FlashAdapter {
     if (purchase.itemType === 6) {
       const decoration = manorV7Decoration("pasture", purchase.itemId);
       if (purchase.quantity !== 1) throw new Error("牧场装扮每次只能购买一个");
+      if (!decoration.isRenderable) throw new Error("该装扮素材不完整，暂不可使用");
+      if (decoration.isHidden) throw new Error("该装扮只能通过活动或奖励获得");
       if (view.pastureLevel < decoration.originalLevel) throw new Error("等级不足");
       return;
     }
@@ -2366,6 +2368,8 @@ export class ManorV7FlashAdapter {
     if (shopType === 2) {
       const decoration = manorV7Decoration("farm", itemId);
       if (quantity !== 1 || itemType !== decoration.itemType) throw new Error("装扮商品参数无效");
+      if (!decoration.isRenderable) throw new Error("该装扮素材不完整，暂不可使用");
+      if (decoration.isHidden) throw new Error("该装扮只能通过活动或奖励获得");
       return { itemId, itemType, quantity, shopType };
     }
     const expectedShopType = itemType === 4
@@ -3461,7 +3465,7 @@ function flashPastureMaterialInventory(view: ManorV7View) {
 
 function flashPastureDecorationShop(view: ManorV7View) {
   return view.catalogs.decorations
-    .filter((item) => item.area === "pasture")
+    .filter((item) => item.area === "pasture" && !item.isHidden && item.isRenderable)
     .sort((left, right) => left.originalLevel - right.originalLevel || left.id - right.id)
     .map((item) => ({
       itemId: item.id,
@@ -3888,7 +3892,7 @@ function flashDecorationInventory(view: ManorV7View) {
 
 function flashDecorationShop(view: ManorV7View) {
   return view.catalogs.decorations
-    .filter((item) => item.area === "farm")
+    .filter((item) => item.area === "farm" && !item.isHidden && item.isRenderable)
     .map((item) => ({
       itemId: item.id,
       itemName: item.name,

@@ -82,6 +82,8 @@ export interface ManorV7DecorationDefinition {
   premiumPrice: number;
   experience: number;
   validSeconds: number;
+  isHidden: boolean;
+  isRenderable: boolean;
 }
 
 export interface ManorV7DecorationOwnership {

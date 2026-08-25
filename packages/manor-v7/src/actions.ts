@@ -1136,6 +1136,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "buy-decoration": {
       const decoration = manorV7Decoration(action.area, action.decorationId);
+      if (!decoration.isRenderable) throw new Error("该装扮素材不完整，暂不可使用");
+      if (decoration.isHidden) throw new Error("该装扮只能通过活动或奖励获得");
       if (manorV7LevelForExperience(action.area === "farm" ? state.farmExperience : state.pastureExperience) < decoration.originalLevel) throw new Error("等级不足");
       const existing = decorationOwnership(state, action.area, decoration.id);
       if (existing && (existing.validUntil === 0 || existing.validUntil > now)) throw new Error("已经拥有该装扮");
@@ -1151,6 +1153,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "renew-decoration": {
       const decoration = manorV7Decoration(action.area, action.decorationId);
+      if (!decoration.isRenderable) throw new Error("该装扮素材不完整，暂不可使用");
       const ownership = decorationOwnership(state, action.area, decoration.id);
       if (!ownership) throw new Error("尚未拥有该装扮");
       if (ownership.validUntil === 0) throw new Error("永久装扮无需续期");
@@ -1162,6 +1165,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "equip-decoration": {
       const decoration = manorV7Decoration(action.area, action.decorationId);
+      if (!decoration.isRenderable) throw new Error("该装扮素材不完整，暂不可使用");
       const ownership = decorationOwnership(state, action.area, decoration.id);
       if (!ownership || ownership.validUntil !== 0 && ownership.validUntil <= now) throw new Error("尚未拥有或装扮已过期");
       const selected = action.area === "farm" ? state.farm.selectedDecorationIds : state.pasture.selectedDecorationIds;
@@ -1458,6 +1462,8 @@ function awardManorV7Reward(state: ManorV7State, reward: ManorV7RewardItem): voi
       return;
     }
     case "decoration": {
+      const decoration = manorV7Decoration(reward.area, reward.sourceId);
+      if (!decoration.isRenderable) throw new Error("奖励装扮素材不完整");
       const ownership = decorationOwnership(state, reward.area, reward.sourceId);
       if (ownership) ownership.validUntil = 0;
       else state.decorationOwnerships.push({ area: reward.area, decorationId: reward.sourceId, validUntil: 0 });
@@ -1474,6 +1480,7 @@ function grantTimedDecoration(
   now: number
 ): void {
   const definition = manorV7Decoration(area, decorationId);
+  if (!definition.isRenderable) throw new Error("奖励装扮素材不完整");
   const extension = definition.validSeconds * 1_000;
   const ownership = decorationOwnership(state, area, decorationId);
   if (ownership) {

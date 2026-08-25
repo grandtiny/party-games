@@ -122,7 +122,6 @@ const tools = parseCsv("catalog-tools.csv")
   }));
 
 const decorations = parseCsv("catalog-decorations.csv")
-  .filter((row) => row.integration_policy === "deferred-cosmetic")
   .map((row) => ({
     area: row.area,
     id: number(row.source_id),
@@ -133,7 +132,9 @@ const decorations = parseCsv("catalog-decorations.csv")
     coinPrice: number(row.coin_price),
     premiumPrice: number(row.premium_price),
     experience: number(row.experience),
-    validSeconds: number(row.valid_seconds)
+    validSeconds: number(row.valid_seconds),
+    isHidden: bool(row.hidden),
+    isRenderable: row.asset_status === "complete"
   }));
 
 const landUpgrades = parseCsv("catalog-land-upgrades.csv").map((row) => ({

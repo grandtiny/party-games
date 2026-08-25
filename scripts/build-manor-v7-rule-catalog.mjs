@@ -211,6 +211,21 @@ function decorations(path, area, hiddenSet) {
     const coinPrice = Number(field(body, "price", "0"));
     const premiumPrice = Number(field(body, "FBPrice", "0"));
     const hidden = hiddenSet.has(id);
+    const assetDirectory = area === "farm"
+      ? join(moduleRoot, "ui", "farm", "diy")
+      : join(moduleRoot, "mc", "farm", "diy");
+    const mainAsset = area === "farm" ? `${id}.swf` : `z1_${id}_1.swf`;
+    const previewAsset = area === "farm" ? `${id}.jpg` : `z1_${id}_1_shop.jpg`;
+    const detailAsset = area === "farm" ? `${id}b.jpg` : null;
+    const hasMainAsset = existsSync(join(assetDirectory, mainAsset));
+    const hasPreviewAsset = existsSync(join(assetDirectory, previewAsset));
+    const hasDetailAsset = detailAsset === null || existsSync(join(assetDirectory, detailAsset));
+    const missingAssets = [
+      hasMainAsset ? null : "main",
+      hasPreviewAsset ? null : "preview",
+      hasDetailAsset ? null : "detail",
+    ].filter(Boolean);
+    const assetStatus = missingAssets.length === 0 ? "complete" : `missing-${missingAssets.join("+")}`;
     return {
       area,
       source_id: id,
@@ -224,7 +239,15 @@ function decorations(path, area, hiddenSet) {
       experience: Number(field(body, "exp", "0")),
       valid_seconds: Number(field(body, "itemValidTime", "0")),
       hidden,
-      integration_policy: hidden ? "excluded-hidden" : "deferred-cosmetic",
+      has_main_asset: hasMainAsset,
+      has_preview_asset: hasPreviewAsset,
+      has_detail_asset: hasDetailAsset,
+      asset_status: assetStatus,
+      integration_policy: assetStatus !== "complete"
+        ? "blocked-assets"
+        : hidden
+          ? "hidden-cosmetic"
+          : "shop-candidate",
     };
   });
 }
@@ -298,6 +321,9 @@ const summary = [
   { key: "fish_core_candidates", value: fish.filter((row) => row.integration_policy === "core-candidate").length },
   { key: "farm_decoration_rows", value: decorationRows.filter((row) => row.area === "farm").length },
   { key: "pasture_decoration_rows", value: decorationRows.filter((row) => row.area === "pasture").length },
+  { key: "decoration_shop_candidates", value: decorationRows.filter((row) => row.integration_policy === "shop-candidate").length },
+  { key: "decoration_hidden_candidates", value: decorationRows.filter((row) => row.integration_policy === "hidden-cosmetic").length },
+  { key: "decoration_blocked_assets", value: decorationRows.filter((row) => row.integration_policy === "blocked-assets").length },
   { key: "farm_tool_rows", value: toolRows.filter((row) => row.area === "farm").length },
   { key: "pasture_tool_rows", value: toolRows.filter((row) => row.area === "pasture").length },
   { key: "timing_rows", value: timing.length },

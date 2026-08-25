@@ -2141,7 +2141,29 @@ describe("QQ Farm V7 account persistence", () => {
         expect.objectContaining({ id: 1565 })
       ]));
       expect(initial.json().catalogs.tools).toHaveLength(91);
-      expect(initial.json().catalogs.decorations).toHaveLength(631);
+      expect(initial.json().catalogs.decorations).toHaveLength(821);
+
+      const farmDecorationShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=item&act=shop",
+        headers: { cookie }
+      });
+      expect(farmDecorationShop.statusCode, farmDecorationShop.body).toBe(200);
+      expect(farmDecorationShop.json()).toHaveLength(514);
+      expect(farmDecorationShop.json()).not.toEqual(expect.arrayContaining(
+        [1, 11, 21, 627, 669].map((itemId) => expect.objectContaining({ itemId }))
+      ));
+
+      const pastureDecorationShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_items",
+        headers: { cookie }
+      });
+      expect(pastureDecorationShop.statusCode, pastureDecorationShop.body).toBe(200);
+      expect(pastureDecorationShop.json()).toHaveLength(115);
+      expect(pastureDecorationShop.json()).not.toEqual(expect.arrayContaining(
+        [124, 157].map((itemId) => expect.objectContaining({ itemId }))
+      ));
 
       const seedShop = await first.app.inject({
         method: "GET",

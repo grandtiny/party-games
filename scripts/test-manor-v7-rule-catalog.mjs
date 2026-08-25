@@ -35,4 +35,20 @@ if (invalidCoreAnimalHouses.length > 0) {
   throw new Error(`Core animal house classification is incomplete: ${invalidCoreAnimalHouses.length}`);
 }
 
+const decorationText = readFileSync(join(root, "catalog-decorations.csv"), "utf8");
+const decorationLines = decorationText.trim().split(/\r?\n/);
+if (!decorationLines[0]?.includes('"asset_status"')) throw new Error("Decoration asset audit is missing");
+const blockedDecorationIds = decorationLines.slice(1)
+  .filter((line) => line.includes('"blocked-assets"'))
+  .map((line) => Number(line.match(/^"[^"]+","(\d+)"/)?.[1] ?? 0));
+if (blockedDecorationIds.join(",") !== "21,26,31,627,669") {
+  throw new Error(`Unexpected blocked decoration catalog: ${blockedDecorationIds.join(",")}`);
+}
+if (decorationLines.filter((line) => line.includes('"hidden-cosmetic"')).length !== 187) {
+  throw new Error("Renderable hidden decoration count drifted");
+}
+if (decorationLines.filter((line) => line.includes('"shop-candidate"')).length !== 629) {
+  throw new Error("Decoration shop candidate count drifted");
+}
+
 console.log("QQ Farm V7 rule catalog verification passed");

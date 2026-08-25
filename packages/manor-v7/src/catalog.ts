@@ -29,14 +29,21 @@ export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERAT
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
 const fishMap = new Map<number, ManorV7FishDefinition>(MANOR_V7_FISH.map((item) => [item.id, item]));
-const defaultFarmDecorations = [
-  { area: "farm", id: 1, name: "田园风光", setName: "QQ农场", itemType: 1, originalLevel: 0, coinPrice: 0, premiumPrice: 50, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 2, name: "茅草屋", setName: "QQ农场", itemType: 2, originalLevel: 0, coinPrice: 0, premiumPrice: 40, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 3, name: "木桩栅栏", setName: "QQ农场", itemType: 3, originalLevel: 0, coinPrice: 0, premiumPrice: 25, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 4, name: "茅草狗屋", setName: "QQ农场", itemType: 4, originalLevel: 0, coinPrice: 0, premiumPrice: 20, experience: 0, validSeconds: 1 }
-] as const satisfies readonly ManorV7DecorationDefinition[];
 const defaultPastureDecorations = [
-  { area: "pasture", id: 105, name: "默认牧场", setName: "QQ牧场", itemType: 101, originalLevel: 0, coinPrice: 0, premiumPrice: 0, experience: 0, validSeconds: 1 }
+  {
+    area: "pasture",
+    id: 105,
+    name: "默认牧场",
+    setName: "QQ牧场",
+    itemType: 101,
+    originalLevel: 0,
+    coinPrice: 0,
+    premiumPrice: 0,
+    experience: 0,
+    validSeconds: 1,
+    isHidden: true,
+    isRenderable: true
+  }
 ] as const satisfies readonly ManorV7DecorationDefinition[];
 
 export const MANOR_V7_BOARD_IDS = [
@@ -99,8 +106,7 @@ export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
 }
 
 export function manorV7Decoration(area: ManorV7Area, id: number): ManorV7DecorationDefinition {
-  const item = defaultFarmDecorations.find((candidate) => candidate.area === area && candidate.id === id)
-    ?? defaultPastureDecorations.find((candidate) => candidate.area === area && candidate.id === id)
+  const item = defaultPastureDecorations.find((candidate) => candidate.area === area && candidate.id === id)
     ?? MANOR_V7_DECORATIONS.find((candidate) => candidate.area === area && candidate.id === id);
   if (!item) throw new Error("装扮不存在");
   return item;

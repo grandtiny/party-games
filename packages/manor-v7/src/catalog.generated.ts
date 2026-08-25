@@ -18356,6 +18356,398 @@ export const MANOR_V7_TOOLS = [
 export const MANOR_V7_DECORATIONS = [
   {
     "area": "farm",
+    "id": 1,
+    "name": "田园风光",
+    "setName": "QQ农场",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 50,
+    "experience": 0,
+    "validSeconds": 1,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 2,
+    "name": "茅草屋",
+    "setName": "QQ农场",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 40,
+    "experience": 0,
+    "validSeconds": 1,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 3,
+    "name": "木桩栅栏",
+    "setName": "QQ农场",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 25,
+    "experience": 0,
+    "validSeconds": 1,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 4,
+    "name": "茅草狗屋",
+    "setName": "QQ农场",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 0,
+    "premiumPrice": 20,
+    "experience": 0,
+    "validSeconds": 1,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 11,
+    "name": "春日风车背景",
+    "setName": "荷兰葵花系列",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 12,
+    "name": "绿顶小木屋",
+    "setName": "荷兰葵花系列",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 9999,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 13,
+    "name": "爱心木栅栏",
+    "setName": "荷兰葵花系列",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5999,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 14,
+    "name": "木制小狗窝",
+    "setName": "荷兰葵花系列",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 4999,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 16,
+    "name": "圣诞快乐",
+    "setName": "圣诞快乐",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 17,
+    "name": "圣诞雪屋",
+    "setName": "圣诞快乐",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 18,
+    "name": "小院围墙",
+    "setName": "圣诞快乐",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 19,
+    "name": "圣诞狗窝",
+    "setName": "圣诞快乐",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 21,
+    "name": "春天的故事",
+    "setName": "春天的故事",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 12499,
+    "premiumPrice": 35,
+    "experience": 188,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": false
+  },
+  {
+    "area": "farm",
+    "id": 22,
+    "name": "春天小屋",
+    "setName": "春天的故事",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 11599,
+    "premiumPrice": 30,
+    "experience": 140,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 23,
+    "name": "春天围墙",
+    "setName": "春天的故事",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 8889,
+    "premiumPrice": 15,
+    "experience": 60,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 24,
+    "name": "春天狗窝",
+    "setName": "春天的故事",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 9099,
+    "premiumPrice": 15,
+    "experience": 40,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 26,
+    "name": "新年快乐",
+    "setName": "新年快乐",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": false
+  },
+  {
+    "area": "farm",
+    "id": 27,
+    "name": "新年小屋",
+    "setName": "新年快乐",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 28,
+    "name": "新年围墙",
+    "setName": "新年快乐",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 29,
+    "name": "新年狗窝",
+    "setName": "新年快乐",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 31,
+    "name": "夏日海滩",
+    "setName": "夏日海滩",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 16499,
+    "premiumPrice": 35,
+    "experience": 188,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": false
+  },
+  {
+    "area": "farm",
+    "id": 32,
+    "name": "海滩别墅",
+    "setName": "夏日海滩",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 13599,
+    "premiumPrice": 30,
+    "experience": 140,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 33,
+    "name": "海滩栅栏",
+    "setName": "夏日海滩",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 12089,
+    "premiumPrice": 15,
+    "experience": 60,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 34,
+    "name": "海滩狗窝",
+    "setName": "夏日海滩",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 11099,
+    "premiumPrice": 15,
+    "experience": 40,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 41,
+    "name": "浓情原野",
+    "setName": "青春草原套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 17280,
+    "premiumPrice": 65,
+    "experience": 346,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 42,
+    "name": "温情蒙古包",
+    "setName": "青春草原套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 12000,
+    "premiumPrice": 45,
+    "experience": 240,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 43,
+    "name": "怡情围毡",
+    "setName": "青春草原套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 7200,
+    "premiumPrice": 28,
+    "experience": 144,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 44,
+    "name": "风情獒窝",
+    "setName": "青春草原套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5760,
+    "premiumPrice": 22,
+    "experience": 115,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
     "id": 45,
     "name": "魔幻乐园背景",
     "setName": "魔幻乐园套装",
@@ -18364,7 +18756,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 42199,
     "premiumPrice": 144,
     "experience": 720,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18376,7 +18770,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 29888,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18388,7 +18784,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 18088,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18400,7 +18798,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14399,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18412,7 +18812,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 50199,
     "premiumPrice": 144,
     "experience": 480,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18424,7 +18826,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30888,
     "premiumPrice": 100,
     "experience": 420,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18436,7 +18840,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 20088,
     "premiumPrice": 60,
     "experience": 320,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18448,7 +18854,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 20399,
     "premiumPrice": 48,
     "experience": 250,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18460,7 +18868,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 52199,
     "premiumPrice": 144,
     "experience": 480,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18472,7 +18882,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 32888,
     "premiumPrice": 100,
     "experience": 420,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18484,7 +18896,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 22088,
     "premiumPrice": 60,
     "experience": 320,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18496,7 +18910,177 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 22399,
     "premiumPrice": 48,
     "experience": 250,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 57,
+    "name": "地中海风情",
+    "setName": "地中海套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 33088,
+    "premiumPrice": 88,
+    "experience": 442,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 58,
+    "name": "迷情蓝堡",
+    "setName": "地中海套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 22299,
+    "premiumPrice": 61,
+    "experience": 307,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 59,
+    "name": "白沙围廊",
+    "setName": "地中海套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 13788,
+    "premiumPrice": 37,
+    "experience": 184,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 60,
+    "name": "贝鲁特犬舍",
+    "setName": "地中海套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 11088,
+    "premiumPrice": 29,
+    "experience": 147,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 61,
+    "name": "仙踪林背景",
+    "setName": "仙踪林套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 62,
+    "name": "豪华别墅",
+    "setName": "仙踪林套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 63,
+    "name": "木制栅栏",
+    "setName": "仙踪林套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 64,
+    "name": "豪华狗窝",
+    "setName": "仙踪林套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7688,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 65,
+    "name": "水果熟啦背景",
+    "setName": "入秋套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 66,
+    "name": "动漫小屋",
+    "setName": "入秋套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 67,
+    "name": "铅笔栅栏",
+    "setName": "入秋套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 68,
+    "name": "可爱狗窝",
+    "setName": "入秋套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7688,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18508,7 +19092,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23088,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18520,7 +19106,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18532,7 +19120,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9588,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18544,7 +19134,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7688,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18556,7 +19148,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25888,
     "premiumPrice": 57,
     "experience": 199,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18568,7 +19162,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 17999,
     "premiumPrice": 40,
     "experience": 138,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18580,7 +19176,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 10888,
     "premiumPrice": 24,
     "experience": 83,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18592,7 +19190,121 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 8599,
     "premiumPrice": 19,
     "experience": 66,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 77,
+    "name": "操场背景",
+    "setName": "回归学校套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 78,
+    "name": "教学大楼",
+    "setName": "回归学校套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 79,
+    "name": "树木栅栏",
+    "setName": "回归学校套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 80,
+    "name": "平顶狗窝",
+    "setName": "回归学校套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7688,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 81,
+    "name": "大自然背景",
+    "setName": "熊猫套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 82,
+    "name": "树制小屋",
+    "setName": "熊猫套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 83,
+    "name": "木制栅栏",
+    "setName": "熊猫套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 84,
+    "name": "树桩狗窝",
+    "setName": "熊猫套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7688,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18604,7 +19316,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23088,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18616,7 +19330,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18628,7 +19344,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9588,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18640,7 +19358,401 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7688,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 89,
+    "name": "鹊桥相间背景",
+    "setName": "浪漫七夕套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23000,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 90,
+    "name": "望月楼",
+    "setName": "浪漫七夕套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16825,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 91,
+    "name": "矮围墙",
+    "setName": "浪漫七夕套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9568,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 92,
+    "name": "狗亭",
+    "setName": "浪漫七夕套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7806,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 93,
+    "name": "厮守终生背景",
+    "setName": "相爱永远套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23000,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 94,
+    "name": "浪漫满屋",
+    "setName": "相爱永远套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 17499,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 95,
+    "name": "浪漫栅栏",
+    "setName": "相爱永远套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9256,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 96,
+    "name": "粉色狗窝",
+    "setName": "相爱永远套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 6888,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 97,
+    "name": "狮子座背景",
+    "setName": "梦幻星空套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 24086,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 98,
+    "name": "豪华城堡",
+    "setName": "梦幻星空套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16825,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 99,
+    "name": "铁栅栏",
+    "setName": "梦幻星空套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 8564,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 100,
+    "name": "看门狗窝",
+    "setName": "梦幻星空套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7587,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 201,
+    "name": "沙漠背景",
+    "setName": "沙漠套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 202,
+    "name": "沙漠小屋",
+    "setName": "沙漠套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 203,
+    "name": "沙漠栅栏",
+    "setName": "沙漠套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 204,
+    "name": "沙漠狗窝",
+    "setName": "沙漠套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7688,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 205,
+    "name": "都市霓虹背景",
+    "setName": "都市霓虹套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 206,
+    "name": "玻璃花房",
+    "setName": "都市霓虹套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 207,
+    "name": "白金花栏",
+    "setName": "都市霓虹套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 208,
+    "name": "花亭小窝",
+    "setName": "都市霓虹套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 72128,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 209,
+    "name": "入学啦背景",
+    "setName": "校友套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 210,
+    "name": "校友教学楼",
+    "setName": "校友套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 211,
+    "name": "红旗飘飘",
+    "setName": "校友套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 212,
+    "name": "门卫室",
+    "setName": "校友套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 72128,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 213,
+    "name": "碧草云天背景",
+    "setName": "碧草云天套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 23088,
+    "premiumPrice": 55,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 214,
+    "name": "风情木屋",
+    "setName": "碧草云天套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 15999,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 215,
+    "name": "积木栅栏",
+    "setName": "碧草云天套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9588,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 216,
+    "name": "简约狗窝",
+    "setName": "碧草云天套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 72128,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18652,7 +19764,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18664,7 +19778,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18676,7 +19792,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18688,7 +19806,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18700,7 +19820,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 24503,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18712,7 +19834,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16879,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18724,7 +19848,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9452,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18736,7 +19862,65 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7538,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 229,
+    "name": "蓝色海洋",
+    "setName": "去海边吧套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 230,
+    "name": "红瓦小屋",
+    "setName": "去海边吧套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 231,
+    "name": "木桩阑珊",
+    "setName": "去海边吧套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 232,
+    "name": "红瓦狗窝",
+    "setName": "去海边吧套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18748,7 +19932,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18760,7 +19946,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18772,7 +19960,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18784,7 +19974,233 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 237,
+    "name": "圣诞背景",
+    "setName": "圣诞节题套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 238,
+    "name": "圣诞小屋",
+    "setName": "圣诞节套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 239,
+    "name": "圣诞红栏",
+    "setName": "圣诞节套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 240,
+    "name": "圣诞小窝",
+    "setName": "圣诞节套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 241,
+    "name": "新年快乐背景",
+    "setName": "新年快乐套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 242,
+    "name": "春雪小屋",
+    "setName": "新年快乐套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 243,
+    "name": "春雪红栏",
+    "setName": "新年快乐套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 244,
+    "name": "春雪小窝",
+    "setName": "新年快乐套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 245,
+    "name": "世博家园背景",
+    "setName": "世博主题套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 246,
+    "name": "中国馆小屋",
+    "setName": "世博主题套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 247,
+    "name": "绿草红栏",
+    "setName": "世博主题套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 248,
+    "name": "红乐小窝",
+    "setName": "世博主题套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 249,
+    "name": "虎年新春背景",
+    "setName": "虎年新春",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 250,
+    "name": "虎年大屋",
+    "setName": "虎年新春",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 251,
+    "name": "新年红栏",
+    "setName": "虎年新春",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 252,
+    "name": "新春狗窝",
+    "setName": "虎年新春",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18796,7 +20212,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18808,7 +20226,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18820,7 +20240,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18832,7 +20254,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18844,7 +20268,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18856,7 +20282,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18868,7 +20296,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18880,7 +20310,65 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 261,
+    "name": "公益背景",
+    "setName": "公益套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 262,
+    "name": "公益大屋",
+    "setName": "公益套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 263,
+    "name": "公益围栏",
+    "setName": "公益套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 264,
+    "name": "公益狗窝",
+    "setName": "公益套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18892,7 +20380,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18904,7 +20394,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18916,7 +20408,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18928,7 +20422,65 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 269,
+    "name": "绿色背景",
+    "setName": "农场绿色装扮",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 270,
+    "name": "绿色大屋",
+    "setName": "农场绿色装扮",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 271,
+    "name": "绿色围栏",
+    "setName": "农场绿色装扮",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 272,
+    "name": "绿色狗窝",
+    "setName": "农场绿色装扮",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18940,7 +20492,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18952,7 +20506,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18964,7 +20520,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18976,7 +20534,457 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 277,
+    "name": "QQ返利背景",
+    "setName": "QQ返利套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 278,
+    "name": "QQ返利小屋",
+    "setName": "QQ返利套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 279,
+    "name": "QQ返利围栏",
+    "setName": "QQ返利套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 280,
+    "name": "QQ返利狗窝",
+    "setName": "QQ返利套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 281,
+    "name": "方楼酒坊背景",
+    "setName": "方楼酒坊套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 282,
+    "name": "方楼酒坊大屋",
+    "setName": "方楼酒坊套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 283,
+    "name": "方楼酒坊围栏",
+    "setName": "方楼酒坊套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 284,
+    "name": "方楼酒坊狗窝",
+    "setName": "方楼酒坊套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 285,
+    "name": "八角别墅背景",
+    "setName": "八角别墅套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 286,
+    "name": "八角别墅大屋",
+    "setName": "八角别墅套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 287,
+    "name": "八角别墅围栏",
+    "setName": "八角别墅套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 288,
+    "name": "八角别墅狗窝",
+    "setName": "八角别墅套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 289,
+    "name": "五一假日背景",
+    "setName": "五一假日套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 290,
+    "name": "五一假日大屋",
+    "setName": "五一假日套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 291,
+    "name": "五一假日围栏",
+    "setName": "五一假日套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 292,
+    "name": "五一假日小窝",
+    "setName": "五一假日套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 293,
+    "name": "国防背景",
+    "setName": "国防套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 294,
+    "name": "国防大楼",
+    "setName": "国防套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 295,
+    "name": "国防围墙",
+    "setName": "国防套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 296,
+    "name": "国防狗窝",
+    "setName": "国防套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 297,
+    "name": "音乐背景",
+    "setName": "音乐套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 298,
+    "name": "音乐大楼",
+    "setName": "音乐套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 299,
+    "name": "音乐围墙",
+    "setName": "音乐套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 300,
+    "name": "音乐狗窝",
+    "setName": "音乐套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 301,
+    "name": "qzone五周年背景",
+    "setName": "五周年套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 302,
+    "name": "缤纷五年",
+    "setName": "五周年套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 303,
+    "name": "星星栅栏",
+    "setName": "五周年套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 304,
+    "name": "星蓝狗窝",
+    "setName": "五周年套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 1,
+    "premiumPrice": 0,
+    "experience": 0,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 305,
+    "name": "加工坊背景",
+    "setName": "加工坊套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 306,
+    "name": "加工坊城堡",
+    "setName": "加工坊套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 307,
+    "name": "加工坊围栏",
+    "setName": "加工坊套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 308,
+    "name": "加工坊小窝",
+    "setName": "加工坊套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -18988,7 +20996,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19000,7 +21010,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 18000,
     "premiumPrice": 0,
     "experience": 72,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19012,7 +21024,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9000,
     "premiumPrice": 0,
     "experience": 36,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19024,7 +21038,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 6000,
     "premiumPrice": 0,
     "experience": 24,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19036,7 +21052,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19048,7 +21066,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 18000,
     "premiumPrice": 0,
     "experience": 72,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19060,7 +21080,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9000,
     "premiumPrice": 0,
     "experience": 36,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19072,7 +21094,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 6000,
     "premiumPrice": 0,
     "experience": 24,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19084,7 +21108,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19096,7 +21122,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19108,7 +21136,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19120,7 +21150,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19132,7 +21164,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19144,7 +21178,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19156,7 +21192,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19168,7 +21206,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19180,7 +21220,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19192,7 +21234,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19204,7 +21248,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19216,7 +21262,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19228,7 +21276,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19240,7 +21290,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19252,7 +21304,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19264,7 +21318,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19276,7 +21332,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19288,7 +21346,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19300,7 +21360,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19312,7 +21374,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19324,7 +21388,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19336,7 +21402,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19348,7 +21416,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19360,7 +21430,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19372,7 +21444,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19384,7 +21458,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19396,7 +21472,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19408,7 +21486,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19420,7 +21500,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19432,7 +21514,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19444,7 +21528,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19456,7 +21542,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19468,7 +21556,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19480,7 +21570,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19492,7 +21584,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19504,7 +21598,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19516,7 +21612,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19528,7 +21626,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19540,7 +21640,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19552,7 +21654,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19564,7 +21668,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19576,7 +21682,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19588,7 +21696,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19600,7 +21710,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19612,7 +21724,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19624,7 +21738,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19636,7 +21752,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19648,7 +21766,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19660,7 +21780,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19672,7 +21794,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19684,7 +21808,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19696,7 +21822,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19708,7 +21836,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19720,7 +21850,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19732,7 +21864,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19744,7 +21878,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19756,7 +21892,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19768,7 +21906,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19780,7 +21920,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19792,7 +21934,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19804,7 +21948,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19816,7 +21962,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19828,7 +21976,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19840,7 +21990,401 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 400,
+    "name": "新年快乐",
+    "setName": "新年快乐",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 401,
+    "name": "新年小屋",
+    "setName": "新年快乐",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 402,
+    "name": "新年围墙",
+    "setName": "新年快乐",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 403,
+    "name": "新年狗窝",
+    "setName": "新年快乐",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 404,
+    "name": "简单世界",
+    "setName": "简单世界",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 405,
+    "name": "简单小屋",
+    "setName": "简单世界",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 406,
+    "name": "简单围墙",
+    "setName": "简单世界",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 407,
+    "name": "简单狗窝",
+    "setName": "简单世界",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 408,
+    "name": "桃花源记",
+    "setName": "桃花源记",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 409,
+    "name": "桃花小屋",
+    "setName": "桃花源记",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 410,
+    "name": "桃花围墙",
+    "setName": "桃花源记",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 411,
+    "name": "桃花狗窝",
+    "setName": "桃花源记",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 412,
+    "name": "星际地面",
+    "setName": "天外来客",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 413,
+    "name": "天外来客",
+    "setName": "天外来客",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 414,
+    "name": "外星栅栏",
+    "setName": "天外来客",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 415,
+    "name": "蛋壳狗窝",
+    "setName": "天外来客",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 416,
+    "name": "冰天雪地",
+    "setName": "雪山飞狐",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 14499,
+    "premiumPrice": 50,
+    "experience": 288,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 417,
+    "name": "雪原小屋",
+    "setName": "雪山飞狐",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 10099,
+    "premiumPrice": 40,
+    "experience": 200,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 418,
+    "name": "木质栅栏",
+    "setName": "雪山飞狐",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 5989,
+    "premiumPrice": 25,
+    "experience": 120,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 419,
+    "name": "别墅狗窝",
+    "setName": "雪山飞狐",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 5899,
+    "premiumPrice": 20,
+    "experience": 96,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 501,
+    "name": "春绿背景",
+    "setName": "春绿套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 502,
+    "name": "春绿大屋",
+    "setName": "春绿套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 503,
+    "name": "春绿围栏",
+    "setName": "春绿套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 504,
+    "name": "春绿狗窝",
+    "setName": "春绿套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 505,
+    "name": "绿油油背景",
+    "setName": "绿油油套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 506,
+    "name": "绿油油大屋",
+    "setName": "绿油油套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 507,
+    "name": "绿油油围栏",
+    "setName": "绿油油套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 508,
+    "name": "绿油油狗窝",
+    "setName": "绿油油套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19852,7 +22396,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19864,7 +22410,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19876,7 +22424,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19888,7 +22438,65 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 513,
+    "name": "丛林背景",
+    "setName": "丛林套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 514,
+    "name": "丛林大屋",
+    "setName": "丛林套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 515,
+    "name": "丛林围栏",
+    "setName": "丛林套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 516,
+    "name": "丛林狗窝",
+    "setName": "丛林套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19900,7 +22508,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 25268,
     "premiumPrice": 55,
     "experience": 165,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19912,7 +22522,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 16299,
     "premiumPrice": 38,
     "experience": 114,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19924,7 +22536,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9108,
     "premiumPrice": 23,
     "experience": 69,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19936,7 +22550,177 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 7856,
     "premiumPrice": 18,
     "experience": 55,
-    "validSeconds": 2592000
+    "validSeconds": 2592000,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 521,
+    "name": "六一节背景",
+    "setName": "六一节套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 522,
+    "name": "六一节城堡",
+    "setName": "六一节套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 523,
+    "name": "六一节围栏",
+    "setName": "六一节套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 524,
+    "name": "六一节小窝",
+    "setName": "六一节套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 525,
+    "name": "外星背景",
+    "setName": "外星套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 25268,
+    "premiumPrice": 55,
+    "experience": 165,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 526,
+    "name": "外星城堡",
+    "setName": "外星套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 16299,
+    "premiumPrice": 38,
+    "experience": 114,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 527,
+    "name": "外星围栏",
+    "setName": "外星套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9108,
+    "premiumPrice": 23,
+    "experience": 69,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 528,
+    "name": "外星小窝",
+    "setName": "外星套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 7856,
+    "premiumPrice": 18,
+    "experience": 55,
+    "validSeconds": 2592000,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 529,
+    "name": "世界杯背景",
+    "setName": "世界杯套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 30000,
+    "premiumPrice": 0,
+    "experience": 120,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 530,
+    "name": "世界杯凉亭",
+    "setName": "世界杯套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 18000,
+    "premiumPrice": 0,
+    "experience": 72,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 531,
+    "name": "世界杯栅栏",
+    "setName": "世界杯套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9000,
+    "premiumPrice": 0,
+    "experience": 36,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 532,
+    "name": "世界杯小窝",
+    "setName": "世界杯套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 6000,
+    "premiumPrice": 0,
+    "experience": 24,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19948,7 +22732,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19960,7 +22746,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 18000,
     "premiumPrice": 0,
     "experience": 72,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19972,7 +22760,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9000,
     "premiumPrice": 0,
     "experience": 36,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19984,7 +22774,121 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 6000,
     "premiumPrice": 0,
     "experience": 24,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 537,
+    "name": "青山背景",
+    "setName": "青山套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 30000,
+    "premiumPrice": 0,
+    "experience": 120,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 538,
+    "name": "青山凉亭",
+    "setName": "青山套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 18000,
+    "premiumPrice": 0,
+    "experience": 72,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 539,
+    "name": "青山栅栏",
+    "setName": "青山套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9000,
+    "premiumPrice": 0,
+    "experience": 36,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 540,
+    "name": "青山小窝",
+    "setName": "青山套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 6000,
+    "premiumPrice": 0,
+    "experience": 24,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 541,
+    "name": "海边背景",
+    "setName": "海边套装",
+    "itemType": 1,
+    "originalLevel": 0,
+    "coinPrice": 30000,
+    "premiumPrice": 0,
+    "experience": 120,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 542,
+    "name": "海边凉亭",
+    "setName": "海边套装",
+    "itemType": 2,
+    "originalLevel": 0,
+    "coinPrice": 18000,
+    "premiumPrice": 0,
+    "experience": 72,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 543,
+    "name": "海边栅栏",
+    "setName": "海边套装",
+    "itemType": 3,
+    "originalLevel": 0,
+    "coinPrice": 9000,
+    "premiumPrice": 0,
+    "experience": 36,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
+  },
+  {
+    "area": "farm",
+    "id": 544,
+    "name": "海边小窝",
+    "setName": "海边套装",
+    "itemType": 4,
+    "originalLevel": 0,
+    "coinPrice": 6000,
+    "premiumPrice": 0,
+    "experience": 24,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -19996,7 +22900,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20008,7 +22914,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 18000,
     "premiumPrice": 0,
     "experience": 72,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20020,7 +22928,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9000,
     "premiumPrice": 0,
     "experience": 36,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20032,7 +22942,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 6000,
     "premiumPrice": 0,
     "experience": 24,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20044,7 +22956,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 60000,
     "premiumPrice": 0,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20056,7 +22970,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 46000,
     "premiumPrice": 0,
     "experience": 72,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20068,7 +22984,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 30000,
     "premiumPrice": 0,
     "experience": 36,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20080,7 +22998,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 20000,
     "premiumPrice": 0,
     "experience": 24,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20092,7 +23012,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 49999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20104,7 +23026,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 35999,
     "premiumPrice": 44,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20116,7 +23040,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19999,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20128,7 +23054,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 20,
     "experience": 100,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20140,7 +23068,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 49999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20152,7 +23082,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 35999,
     "premiumPrice": 44,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20164,7 +23096,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19999,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20176,7 +23110,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 20,
     "experience": 100,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20188,7 +23124,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20200,7 +23138,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20212,7 +23152,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20224,7 +23166,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20236,7 +23180,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20248,7 +23194,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20260,7 +23208,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20272,7 +23222,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20284,7 +23236,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20296,7 +23250,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20308,7 +23264,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20320,7 +23278,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20332,7 +23292,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20344,7 +23306,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20356,7 +23320,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20368,7 +23334,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20380,7 +23348,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 49999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20392,7 +23362,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 35999,
     "premiumPrice": 44,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20404,7 +23376,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19999,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20416,7 +23390,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 20,
     "experience": 100,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20428,7 +23404,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20440,7 +23418,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20452,7 +23432,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20464,7 +23446,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20476,7 +23460,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 49999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20488,7 +23474,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 35999,
     "premiumPrice": 44,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20500,7 +23488,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19999,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20512,7 +23502,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 15999,
     "premiumPrice": 20,
     "experience": 100,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20524,7 +23516,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20536,7 +23530,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20548,7 +23544,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20560,7 +23558,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20572,7 +23572,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20584,7 +23586,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20596,7 +23600,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20608,7 +23614,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20620,7 +23628,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20632,7 +23642,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20644,7 +23656,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20656,7 +23670,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20668,7 +23684,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20680,7 +23698,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20692,7 +23712,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20704,7 +23726,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20716,7 +23740,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20728,7 +23754,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20740,7 +23768,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20752,7 +23782,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20764,7 +23796,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20776,7 +23810,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20788,7 +23824,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20800,7 +23838,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20812,7 +23852,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20824,7 +23866,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20836,7 +23880,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20848,7 +23894,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20860,7 +23908,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20872,7 +23922,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20884,7 +23936,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20896,7 +23950,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20908,7 +23964,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20920,7 +23978,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20932,7 +23992,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20944,7 +24006,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20956,7 +24020,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20968,7 +24034,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -20980,7 +24048,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": false
   },
   {
     "area": "farm",
@@ -20992,7 +24062,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21004,7 +24076,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 82899,
     "premiumPrice": 85,
     "experience": 420,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21016,7 +24090,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 57599,
     "premiumPrice": 65,
     "experience": 320,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21028,7 +24104,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 34599,
     "premiumPrice": 45,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21040,7 +24118,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 27688,
     "premiumPrice": 30,
     "experience": 150,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21052,7 +24132,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21064,7 +24146,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21076,7 +24160,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21088,7 +24174,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21100,7 +24188,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21112,7 +24202,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21124,7 +24216,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21136,7 +24230,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21148,7 +24244,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21160,7 +24258,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21172,7 +24272,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21184,7 +24286,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21196,7 +24300,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21208,7 +24314,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21220,7 +24328,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21232,7 +24342,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21244,7 +24356,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21256,7 +24370,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21268,7 +24384,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21280,7 +24398,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21292,7 +24412,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21304,7 +24426,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21316,7 +24440,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21328,7 +24454,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21340,7 +24468,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 82899,
     "premiumPrice": 85,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21352,7 +24482,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 57599,
     "premiumPrice": 65,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21364,7 +24496,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 34599,
     "premiumPrice": 45,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21376,7 +24510,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 27688,
     "premiumPrice": 30,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21388,7 +24524,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21400,7 +24538,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21412,7 +24552,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21424,7 +24566,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21436,7 +24580,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21448,7 +24594,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21460,7 +24608,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21472,7 +24622,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21484,7 +24636,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": false
   },
   {
     "area": "farm",
@@ -21496,7 +24650,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21508,7 +24664,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21520,7 +24678,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21532,7 +24692,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21544,7 +24706,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21556,7 +24720,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21568,7 +24734,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21580,7 +24748,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21592,7 +24762,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21604,7 +24776,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21616,7 +24790,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21628,7 +24804,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21640,7 +24818,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21652,7 +24832,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21664,7 +24846,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21676,7 +24860,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21688,7 +24874,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21700,7 +24888,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21712,7 +24902,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21724,7 +24916,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21736,7 +24930,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21748,7 +24944,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21760,7 +24958,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21772,7 +24972,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21784,7 +24986,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21796,7 +25000,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21808,7 +25014,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21820,7 +25028,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21832,7 +25042,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21844,7 +25056,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21856,7 +25070,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21868,7 +25084,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 82899,
     "premiumPrice": 85,
     "experience": 420,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21880,7 +25098,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 57599,
     "premiumPrice": 65,
     "experience": 320,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21892,7 +25112,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 34599,
     "premiumPrice": 45,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21904,7 +25126,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 27688,
     "premiumPrice": 30,
     "experience": 150,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21916,7 +25140,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21928,7 +25154,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21940,7 +25168,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21952,7 +25182,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21964,7 +25196,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21976,7 +25210,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -21988,7 +25224,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22000,7 +25238,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22012,7 +25252,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22024,7 +25266,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22036,7 +25280,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22048,7 +25294,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22060,7 +25308,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22072,7 +25322,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22084,7 +25336,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22096,7 +25350,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22108,7 +25364,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22120,7 +25378,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22132,7 +25392,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22144,7 +25406,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22156,7 +25420,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22168,7 +25434,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22180,7 +25448,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22192,7 +25462,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22204,7 +25476,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22216,7 +25490,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22228,7 +25504,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22240,7 +25518,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22252,7 +25532,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22264,7 +25546,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22276,7 +25560,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22288,7 +25574,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22300,7 +25588,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22312,7 +25602,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22324,7 +25616,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22336,7 +25630,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22348,7 +25644,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22360,7 +25658,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22372,7 +25672,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22384,7 +25686,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22396,7 +25700,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22408,7 +25714,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22420,7 +25728,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22432,7 +25742,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22444,7 +25756,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22456,7 +25770,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22468,7 +25784,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22480,7 +25798,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22492,7 +25812,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22504,7 +25826,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22516,7 +25840,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22528,7 +25854,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22540,7 +25868,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22552,7 +25882,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22564,7 +25896,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22576,7 +25910,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22588,7 +25924,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22600,7 +25938,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22612,7 +25952,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22624,7 +25966,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22636,7 +25980,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22648,7 +25994,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22660,7 +26008,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22672,7 +26022,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22684,7 +26036,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22696,7 +26050,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22708,7 +26064,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22720,7 +26078,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22732,7 +26092,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22744,7 +26106,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22756,7 +26120,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22768,7 +26134,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22780,7 +26148,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22792,7 +26162,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22804,7 +26176,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22816,7 +26190,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22828,7 +26204,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22840,7 +26218,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22852,7 +26232,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22864,7 +26246,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22876,7 +26260,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22888,7 +26274,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22900,7 +26288,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22912,7 +26302,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22924,7 +26316,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22936,7 +26330,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22948,7 +26344,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22960,7 +26358,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22972,7 +26372,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22984,7 +26386,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -22996,7 +26400,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23008,7 +26414,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23020,7 +26428,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23032,7 +26442,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23044,7 +26456,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23056,7 +26470,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23068,7 +26484,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23080,7 +26498,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23092,7 +26512,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23104,7 +26526,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23116,7 +26540,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23128,7 +26554,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23140,7 +26568,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23152,7 +26582,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23164,7 +26596,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 14499,
     "premiumPrice": 50,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23176,7 +26610,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 9999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23188,7 +26624,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 5999,
     "premiumPrice": 25,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23200,7 +26638,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 4999,
     "premiumPrice": 20,
     "experience": 96,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23212,7 +26652,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23224,7 +26666,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23236,7 +26680,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23248,7 +26694,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23260,7 +26708,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23272,7 +26722,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23284,7 +26736,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23296,7 +26750,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23308,7 +26764,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23320,7 +26778,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23332,7 +26792,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23344,7 +26806,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23356,7 +26820,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23368,7 +26834,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23380,7 +26848,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23392,7 +26862,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23404,7 +26876,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23416,7 +26890,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23428,7 +26904,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23440,7 +26918,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23452,7 +26932,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23464,7 +26946,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23476,7 +26960,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23488,7 +26974,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23500,7 +26988,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23512,7 +27002,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23524,7 +27016,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23536,7 +27030,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23548,7 +27044,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23560,7 +27058,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23572,7 +27072,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23584,7 +27086,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23596,7 +27100,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 82899,
     "premiumPrice": 85,
     "experience": 420,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23608,7 +27114,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 57599,
     "premiumPrice": 65,
     "experience": 320,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23620,7 +27128,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 34599,
     "premiumPrice": 45,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23632,7 +27142,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 27688,
     "premiumPrice": 30,
     "experience": 150,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23644,7 +27156,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 82899,
     "premiumPrice": 85,
     "experience": 420,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23656,7 +27170,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 57599,
     "premiumPrice": 65,
     "experience": 320,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23668,7 +27184,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 34599,
     "premiumPrice": 45,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23680,7 +27198,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 27688,
     "premiumPrice": 30,
     "experience": 150,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23692,7 +27212,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23704,7 +27226,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23716,7 +27240,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23728,7 +27254,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23740,7 +27268,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23752,7 +27282,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23764,7 +27296,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23776,7 +27310,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23788,7 +27324,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23800,7 +27338,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23812,7 +27352,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23824,7 +27366,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23836,7 +27380,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23848,7 +27394,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23860,7 +27408,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23872,7 +27422,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23884,7 +27436,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23896,7 +27450,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23908,7 +27464,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23920,7 +27478,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23932,7 +27492,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 120,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23944,7 +27506,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 88,
     "experience": 440,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23956,7 +27520,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 39999,
     "premiumPrice": 48,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23968,7 +27534,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 31999,
     "premiumPrice": 40,
     "experience": 200,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23980,7 +27548,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -23992,7 +27562,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24004,7 +27576,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24016,7 +27590,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24028,7 +27604,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 79999,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24040,7 +27618,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 63999,
     "premiumPrice": 80,
     "experience": 400,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24052,7 +27632,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24064,7 +27646,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 47999,
     "premiumPrice": 60,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24076,7 +27660,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24088,7 +27674,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24100,7 +27688,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24112,7 +27702,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24124,7 +27716,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 59999,
     "premiumPrice": 72,
     "experience": 360,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24136,7 +27730,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 43199,
     "premiumPrice": 53,
     "experience": 264,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24148,7 +27744,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 23999,
     "premiumPrice": 29,
     "experience": 144,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24160,7 +27758,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 19199,
     "premiumPrice": 24,
     "experience": 120,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24172,7 +27772,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24184,7 +27786,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24196,7 +27800,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24208,7 +27814,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24220,7 +27828,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 100,
     "experience": 800,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24232,7 +27842,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 83,
     "experience": 660,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24244,7 +27856,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 38,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24256,7 +27870,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 28,
     "experience": 220,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24268,7 +27884,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24280,7 +27898,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24292,7 +27912,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24304,7 +27926,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24316,7 +27940,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 99999,
     "premiumPrice": 124,
     "experience": 625,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24328,7 +27954,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 87999,
     "premiumPrice": 110,
     "experience": 550,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24340,7 +27968,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 71999,
     "premiumPrice": 90,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24352,7 +27982,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 55999,
     "premiumPrice": 70,
     "experience": 350,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24364,7 +27996,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24376,7 +28010,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24388,7 +28024,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24400,7 +28038,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24412,7 +28052,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24424,7 +28066,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24436,7 +28080,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24448,7 +28094,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24460,7 +28108,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24472,7 +28122,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24484,7 +28136,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24496,7 +28150,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24508,7 +28164,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 90,
     "experience": 720,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24520,7 +28178,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 75,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24532,7 +28192,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 35,
     "experience": 300,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "farm",
@@ -24544,7 +28206,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 0,
     "premiumPrice": 25,
     "experience": 240,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24556,7 +28220,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 108000,
     "premiumPrice": 36,
     "experience": 180,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24568,7 +28234,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 158000,
     "premiumPrice": 53,
     "experience": 263,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24580,7 +28248,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 88000,
     "premiumPrice": 29,
     "experience": 146,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24592,7 +28262,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24604,7 +28276,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 60000,
     "premiumPrice": 20,
     "experience": 100,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24616,7 +28290,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24628,7 +28304,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24640,7 +28318,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 80000,
     "premiumPrice": 30,
     "experience": 150,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24652,7 +28332,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 100000,
     "premiumPrice": 33,
     "experience": 166,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24664,7 +28346,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 110000,
     "premiumPrice": 37,
     "experience": 183,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24676,7 +28360,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 100000,
     "premiumPrice": 20,
     "experience": 166,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24688,7 +28374,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 110000,
     "premiumPrice": 22,
     "experience": 183,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24700,7 +28388,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24712,7 +28402,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24724,7 +28416,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 60,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24736,7 +28430,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24748,7 +28444,23 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "pasture",
+    "id": 124,
+    "name": "缘分星空",
+    "setName": "缘分星空",
+    "itemType": 101,
+    "originalLevel": 0,
+    "coinPrice": 300000,
+    "premiumPrice": 60,
+    "experience": 288,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24760,7 +28472,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 220000,
     "premiumPrice": 73,
     "experience": 366,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24772,7 +28486,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 230000,
     "premiumPrice": 75,
     "experience": 380,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24784,7 +28500,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 60,
     "experience": 288,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24796,7 +28514,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24808,7 +28528,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 220000,
     "premiumPrice": 73,
     "experience": 366,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24820,7 +28542,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24832,7 +28556,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24844,7 +28570,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24856,7 +28584,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24868,7 +28598,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24880,7 +28612,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24892,7 +28626,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 111,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24904,7 +28640,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 111,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24916,7 +28654,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 111,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24928,7 +28668,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 111,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24940,7 +28682,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 111,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24952,7 +28696,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24964,7 +28710,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24976,7 +28724,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -24988,7 +28738,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25000,7 +28752,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25012,7 +28766,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25024,7 +28780,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 150000,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25036,7 +28794,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 150000,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25048,7 +28808,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 150000,
     "premiumPrice": 50,
     "experience": 250,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25060,7 +28822,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25072,7 +28836,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25084,7 +28850,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25096,7 +28864,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25108,7 +28878,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25120,7 +28892,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 200000,
     "premiumPrice": 67,
     "experience": 333,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25132,7 +28906,23 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
+  },
+  {
+    "area": "pasture",
+    "id": 157,
+    "name": "欢度春节",
+    "setName": "欢度春节",
+    "itemType": 101,
+    "originalLevel": 0,
+    "coinPrice": 200000,
+    "premiumPrice": 67,
+    "experience": 333,
+    "validSeconds": 2678400,
+    "isHidden": true,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25144,7 +28934,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25156,7 +28948,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25168,7 +28962,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25180,7 +28976,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25192,7 +28990,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25204,7 +29004,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25216,7 +29018,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25228,7 +29032,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25240,7 +29046,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25252,7 +29060,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25264,7 +29074,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25276,7 +29088,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25288,7 +29102,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25300,7 +29116,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25312,7 +29130,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25324,7 +29144,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25336,7 +29158,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 330000,
     "premiumPrice": 115,
     "experience": 560,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25348,7 +29172,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25360,7 +29186,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 1,
     "premiumPrice": 0,
     "experience": 0,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25372,7 +29200,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 330000,
     "premiumPrice": 115,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25384,7 +29214,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 540,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25396,7 +29228,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25408,7 +29242,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 540,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25420,7 +29256,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25432,7 +29270,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25444,7 +29284,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25456,7 +29298,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25468,7 +29312,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 540,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25480,7 +29326,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25492,7 +29340,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25504,7 +29354,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 330000,
     "premiumPrice": 115,
     "experience": 560,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25516,7 +29368,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25528,7 +29382,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25540,7 +29396,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25552,7 +29410,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 540,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25564,7 +29424,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25576,7 +29438,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25588,7 +29452,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 96,
     "experience": 480,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25600,7 +29466,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25612,7 +29480,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25624,7 +29494,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 96,
     "experience": 480,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25636,7 +29508,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25648,7 +29522,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 290000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25660,7 +29536,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25672,7 +29550,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 540,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25684,7 +29564,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25696,7 +29578,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25708,7 +29592,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25720,7 +29606,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 250000,
     "premiumPrice": 83,
     "experience": 416,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25732,7 +29620,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25744,7 +29634,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25756,7 +29648,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25768,7 +29662,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 310000,
     "premiumPrice": 105,
     "experience": 520,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25780,7 +29676,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 280000,
     "premiumPrice": 86,
     "experience": 450,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25792,7 +29690,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 300000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25804,7 +29704,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 100,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25816,7 +29718,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25828,7 +29732,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25840,7 +29746,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25852,7 +29760,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 320000,
     "premiumPrice": 110,
     "experience": 500,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25864,7 +29774,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25876,7 +29788,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25888,7 +29802,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 600,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25900,7 +29816,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25912,7 +29830,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   },
   {
     "area": "pasture",
@@ -25924,7 +29844,9 @@ export const MANOR_V7_DECORATIONS = [
     "coinPrice": 340000,
     "premiumPrice": 125,
     "experience": 610,
-    "validSeconds": 2678400
+    "validSeconds": 2678400,
+    "isHidden": false,
+    "isRenderable": true
   }
 ] as const satisfies readonly ManorV7DecorationDefinition[];
 

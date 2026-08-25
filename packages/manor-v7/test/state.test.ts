@@ -30,6 +30,7 @@ import {
   manorV7ExperienceForLevel,
   manorV7Fish,
   manorV7HouseCapacity,
+  isManorV7RewardAvailable,
   manorV7LevelForExperience,
   manorV7LandUpgrade,
   manorV7MaxProductionCount,
@@ -57,12 +58,17 @@ describe("QQ Farm V7 domain", () => {
     expect(MANOR_V7_CROPS).toHaveLength(577);
     expect(MANOR_V7_ANIMALS).toHaveLength(177);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
-    expect(MANOR_V7_DECORATIONS).toHaveLength(631);
+    expect(MANOR_V7_DECORATIONS).toHaveLength(821);
     expect(MANOR_V7_FISH).toHaveLength(16);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
     expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden)).toHaveLength(24);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => decoration.isHidden)).toHaveLength(190);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => decoration.isRenderable)).toHaveLength(816);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => (
+      !decoration.isHidden && decoration.isRenderable
+    ))).toHaveLength(629);
     expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden).map((animal) => animal.id)).toEqual(
       expect.arrayContaining([
         1037, 1085, 1086, 1537, 1546, 1593,
@@ -97,7 +103,20 @@ describe("QQ Farm V7 domain", () => {
     });
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
     expect(manorV7Fish(2)).toMatchObject({ name: "小丑鱼", seedPrice: 650, salePrice: 90 });
-    expect(manorV7Decoration("farm", 1)).toMatchObject({ name: "田园风光", itemType: 1 });
+    expect(manorV7Decoration("farm", 1)).toMatchObject({
+      name: "田园风光",
+      itemType: 1,
+      isHidden: true,
+      isRenderable: true
+    });
+    expect(manorV7Decoration("pasture", 157)).toMatchObject({
+      name: "欢度春节",
+      isHidden: true,
+      isRenderable: true
+    });
+    for (const id of [21, 26, 31, 627, 669]) {
+      expect(manorV7Decoration("farm", id).isRenderable).toBe(false);
+    }
   });
 
   it("initializes and resets the persisted seasonal activity state", () => {
@@ -599,6 +618,60 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(withPasture.decorationOwnerships.filter((ownership) => ownership.decorationId === 217))
       .toHaveLength(2);
+  });
+
+  it("keeps hidden decorations reward-only and preserves blocked legacy ownerships without rendering them", () => {
+    const now = 100_000;
+    const state = createManorV7State(now);
+    state.coins = 1_000_000;
+    state.farmExperience = manorV7ExperienceForLevel(60);
+
+    expect(() => transitionManorV7State(
+      state,
+      { type: "buy-decoration", area: "farm", decorationId: 11 },
+      now
+    )).toThrow("该装扮只能通过活动或奖励获得");
+
+    const withHiddenOwnership = structuredClone(state);
+    withHiddenOwnership.decorationOwnerships.push({ area: "farm", decorationId: 11, validUntil: 0 });
+    const equippedHidden = transitionManorV7State(
+      withHiddenOwnership,
+      { type: "equip-decoration", area: "farm", decorationId: 11 },
+      now
+    );
+    expect(equippedHidden.farm.selectedDecorationIds).toContain(11);
+
+    const withBlockedOwnership = structuredClone(equippedHidden);
+    withBlockedOwnership.decorationOwnerships.push({ area: "farm", decorationId: 627, validUntil: 0 });
+    withBlockedOwnership.farm.selectedDecorationIds.push(627);
+    const synchronized = advanceManorV7State(withBlockedOwnership, now + 1);
+    expect(synchronized.decorationOwnerships).toContainEqual({
+      area: "farm",
+      decorationId: 627,
+      validUntil: 0
+    });
+    expect(synchronized.farm.selectedDecorationIds).not.toContain(627);
+    expect(isManorV7RewardAvailable({
+      kind: "decoration",
+      area: "farm",
+      sourceId: 627,
+      quantity: 1
+    })).toBe(false);
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "buy-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "renew-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "equip-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
   });
 
   it("persists farm boards and avatars independently from regular decorations", () => {
