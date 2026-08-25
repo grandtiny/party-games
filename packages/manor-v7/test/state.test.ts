@@ -109,11 +109,24 @@ describe("QQ Farm V7 domain", () => {
       name: "兔子",
       house: "hutch",
       purchasePrice: 1200,
+      cubSeconds: 6_000,
+      maturitySeconds: 12_000,
+      productionSeconds: 129_600,
       productionCooldownSeconds: 28_785,
-      lifecycleSeconds: 165_600
+      lifecycleSeconds: 141_600
     });
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
-    expect(manorV7Fish(2)).toMatchObject({ name: "小丑鱼", seedPrice: 650, salePrice: 90 });
+    expect(manorV7Crop(2)).toMatchObject({
+      growthSeconds: 12_000,
+      stageSeconds: [2_400, 4_800, 8_400, 12_000, 12_000]
+    });
+    expect(manorV7Fish(2)).toMatchObject({
+      name: "小丑鱼",
+      cycleSeconds: [7_200, 16_800, 27_600],
+      matureHours: 23 / 3,
+      seedPrice: 650,
+      salePrice: 90
+    });
     expect(manorV7Decoration("farm", 1)).toMatchObject({
       name: "田园风光",
       itemType: 1,
@@ -1656,26 +1669,25 @@ describe("QQ Farm V7 domain", () => {
     const own = createManorV7State(now);
     own.farm.fishPool.opened = true;
     own.farm.fishPool.fish = [{ serial: 1, fishId: fish.id, growthSeconds: 0, stolen: 0, thiefUserIds: [], fedStage: 0 }];
-    own.farm.fishPool.toolInventory = [{ sourceId: 1, quantity: 2 }];
+    own.farm.fishPool.toolInventory = [{ sourceId: 1, quantity: 3 }];
 
     const firstFeed = transitionManorV7State(own, { type: "fertilize-fish", serial: 1, toolId: 1 }, now);
     expect(firstFeed.farm.fishPool.fish[0]).toMatchObject({ fedStage: 1, growthSeconds: 7_200 });
-    expect(() => transitionManorV7State(
+
+    // The fixed 7,200-second fish-food effect now crosses the shortened first stage.
+    const secondFeed = transitionManorV7State(
       firstFeed,
+      { type: "fertilize-fish", serial: 1, toolId: 1 },
+      now
+    );
+    expect(secondFeed.farm.fishPool.fish[0]).toMatchObject({ fedStage: 2, growthSeconds: 14_400 });
+    expect(() => transitionManorV7State(
+      secondFeed,
       { type: "fertilize-fish", serial: 1, toolId: 1 },
       now
     )).toThrow("当前生长阶段已经使用过鱼食");
 
-    const secondStageAt = now + (fish.cycleSeconds[0]! - 7_200) * 1_000;
-    const secondStage = advanceManorV7State(firstFeed, secondStageAt);
-    const secondFeed = transitionManorV7State(
-      secondStage,
-      { type: "fertilize-fish", serial: 1, toolId: 1 },
-      secondStageAt
-    );
-    expect(secondFeed.farm.fishPool.fish[0]?.fedStage).toBe(2);
-
-    const matureAt = secondStageAt + fish.cycleSeconds.at(-1)! * 1_000;
+    const matureAt = now + (fish.cycleSeconds.at(-1)! - 14_400) * 1_000;
     const matureOwner = advanceManorV7State(secondFeed, matureAt);
     const stolen = transitionManorV7FriendStates(
       createManorV7State(matureAt),
