@@ -1998,9 +1998,12 @@ export class ManorV7FlashAdapter {
       return { cId: cropId, code: 1, direction: "出售成功", money: after.coins - before.coins };
     }
     if (action === "saleall") {
+      const cropIds = params.cIds === undefined
+        ? undefined
+        : positiveIntegerList(params.cIds, "作物编号");
       const { before, after } = this.service.performActionWithPrevious(
         user,
-        { type: "sell-all-produce" },
+        { type: "sell-all-produce", ...(cropIds === undefined ? {} : { cropIds }) },
         now
       );
       return { code: 1, direction: "", money: after.coins - before.coins };

@@ -813,6 +813,7 @@ describe("QQ Farm V7 account persistence", () => {
       stocked.coins = 100;
       stocked.farm.produceInventory = [
         { sourceId: 1, quantity: 3 },
+        { sourceId: 2, quantity: 4 },
         { sourceId: 6, quantity: 2 }
       ];
       stocked.revision += 1;
@@ -872,14 +873,20 @@ describe("QQ Farm V7 account persistence", () => {
       const sold = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/farm?mod=repertory&act=saleAll",
-        headers: { cookie: owner.cookie }
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "cIds=6"
       });
       const revenue = manorV7Crop(6).salePrice * 2;
       expect(sold.statusCode, sold.body).toBe(200);
       expect(sold.json()).toEqual({ code: 1, direction: "", money: revenue });
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
         coins: 100 + revenue,
-        farm: { produceInventory: [{ sourceId: 1, quantity: 3, locked: true }] }
+        farm: {
+          produceInventory: [
+            { sourceId: 1, quantity: 3, locked: true },
+            { sourceId: 2, quantity: 4 }
+          ]
+        }
       });
     } finally {
       await instance.app.close();

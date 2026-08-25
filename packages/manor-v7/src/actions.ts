@@ -334,7 +334,10 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "sell-all-produce": {
-      const sellable = state.farm.produceInventory.filter((entry) => !entry.locked);
+      const selectedCropIds = action.cropIds === undefined ? null : new Set(action.cropIds);
+      const sellable = state.farm.produceInventory.filter((entry) => (
+        !entry.locked && (selectedCropIds === null || selectedCropIds.has(entry.sourceId))
+      ));
       if (!sellable.length) throw new Error("仓库没有可出售的果实");
       const quotes = sellable.map((entry) => {
         const crop = manorV7Crop(entry.sourceId);
@@ -342,7 +345,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       });
       const revenue = quotes.reduce((total, quote) => total + quote.revenue, 0);
       const quantity = sellable.reduce((total, entry) => total + entry.quantity, 0);
-      state.farm.produceInventory = state.farm.produceInventory.filter((entry) => entry.locked);
+      const soldCropIds = new Set(sellable.map((entry) => entry.sourceId));
+      state.farm.produceInventory = state.farm.produceInventory.filter((entry) => !soldCropIds.has(entry.sourceId));
       state.coins += revenue;
       progressManorV7Task(state, "sell", quantity);
       const lovesdayBonus = quotes.some((quote) => quote.multiplier > 1) ? "，含情人节 9 倍收益" : "";

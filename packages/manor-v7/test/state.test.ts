@@ -866,6 +866,7 @@ describe("QQ Farm V7 domain", () => {
     initial.coins = 50;
     initial.farm.produceInventory = [
       { sourceId: 1, quantity: 3 },
+      { sourceId: 2, quantity: 4 },
       { sourceId: 6, quantity: 2 }
     ];
 
@@ -873,9 +874,12 @@ describe("QQ Farm V7 domain", () => {
     expect(() => transitionManorV7State(locked, { type: "sell-produce", cropId: 1, quantity: 1 }, 2_100))
       .toThrow("锁定的农产品不能出售");
 
-    const sold = transitionManorV7State(locked, { type: "sell-all-produce" }, 2_100);
+    const sold = transitionManorV7State(locked, { type: "sell-all-produce", cropIds: [6] }, 2_100);
     expect(sold.coins).toBe(50 + manorV7Crop(6).salePrice * 2);
-    expect(sold.farm.produceInventory).toEqual([{ sourceId: 1, quantity: 3, locked: true }]);
+    expect(sold.farm.produceInventory).toEqual([
+      { sourceId: 1, quantity: 3, locked: true },
+      { sourceId: 2, quantity: 4 }
+    ]);
   });
 
   it("sells one seed quantity or every selected seed at the original half-price rule", () => {
