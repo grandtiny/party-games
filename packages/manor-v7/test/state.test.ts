@@ -12,6 +12,8 @@ import {
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
   MANOR_V7_HOUSE_UPGRADES,
+  MANOR_V7_LAND_EXPANSION_FUND_COINS,
+  MANOR_V7_LAND_EXPANSION_FUND_LEVEL,
   MANOR_V7_LAND_COUNT,
   MANOR_V7_LOVESDAY_ANIMAL_ID,
   MANOR_V7_LOVESDAY_CROP_ID,
@@ -577,6 +579,23 @@ describe("QQ Farm V7 domain", () => {
     expect(state.pasture.grass).toBe(20);
     expect(toManorV7View(state, { userId: "u1", displayName: "玩家" }, 1_000).version)
       .toBe("7.0 Beta1 Build 20120209.1000");
+  });
+
+  it("grants the land expansion fund once when farm level first reaches the land-upgrade threshold", () => {
+    const now = 1_500;
+    const initial = createManorV7State(now);
+    initial.coins = 100;
+    initial.farmExperience = manorV7ExperienceForLevel(MANOR_V7_LAND_EXPANSION_FUND_LEVEL) - 1;
+    initial.farm.lands[0]!.weeds = true;
+
+    const granted = transitionManorV7State(initial, { type: "remove-weeds", landId: 1 }, now);
+    expect(granted.rewardClaims.landExpansionFundClaimed).toBe(true);
+    expect(granted.coins).toBe(100 + MANOR_V7_LAND_EXPANSION_FUND_COINS);
+    expect(granted.activities[0]?.message).toContain("土地扩建基金");
+
+    const advanced = advanceManorV7State(granted, now + 1_000);
+    expect(advanced.coins).toBe(granted.coins);
+    expect(advanced.activities.filter((activity) => activity.message.includes("土地扩建基金"))).toHaveLength(1);
   });
 
   it("expires, unequips and renews decorations without mixing farm and pasture IDs", () => {
@@ -1178,6 +1197,23 @@ describe("QQ Farm V7 domain", () => {
     expect(sold.farm.fishPool.produceInventory).toEqual([]);
   });
 
+  it("requires and consumes the original crystal cost when unlocking fish", () => {
+    const now = 6_600;
+    const initial = createManorV7State(now);
+    expect(() => transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now))
+      .toThrow("金币不足");
+    initial.coins = 100_000;
+
+    expect(() => transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now))
+      .toThrow("水晶库存不足");
+
+    initial.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 10 }];
+    const unlocked = transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now);
+    expect(unlocked.coins).toBe(50_000);
+    expect(unlocked.pasture.wild.crystalInventory).toEqual([]);
+    expect(unlocked.farm.fishPool.unlockedFishIds).toContain(4);
+  });
+
   it("harvests adult animals into inventory before they are sold", () => {
     const initial = createManorV7State(7_000);
     initial.coins = 500;
@@ -1280,7 +1316,8 @@ describe("QQ Farm V7 domain", () => {
       signInRewardIds: [],
       signInStreak: 0,
       signInStreakRewardDays: [],
-      vipReturnGiftClaimed: false
+      vipReturnGiftClaimed: false,
+      landExpansionFundClaimed: false
     });
     expect(migrated.seasonal).toEqual({
       animalDrops: [],
@@ -1367,6 +1404,7 @@ describe("QQ Farm V7 domain", () => {
     delete legacy.rewardClaims.signInRewardDay;
     delete legacy.rewardClaims.signInRewardIds;
     delete legacy.rewardClaims.signInStreakRewardDays;
+    delete legacy.rewardClaims.landExpansionFundClaimed;
 
     const migrated = migrateManorV7State(legacy, 8_500);
     expect(migrated.rewardClaims).toMatchObject({
@@ -1375,7 +1413,8 @@ describe("QQ Farm V7 domain", () => {
       signInRewardId: 2,
       signInRewardIds: [2],
       signInStreak: 4,
-      signInStreakRewardDays: []
+      signInStreakRewardDays: [],
+      landExpansionFundClaimed: false
     });
   });
 

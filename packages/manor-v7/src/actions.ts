@@ -361,7 +361,20 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const fish = manorV7Fish(action.fishId);
       if (fish.isHidden) throw new Error("该鱼种只能通过活动获得");
       if (state.farm.fishPool.unlockedFishIds.includes(fish.id)) throw new Error("该鱼种已经解锁");
+      if (state.coins < fish.unlockCoins) throw new Error("金币不足");
+      if (fish.unlockCrystalType > 0 && fish.unlockCrystalAmount > 0) {
+        manorV7WildCrystal(fish.unlockCrystalType);
+        const crystals = inventoryQuantity(state.pasture.wild.crystalInventory, fish.unlockCrystalType);
+        if (crystals < fish.unlockCrystalAmount) throw new Error("水晶库存不足");
+      }
       charge(state, fish.unlockCoins);
+      if (fish.unlockCrystalType > 0 && fish.unlockCrystalAmount > 0) {
+        setInventoryQuantity(
+          state.pasture.wild.crystalInventory,
+          fish.unlockCrystalType,
+          inventoryQuantity(state.pasture.wild.crystalInventory, fish.unlockCrystalType) - fish.unlockCrystalAmount
+        );
+      }
       state.farm.fishPool.unlockedFishIds.push(fish.id);
       state.farm.fishPool.unlockedFishIds.sort((left, right) => left - right);
       addManorV7Activity(state, "farm", `解锁了鱼种${fish.name}`, now);
@@ -1270,7 +1283,15 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "attack-wild-animal": {
-      attackIncomingWildAnimal(state, action.serial, action.attackType, action.weaponId, "本场主人", now);
+      attackIncomingWildAnimal(
+        state,
+        action.serial,
+        action.attackType,
+        action.weaponId,
+        action.attackerDisplayName ?? "本场主人",
+        now,
+        action.attackerUserId ?? "self"
+      );
       break;
     }
     case "sell-wild-crystal": {

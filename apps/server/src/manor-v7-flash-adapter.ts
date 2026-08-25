@@ -59,6 +59,7 @@ export type ManorV7UnsupportedProtocolReporter = (event: ManorV7UnsupportedProto
 
 const FLASH_VIP_LEVEL = 7;
 const FLASH_VIP_STATUS = 2;
+const FLASH_PROFILE_HEAD_PATH = "/assets/manor/v7-swf/module/ui/npc/feedsNPC/pengyouHead.jpg";
 
 export class ManorV7FlashAdapter {
   constructor(
@@ -192,8 +193,14 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_fish_harvest") return this.#harvestFish(user, params, now);
     if (moduleName === "cgi_fish_output") return flashFishOutput(this.service.getView(user, now), params);
     if (moduleName === "cgi_fish_user_rep") return flashFishRepertory(this.service.getView(user, now));
+    if (moduleName === "cgi_farm_get_usercrystal" || params.cgi_farm_get_usercrystal !== undefined) {
+      return this.#wildInventory(user, params, now);
+    }
+    if (moduleName === "cgi_farm_sell_crystal" || params.cgi_farm_sell_crystal !== undefined) {
+      return this.#sellWildCrystal(user, params, now);
+    }
     if (moduleName === "cgi_fish_getall") {
-      return { repertory: flashFishRepertory(this.service.getView(user, now)) };
+      return { repertory: flashFishProfileHistory(this.#profileTarget(user, params, now).view) };
     }
     if (moduleName === "cgi_fish_sale") return this.#sellFish(user, params, now);
     if (moduleName === "cgi_fish_steal") return this.#stealFish(user, params, now);
@@ -206,6 +213,12 @@ export class ManorV7FlashAdapter {
     }
     if (moduleName === "cgi_farm_login_home" || moduleName === "cgi_farm_login_click") {
       return flashSignInStatus(this.#recordSignInVisit(user, now), now);
+    }
+    if (moduleName === "cgi_farm_landext_fund") {
+      const claimed = this.service.getView(user, now).rewardClaims.landExpansionFundClaimed;
+      return integer(params.op) === 1
+        ? { code: 1, flag: Number(claimed), money: 0 }
+        : { code: 1, flag: Number(claimed) };
     }
     if (moduleName === "cgi_pasture_signin" || moduleName === "cgi_signin") {
       return this.#claimSignIn(user, params, now);
@@ -238,11 +251,11 @@ export class ManorV7FlashAdapter {
     }
     if (moduleName === "market" && actionName === "change") return this.#redeemCode(user, params, now);
     if (moduleName === "hydra_feeds_select") {
-      return { data: flashActivityLog(this.service.getView(user, now)), ecode: 0 };
+      return { data: flashActivityLog(this.#profileTarget(user, params, now).view), ecode: 0 };
     }
     if (moduleName === "hydra_feeds_delete") return { data: [], ecode: 0 };
     if (moduleName === "cgi_get_rep_history") {
-      return flashProfileHistory(this.service.getView(user, now), "farm");
+      return flashProfileHistory(this.#profileTarget(user, params, now).view, "farm");
     }
     if (moduleName === "cgi_farm_exchange") {
       return flashCostHistory(this.service.getView(user, now));
@@ -553,12 +566,19 @@ export class ManorV7FlashAdapter {
 
   #unlockFish(user: AccountUserView, params: FlashParams, now: number) {
     const fishId = positiveInteger(params.fid, "鱼种编号");
+    const definition = manorV7Fish(fishId);
     const { before, after } = this.service.performActionWithPrevious(
       user,
       { type: "unlock-fish", fishId },
       now
     );
-    return { code: 1, fid: fishId, money: after.coins - before.coins };
+    return {
+      code: 1,
+      crystal_id: definition.unlockCrystalType,
+      crystal_num: definition.unlockCrystalAmount,
+      fid: fishId,
+      money: after.coins - before.coins
+    };
   }
 
   #buyFish(user: AccountUserView, params: FlashParams, now: number) {
@@ -820,7 +840,7 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_farm_attack_beast") return this.#attackWildAnimal(user, params, now);
     if (moduleName === "cgi_farm_pickup_crystal") return this.#pickupWildCrystal(user, params, now);
     if (moduleName === "cgi_farm_hpage_beast") {
-      return { ecode: 0, ...this.#wildOwnerView(user, params, now) };
+      return { ecode: 0, steal: [], ...this.#wildOwnerView(user, params, now) };
     }
     if (moduleName === "cgi_farm_beast_getnick") return this.#wildNicknames(user, params, now);
 
@@ -846,7 +866,9 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_get_repertory" || moduleName === "cgi_get_repertory_animal") {
       return flashPastureRepertory(view);
     }
-    if (moduleName === "cgi_get_rep_history") return flashProfileHistory(view, "pasture");
+    if (moduleName === "cgi_get_rep_history") {
+      return flashProfileHistory(this.#profileTarget(user, params, now).view, "pasture");
+    }
     if (moduleName === "cgi_farm_exchange") return flashCostHistory(view);
     if (moduleName === "fcg_ws_get_costfeeds") return { code: 1, cost: [] };
     if (moduleName === "cgi_farm_getusercrop") return flashPastureMaterialInventory(view);
@@ -885,26 +907,44 @@ export class ManorV7FlashAdapter {
     params: FlashParams,
     now: number
   ) {
-    const view = this.service.getView(user, now);
-    const guestbook = this.service.getGuestbook(user, undefined, now);
+    const { view, ownerUserId } = this.#profileTarget(user, params, now);
+    const guestbook = this.service.getGuestbook(user, ownerUserId, now);
     return flashProfile(view, area, params, flashGuestbook(guestbook));
   }
 
   #sendChat(user: AccountUserView, params: FlashParams, now: number) {
     const content = (params.msg ?? "").trim();
     if (!content) throw new Error("留言内容不能为空");
-    const current = this.service.getGuestbook(user, undefined, now);
+    const boardId = params.showId ?? params.ownerId ?? params.uId;
+    const { ownerUserId } = this.#profileTarget(
+      user,
+      boardId === undefined ? {} : { uId: boardId },
+      now
+    );
+    const current = this.service.getGuestbook(user, ownerUserId, now);
     const replyToFlashId = integer(params.toId);
     const replyTo = integer(params.isReply) === 1 && replyToFlashId
       ? current.messages.find((message) => stableFlashUserId(message.senderUserId) === replyToFlashId)
       : undefined;
     const guestbook = this.service.createGuestbookMessage(
       user,
-      undefined,
+      ownerUserId,
       { content, ...(replyTo ? { replyToId: replyTo.id } : {}) },
       now
     );
     return { chat: flashGuestbook(guestbook), code: 1 };
+  }
+
+  #profileTarget(user: AccountUserView, params: FlashParams, now: number) {
+    const requestedId = integer(params.uId ?? params.ownerId ?? params.uin);
+    if (!requestedId || requestedId === stableFlashUserId(user.id)) {
+      return { view: this.service.getView(user, now), ownerUserId: undefined };
+    }
+    const friend = this.#friendByFlashId(user, requestedId, now);
+    return {
+      view: this.service.getFriendView(user, friend.userId, now),
+      ownerUserId: friend.userId
+    };
   }
 
   #openWildSlot(user: AccountUserView, params: FlashParams, now: number) {
@@ -1966,8 +2006,11 @@ export class ManorV7FlashAdapter {
   }
 
   #setProduceLock(user: AccountUserView, params: FlashParams, now: number): unknown {
-    const cropId = positiveInteger(params.cId, "作物编号");
-    const cropDirective = params.crop?.split(":")[1];
+    const [cropIdFromDirective, cropDirective] = (params.crop ?? "").split(":");
+    const cropId = positiveInteger(params.cId ?? cropIdFromDirective, "作物编号");
+    if (params.cId !== undefined && cropIdFromDirective && positiveInteger(cropIdFromDirective, "作物编号") !== cropId) {
+      throw new Error("锁定作物编号不一致");
+    }
     const target = (params.target ?? "").toLowerCase();
     const locked = cropDirective === "1" || target === "lock";
     if (!locked && cropDirective !== "2" && target !== "unlock") {
@@ -1976,6 +2019,7 @@ export class ManorV7FlashAdapter {
     this.service.performAction(user, { type: "set-produce-lock", cropId, locked }, now);
     return {
       code: 1,
+      crop: [{ cId: cropId, isLock: locked ? 1 : 2 }],
       ecode: 0,
       post_data: { ...params, cId: String(cropId) },
       type: integer(params.type) ?? 0
@@ -2642,7 +2686,7 @@ export class ManorV7FlashAdapter {
       const toolId = positiveInteger(params.tId, "化肥编号");
       const view = this.service.performAction(user, { type: "fertilize", landId: place + 1, toolId }, now);
       const land = requireLand(view, place);
-      return { farmlandIndex: place, code: 1, tId: toolId, status: flashLandStatus(land, now) };
+      return { farmlandIndex: place, code: 1, tId: toolId, status: flashLandActionStatus(land, now) };
     }
     return this.#unsupported("farm", "farmlandstatus", action, `土地功能尚未接入：${action || "unknown"}`);
   }
@@ -2769,7 +2813,7 @@ export class ManorV7FlashAdapter {
         farmlandIndex: place,
         harvest: Math.max(0, visitorAmount - previousAmount),
         poptype: 4,
-        status: flashLandStatus(requireLand(result.owner, place), now)
+        status: flashLandActionStatus(requireLand(result.owner, place), now)
       };
     });
     return responses.length === 1 ? responses[0] : responses;
@@ -2807,7 +2851,7 @@ export function flashFarmBootstrap(view: ManorV7View, playerView: ManorV7View = 
     user: {
       canbad: playerView.farm.badActions.remaining,
       exp: view.farmExperience,
-      headPic: "",
+      headPic: FLASH_PROFILE_HEAD_PATH,
       healthMode: {
         beginTime: 0,
         canClose: 1,
@@ -2857,11 +2901,16 @@ function flashQShowProfile(view: ManorV7View) {
 }
 
 function flashActivityLog(view: ManorV7View) {
-  return view.activities.map((activity) => ({
-    content: activity.message,
-    msg: activity.message,
-    time: Math.floor(activity.createdAt / 1_000)
-  }));
+  return view.activities.map((activity) => {
+    const time = Math.floor(activity.createdAt / 1_000);
+    return {
+      cn: activity.message,
+      content: activity.message,
+      msg: activity.message,
+      t: time,
+      time
+    };
+  });
 }
 
 function flashGuestbook(guestbook: ManorGuestbookView) {
@@ -2880,8 +2929,8 @@ function flashProfileHistory(view: ManorV7View, area: "farm" | "pasture") {
     return view.farm.produceInventory.map((entry) => ({
       cId: entry.sourceId,
       cName: view.catalogs.crops.find((crop) => crop.id === entry.sourceId)?.name ?? `作物 ${entry.sourceId}`,
-      harvest: entry.quantity,
-      scrounge: 0
+      harvestNumber: entry.quantity,
+      scroungeNumber: 0
     }));
   }
   const ids = new Set([
@@ -2899,6 +2948,15 @@ function flashProfileHistory(view: ManorV7View, area: "farm" | "pasture") {
       scrounge: 0
     };
   });
+}
+
+function flashFishProfileHistory(view: ManorV7View) {
+  return view.farm.fishPool.produceInventory.map((entry) => ({
+    cid: entry.sourceId,
+    cName: view.catalogs.fish.find((fish) => fish.id === entry.sourceId)?.name ?? `成鱼 ${entry.sourceId}`,
+    hn: entry.quantity,
+    sn: 0
+  }));
 }
 
 function flashRewardItem(reward: ManorV7RewardItem) {
@@ -2954,7 +3012,7 @@ function flashProfile(
     repertory: flashProfileHistory(view, area),
     user: {
       FB: 0,
-      headPicBig: "",
+      headPicBig: FLASH_PROFILE_HEAD_PATH,
       homePage: "",
       money: view.coins,
       moralexp: view.pasture.wild.moralExperience,
@@ -3000,7 +3058,7 @@ function flashDailyPackage(view: ManorV7View, now: number, claimed = false) {
   const vipItem = [
     { eNum: 1, eParam: 7, eType: 3 },
     { eNum: 1, eParam: 9001, eType: 909090 },
-    { eNum: 100, eParam: 40, eType: 4 },
+    { eNum: 100, eParam: 40, eType: 1 },
     { eNum: 1, eParam: 1, eType: 7 }
   ];
   return {
@@ -3135,7 +3193,7 @@ export function flashPastureBootstrap(view: ManorV7View, playerView: ManorV7View
     },
     user: {
       exp: view.pastureExperience,
-      headPic: "",
+      headPic: FLASH_PROFILE_HEAD_PATH,
       money: view.coins,
       moralexp: view.pasture.wild.moralExperience,
       flv: view.farmLevel,
@@ -3324,7 +3382,7 @@ function flashPastureFriendSummary(userId: string, displayName: string, view: Ma
     uId: uin,
     uin,
     userName: displayName,
-    headPic: "",
+    headPic: FLASH_PROFILE_HEAD_PATH,
     yellowlevel: FLASH_VIP_LEVEL,
     yellowstatus: FLASH_VIP_STATUS,
     exp: view.pastureExperience,
@@ -3447,7 +3505,7 @@ function flashPastureRepertory(view: ManorV7View) {
 
 function flashPastureMaterialInventory(view: ManorV7View) {
   return view.farm.produceInventory.flatMap((entry) => {
-    if (entry.sourceId <= 2000 || entry.quantity < 1) return [];
+    if (entry.quantity < 1) return [];
     const crop = view.catalogs.crops.find((item) => item.id === entry.sourceId);
     if (!crop) return [];
     return [{
@@ -3459,7 +3517,7 @@ function flashPastureMaterialInventory(view: ManorV7View) {
       isLock: Number(Boolean(entry.locked)),
       lock: Number(Boolean(entry.locked)),
       level: crop.originalLevel,
-      price: crop.salePrice,
+      price: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice),
       type: crop.cropType
     }];
   });
@@ -3647,7 +3705,9 @@ function flashLandActionStatus(land: ManorV7LandView, nowMs: number) {
     pId: 0,
     pest: Number(land.pests),
     plantTime: crop ? now - Math.floor(land.growthSeconds) : 0,
-    thief: {},
+    thief: land.thiefUserIds.length
+      ? Object.fromEntries(land.thiefUserIds.map((id) => [String(stableFlashUserId(id)), 1]))
+      : {},
     updateTime: now,
     weed: Number(land.weeds)
   };
@@ -3717,11 +3777,16 @@ function flashReclaimQuery(view: ManorV7View) {
 
 function flashFishShop(view: ManorV7View) {
   const unlocked = new Set(view.farm.fishPool.unlockedFishIds);
-  return view.catalogs.fish.filter((fish) => !fish.isHidden).map((fish) => ({
-    fid: fish.id,
-    lock: unlocked.has(fish.id) ? 1 : 2,
-    type: 23
-  }));
+  return view.catalogs.fish.filter((fish) => !fish.isHidden).map((fish) => {
+    const crystalQuantity = view.pasture.wild.crystalInventory
+      .find((entry) => entry.sourceId === fish.unlockCrystalType)?.quantity ?? 0;
+    const canUnlock = view.coins >= fish.unlockCoins && crystalQuantity >= fish.unlockCrystalAmount;
+    return {
+      fid: fish.id,
+      lock: unlocked.has(fish.id) ? 1 : canUnlock ? 2 : 0,
+      type: 23
+    };
+  });
 }
 
 function flashFishPool(view: ManorV7View) {
@@ -3933,7 +3998,7 @@ function flashFriendSummary(friend: ManorV7FriendSummary) {
     uId: uin,
     uin,
     userName: friend.displayName,
-    headPic: "",
+    headPic: FLASH_PROFILE_HEAD_PATH,
     yellowlevel: FLASH_VIP_LEVEL,
     yellowstatus: FLASH_VIP_STATUS,
     exp: friend.farmLevel,

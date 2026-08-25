@@ -2,11 +2,15 @@ import {
   advanceManorV7State,
   addManorV7Activity,
   createManorV7State,
+  grantLandExpansionFundIfEligible,
+  inventoryQuantity,
   MANOR_V7_GRASS_CAPACITY,
+  manorV7ExperienceForLevel,
   manorV7LevelForExperience,
   migrateManorV7State,
   parseManorV7Action,
   parseManorV7FriendAction,
+  setInventoryQuantity,
   toManorV7View,
   transitionManorV7State,
   transitionManorV7FriendStates,
@@ -22,7 +26,8 @@ import type {
   AccountUserView,
   ManorGuestbookCreateRequest,
   ManorGuestbookView,
-  ManorTestGrantResourceRequest
+  ManorTestGrantResourceRequest,
+  ManorTestSetLevelRequest
 } from "@party-games/shared";
 import type { SqliteRoomRepository } from "./repository.js";
 
@@ -58,7 +63,10 @@ export class ManorV7Service {
       ? (input as (view: ManorV7View) => unknown)(before)
       : input;
     const action: ManorV7Action = parseManorV7Action(selectedInput);
-    const next = transitionManorV7State(current, action, now, this.options);
+    const authenticatedAction: ManorV7Action = action.type === "attack-wild-animal"
+      ? { ...action, attackerUserId: user.id, attackerDisplayName: user.displayName }
+      : action;
+    const next = transitionManorV7State(current, authenticatedAction, now, this.options);
     this.repository.updateManorV7State(user.id, current.revision, next);
     return {
       before,
@@ -220,6 +228,64 @@ export class ManorV7Service {
     };
   }
 
+  setTestLevel(
+    user: AccountUserView,
+    input: ManorTestSetLevelRequest,
+    now = Date.now()
+  ): { view: ManorV7View; message: string } {
+    const current = this.#load(user.id, now);
+    const next = advanceManorV7State(current, now, this.options);
+    const experience = manorV7ExperienceForLevel(input.level);
+    if (input.area === "farm") next.farmExperience = experience;
+    else next.pastureExperience = experience;
+    grantLandExpansionFundIfEligible(next, now);
+    next.revision = current.revision + 1;
+    next.updatedAt = now;
+    addManorV7Activity(next, input.area, `测试工具将${testAreaLabel(input.area)}等级设置为 ${input.level} 级`, now);
+    validateManorV7State(next);
+    this.repository.updateManorV7State(user.id, current.revision, next);
+    return {
+      view: toManorV7View(next, { userId: user.id, displayName: user.displayName }, now),
+      message: `${testAreaLabel(input.area)}等级已设置为 ${input.level} 级`
+    };
+  }
+
+  prepareTestAcceptanceData(
+    user: AccountUserView,
+    now = Date.now()
+  ): { view: ManorV7View; message: string } {
+    const current = this.#load(user.id, now);
+    const next = advanceManorV7State(current, now, this.options);
+
+    ensureInventoryMinimum(next.farm.seedInventory, 2, 7);
+    ensureInventoryMinimum(next.farm.produceInventory, 2, 13);
+    ensureInventoryMinimum(next.farm.produceInventory, 40, 25);
+    ensureInventoryMinimum(next.farm.toolInventory, 1, 5);
+    ensureInventoryMinimum(next.farm.fishPool.seedInventory, 2, 4);
+    ensureInventoryMinimum(next.farm.fishPool.produceInventory, 2, 8);
+    ensureInventoryMinimum(next.pasture.cubInventory, 1001, 3);
+    ensureInventoryMinimum(next.pasture.productInventory, 1001, 6);
+    ensureInventoryMinimum(next.pasture.harvestedAnimalInventory, 1002, 2);
+    ensureInventoryMinimum(next.pasture.toolInventory, 1, 4);
+    ensureInventoryMinimum(next.pasture.weaponInventory, 4, 3);
+    ensureInventoryMinimum(next.pasture.wild.crystalInventory, 1, 5);
+
+    for (const fixture of TEST_ACCEPTANCE_ACTIVITIES) {
+      if (!next.activities.some((activity) => activity.message === fixture.message)) {
+        addManorV7Activity(next, fixture.area, fixture.message, now);
+      }
+    }
+
+    next.revision = current.revision + 1;
+    next.updatedAt = now;
+    validateManorV7State(next);
+    this.repository.updateManorV7State(user.id, current.revision, next);
+    return {
+      view: toManorV7View(next, { userId: user.id, displayName: user.displayName }, now),
+      message: "巡检数据已准备：动态、农场仓库、鱼塘仓库、牧场仓库和水晶均有代表项；留言请用第二账号实际发送"
+    };
+  }
+
   #loadAndAdvance(userId: string, now: number): ManorV7State {
     const current = this.#load(userId, now);
     const advanced = advanceManorV7State(current, now, this.options);
@@ -340,3 +406,27 @@ function testResourceLabel(resource: ManorTestGrantResourceRequest["resource"]):
     case "pasture-feed": return "牧场饲料";
   }
 }
+
+function testAreaLabel(area: ManorTestSetLevelRequest["area"]): string {
+  return area === "farm" ? "农场" : "牧场";
+}
+
+function ensureInventoryMinimum(
+  inventory: ManorV7State["farm"]["seedInventory"],
+  sourceId: number,
+  quantity: number
+): void {
+  if (inventoryQuantity(inventory, sourceId) < quantity) {
+    setInventoryQuantity(inventory, sourceId, quantity);
+  }
+}
+
+const TEST_ACCEPTANCE_ACTIVITIES = [
+  { area: "farm", message: "[巡检样本] 收获了 13 个白萝卜" },
+  { area: "farm", message: "[巡检样本] 购买白萝卜种子 7 个" },
+  { area: "farm", message: "[巡检样本] 鱼塘收获小丑鱼 8 条" },
+  { area: "pasture", message: "[巡检样本] 收获鸡蛋 6 份" },
+  { area: "pasture", message: "[巡检样本] 收获兔子 2 只" },
+  { area: "pasture", message: "[巡检样本] 购买普通罐头 4 个" },
+  { area: "farm", message: "[巡检样本] 系统消息：巡检展示数据已准备" }
+] as const;

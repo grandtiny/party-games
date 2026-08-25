@@ -24,6 +24,7 @@ import {
   ManorGuestbookCreateRequestSchema,
   ManorTestAdvanceTimeRequestSchema,
   ManorTestGrantResourceRequestSchema,
+  ManorTestSetLevelRequestSchema,
   PuzzleResultSubmitRequestSchema,
   RecoverRoomRequestSchema,
   RulesQuestionRequestSchema,
@@ -366,6 +367,33 @@ export async function createApp(options: AppOptions) {
         const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
         const input = ManorTestGrantResourceRequestSchema.parse(request.body);
         return manorService.grantTestResource(user, input);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+
+    app.post("/api/manor/test/set-level", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        const input = ManorTestSetLevelRequestSchema.parse(request.body);
+        return manorService.setTestLevel(user, input);
+      } catch (error) {
+        const message = messageOf(error);
+        return reply
+          .code(message.includes("会话无效") ? 401 : 400)
+          .send({ error: message });
+      }
+    });
+
+    app.post("/api/manor/test/prepare-acceptance-data", async (request, reply) => {
+      try {
+        requireAdminAuthentication(request.headers.cookie, accountService, adminService);
+        const user = accountService.requireUser(accountSessionToken(request.headers.cookie));
+        return manorService.prepareTestAcceptanceData(user);
       } catch (error) {
         const message = messageOf(error);
         return reply

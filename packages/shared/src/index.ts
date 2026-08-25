@@ -401,6 +401,12 @@ export const ManorTestAdvanceTimeRequestSchema = z.object({
 });
 export type ManorTestAdvanceTimeRequest = z.infer<typeof ManorTestAdvanceTimeRequestSchema>;
 
+export const ManorTestSetLevelRequestSchema = z.object({
+  area: z.enum(["farm", "pasture"]),
+  level: z.number().int().min(0).max(100)
+});
+export type ManorTestSetLevelRequest = z.infer<typeof ManorTestSetLevelRequestSchema>;
+
 const AdminPasswordSchema = z.string().min(8).max(128);
 
 export const AdminSetupRequestSchema = z.object({

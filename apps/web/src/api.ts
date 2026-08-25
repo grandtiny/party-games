@@ -32,6 +32,7 @@ import type {
   ManorGuestbookView,
   ManorTestAdvanceTimeRequest,
   ManorTestGrantResourceRequest,
+  ManorTestSetLevelRequest,
   PlatformStatusResponse,
   PuzzleResultSubmitRequest,
   PuzzleResultView,
@@ -121,6 +122,16 @@ export async function grantManorTestResource(
   input: ManorTestGrantResourceRequest
 ): Promise<ManorTestMutationResponse> {
   return request("/api/manor/test/grant-resource", { method: "POST", body: input });
+}
+
+export async function setManorTestLevel(
+  input: ManorTestSetLevelRequest
+): Promise<ManorTestMutationResponse> {
+  return request("/api/manor/test/set-level", { method: "POST", body: input });
+}
+
+export async function prepareManorTestAcceptanceData(): Promise<ManorTestMutationResponse> {
+  return request("/api/manor/test/prepare-acceptance-data", { method: "POST" });
 }
 
 export async function getManorV7Social(): Promise<ManorV7SocialView> {

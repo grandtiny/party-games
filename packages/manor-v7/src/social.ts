@@ -8,6 +8,7 @@ import {
   MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_SEASONAL_ANIMAL_DROP_LIMIT,
   MANOR_V7_SEASONAL_ANIMAL_IDS,
+  grantLandExpansionFundIfEligible,
   manorV7EffectiveYield,
   setInventoryQuantity,
   validateManorV7State,
@@ -493,6 +494,8 @@ function finish(
   message: string,
   now: number
 ): ManorV7FriendTransitionResult {
+  grantLandExpansionFundIfEligible(visitor, now);
+  grantLandExpansionFundIfEligible(owner, now);
   visitor.revision = currentVisitor.revision + 1;
   owner.revision = currentOwner.revision + 1;
   visitor.updatedAt = now;

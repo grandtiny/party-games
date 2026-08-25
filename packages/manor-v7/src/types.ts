@@ -397,6 +397,7 @@ export interface ManorV7State {
     signInStreak: number;
     signInStreakRewardDays: number[];
     vipReturnGiftClaimed: boolean;
+    landExpansionFundClaimed: boolean;
   };
   researchGuideSeen: boolean;
   tutorialTask: { taskId: number; accepted: boolean };
@@ -501,7 +502,14 @@ export type ManorV7Action =
   | { type: "adopt-wild-animal"; slotId: number; animalType: number }
   | { type: "claim-wild-return"; slotId: number }
   | { type: "donate-wild-animal"; slotId: number }
-  | { type: "attack-wild-animal"; serial: number; attackType: string; weaponId: number }
+  | {
+      type: "attack-wild-animal";
+      serial: number;
+      attackType: string;
+      weaponId: number;
+      attackerUserId?: string;
+      attackerDisplayName?: string;
+    }
   | { type: "sell-wild-crystal"; crystalId: number; quantity: number }
   | { type: "pickup-wild-crystal"; serial: number };
 
