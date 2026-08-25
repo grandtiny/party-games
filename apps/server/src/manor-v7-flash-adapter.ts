@@ -11,6 +11,7 @@ import {
   MANOR_V7_VIP_RETURN_GIFT,
   isManorV7RewardAvailable,
   manorV7DayKey,
+  manorV7Avatar,
   manorV7Decoration,
   manorV7DecorationCoinPrice,
   manorV7Fish,
@@ -2844,13 +2845,14 @@ function flashSelectedFarmItems(view: ManorV7View) {
 }
 
 function flashQShowProfile(view: ManorV7View) {
+  const sex = view.farm.selectedAvatarId === null ? "M" : manorV7Avatar(view.farm.selectedAvatarId).sex;
   return {
     code: "0",
     uin: stableFlashUserId(view.owner.userId),
     red: 1,
     style: "1",
     showtype: "0",
-    sex: "M"
+    sex
   };
 }
 

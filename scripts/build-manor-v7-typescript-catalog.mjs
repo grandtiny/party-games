@@ -121,6 +121,17 @@ const tools = parseCsv("catalog-tools.csv")
     available: bool(row.available)
   }));
 
+const avatars = parseCsv("catalog-avatars.csv")
+  .filter((row) => row.asset_status === "complete" && number(row.source_status) === 1)
+  .map((row) => ({
+    id: number(row.source_id),
+    sex: row.sex,
+    displayOrder: number(row.display_order),
+    assetPath: row.asset_path,
+    width: number(row.width),
+    height: number(row.height)
+  }));
+
 const decorations = parseCsv("catalog-decorations.csv")
   .map((row) => ({
     area: row.area,
@@ -166,14 +177,15 @@ const fish = parseCsv("catalog-fish.csv")
   }));
 
 const output = `// Generated from docs/manor-v7-source. Do not edit by hand.\n` +
-  `import type { ManorV7AnimalDefinition, ManorV7CropDefinition, ManorV7DecorationDefinition, ManorV7FishDefinition, ManorV7LandUpgradeDefinition, ManorV7ToolDefinition } from "./types.js";\n\n` +
+  `import type { ManorV7AnimalDefinition, ManorV7AvatarDefinition, ManorV7CropDefinition, ManorV7DecorationDefinition, ManorV7FishDefinition, ManorV7LandUpgradeDefinition, ManorV7ToolDefinition } from "./types.js";\n\n` +
   `export const MANOR_V7_CROPS = ${JSON.stringify(crops, null, 2)} as const satisfies readonly ManorV7CropDefinition[];\n\n` +
   `export const MANOR_V7_ANIMALS = ${JSON.stringify(animals, null, 2)} as const satisfies readonly ManorV7AnimalDefinition[];\n\n` +
   `export const MANOR_V7_TOOLS = ${JSON.stringify(tools, null, 2)} as const satisfies readonly ManorV7ToolDefinition[];\n\n` +
+  `export const MANOR_V7_AVATARS = ${JSON.stringify(avatars, null, 2)} as const satisfies readonly ManorV7AvatarDefinition[];\n\n` +
   `export const MANOR_V7_DECORATIONS = ${JSON.stringify(decorations, null, 2)} as const satisfies readonly ManorV7DecorationDefinition[];\n\n` +
   `export const MANOR_V7_FISH = ${JSON.stringify(fish, null, 2)} as const satisfies readonly ManorV7FishDefinition[];\n\n` +
   `export const MANOR_V7_LAND_UPGRADES = ${JSON.stringify(landUpgrades, null, 2)} as const satisfies readonly ManorV7LandUpgradeDefinition[];\n`;
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, output, "utf8");
-console.log(`Generated ${crops.length} crops, ${animals.length} animals, ${fish.length} fish, ${tools.length} tools, ${decorations.length} decorations and ${landUpgrades.length} land upgrades`);
+console.log(`Generated ${crops.length} crops, ${animals.length} animals, ${fish.length} fish, ${tools.length} tools, ${avatars.length} avatars, ${decorations.length} decorations and ${landUpgrades.length} land upgrades`);

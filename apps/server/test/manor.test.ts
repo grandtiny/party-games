@@ -268,6 +268,34 @@ describe("QQ Farm V7 account persistence", () => {
       expect(selectedAvatar.statusCode, selectedAvatar.body).toBe(200);
       expect(selectedAvatar.json()).toEqual({ code: "1", id: 515000 });
 
+      const invalidAvatar = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=item&act=activeitem",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "mod=qqshow&act=activeItem&id=1"
+      });
+      expect(invalidAvatar.statusCode, invalidAvatar.body).toBe(200);
+      expect(invalidAvatar.json()).toMatchObject({
+        code: 0,
+        direction: "农场形象不存在或未接入 V7 素材"
+      });
+
+      const selectedFemaleAvatar = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=item&act=activeitem",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "mod=qqshow&act=activeItem&id=546375"
+      });
+      expect(selectedFemaleAvatar.json()).toEqual({ code: "1", id: 546375 });
+
+      const femaleQshowProfile = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=user&act=qqshow",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "param=1"
+      });
+      expect(femaleQshowProfile.json()).toMatchObject({ code: "0", sex: "F", showtype: "0" });
+
       const decoratedFarm = await instance.app.inject({
         method: "GET",
         url: "/api/manor/flash/farm?qzonemod=user&act=run",
@@ -275,7 +303,19 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(decoratedFarm.statusCode, decoratedFarm.body).toBe(200);
       expect(decoratedFarm.json()).toMatchObject({
-        items: { 1: { itemId: 1 }, 2: { itemId: 2 }, 3: { itemId: 3 }, 4: { itemId: 4 }, 9: { itemId: 90020 }, 10: { itemId: 515000 } }
+        items: { 1: { itemId: 1 }, 2: { itemId: 2 }, 3: { itemId: 3 }, 4: { itemId: 4 }, 9: { itemId: 90020 }, 10: { itemId: 546375 } }
+      });
+
+      const visitor = await registerMember(instance.app, owner.cookie);
+      const friendFarm = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/farm?qzonemod=user&act=run&ownerId=${stableFlashUserId(owner.userId)}`,
+        headers: { cookie: visitor.cookie }
+      });
+      expect(friendFarm.statusCode, friendFarm.body).toBe(200);
+      expect(friendFarm.json()).toMatchObject({
+        items: { 10: { itemId: 546375 } },
+        user: { uId: stableFlashUserId(owner.userId), userName: "庄园主人" }
       });
 
       const clearedBoard = await instance.app.inject({

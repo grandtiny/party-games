@@ -5,6 +5,7 @@ import {
   MANOR_V7_FISH,
   MANOR_V7_TOOLS,
   manorV7Animal,
+  manorV7Avatar,
   manorV7Board,
   manorV7Crop,
   manorV7Decoration,
@@ -323,6 +324,7 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
   }
   state.farm.selectedBoardId ??= null;
   state.farm.selectedAvatarId ??= null;
+  if (!validAvatarId(state.farm.selectedAvatarId)) state.farm.selectedAvatarId = null;
   state.pasture.harvestedAnimalInventory ??= [];
   state.pasture.cubInventory ??= [];
   state.pasture.materialInventory ??= [];
@@ -959,7 +961,13 @@ function validBoardId(value: number | null): boolean {
 }
 
 function validAvatarId(value: number | null): boolean {
-  return value === null || (Number.isInteger(value) && value > 0 && value <= 1_000_000);
+  if (value === null) return true;
+  try {
+    manorV7Avatar(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function validClaimDay(value: string | null): boolean {

@@ -8,6 +8,9 @@ Generate and verify it with:
 ```powershell
 pwsh -NoProfile -File scripts/build-manor-v7-source-inventory.ps1 -SourceRoot <QQnc-root>
 pwsh -NoProfile -File scripts/test-manor-v7-source-inventory.ps1
+pwsh -NoProfile -File scripts/build-manor-v7-avatar-catalog.ps1
+pwsh -NoProfile -File scripts/patch-manor-v7-avatar-links.ps1 -SourceRoot <QQnc-root>
+pwsh -NoProfile -File scripts/test-manor-v7-avatar-links.ps1
 pwsh -NoProfile -File scripts/build-manor-v7-swf-audio-inventory.ps1 -SourceRoot <QQnc-root>
 pwsh -NoProfile -File scripts/test-manor-v7-swf-audio-inventory.ps1
 ```
@@ -28,6 +31,7 @@ Files:
 - `swf-audio.csv`: every dedicated animal sound SWF with codec, sample rate, duration, stage, and placeholder status.
 - `swf-audio-summary.csv`: stable audio coverage totals and duration bounds.
 - `catalog-*.csv`: V7 crops, animals, fish, decorations, tools, timings, and land upgrades reconstructed from PHP configuration.
+- `catalog-avatars.csv`: all 326 local farm figures reconstructed from the original QQ Show XML and matching PNG assets.
 - `rules-summary.csv`: V7 rule counts and a stable configuration fingerprint.
 - `runtime-catalog-assets.csv`: full-root V7 crop and animal state exports with source/output hashes and bounds.
 - `runtime-catalog-issues.csv`: catalog states that could not be exported; the runtime test requires this to remain empty.

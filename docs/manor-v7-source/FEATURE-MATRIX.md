@@ -4,8 +4,8 @@
 它记录源项目有什么、当前做到了什么、哪些功能被本地化替代、哪些明确放弃，以及哪些仍需决定。
 
 - 源项目基线：`summary.csv` 中的 `source_bundle_sha256=9a73402041a571286e27e2cd6e95bf99b00343bc410ae2ae90af9dacc846aff0`
-- 当前实现基线：`feature/manor` 分支提交 `16c2e53`
-- 最近审计日期：2026-08-24
+- 当前实现基线：`feature/manor` 分支提交 `0f2e431`
+- 最近审计日期：2026-08-25
 - 源项目证据路径均相对授权包内 `source/plugin/qqfarm/`，不记录源机器绝对路径
 - 当前实现证据主要来自 `packages/manor-v7/`、`apps/server/src/manor-v7-*`、`apps/web/src/games/manor/` 和庄园测试
 
@@ -27,7 +27,7 @@
 | Discuz/外部服务 | 安装、账号、好友、支付、分享、广告和腾讯联动 | 第 2、3、10、13 节。 |
 
 功能状态以“玩家最终得到的行为”为准，协议覆盖以源入口为准，素材覆盖以生成台账为准。这三种口径不能互相替代。
-当前共有 235 个稳定功能 ID（不含 `D-*` 决策）：已实现 106、部分实现 18、特殊实现 23、未实现 35、
+当前共有 235 个稳定功能 ID（不含 `D-*` 决策）：已实现 112、部分实现 12、特殊实现 23、未实现 35、
 放弃 44、待确认 3、源残留 6。状态变化必须同步更新对应行和这组汇总数。
 
 ## 1. 状态定义
@@ -94,15 +94,15 @@
 | ID | 源项目内容 | 状态 | 当前实现与差异 | 证据 |
 | --- | --- | --- | --- | --- |
 | CAT-01 | 全量 V7 文件台账 | 已实现 | 已登记 8197 个模块文件、4735 个 SWF、1249 个 PNG、2189 个 JPG、21 个 GIF。 | `summary.csv`、`files.csv` |
-| CAT-02 | 作物目录 | 部分实现 | 源配置 589 行；当前领域目录 405 种，覆盖所有已审计可运行项，并区分 VIP、隐藏和土地要求。未接入项必须从 `catalog-crops.csv` 逐项判断，不能默认缺失即放弃。 | `rules-summary.csv`、`catalog-crops.csv`、`state.test.ts` |
-| CAT-03 | 动物目录 | 部分实现 | 源配置 178 行；当前领域目录 167 种，活动隐藏动物保留但不进入普通商店。 | `catalog-animals.csv`、`state.test.ts` |
-| CAT-04 | 鱼目录 | 部分实现 | 源配置 17 行；当前领域目录 13 种，其中团圆鱼为隐藏奖励。 | `catalog-fish.csv`、`state.test.ts` |
+| CAT-02 | 作物目录 | 已实现 | 源配置 589 行，已逐项判定并接入 577 种可运行作物，保留 VIP、隐藏和土地要求。4 种作物只有 3 个阶段素材而阻塞；另 8 条 `crop_type=11` 是节日卡片，不属于作物目录。 | `rules-summary.csv`、`catalog-crops.csv`、`catalog.generated.ts`、`state.test.ts` |
+| CAT-03 | 动物目录 | 已实现 | 源配置 178 行，运行目录 177 种，包括 153 种普通动物和 24 种隐藏动物。唯一排除项为缺失两段动画素材的仙人掌小妖（1565）。 | `rules-summary.csv`、`catalog-animals.csv`、`catalog.generated.ts`、`state.test.ts` |
+| CAT-04 | 鱼目录 | 已实现 | 源配置 17 行，运行目录 16 种；仅排除 ID 1 测试鱼，团圆鱼（15）作为隐藏奖励保留，其余鱼种均有鱼体和鱼苗素材。 | `rules-summary.csv`、`catalog-fish.csv`、`catalog.generated.ts`、`state.test.ts` |
 | CAT-05 | 工具目录 | 已实现 | 当前接入农牧场 91 个工具定义，并按独立物品类型保存化肥、鱼食、罐头、沙漏、武器、狗粮和看守用品。 | `catalog-tools.csv`、`catalog.generated.ts` |
-| CAT-06 | 装扮目录 | 部分实现 | 源配置农场 704 行、牧场 117 行；当前领域目录 631 项。当前可售项均有本地金币价，仍需按素材问题表审计未入目录项。 | `catalog-decorations.csv`、`runtime-catalog-issues.csv` |
+| CAT-06 | 装扮目录 | 已实现 | 源配置农场 704 行、牧场 117 行，821 条定义全部保留在领域目录；629 项可售、187 项为可渲染隐藏装扮，5 项缺主素材。缺素材项仅兼容既有拥有记录，不可购买或装备。 | `rules-summary.csv`、`catalog-decorations.csv`、`catalog.generated.ts`、`state.test.ts` |
 | CAT-07 | 作物与动物全部生长/生产状态素材 | 已实现 | 已导出并校验当前运行目录需要的阶段资产，运行时问题表为空。 | `runtime-catalog-assets.csv`、`runtime-catalog-issues.csv` |
 | CAT-08 | 原版主场景、窗口和装饰素材 | 已实现 | 正式页面直接使用原 SWF，不再自行拆层重组主界面。 | `apps/web/public/assets/manor/v7-swf/` |
 | CAT-09 | 音效和动画 | 已实现 | 4735 个源 SWF 全部进入运行目录；89 个专用动物音效 SWF 已逐项审计，88 个含有效音频，`s1038.swf` 明确登记为源占位。缺少音频文件的 4 种动物已关闭声音入口，庄园支持持久化静音。活动动画单独归 CAT-11。 | `swf-audio.csv`、`swf-audio-summary.csv`、Ruffle 运行时 |
-| CAT-10 | 社交头像素材 | 部分实现 | 329 个社交头像素材已入台账；当前以平台账号显示名为主，农场形象只接入审计 ID。 | `categories.csv`、`set-avatar` |
+| CAT-10 | 农场形象素材 | 已实现 | 原 XML 的 326 个有效形象 ID 与本地 PNG 一一对应，男 167 个、女 159 个，均为 140x226；目录已生成并进入运行时严格校验。源包另有 1 个有效插件 SWF、1 个 XML 和 1 个零字节废 SWF。 | `catalog-avatars.csv`、`catalog.generated.ts`、`state.test.ts` |
 | CAT-11 | 活动素材 | 部分实现 | 181 个延后运营文件已登记；只有第 11 节列出的活动进入运行时。 | `categories.csv`；第 11 节 |
 | CAT-12 | 旧经典版素材和早期拆图成果 | 放弃 | 不再作为修复或补图来源。 | D-01 |
 | CAT-13 | 基线中已关闭或过期的配置能力 | 源残留 | 好友背包、限时特价、广告种子页、七夕链接、QQ 超市等在 V7 配置里已关闭或时间窗早已结束，不算可用源功能。 | `mcini_main` 的 `openControl`、`addon` 开关 |
@@ -134,7 +134,7 @@
 | FARM-21 | 看门狗购买、切换、喂食和有效期 | 已实现 | 狗粮按金币购买；喂饱的看门狗可拦截偷窃并转移金币，时间到期停止工作。 | `dog_*`、`buy-farm-dog` |
 | FARM-22 | 农场装扮购买、续期和启用 | 已实现 | 保留原装扮界面；元宝/VIP 免费选项改为金币，支持到期、续期和互斥部件。 | `item_*`、`cgi_farm_buyitem`、D-08 |
 | FARM-23 | 告示牌 | 已实现 | 支持选择和取消审计过的告示牌。 | `set-board` |
-| FARM-24 | 农场形象 | 部分实现 | 支持审计 ID 的选择和取消；没有恢复 QQ 秀、QQ 头像或全部社交头像体系。 | `qqshow_*`、`set-avatar` |
+| FARM-24 | 农场形象 | 已实现 | 原插件的男女切换、分页、预览、保存和取消继续使用；只接受 326 个本地形象 ID，选择结果持久化并在本人及好友农场展示。腾讯 QQ 秀、QQ 头像、商城和充值不属于本站形象功能，按 EXT-04、EXT-08 移除。 | `qqshow_*`、`set-avatar`、`catalog-avatars.csv` |
 | FARM-25 | 鲜花加工和赠送 | 已实现 | 支持审计配方、材料扣减、留言卡、好友收花和删除记录。 | `user_case`、`cgi_farm_flower_*` |
 | FARM-26 | 便便 + 红玫瑰加工化肥 | 已实现 | 原子扣除配方材料并增加化肥。 | `process-manure-fertilizer` |
 | FARM-27 | 农场公告 | 部分实现 | 返回本地静态公告；没有管理员可编辑的动态公告系统。 | `user_getnotice` |
@@ -371,7 +371,7 @@
 | 已实现 | `repertory_buyseed`、`repertory_getseedinfo`、`repertory_getuserseed`、`repertory_sale`、`repertory_saleall`、`cgi_farm_seed_list`、`cgi_farm_seed_sell`、`cgi_farm_getusercrop`、`cgi_farm_set_lock` | FARM-16 至 FARM-20 |
 | 已实现 | `usertool_getseedinfo`、`usertool_gettools`、`usertool_buytool`、`cgi_farm_buyweapon` | FARM-16、FARM-20、WILD-06 |
 | 已实现 | `user_run`、`user_reclaim`、`user_reclaimpay`、`user_getnotice`、`user_received`、`user_case`、`cgi_farm_upgrade`、`cgi_farm_upgrade_black` | FARM-01 至 FARM-04、FARM-25、FARM-27 |
-| 已实现/部分 | `item_shop`、`item_getuseritems`、`item_activeitem`、`item_deactiveitem`、`cgi_farm_buyitem`、`cgi_farm_item_vip`、`qqshow_activeitem`、`qqshow_deactiveitem`、`user_qqshow` | 装扮完整；农场形象体系仅部分实现，见 FARM-22 至 FARM-24 |
+| 已实现 | `item_shop`、`item_getuseritems`、`item_activeitem`、`item_deactiveitem`、`cgi_farm_buyitem`、`cgi_farm_item_vip`、`qqshow_activeitem`、`qqshow_deactiveitem`、`user_qqshow` | 装扮和 326 项本地农场形象均已接入，见 FARM-22 至 FARM-24；腾讯外部形象与支付体系按 EXT-04、EXT-08 放弃。 |
 | 已实现 | `dog_feedmoney` | FARM-21 |
 | 已实现 | `cgi_fish_register`、`cgi_fish_index`、`cgi_fish_harvest`、`cgi_fish_buy`、`cgi_fish_list`、`cgi_fish_unlock`、`cgi_fish_user_rep`、`cgi_fish_plant`、`cgi_fish_rep_lock`、`cgi_fish_sale`、`cgi_fish_output`、`cgi_fish_steal`、`cgi_fish_fertilize`、`cgi_fish_getall` | FISH-01 至 FISH-10 |
 | 已实现/部分 | `cgi_farm_get_userbeast`、`cgi_farm_open_slot`、`cgi_farm_get_moralexp`、`cgi_farm_adopt_beast`、`cgi_farm_raise_beast`、`cgi_farm_reward_beast`、`cgi_farm_donate_beast`、`cgi_farm_attack_beast`、`cgi_farm_get_usercrystal`、`cgi_farm_sell_crystal`、`cgi_farm_pickup_crystal`、`cgi_farm_hpage_beast`、`cgi_farm_beast_getnick` | WILD-01 至 WILD-09；社交展示细节仍为部分实现 |
@@ -466,12 +466,12 @@
 | FARM-31 | 飞机访问/分享动画 | 需要继续反编译或运行，确认是否只有动画，是否存在本地奖励规则。 |
 | FARM-32 | “出售有机”窗口 | 需要继续反编译，确认它与普通售卖的真实差异和结算规则。 |
 
-### 15.3 部分实现（18 项）
+### 15.3 部分实现（12 项）
 
 | 分类 | 稳定 ID | 尚未覆盖的主要差异 |
 | --- | --- | --- |
-| 目录与素材 | CAT-02、CAT-03、CAT-04、CAT-06、CAT-10、CAT-11 | 配置目录数量仍有差额；社交头像及未启用活动没有逐项运行验收。 |
-| 农场与鱼塘 | FARM-24、FARM-27、FISH-11 | 农场形象不含完整 QQ 秀体系；公告不可运营编辑；鱼塘没有独立本站教程页。 |
+| 活动素材 | CAT-11 | 未启用活动没有逐项运行验收。 |
+| 农场与鱼塘 | FARM-27、FISH-11 | 公告不可运营编辑；鱼塘没有独立本站教程页。 |
 | 牧场与野生动物 | PAST-28、PAST-31、WILD-09 | QQ 餐厅联动被排除；好友牧场状态提示和野生动物社交细节不完整。 |
 | 消息与经济 | SOC-12、ECO-15 | 成果、消费、系统消息及所有历史记录类别没有完整复刻。 |
 | 活动 | EVT-12 | 典礼礼包只接入团圆鱼 type 3。 |
@@ -538,8 +538,6 @@
 11. **翻牌小游戏（EVT-27）**：素材和奖品目录较完整，但服务端规则残缺，需要重新定义次数、概率和防重复领取。建议：以后再说。
 12. **飞机/出售有机窗口（FARM-31、FARM-32）**：当前只有素材证据，业务语义不完整。建议：先反编译，不承诺实现。
 13. **旧 NPC 活动（EVT-33、EVT-34）**：规则可读，但奖励和长期开放方式需要重新平衡。建议：节日活动批次再决定。
-14. **目录差额（CAT-02、CAT-03、CAT-04、CAT-06）**：继续按目录台账逐项判断素材、规则、隐藏原因和可运行性，不把数量差额直接当成功能缺陷。
-
 VIP 经验成长已按 ECO-08 明确放弃，不再列入决策队列；源 `speed` 只影响会员等级经验，不影响作物或动物速度。
 
 ## 19. 维护规则

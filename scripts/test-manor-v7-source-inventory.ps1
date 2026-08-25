@@ -19,6 +19,7 @@ $duplicates = @(Import-Csv -LiteralPath (Join-Path $InventoryDirectory "duplicat
 $categories = @(Import-Csv -LiteralPath (Join-Path $InventoryDirectory "categories.csv"))
 $database = @(Import-Csv -LiteralPath (Join-Path $InventoryDirectory "database-boundary.csv"))
 $protocols = @(Import-Csv -LiteralPath (Join-Path $InventoryDirectory "source-protocols.csv"))
+$avatars = @(Import-Csv -LiteralPath (Join-Path $InventoryDirectory "catalog-avatars.csv"))
 $featureMatrix = Get-Content -LiteralPath (Join-Path $InventoryDirectory "FEATURE-MATRIX.md") -Raw -Encoding utf8
 
 if ($summary.source_version -ne "7.0 Beta1 Build 20120209.1000") { throw "Unexpected source version" }
@@ -55,6 +56,18 @@ if (@($protocols | Where-Object source_condition -eq "handler-not-allowlisted").
 if (@($protocols | Where-Object { [int]$_.declaration_count -gt 1 }).Count -ne 5) {
   throw "Expected five duplicate protocol declarations"
 }
+if ($avatars.Count -ne 326) { throw "Expected 326 farm avatars, found $($avatars.Count)" }
+if (@($avatars.source_id | Sort-Object -Unique).Count -ne 326) { throw "Farm avatar IDs must be unique" }
+if (@($avatars | Where-Object sex -eq "M").Count -ne 167) { throw "Male farm avatar count drifted" }
+if (@($avatars | Where-Object sex -eq "F").Count -ne 159) { throw "Female farm avatar count drifted" }
+if (@($avatars | Where-Object {
+  [int]$_.width -ne 140 -or
+  [int]$_.height -ne 226 -or
+  $_.asset_status -ne "complete" -or
+  $_.integration_policy -ne "core-candidate"
+}).Count -gt 0) {
+  throw "Farm avatar dimensions or integration status drifted"
+}
 
 $featureDefinitionMatch = [regex]::Match($featureMatrix, '(?ms)\A.*?(?=^## 15\.)')
 if (-not $featureDefinitionMatch.Success) { throw "Feature matrix detail boundary was not found" }
@@ -76,8 +89,8 @@ if (@($featureRows | Where-Object status -notin $allowedFeatureStatuses).Count -
   throw "Feature matrix contains an unknown status"
 }
 $expectedStatusCounts = @{
-  "已实现" = 106
-  "部分实现" = 18
+  "已实现" = 112
+  "部分实现" = 12
   "特殊实现" = 23
   "未实现" = 35
   "放弃" = 44

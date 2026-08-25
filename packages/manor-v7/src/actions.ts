@@ -1,6 +1,7 @@
 import {
   MANOR_V7_CROPS,
   manorV7Animal,
+  manorV7Avatar,
   manorV7Board,
   manorV7Crop,
   manorV7Decoration,
@@ -1190,12 +1191,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "set-avatar": {
-      if (
-        action.avatarId !== null &&
-        (!Number.isInteger(action.avatarId) || action.avatarId < 1 || action.avatarId > 1_000_000)
-      ) {
-        throw new Error("农场形象编号无效");
-      }
+      if (action.avatarId !== null) manorV7Avatar(action.avatarId);
       state.farm.selectedAvatarId = action.avatarId;
       addManorV7Activity(
         state,

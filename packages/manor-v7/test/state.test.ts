@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MANOR_V7_ANIMALS,
+  MANOR_V7_AVATARS,
   MANOR_V7_BAD_ACTION_DAILY_LIMIT,
   MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_CROPS,
@@ -24,6 +25,7 @@ import {
   inventoryQuantity,
   manorV7DailySignInReward,
   manorV7Animal,
+  manorV7Avatar,
   manorV7Crop,
   manorV7Decoration,
   manorV7DecorationCoinPrice,
@@ -57,6 +59,10 @@ describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
     expect(MANOR_V7_CROPS).toHaveLength(577);
     expect(MANOR_V7_ANIMALS).toHaveLength(177);
+    expect(MANOR_V7_AVATARS).toHaveLength(326);
+    expect(MANOR_V7_AVATARS.filter((avatar) => avatar.sex === "M")).toHaveLength(167);
+    expect(MANOR_V7_AVATARS.filter((avatar) => avatar.sex === "F")).toHaveLength(159);
+    expect(MANOR_V7_AVATARS.every((avatar) => avatar.width === 140 && avatar.height === 226)).toBe(true);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(821);
     expect(MANOR_V7_FISH).toHaveLength(16);
@@ -94,6 +100,9 @@ describe("QQ Farm V7 domain", () => {
     expect(manorV7Animal(1028)).toMatchObject({ name: "喜鹊", byproductName: "喜鹊崽" });
     expect(manorV7Animal(1544)).toMatchObject({ name: "白鹭", byproductName: "白鹭崽" });
     expect(() => manorV7Animal(1565)).toThrow("动物不存在或未接入 V7 素材");
+    expect(manorV7Avatar(515000)).toMatchObject({ sex: "M", assetPath: "ui/qqshow/0/0/515000_0_0.png" });
+    expect(manorV7Avatar(546375)).toMatchObject({ sex: "F", assetPath: "ui/qqshow/3/75/546375_0_0.png" });
+    expect(() => manorV7Avatar(1)).toThrow("农场形象不存在或未接入 V7 素材");
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
       house: "hutch",
@@ -684,13 +693,22 @@ describe("QQ Farm V7 domain", () => {
       selectedAvatarId: 515000
     });
 
-    const clearedBoard = transitionManorV7State(withAvatar, { type: "set-board", boardId: null }, 2_000);
+    const withFemaleAvatar = transitionManorV7State(
+      withAvatar,
+      { type: "set-avatar", avatarId: 546375 },
+      2_000
+    );
+    expect(withFemaleAvatar.farm.selectedAvatarId).toBe(546375);
+
+    const clearedBoard = transitionManorV7State(withFemaleAvatar, { type: "set-board", boardId: null }, 2_000);
     const clearedAvatar = transitionManorV7State(clearedBoard, { type: "set-avatar", avatarId: null }, 2_000);
     expect(clearedAvatar.farm).toMatchObject({ selectedBoardId: null, selectedAvatarId: null });
     expect(() => transitionManorV7State(initial, { type: "set-board", boardId: 1 }, 2_000))
       .toThrow("告示牌不存在");
     expect(() => transitionManorV7State(initial, { type: "set-board", boardId: 90019 }, 2_000))
       .toThrow("告示牌不存在");
+    expect(() => transitionManorV7State(initial, { type: "set-avatar", avatarId: 1 }, 2_000))
+      .toThrow("农场形象不存在或未接入 V7 素材");
   });
 
   it("advances crops deterministically and closes the harvest-sale-plant loop", () => {
@@ -1197,6 +1215,15 @@ describe("QQ Farm V7 domain", () => {
     expect(sold.coins).toBe(500 + animal.byproductPrice * 4 + animal.productPrice * 2);
     expect(sold.pasture.productInventory).toEqual([]);
     expect(sold.pasture.harvestedAnimalInventory).toEqual([]);
+  });
+
+  it("clears legacy farm avatar ids that are outside the audited catalog", () => {
+    const legacy = createManorV7State(7_500);
+    legacy.farm.selectedAvatarId = 1;
+
+    const migrated = migrateManorV7State(legacy, 7_500);
+
+    expect(migrated.farm.selectedAvatarId).toBeNull();
   });
 
   it("migrates saves created before adult animal inventory was added", () => {

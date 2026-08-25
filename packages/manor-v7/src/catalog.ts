@@ -1,5 +1,6 @@
 import {
   MANOR_V7_ANIMALS,
+  MANOR_V7_AVATARS,
   MANOR_V7_CROPS as MANOR_V7_GENERATED_CROPS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
@@ -9,6 +10,7 @@ import {
 import type {
   ManorV7AnimalDefinition,
   ManorV7Area,
+  ManorV7AvatarDefinition,
   ManorV7CropDefinition,
   ManorV7DecorationDefinition,
   ManorV7FishDefinition,
@@ -28,6 +30,7 @@ export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERAT
 
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
+const avatarMap = new Map<number, ManorV7AvatarDefinition>(MANOR_V7_AVATARS.map((item) => [item.id, item]));
 const fishMap = new Map<number, ManorV7FishDefinition>(MANOR_V7_FISH.map((item) => [item.id, item]));
 const defaultPastureDecorations = [
   {
@@ -60,6 +63,12 @@ export function manorV7Crop(id: number): ManorV7CropDefinition {
 export function manorV7Animal(id: number): ManorV7AnimalDefinition {
   const item = animalMap.get(id);
   if (!item) throw new Error("动物不存在或未接入 V7 素材");
+  return item;
+}
+
+export function manorV7Avatar(id: number): ManorV7AvatarDefinition {
+  const item = avatarMap.get(id);
+  if (!item) throw new Error("农场形象不存在或未接入 V7 素材");
   return item;
 }
 
@@ -130,6 +139,7 @@ export function manorV7LandUpgrade(tier: Exclude<ManorV7LandTier, "normal">, upg
 
 export {
   MANOR_V7_ANIMALS,
+  MANOR_V7_AVATARS,
   MANOR_V7_DECORATIONS,
   MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,

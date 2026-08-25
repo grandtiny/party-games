@@ -71,6 +71,15 @@ export interface ManorV7ToolDefinition {
   available: boolean;
 }
 
+export interface ManorV7AvatarDefinition {
+  id: number;
+  sex: "M" | "F";
+  displayOrder: number;
+  assetPath: string;
+  width: number;
+  height: number;
+}
+
 export interface ManorV7DecorationDefinition {
   area: ManorV7Area;
   id: number;

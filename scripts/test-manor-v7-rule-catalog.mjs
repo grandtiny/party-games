@@ -16,6 +16,7 @@ const expected = {
   "catalog-fish.csv": 17,
   "catalog-decorations.csv": 821,
   "catalog-tools.csv": 91,
+  "catalog-avatars.csv": 326,
 };
 for (const [name, count] of Object.entries(expected)) {
   const actual = rows(name);
@@ -25,6 +26,18 @@ for (const [name, count] of Object.entries(expected)) {
 const summaryText = readFileSync(join(root, "rules-summary.csv"), "utf8");
 if (!summaryText.includes("7.0 Beta1 Build 20120209.1000")) throw new Error("Rule catalog source version drifted");
 if (!summaryText.includes("config_bundle_sha256")) throw new Error("Rule catalog fingerprint is missing");
+const expectedRuntimeDefinitions = {
+  crop_runtime_definitions: 577,
+  animal_runtime_definitions: 177,
+  fish_runtime_definitions: 16,
+  decoration_runtime_definitions: 821,
+  decoration_renderable_definitions: 816,
+};
+for (const [key, count] of Object.entries(expectedRuntimeDefinitions)) {
+  if (!summaryText.includes(`"${key}","${count}"`)) {
+    throw new Error(`${key}: expected ${count}`);
+  }
+}
 
 const animalLines = readFileSync(join(root, "catalog-animals.csv"), "utf8").trim().split(/\r?\n/);
 if (!animalLines[0]?.includes('"house"')) throw new Error("Animal house classification is missing");
