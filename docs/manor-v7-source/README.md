@@ -18,6 +18,7 @@ pwsh -NoProfile -File scripts/test-manor-v7-swf-audio-inventory.ps1
 Files:
 
 - `FEATURE-MATRIX.md`: complete source-project capability matrix with implemented, partial, localized, deferred, and abandoned status.
+- `MANUAL-ACCEPTANCE.md`: one-session, two-account manual farm and pasture acceptance path with expected data and timing thresholds.
 - `files.csv`: every V7 module file with hash, domain, category, kind, and integration policy.
 - `categories.csv`: counts and sizes grouped by runtime domain and policy.
 - `duplicates.csv`: byte-identical source files; duplication does not imply that business identities can be merged.

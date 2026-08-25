@@ -60,7 +60,7 @@
 | D-09 | 限次奖励可以免费 | 特殊实现 | 每日礼包、签到、连续签到、升级奖励、回归礼包和节日限次礼包保留免费，但必须有日/次/账号限制。 |
 | D-10 | 禁止旧 SWF 打开外部网页 | 放弃 | Ruffle `openUrlMode=deny`；论坛、广告、合作专区、QQ 空间、腾讯管家、餐厅入口等不能跳出本站。 |
 | D-11 | 好友来自平台账号全集 | 特殊实现 | 农场和牧场使用同一好友集合，不实现 QQ/Discuz 好友同步或手动好友申请。 |
-| D-12 | 庄园测试工具默认关闭 | 特殊实现 | 仅显式启用后对平台 owner 开放加速时间和发资源；不得作为正式经济入口。 |
+| D-12 | 庄园测试工具默认关闭 | 特殊实现 | 仅显式启用后对平台 owner 开放加速时间、设置等级、发资源和准备巡检数据；不得作为正式经济入口。 |
 | D-13 | 站点语言决定庄园语言 | 特殊实现 | 当前使用中文 V7 资源，不维护源项目模板/编码切换。 |
 | D-14 | 不接入旧论坛与交流论坛入口 | 放弃 | 留言板保留为庄园内部功能，Discuz 论坛和原项目交流论坛不保留。 |
 | D-15 | Lovesday 活动长期开放用于本地玩法 | 特殊实现 | 活动窗口调整为 2000–2099，保留 99 个产物九倍出售规则。 |
@@ -78,7 +78,7 @@
 | PLAT-07 | 农场/牧场互跳 | 已实现 | 页签与 `C.util.toApp`、`QZONE.FP.toApp`、`switchToFarm` 桥接共同切换场景。 | `V7Page.tsx` |
 | PLAT-08 | 场景截图 | 特殊实现 | 新增本地 PNG 截图，不上传 QQ 相册。 | `ManorRufflePlayer.tsx` |
 | PLAT-09 | 源玩家数据迁移 | 放弃 | 七张可变玩家表全部排除，旧 PHP/MySQL 数据不读取。 | `database-boundary.csv`；D-04 |
-| PLAT-10 | 管理员测试和资源发放 | 特殊实现 | 仅保留显式开关控制的 owner 测试工具；不嵌入正式页面经济。 | `ManorTestTools.tsx`、`app.ts` |
+| PLAT-10 | 管理员测试和资源发放 | 特殊实现 | 仅保留显式开关控制的 owner 测试工具；支持推进时间、设置当前账号等级、发放基础资源和幂等准备人工巡检代表数据，不嵌入正式页面经济。 | `ManorTestTools.tsx`、`app.ts`、`MANUAL-ACCEPTANCE.md` |
 | PLAT-11 | 原版网络外链和统计上报 | 放弃 | 所有外链禁止打开；腾讯统计、广告和分享不发送。 | `openUrlMode=deny`；D-10 |
 | PLAT-12 | React 自绘农牧场场景 | 放弃 | `V7Scenes.tsx`、`V7Windows.tsx` 仍在仓库但没有正式路由引用，不能作为功能完成证据。 | `App.tsx`、`V7Page.tsx` |
 | PLAT-13 | 原 XML 配置服务 | 特殊实现 | 7 个源 XML 模块改为仓库内固定模板，由 Fastify 注入本站资源与协议地址；不运行 `xml.php`。 | `source/xml/mod/`、`/api/manor/flash/config/:fileName` |
@@ -139,10 +139,10 @@
 | FARM-26 | 便便 + 红玫瑰加工化肥 | 已实现 | 原子扣除配方材料并增加化肥。 | `process-manure-fertilizer` |
 | FARM-27 | 农场公告 | 部分实现 | 返回本地静态公告；没有管理员可编辑的动态公告系统。 | `user_getnotice` |
 | FARM-28 | 好友操作自定义提示语 | 未实现 | 源工具页可分别设置浇水、除草、除虫、放草和放虫反馈；当前使用固定提示。 | `core/source/tools/mod/setting.php` |
-| FARM-29 | 健康模式/防沉迷时间段 | 待确认 | 当前不限制游玩时间；源协议 `item_healthmode` 未重构。建议自用站点放弃，但尚未形成明确决定。 | `item_healthmode` |
-| FARM-30 | 土地扩建基金 | 未实现 | 源功能可每账号一次领取 200000 金币扩建基金；常规开地已实现，但这笔限次奖励未接入。 | `cgi_farm_landext_fund`、`landExtPic.jpg` |
+| FARM-29 | 健康模式/防沉迷时间段 | 放弃 | 自用站点不限制游玩时间，不接入原健康模式设置与时段封锁。 | `item_healthmode` |
+| FARM-30 | 土地扩建基金 | 已实现 | 每账号一次；农场首次达到可将普通土地升级为红土地的 28 级时自动发放 200000 金币，旧存档达到等级后补发且不能重复领取。 | `cgi_farm_landext_fund`、`cgi_farm_upgrade`、`landExtPic.jpg` |
 | FARM-31 | 飞机访问/分享动画 | 待确认 | 有 `plane_v_0.swf` 和分享图，但源 PHP 没有独立业务处理，尚不能确认是纯动画还是带奖励流程。 | `ui/plane_v_0.swf` |
-| FARM-32 | “出售有机”窗口 | 待确认 | 有 `sellyouji_v_1.swf`，但源 PHP 与 XML 只声明素材，没有可复核的独立结算规则。 | `ui/sellyouji_v_1.swf` |
+| FARM-32 | “出售有机”窗口 | 源残留 | 反编译确认独立 SWF 只有四个展示位和“去商店/关闭”按钮；主程序只有悬停提示，没有点击分支、窗口创建、请求协议或结算规则，PHP 侧也仅声明素材。 | `ui/sellyouji_v_1.swf`、`main3_v_140.swf` |
 
 ## 6. 鱼塘功能
 
@@ -212,7 +212,7 @@
 | WILD-06 | 武器攻击和血量 | 已实现 | 普通攻击和武器伤害按审计规则结算，武器从独立库存消耗。 | `cgi_farm_attack_beast` |
 | WILD-07 | 水晶掉落、拾取和仓库 | 已实现 | 战斗产生水晶，玩家或好友拾取后持久化。 | `cgi_farm_pickup_crystal/get_usercrystal` |
 | WILD-08 | 水晶出售 | 已实现 | 按审计金币价值出售。 | `cgi_farm_sell_crystal` |
-| WILD-09 | 人品值/昵称/主页状态 | 部分实现 | 返回本地可用状态；源社交展示细节未完全复刻。 | `cgi_farm_get_moralexp/beast_getnick/hpage_beast` |
+| WILD-09 | 人品值/昵称/主页状态 | 已实现 | 人品值持久化并参与领养、放生和驱赶规则；放生者与攻击者昵称按本站账号返回；源 `hpage_beast` 的空回调协议由实时状态和原版 `steal` 空字段兼容。 | `cgi_farm_get_moralexp/beast_getnick/hpage_beast` |
 | WILD-10 | 水晶祝福活动 | 未实现 | 有 `crystalBless_v_0.swf` 和 `cgi_pasture_crystal_blessing`，当前没有完整规则和奖励流程。 | 活动 SWF、源协议 |
 
 ## 9. 好友、留言、动态和排行
@@ -333,7 +333,7 @@
 | ADMIN-15 | 初始金币、元宝和农牧经验配置 | 特殊实现 | 初始资源由版本化状态初始化代码固定；元宝被删除，没有运行时后台表单。 | `admin/mod/system.php`、D-03、D-07 |
 | ADMIN-16 | 好友来源、上限、头像和活动选择配置 | 特殊实现 | 好友固定为平台账号全集，头像取平台资料，活动由代码/配置版本控制，不提供运行时切换。 | `admin/mod/system.php`、D-11 |
 | ADMIN-17 | 每日次数、天气和 VIP 计划任务 | 特殊实现 | 每日限制和周四雨天由确定性状态推进替代；VIP 到期/经验 cron 按全员固定 VIP 决策放弃。 | `source/cron/*.php`、PLAT-15、D-06 |
-| ADMIN-18 | 批量赠送种子、鱼、产品、水晶、工具、动物和装扮 | 部分实现 | owner 测试工具仅能给当前账号发一组测试资源，不能像源 `quick_gift.php` 给全服发完整目录物品。 | `admin/mod/quick_gift.php`、D-12 |
+| ADMIN-18 | 批量赠送种子、鱼、产品、水晶、工具、动物和装扮 | 部分实现 | owner 测试工具能给当前账号补足人工巡检所需的种子、鱼、产品、水晶、工具和动物代表项；不能选择完整目录，也不能像源 `quick_gift.php` 给全服发物品。 | `admin/mod/quick_gift.php`、D-12、`MANUAL-ACCEPTANCE.md` |
 
 ## 13. 外部服务与旧站入口
 
@@ -370,11 +370,11 @@
 | 已实现 | `farmlandstatus_planting`、`farmlandstatus_water`、`farmlandstatus_clearweed`、`farmlandstatus_spraying`、`farmlandstatus_pest`、`farmlandstatus_scatterseed`、`farmlandstatus_scrounge`、`farmlandstatus_fertilize`、`farmlandstatus_getoutput`、`farmlandstatus_harvest`、`farmlandstatus_scarify` | FARM-05 至 FARM-15、SOC-04 至 SOC-08 |
 | 已实现 | `repertory_buyseed`、`repertory_getseedinfo`、`repertory_getuserseed`、`repertory_sale`、`repertory_saleall`、`cgi_farm_seed_list`、`cgi_farm_seed_sell`、`cgi_farm_getusercrop`、`cgi_farm_set_lock` | FARM-16 至 FARM-20 |
 | 已实现 | `usertool_getseedinfo`、`usertool_gettools`、`usertool_buytool`、`cgi_farm_buyweapon` | FARM-16、FARM-20、WILD-06 |
-| 已实现 | `user_run`、`user_reclaim`、`user_reclaimpay`、`user_getnotice`、`user_received`、`user_case`、`cgi_farm_upgrade`、`cgi_farm_upgrade_black` | FARM-01 至 FARM-04、FARM-25、FARM-27 |
+| 已实现 | `user_run`、`user_reclaim`、`user_reclaimpay`、`user_getnotice`、`user_received`、`user_case`、`cgi_farm_upgrade`、`cgi_farm_upgrade_black`、`cgi_farm_landext_fund` | FARM-01 至 FARM-04、FARM-25、FARM-27、FARM-30 |
 | 已实现 | `item_shop`、`item_getuseritems`、`item_activeitem`、`item_deactiveitem`、`cgi_farm_buyitem`、`cgi_farm_item_vip`、`qqshow_activeitem`、`qqshow_deactiveitem`、`user_qqshow` | 装扮和 326 项本地农场形象均已接入，见 FARM-22 至 FARM-24；腾讯外部形象与支付体系按 EXT-04、EXT-08 放弃。 |
 | 已实现 | `dog_feedmoney` | FARM-21 |
 | 已实现 | `cgi_fish_register`、`cgi_fish_index`、`cgi_fish_harvest`、`cgi_fish_buy`、`cgi_fish_list`、`cgi_fish_unlock`、`cgi_fish_user_rep`、`cgi_fish_plant`、`cgi_fish_rep_lock`、`cgi_fish_sale`、`cgi_fish_output`、`cgi_fish_steal`、`cgi_fish_fertilize`、`cgi_fish_getall` | FISH-01 至 FISH-10 |
-| 已实现/部分 | `cgi_farm_get_userbeast`、`cgi_farm_open_slot`、`cgi_farm_get_moralexp`、`cgi_farm_adopt_beast`、`cgi_farm_raise_beast`、`cgi_farm_reward_beast`、`cgi_farm_donate_beast`、`cgi_farm_attack_beast`、`cgi_farm_get_usercrystal`、`cgi_farm_sell_crystal`、`cgi_farm_pickup_crystal`、`cgi_farm_hpage_beast`、`cgi_farm_beast_getnick` | WILD-01 至 WILD-09；社交展示细节仍为部分实现 |
+| 已实现 | `cgi_farm_get_userbeast`、`cgi_farm_open_slot`、`cgi_farm_get_moralexp`、`cgi_farm_adopt_beast`、`cgi_farm_raise_beast`、`cgi_farm_reward_beast`、`cgi_farm_donate_beast`、`cgi_farm_attack_beast`、`cgi_farm_get_usercrystal`、`cgi_farm_sell_crystal`、`cgi_farm_pickup_crystal`、`cgi_farm_hpage_beast`、`cgi_farm_beast_getnick` | WILD-01 至 WILD-09 |
 | 已实现/部分 | `chat_getallinfo`、`chat_sendchat`、`chat_clearchat`、`chat_clearlog`、`friend`、`cgi_farm_getstatus_filter` | 留言和好友可用；部分日志清理协议是兼容响应，见 SOC-10 至 SOC-14 |
 | 已实现/部分 | `feast_getpackagelist`、`feast_getpackage`、`feast_levelup`、`task_accept`、`task_update`、`cgi_farm_login_home`、`cgi_farm_login_click`、`cgi_pasture_signin`、`cgi_return_gift` | EVT-01 至 EVT-07；`feast_levelup` 只负责升级提示 |
 | 已实现/部分 | `cgi_farm_flower_send`、`cgi_farm_flower_received`、`cgi_farm_flower_get_card`、`cgi_farm_flower_del_msg`、`cgi_farm_exchange`、`sysmsg_select`、`hydra_feeds_select`、`hydra_feeds_delete` | FARM-25、SOC-11、SOC-12、ECO-15 |
@@ -383,9 +383,7 @@
 | 部分实现 | `feeds_select`、`feeds_delete`、`hydra_feeds_select`、`hydra_feeds_delete`、`sysmsg_select`、`fcg_ws_get_costfeeds` | 站内动态可用，但部分源消息类别为空兼容桩，见 SOC-12 |
 | 部分实现 | `cgi_farm_request_count`、`request_get_count` | 只返回关闭/零计数，见 SOC-16 |
 | 未实现 | `cgi_farm_sendrequest`、`cgi_farm_request_list`、`cgi_farm_request_gift_recv` | SOC-16、EVT-25 |
-| 未实现 | `item_healthmode` | FARM-29 |
 | 源残留 | `user_welcome`、`user_costfeeds`、`user_checkstatus` | 源处理本身为空或固定成功，真正的提示设置见 FARM-28 |
-| 未实现 | `cgi_farm_landext_fund` | FARM-30 |
 | 未实现 | `cgi_farm_activity`、`cgi_farm_halloweeneve_initview`、`cgi_farm_halloweeneve_bonus`、`cgi_get_thanks_package`、`cgi_farm_guang_gun`、`cgi_farm_thanksgiving_initview`、`cgi_farm_thanksgiving_setfree` | EVT-14 至 EVT-24 |
 | 未实现 | `task_activity`、`task_checkbitmap`、`task_npc` | EVT-17、EVT-33、EVT-34 |
 | 特殊实现 | `task_halloween`、`task_halloweenseed`、`task_qixiflag`、`task_putin` | 对应玩家功能由当前 `cgi_*`/`xiaoyou*` 活动协议承接，见 EVT-09、EVT-10 |
@@ -393,7 +391,7 @@
 | 特殊实现/放弃 | `gb_buy`、`cgi_farm_shop_verify`、`cgi_farm_shop_pay`、`shop_verify` | 商品改金币购买；充值/外部支付关闭，见 ECO-02、ECO-09 |
 | 特殊实现 | `cgi_ws_com`、`cgi_register` | 手动开通流程改为首次访问自动初始化，见 PLAT-19 |
 | 已实现 | `cgi_fetch_strategy_rules` | PAST-32 |
-| 放弃 | `cgi_farm_housekeeper` | 腾讯管家活动及外链不接入，见 EVT-31 |
+| 放弃 | `item_healthmode`、`cgi_farm_housekeeper` | 自用站点不限制游玩时间；腾讯管家活动及外链不接入，见 FARM-29、EVT-31 |
 | 放弃 | `cgi_ua_stat`、外部 feed/share、论坛和广告协议 | D-10、EXT-03、EXT-09、EXT-10 |
 
 ### 14.2 牧场协议组
@@ -410,7 +408,7 @@
 | 已实现 | `cgi_buy_guard`、`cgi_get_userguard`、`cgi_active_guard`、`cgi_hide_guard` | PAST-24 |
 | 已实现 | `cgi_get_items`、`cgi_get_useritem`、`cgi_buy_item`、`cgi_renew_item`、`cgi_active_item` | PAST-25 |
 | 已实现 | `cgi_get_parade`、`cgi_set_parade` | PAST-26 |
-| 已实现/部分 | `cgi_farm_get_userbeast`、`cgi_farm_open_slot`、`cgi_farm_get_moralexp`、`cgi_farm_adopt_beast`、`cgi_farm_raise_beast`、`cgi_farm_reward_beast`、`cgi_farm_donate_beast`、`cgi_farm_attack_beast`、`cgi_farm_get_usercrystal`、`cgi_farm_sell_crystal`、`cgi_farm_pickup_crystal`、`cgi_farm_hpage_beast`、`cgi_farm_beast_getnick` | WILD-01 至 WILD-09 |
+| 已实现 | `cgi_farm_get_userbeast`、`cgi_farm_open_slot`、`cgi_farm_get_moralexp`、`cgi_farm_adopt_beast`、`cgi_farm_raise_beast`、`cgi_farm_reward_beast`、`cgi_farm_donate_beast`、`cgi_farm_attack_beast`、`cgi_farm_get_usercrystal`、`cgi_farm_sell_crystal`、`cgi_farm_pickup_crystal`、`cgi_farm_hpage_beast`、`cgi_farm_beast_getnick` | WILD-01 至 WILD-09 |
 | 已实现/部分 | `chat_clearchat`、`chat_getallinfo`、`chat_sendchat`、`friend`、`cgi_get_user_info`、`cgi_clear_log`、`cgi_get_exp` | 留言、好友和日志可用；好友状态提示仅返回空标志，见 PAST-31、SOC-01 至 SOC-14 |
 | 已实现 | `cgi_pasture_login_home`、`cgi_pasture_login_click`、`cgi_signin`、`cgi_get_gifts`、`cgi_accept_gift`、`cgi_return_gift`、`cgi_up_task_1`、`cgi_up_task_2` | EVT-01 至 EVT-07 |
 | 已实现/特殊 | `cgi_farm_halloween`、`cgi_farm_get_halloweenseed`、`cgi_farm_qixiflag`、`cgi_pasture_activity`、`cgi_putin` | EVT-09、EVT-10 |
@@ -446,33 +444,31 @@
 
 本节是后续排期和复查入口。所有 ID 都能回到第 3–13 节的详细功能行；不得只看本节标题推断实现范围。
 
-### 15.1 未实现（35 项）
+### 15.1 未实现（34 项）
 
 | 分类 | 稳定 ID | 当前缺口 |
 | --- | --- | --- |
 | 平台运行 | PLAT-16 | 庄园全站维护开关和关闭原因。 |
-| 农场 | FARM-28、FARM-30 | 好友操作自定义提示语；一次性土地扩建基金。 |
+| 农场 | FARM-28 | 好友操作自定义提示语。 |
 | 牧场与野生动物 | PAST-29、PAST-30、WILD-10 | 看守员台词/机器人提示；牧场公告；水晶祝福。 |
 | 社交与经济 | SOC-16、ECO-12 | 站内召回/请求礼包；玩家自由市场。 |
 | 节日与活动 | EVT-14、EVT-15、EVT-16、EVT-17、EVT-18、EVT-19、EVT-20、EVT-21、EVT-22、EVT-23、EVT-24、EVT-25、EVT-27、EVT-32、EVT-33、EVT-34、EVT-35 | 水晶兑换、万圣夜抽奖、感恩节、卡片兑换、送福、牧场中秋、秋季、爆竹、月初/月末、单身节、免费礼物、翻牌、召回、植树节、小丑寻宝和年末本地奖。 |
 | 玩家工具页 | TOOL-03、TOOL-04、TOOL-06、TOOL-07 | 独立帮助中心、提示语设置、农场市场和牧场市场。 |
 | 运营能力 | ADMIN-01、ADMIN-03、ADMIN-05、ADMIN-07、ADMIN-09、ADMIN-14 | 运营统计、公告编辑、存档管理、全服留言、批量数据处理和维护模式。 |
 
-### 15.2 待确认（3 项）
+### 15.2 待确认（1 项）
 
 | 稳定 ID | 能力 | 需要确认的证据或决定 |
 | --- | --- | --- |
-| FARM-29 | 健康模式 | 是否需要为自用站点保留游玩时段限制。 |
 | FARM-31 | 飞机访问/分享动画 | 需要继续反编译或运行，确认是否只有动画，是否存在本地奖励规则。 |
-| FARM-32 | “出售有机”窗口 | 需要继续反编译，确认它与普通售卖的真实差异和结算规则。 |
 
-### 15.3 部分实现（12 项）
+### 15.3 部分实现（11 项）
 
 | 分类 | 稳定 ID | 尚未覆盖的主要差异 |
 | --- | --- | --- |
 | 活动素材 | CAT-11 | 未启用活动没有逐项运行验收。 |
 | 农场与鱼塘 | FARM-27、FISH-11 | 公告不可运营编辑；鱼塘没有独立本站教程页。 |
-| 牧场与野生动物 | PAST-28、PAST-31、WILD-09 | QQ 餐厅联动被排除；好友牧场状态提示和野生动物社交细节不完整。 |
+| 牧场 | PAST-28、PAST-31 | QQ 餐厅联动被排除；好友牧场状态提示不完整。 |
 | 消息与经济 | SOC-12、ECO-15 | 成果、消费、系统消息及所有历史记录类别没有完整复刻。 |
 | 活动 | EVT-12 | 典礼礼包只接入团圆鱼 type 3。 |
 | 工具与运营 | TOOL-01、ADMIN-02、ADMIN-18 | 缺金币/最近访问榜；没有运行时系统配置 UI；测试工具不能全服发完整目录物品。 |
@@ -492,12 +488,13 @@
 金币替代的统一规则见 D-08：原本无限免费的 VIP 商品不得继续免费；优先使用源金币价，只有元宝价时按
 `元宝价 × 1000` 转金币。每日礼包、签到、升级、回归及节日限次礼包按 D-09 保留免费，但必须限制日、次或账号。
 
-## 16. 已明确放弃（44 项）
+## 16. 已明确放弃（45 项）
 
 | 分类 | 稳定 ID | 放弃边界 |
 | --- | --- | --- |
 | 平台与旧架构 | PLAT-01、PLAT-09、PLAT-11、PLAT-12、PLAT-17、PLAT-18 | Discuz 壳与登录、旧玩家数据迁移、外部上报、自绘旧场景、双编码模板及旧升级脚本。 |
 | 旧素材 | CAT-12 | 旧经典版和早期自行拆图成果不再作为实现依据。 |
+| 农场 | FARM-29 | 自用站点不实现健康模式、防沉迷时段或游玩时间封锁。 |
 | 社交 | SOC-15、SOC-17、SOC-18 | 手动/QQ 好友、外部分享和论坛。 |
 | 元宝与 VIP 生命周期 | ECO-02、ECO-03、ECO-07、ECO-08、ECO-13 | 元宝充值、VIP 开通续费、永久半价、VIP 经验生命周期和 Discuz 积分兑换。 |
 | 外部活动 | EVT-26、EVT-29、EVT-30、EVT-31、EVT-37 | Qzone 礼包、股票、Intel、腾讯管家及腾讯账号权益奖励。 |
@@ -508,11 +505,12 @@
 统一边界：运行时不打开原 SWF 外部 URL，不采集邮寄资料，不发放元宝、黄钻、QQ 秀、实物或第三方券。
 源活动中的本地虚拟奖励只有在另列稳定功能 ID、明确次数和经济规则后才能接入，不能因同一活动外部部分被放弃而默认启用。
 
-## 17. 源残留（6 项）
+## 17. 源残留（7 项）
 
 | 稳定 ID | 源残留 | 判定 |
 | --- | --- | --- |
 | CAT-13 | 已关闭或过期配置能力 | 配置已关闭或时间窗失效，不能算当前 V7 可用功能。 |
+| FARM-32 | “出售有机”窗口 | 独立 SWF 只有展示元件；主程序没有点击、开窗、请求或结算逻辑，PHP 也只有素材声明。 |
 | PAST-34 | 好友背包 | 配置关闭且缺少完整流程。 |
 | PAST-35 | 牧场限时特价 | 仅有 2010 年时间窗，没有当前规则。 |
 | EVT-28 | 七夕翻牌窗口 | XML 引用的 SWF 缺失，服务端规则也不完整。 |
@@ -526,18 +524,16 @@
 以下项目仍可能进入后续开发，但不代表已经承诺实现。后续可以直接按编号回复“要 / 弱化 / 不要 / 以后再说”：
 
 1. **玩家自由市场（ECO-12、TOOL-06、TOOL-07）**：有完整源代码和独立数据表，能形成玩家间经济，但会扩大交易、并发和价格治理范围。建议：以后再说。
-2. **健康模式（FARM-29）**：源项目可限制游玩时间，自用站点实际价值较低。建议：不要。
-3. **独立帮助中心（TOOL-03）**：集中展示源规则、目录和当前本地化差异，能降低测试和使用成本。建议：要。
-4. **欢迎语/提示语设置（FARM-28、TOOL-04）**：主要是个性化展示，对核心循环影响小。建议：以后再说。
-5. **站内召回/请求礼包（SOC-16、EVT-25、EVT-32）**：需要按平台账号重做，不应照搬 QQ 请求。建议：以后再说。
-6. **完整消息中心（SOC-12、ECO-15）**：留言和动态可用，但成果、消费、系统分类仍不完整。建议：要。
-7. **水晶祝福（WILD-10、EVT-21）**：有素材和协议名，需要继续反编译规则与奖励。建议：确认素材后再决定。
-8. **剩余节日活动（EVT-14 至 EVT-24、EVT-27、EVT-33 至 EVT-35）**：逐个做，不一次全部常开；优先规则和素材完整的活动。
-9. **最小庄园运营能力（PLAT-16、ADMIN-01、ADMIN-03、ADMIN-05、ADMIN-07、ADMIN-09、ADMIN-14）**：先做维护开关、公告和存档查看/修复，不复刻旧后台全部能力。建议：弱化后要。
-10. **土地扩建基金（FARM-30）**：源规则为每账号一次 200000 金币，会直接改变前期经济。建议：不要照搬；若保留则改为任务奖励。
-11. **翻牌小游戏（EVT-27）**：素材和奖品目录较完整，但服务端规则残缺，需要重新定义次数、概率和防重复领取。建议：以后再说。
-12. **飞机/出售有机窗口（FARM-31、FARM-32）**：当前只有素材证据，业务语义不完整。建议：先反编译，不承诺实现。
-13. **旧 NPC 活动（EVT-33、EVT-34）**：规则可读，但奖励和长期开放方式需要重新平衡。建议：节日活动批次再决定。
+2. **独立帮助中心（TOOL-03）**：集中展示源规则、目录和当前本地化差异，能降低测试和使用成本。建议：要。
+3. **欢迎语/提示语设置（FARM-28、TOOL-04）**：主要是个性化展示，对核心循环影响小。建议：以后再说。
+4. **站内召回/请求礼包（SOC-16、EVT-25、EVT-32）**：需要按平台账号重做，不应照搬 QQ 请求。建议：以后再说。
+5. **完整消息中心（SOC-12、ECO-15）**：留言和动态可用，但成果、消费、系统分类仍不完整。建议：要。
+6. **水晶祝福（WILD-10、EVT-21）**：有素材和协议名，需要继续反编译规则与奖励。建议：确认素材后再决定。
+7. **剩余节日活动（EVT-14 至 EVT-24、EVT-27、EVT-33 至 EVT-35）**：逐个做，不一次全部常开；优先规则和素材完整的活动。
+8. **最小庄园运营能力（PLAT-16、ADMIN-01、ADMIN-03、ADMIN-05、ADMIN-07、ADMIN-09、ADMIN-14）**：先做维护开关、公告和存档查看/修复，不复刻旧后台全部能力。建议：弱化后要。
+9. **翻牌小游戏（EVT-27）**：素材和奖品目录较完整，但服务端规则残缺，需要重新定义次数、概率和防重复领取。建议：以后再说。
+10. **飞机访问/分享动画（FARM-31）**：当前只有素材证据，业务语义不完整。建议：先反编译，不承诺实现。
+11. **旧 NPC 活动（EVT-33、EVT-34）**：规则可读，但奖励和长期开放方式需要重新平衡。建议：节日活动批次再决定。
 VIP 经验成长已按 ECO-08 明确放弃，不再列入决策队列；源 `speed` 只影响会员等级经验，不影响作物或动物速度。
 
 ## 19. 维护规则
