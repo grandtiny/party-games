@@ -2480,6 +2480,62 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("keeps pasture house upgrade queries read-only and charges only after confirmation", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-house-upgrade-query-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Pasture V7 state missing before house upgrade query test");
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = 10_000;
+      prepared.pastureExperience = manorV7ExperienceForLevel(2);
+      prepared.pasture.shedLevel = 0;
+      prepared.revision += 1;
+      prepared.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
+
+      const beforeQuery = instance.repository.getManorV7State(owner.userId);
+      if (!beforeQuery) throw new Error("Pasture V7 state missing after house upgrade preparation");
+      const query = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_up_animalhouse",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "act=query&level=0&type=2&newitem=1"
+      });
+      expect(query.statusCode, query.body).toBe(200);
+      expect(query.json()).toEqual({ ecode: 0, iscdtime: false, level: 2, money: 5_000, qd: 0 });
+      const afterQuery = instance.repository.getManorV7State(owner.userId);
+      expect(afterQuery).toMatchObject({
+        coins: beforeQuery.coins,
+        pasture: { shedLevel: 0 }
+      });
+      if (!afterQuery) throw new Error("Pasture V7 state missing after house upgrade query");
+
+      const upgrade = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_up_animalhouse",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "type=2&newitem=1"
+      });
+      expect(upgrade.statusCode, upgrade.body).toBe(200);
+      expect(upgrade.json()).toMatchObject({
+        3: { id: 103, lv: 1 },
+        code: 1,
+        ecode: 0,
+        money: -4_000
+      });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 6_000,
+        pasture: { shedLevel: 1 }
+      });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("uses the platform account, schema 9 and an independent persistent V7 save", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-v7-test-"));
     const databasePath = join(directory, "test.sqlite");
@@ -4008,10 +4064,7 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(pastureMaterials.statusCode, pastureMaterials.body).toBe(200);
-      expect(pastureMaterials.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ amount: 13, cId: 2, cName: "白萝卜" }),
-        expect.objectContaining({ amount: 25, cId: 40, cName: "牧草" })
-      ]));
+      expect(pastureMaterials.json()).toEqual([]);
 
       const persisted = await getManor(instance.app, owner.cookie);
       expect(persisted.coins).toBe(initial.coins + 1_234 + MANOR_V7_LAND_EXPANSION_FUND_COINS);

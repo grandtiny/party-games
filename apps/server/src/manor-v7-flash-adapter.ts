@@ -822,7 +822,10 @@ export class ManorV7FlashAdapter {
     if (moduleName === "cgi_sale_product") return this.#sellPastureProduct(user, params, now);
     if (moduleName === "cgi_help_pasture") return this.#cleanPasture(user, params, now);
     if (moduleName === "cgi_steal_product") return this.#stealPastureProduct(user, params, now);
-    if (moduleName === "cgi_up_animalhouse") return this.#upgradePastureHouse(user, params, now);
+    if (moduleName === "cgi_up_animalhouse") {
+      if (actionName === "query") return flashHouseUpgradeQuery(this.service.getView(user, now), params);
+      return this.#upgradePastureHouse(user, params, now);
+    }
     if (moduleName === "cgi_buy_item") return this.#buyPastureDecoration(user, params, now);
     if (moduleName === "cgi_renew_item" || moduleName === "item" && actionName === "renew") {
       return this.#renewPastureDecoration(user, params, now);
@@ -871,7 +874,7 @@ export class ManorV7FlashAdapter {
     }
     if (moduleName === "cgi_farm_exchange") return flashCostHistory(view);
     if (moduleName === "fcg_ws_get_costfeeds") return { code: 1, cost: [] };
-    if (moduleName === "cgi_farm_getusercrop") return flashPastureMaterialInventory(view);
+    if (moduleName === "cgi_farm_getusercrop") return flashPastureMaterialInventory();
     if (moduleName === "cgi_farm_get_usercrystal") return this.#wildInventory(user, params, now);
     if (moduleName === "cgi_farm_sell_crystal") return this.#sellWildCrystal(user, params, now);
     if (moduleName === "cgi_get_items") return flashPastureDecorationShop(view);
@@ -3503,24 +3506,9 @@ function flashPastureRepertory(view: ManorV7View) {
   return [...products, ...harvestedAnimals];
 }
 
-function flashPastureMaterialInventory(view: ManorV7View) {
-  return view.farm.produceInventory.flatMap((entry) => {
-    if (entry.quantity < 1) return [];
-    const crop = view.catalogs.crops.find((item) => item.id === entry.sourceId);
-    if (!crop) return [];
-    return [{
-      amount: entry.quantity,
-      cId: entry.sourceId,
-      cName: crop.name,
-      ext: "",
-      high_price: 0,
-      isLock: Number(Boolean(entry.locked)),
-      lock: Number(Boolean(entry.locked)),
-      level: crop.originalLevel,
-      price: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice),
-      type: crop.cropType
-    }];
-  });
+function flashPastureMaterialInventory() {
+  // The legacy endpoint contains activity cards, not ordinary farm produce.
+  return [];
 }
 
 function flashPastureDecorationShop(view: ManorV7View) {
