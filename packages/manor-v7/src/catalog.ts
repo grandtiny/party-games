@@ -1,9 +1,9 @@
 import {
-  MANOR_V7_ANIMALS,
+  MANOR_V7_ANIMALS as MANOR_V7_GENERATED_ANIMALS,
   MANOR_V7_AVATARS,
   MANOR_V7_CROPS as MANOR_V7_GENERATED_CROPS,
-  MANOR_V7_DECORATIONS,
-  MANOR_V7_FISH,
+  MANOR_V7_DECORATIONS as MANOR_V7_GENERATED_DECORATIONS,
+  MANOR_V7_FISH as MANOR_V7_GENERATED_FISH,
   MANOR_V7_LAND_UPGRADES,
   MANOR_V7_TOOLS
 } from "./catalog.generated.js";
@@ -21,12 +21,48 @@ import {
   manorV7EffectiveCropSalePrice,
   manorV7EffectiveCropSeedPrice
 } from "./seasonal.js";
+import { manorV7RewardAmount } from "./economy.js";
+
+export const MANOR_V7_MATURITY_TIME_DIVISOR = 3;
+
+function scaledMaturitySeconds(seconds: number): number {
+  return Math.max(1, Math.ceil(seconds / MANOR_V7_MATURITY_TIME_DIVISOR));
+}
 
 export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERATED_CROPS.map((crop) => ({
   ...crop,
   seedPrice: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
-  salePrice: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
+  salePrice: manorV7RewardAmount(manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)),
+  experience: manorV7RewardAmount(crop.experience),
+  growthSeconds: scaledMaturitySeconds(crop.growthSeconds),
+  stageSeconds: crop.stageSeconds.map(scaledMaturitySeconds)
 }));
+
+export const MANOR_V7_ANIMALS: readonly ManorV7AnimalDefinition[] = MANOR_V7_GENERATED_ANIMALS.map((animal) => ({
+  ...animal,
+  productPrice: manorV7RewardAmount(animal.productPrice),
+  byproductPrice: manorV7RewardAmount(animal.byproductPrice),
+  animalHarvestExperience: manorV7RewardAmount(animal.animalHarvestExperience),
+  byproductHarvestExperience: manorV7RewardAmount(animal.byproductHarvestExperience),
+  cubSeconds: scaledMaturitySeconds(animal.cubSeconds),
+  maturitySeconds: scaledMaturitySeconds(animal.maturitySeconds),
+  lifecycleSeconds: scaledMaturitySeconds(animal.maturitySeconds) + animal.productionSeconds
+}));
+
+export const MANOR_V7_FISH: readonly ManorV7FishDefinition[] = MANOR_V7_GENERATED_FISH.map((fish) => ({
+  ...fish,
+  experience: manorV7RewardAmount(fish.experience),
+  salePrice: manorV7RewardAmount(fish.salePrice),
+  cycleSeconds: fish.cycleSeconds.map(scaledMaturitySeconds),
+  matureHours: scaledMaturitySeconds(fish.matureHours * 3_600) / 3_600
+}));
+
+export const MANOR_V7_DECORATIONS: readonly ManorV7DecorationDefinition[] = MANOR_V7_GENERATED_DECORATIONS.map(
+  (decoration) => ({
+    ...decoration,
+    experience: manorV7RewardAmount(decoration.experience)
+  })
+);
 
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
@@ -138,10 +174,7 @@ export function manorV7LandUpgrade(tier: Exclude<ManorV7LandTier, "normal">, upg
 }
 
 export {
-  MANOR_V7_ANIMALS,
   MANOR_V7_AVATARS,
-  MANOR_V7_DECORATIONS,
-  MANOR_V7_FISH,
   MANOR_V7_LAND_UPGRADES,
   MANOR_V7_TOOLS
 };

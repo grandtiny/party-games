@@ -14,6 +14,11 @@ import {
   manorV7ToolByType
 } from "./catalog.js";
 import {
+  grantManorV7Coins,
+  grantManorV7Experience,
+  manorV7RewardAmount
+} from "./economy.js";
+import {
   MANOR_V7_GRASS_CAPACITY,
   MANOR_V7_DOG_FOOD_DAY_SECONDS,
   MANOR_V7_GUARD_INITIAL_WAGE_SECONDS,
@@ -111,7 +116,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         fertilizedSeconds: 0,
         yieldPenaltyPercent: 0
       });
-      state.farmExperience += 1;
+      grantManorV7Experience(state, "farm", 1);
       progressManorV7Task(state, "plant", 1);
       addManorV7Activity(state, "farm", `在第 ${land.id} 块土地种下了${crop.name}`, now);
       break;
@@ -120,7 +125,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const land = cropLand(state, action.landId);
       if (land.watered) throw new Error("这块土地不需要浇水");
       land.watered = true;
-      state.farmExperience += 2;
+      grantManorV7Experience(state, "farm", 2);
       progressManorV7Task(state, "water", 1);
       addManorV7Activity(state, "farm", `给第 ${land.id} 块土地浇了水`, now);
       break;
@@ -129,7 +134,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const land = cropLand(state, action.landId);
       if (!land.weeds) throw new Error("这块土地没有杂草");
       land.weeds = false;
-      state.farmExperience += 2;
+      grantManorV7Experience(state, "farm", 2);
       progressManorV7Task(state, "care", 1);
       addManorV7Activity(state, "farm", `清除了第 ${land.id} 块土地的杂草`, now);
       break;
@@ -138,7 +143,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const land = cropLand(state, action.landId);
       if (!land.pests) throw new Error("这块土地没有害虫");
       land.pests = false;
-      state.farmExperience += 2;
+      grantManorV7Experience(state, "farm", 2);
       progressManorV7Task(state, "care", 1);
       addManorV7Activity(state, "farm", `清除了第 ${land.id} 块土地的害虫`, now);
       break;
@@ -269,7 +274,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const land = cropLand(state, action.landId);
       const crop = manorV7Crop(land.cropId!);
       if (land.harvests < crop.harvestCycles) throw new Error("作物还没有结束全部收获季");
-      state.farmExperience += 3;
+      grantManorV7Experience(state, "farm", 3);
       const hiddenSeeds = MANOR_V7_CROPS.filter((candidate) => candidate.isHidden);
       if (hiddenSeeds.length > 0 && drawManorV7Random(state) < 1 / 50) {
         const hiddenSeed = hiddenSeeds[Math.floor(drawManorV7Random(state) * hiddenSeeds.length)]!;
@@ -310,7 +315,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const crop = manorV7Crop(action.cropId);
       const available = inventoryQuantity(state.farm.seedInventory, crop.id);
       if (available < action.quantity) throw new Error("种子库存不足");
-      const revenue = Math.ceil(crop.seedPrice / 2) * action.quantity;
+      const revenue = manorV7RewardAmount(Math.ceil(crop.seedPrice / 2) * action.quantity);
       setInventoryQuantity(state.farm.seedInventory, crop.id, available - action.quantity);
       state.coins += revenue;
       addManorV7Activity(state, "farm", `出售了 ${action.quantity} 份${crop.name}种子，获得 ${revenue} 金币`, now);
@@ -324,7 +329,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       for (const cropId of cropIds) {
         const crop = manorV7Crop(cropId);
         const available = inventoryQuantity(state.farm.seedInventory, crop.id);
-        revenue += Math.ceil(crop.seedPrice / 2) * available;
+        revenue += manorV7RewardAmount(Math.ceil(crop.seedPrice / 2) * available);
         quantity += available;
         setInventoryQuantity(state.farm.seedInventory, crop.id, 0);
       }
@@ -334,7 +339,10 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       break;
     }
     case "sell-all-produce": {
-      const sellable = state.farm.produceInventory.filter((entry) => !entry.locked);
+      const selectedCropIds = action.cropIds === undefined ? null : new Set(action.cropIds);
+      const sellable = state.farm.produceInventory.filter((entry) => (
+        !entry.locked && (selectedCropIds === null || selectedCropIds.has(entry.sourceId))
+      ));
       if (!sellable.length) throw new Error("仓库没有可出售的果实");
       const quotes = sellable.map((entry) => {
         const crop = manorV7Crop(entry.sourceId);
@@ -342,7 +350,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       });
       const revenue = quotes.reduce((total, quote) => total + quote.revenue, 0);
       const quantity = sellable.reduce((total, entry) => total + entry.quantity, 0);
-      state.farm.produceInventory = state.farm.produceInventory.filter((entry) => entry.locked);
+      const soldCropIds = new Set(sellable.map((entry) => entry.sourceId));
+      state.farm.produceInventory = state.farm.produceInventory.filter((entry) => !soldCropIds.has(entry.sourceId));
       state.coins += revenue;
       progressManorV7Task(state, "sell", quantity);
       const lovesdayBonus = quotes.some((quote) => quote.multiplier > 1) ? "，含情人节 9 倍收益" : "";
@@ -524,7 +533,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         state.pasture.animals.push({ serial: state.pasture.nextAnimalSerial, animalId: animal.id, growthSeconds: 0, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] });
         state.pasture.nextAnimalSerial += 1;
       }
-      state.pastureExperience += action.quantity * 5;
+      grantManorV7Experience(state, "pasture", action.quantity * 5);
       addManorV7Activity(state, "pasture", `购买了 ${action.quantity} 只${animal.name}`, now);
       break;
     }
@@ -543,7 +552,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         state.pasture.animals.push({ serial: state.pasture.nextAnimalSerial, animalId: animal.id, growthSeconds: 0, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] });
         state.pasture.nextAnimalSerial += 1;
       }
-      state.pastureExperience += action.quantity * 5;
+      grantManorV7Experience(state, "pasture", action.quantity * 5);
       addManorV7Activity(state, "pasture", `从物品包放养了 ${action.quantity} 只${animal.name}`, now);
       break;
     }
@@ -632,7 +641,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const day = manorV7DayKey(now);
       if (state.rewardClaims.dailyPackageDay === day) throw new Error("今日礼包已经领取");
       state.rewardClaims.dailyPackageDay = day;
-      state.coins += 300;
+      const rewardCoins = grantManorV7Coins(state, 300);
       for (const toolId of [1, 2, 3, 7]) {
         setInventoryQuantity(
           state.farm.toolInventory,
@@ -655,7 +664,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       state.farm.dog.feedSeconds += MANOR_V7_DOG_FOOD_DAY_SECONDS;
       const activeGuard = state.pasture.guards.find((guard) => guard.active);
       if (activeGuard) activeGuard.remainingSeconds += MANOR_V7_DOG_FOOD_DAY_SECONDS;
-      addManorV7Activity(state, "farm", "领取了 7 级年费 VIP 每日礼包和 300 金币", now);
+      addManorV7Activity(state, "farm", `领取了 7 级年费 VIP 每日礼包和 ${rewardCoins} 金币`, now);
       break;
     }
     case "record-sign-in-visit": {
@@ -715,14 +724,14 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "complete-tutorial-task": {
       if (!state.tutorialTask.accepted) throw new Error("请先接受当前新手任务");
       const task = manorV7TutorialTask(state.tutorialTask.taskId);
-      state.coins += task.rewardCoins;
-      state.pastureExperience += task.rewardExperience;
+      const rewardCoins = grantManorV7Coins(state, task.rewardCoins);
+      const rewardExperience = grantManorV7Experience(state, "pasture", task.rewardExperience);
       state.tutorialTask.taskId += 1;
       state.tutorialTask.accepted = state.tutorialTask.taskId < MANOR_V7_TUTORIAL_TASKS.length;
       addManorV7Activity(
         state,
         "pasture",
-        `完成新手任务，获得 ${task.rewardExperience} 经验和 ${task.rewardCoins} 金币`,
+        `完成新手任务，获得 ${rewardExperience} 经验和 ${rewardCoins} 金币`,
         now
       );
       break;
@@ -827,7 +836,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       state.seasonal.halloweenCandies -= 55;
       state.seasonal.halloweenCookies -= 55;
       state.seasonal.halloweenCarnivalGiftClaimed = true;
-      state.coins += 20_000;
+      grantManorV7Coins(state, 20_000);
       setInventoryQuantity(
         state.pasture.cubInventory,
         1038,
@@ -868,7 +877,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (materials < 1_999) throw new Error("领取团圆鱼礼包需要 1999 个火舞草产物");
       state.seasonal.reunionFishGiftClaimed = true;
       setInventoryQuantity(state.farm.produceInventory, 450, materials - 1_999);
-      state.coins += 99_999;
+      grantManorV7Coins(state, 99_999);
       setInventoryQuantity(
         state.farm.seedInventory,
         448,
@@ -960,7 +969,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const animalState = state.pasture.animals[index];
       if (!animalState) throw new Error("动物不存在");
       const animal = manorV7Animal(animalState.animalId);
-      const price = animalState.growthSeconds >= animal.maturitySeconds ? animal.productPrice : Math.floor(animal.purchasePrice * 0.6);
+      const price = animalState.growthSeconds >= animal.maturitySeconds
+        ? animal.productPrice
+        : manorV7RewardAmount(Math.floor(animal.purchasePrice * 0.6));
       state.pasture.animals.splice(index, 1);
       state.coins += price;
       state.pastureExperience += animal.animalHarvestExperience;
@@ -972,7 +983,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const animalState = state.pasture.animals[index];
       if (!animalState) throw new Error("动物不存在");
       const animal = manorV7Animal(animalState.animalId);
-      const reward = Math.floor(animal.purchasePrice / 2);
+      const reward = manorV7RewardAmount(Math.floor(animal.purchasePrice / 2));
       state.pasture.animals.splice(index, 1);
       state.coins += reward;
       addManorV7Activity(state, "pasture", `爱心捐赠了${animal.name}，获得 ${reward} 金币`, now);
@@ -983,7 +994,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const animal = manorV7Animal(action.animalId);
       const available = inventoryQuantity(state.pasture.cubInventory, animal.id);
       if (available < action.quantity) throw new Error("动物幼崽库存不足");
-      const revenue = Math.floor(animal.purchasePrice / 2) * action.quantity;
+      const revenue = manorV7RewardAmount(Math.floor(animal.purchasePrice / 2) * action.quantity);
       setInventoryQuantity(state.pasture.cubInventory, animal.id, available - action.quantity);
       state.coins += revenue;
       addManorV7Activity(state, "pasture", `出售了 ${action.quantity} 只${animal.name}幼崽`, now);
@@ -991,9 +1002,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "sell-all-cubs": {
       if (!state.pasture.cubInventory.length) throw new Error("没有可出售的动物幼崽");
-      const revenue = state.pasture.cubInventory.reduce((sum, entry) => (
+      const revenue = manorV7RewardAmount(state.pasture.cubInventory.reduce((sum, entry) => (
         sum + Math.floor(manorV7Animal(entry.sourceId).purchasePrice / 2) * entry.quantity
-      ), 0);
+      ), 0));
       const quantity = state.pasture.cubInventory.reduce((sum, entry) => sum + entry.quantity, 0);
       state.pasture.cubInventory = [];
       state.coins += revenue;
@@ -1059,7 +1070,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
         1506,
         inventoryQuantity(state.pasture.materialInventory, 1506) + rewarded
       );
-      state.pastureExperience += rewarded;
+      grantManorV7Experience(state, "pasture", rewarded);
       addManorV7Activity(
         state,
         "pasture",
@@ -1128,15 +1139,14 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "clear-mosquito": {
       if (!state.pasture.mosquitoes.sourceUserIds.length) throw new Error("牧场没有蚊子");
       state.pasture.mosquitoes.sourceUserIds.shift();
-      state.pastureExperience += 3;
+      grantManorV7Experience(state, "pasture", 3);
       addManorV7Activity(state, "pasture", "拍掉了牧场里的蚊子", now);
       break;
     }
     case "catch-own-mouse": {
       if (!state.pasture.mousePresent) throw new Error("牧场没有老鼠");
       state.pasture.mousePresent = false;
-      const reward = 50 + Math.floor(drawManorV7Random(state) * 51);
-      state.coins += reward;
+      const reward = grantManorV7Coins(state, 50 + Math.floor(drawManorV7Random(state) * 51));
       addManorV7Activity(state, "pasture", `抓到老鼠，获得 ${reward} 金币`, now);
       break;
     }
@@ -1254,11 +1264,13 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const slot = wildSlot(state, action.slotId);
       if (slot.status !== 3) throw new Error("野生动物尚未返回");
       const definition = manorV7WildAnimal(slot.animalType);
-      const rewardCoins = Math.max(100, Math.floor(definition.adoptionPrice * 0.05));
+      const rewardCoins = grantManorV7Coins(
+        state,
+        Math.max(100, Math.floor(definition.adoptionPrice * 0.05))
+      );
       const crystalId = definition.crystalIds[
         Math.floor(drawManorV7Random(state) * definition.crystalIds.length)
       ] ?? definition.crystalIds[0];
-      state.coins += rewardCoins;
       slot.income += rewardCoins;
       if (crystalId !== undefined) {
         manorV7WildCrystal(crystalId);
@@ -1277,9 +1289,9 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const slot = wildSlot(state, action.slotId);
       if (slot.status !== 5 || slot.remainingReleases !== 0) throw new Error("该野生动物还不能捐赠");
       const definition = manorV7WildAnimal(slot.animalType);
-      state.coins += definition.donationCoins;
+      const rewardCoins = grantManorV7Coins(state, definition.donationCoins);
       state.pasture.wild.slots = state.pasture.wild.slots.filter((item) => item.slotId !== action.slotId);
-      addManorV7Activity(state, "pasture", `捐赠了${definition.name}，获得 ${definition.donationCoins} 金币`, now);
+      addManorV7Activity(state, "pasture", `捐赠了${definition.name}，获得 ${rewardCoins} 金币`, now);
       break;
     }
     case "attack-wild-animal": {
@@ -1301,8 +1313,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const current = inventoryQuantity(inventory, crystal.id);
       if (current < action.quantity) throw new Error("水晶库存不足");
       setInventoryQuantity(inventory, crystal.id, current - action.quantity);
-      const income = crystal.salePrice * action.quantity;
-      state.coins += income;
+      const income = grantManorV7Coins(state, crystal.salePrice * action.quantity);
       addManorV7Activity(state, "pasture", `出售了 ${action.quantity} 颗${crystal.name}，获得 ${income} 金币`, now);
       break;
     }
@@ -1430,7 +1441,7 @@ function recordSignInVisit(state: ManorV7State, now: number): void {
 
 function awardSignInReward(state: ManorV7State, reward: ManorV7SignInRewardDefinition): void {
   if (reward.kind === "coins") {
-    state.coins += reward.quantity;
+    grantManorV7Coins(state, reward.quantity);
     return;
   }
   const inventory = reward.kind === "grass"
@@ -1456,11 +1467,10 @@ function awardSignInReward(state: ManorV7State, reward: ManorV7SignInRewardDefin
 function awardManorV7Reward(state: ManorV7State, reward: ManorV7RewardItem): void {
   switch (reward.kind) {
     case "coins":
-      state.coins += reward.quantity;
+      grantManorV7Coins(state, reward.quantity);
       return;
     case "experience":
-      if (reward.area === "farm") state.farmExperience += reward.quantity;
-      else state.pastureExperience += reward.quantity;
+      grantManorV7Experience(state, reward.area, reward.quantity);
       return;
     case "seed":
       setInventoryQuantity(

@@ -19,12 +19,11 @@ import {
   manorV7LevelReward,
   manorV7MaxProductionCount,
   manorV7DailySignInReward,
-  manorV7EffectiveCropSalePrice,
   manorV7EffectiveCropSeedPrice,
   manorV7PastureGuard,
   manorV7RedeemCode,
+  manorV7RewardAmount,
   manorV7StreakSignInReward,
-  manorV7TutorialTask,
   manorV7ToolCoinPrice,
   manorV7WildAnimal,
   manorV7WildCrystal,
@@ -311,7 +310,7 @@ export class ManorV7FlashAdapter {
       this.service.performAction(user, { type: "claim-sign-in-streak-reward", days }, now);
       return {
         code: 1,
-        direction: `连续登录奖励领取成功，获得${reward.name}。`,
+        direction: `连续登录奖励领取成功，获得${flashSignInRewardName(reward)}。`,
         ecode: 0,
         id: reward.id,
         timestamp: Math.floor(now / 1_000)
@@ -329,7 +328,7 @@ export class ManorV7FlashAdapter {
       canNum: Math.max(0, MANOR_V7_DAILY_SIGN_IN_LIMIT - rewardIds.length),
       code: 1,
       days: after.rewardClaims.signInStreak,
-      direction: `签到成功，获得${reward.name}。`,
+      direction: `签到成功，获得${flashSignInRewardName(reward)}。`,
       ecode: 0,
       id: rewardId,
       number: rewardIds.length,
@@ -353,14 +352,15 @@ export class ManorV7FlashAdapter {
       if (before.tutorialTask.taskId >= MANOR_V7_TUTORIAL_TASKS.length) {
         return { task: { taskId: 0, taskFlag: 0 } };
       }
-      const completed = manorV7TutorialTask(before.tutorialTask.taskId);
       const after = this.service.performAction(user, { type: "complete-tutorial-task" }, now);
+      const rewardExperience = after.pastureExperience - before.pastureExperience;
+      const rewardCoins = after.coins - before.coins;
       const finished = after.tutorialTask.taskId >= MANOR_V7_TUTORIAL_TASKS.length;
       return {
-        direction: `恭喜您完成任务，获得${completed.rewardExperience}个经验和${completed.rewardCoins}个金币`,
+        direction: `恭喜您完成任务，获得${rewardExperience}个经验和${rewardCoins}个金币`,
         item: [
-          { eType: 7, eParam: 0, eNum: completed.rewardExperience },
-          { eType: 6, eParam: 0, eNum: completed.rewardCoins }
+          { eType: 7, eParam: 0, eNum: rewardExperience },
+          { eType: 6, eParam: 0, eNum: rewardCoins }
         ],
         levelUp: false,
         task: {
@@ -452,23 +452,24 @@ export class ManorV7FlashAdapter {
       return { ecode: 0, task, ...task };
     }
     if (action !== 2) throw new Error("新手任务操作无效");
-    const completed = manorV7TutorialTask(before.tutorialTask.taskId);
     const after = this.service.performAction(user, { type: "complete-tutorial-task" }, now);
+    const rewardExperience = after.pastureExperience - before.pastureExperience;
+    const rewardCoins = after.coins - before.coins;
     const task = after.tutorialTask.taskId < MANOR_V7_TUTORIAL_TASKS.length
       ? {
-          taskDesc: `恭喜您完成任务，获得${completed.rewardExperience}个经验和${completed.rewardCoins}个金币！`,
+          taskDesc: `恭喜您完成任务，获得${rewardExperience}个经验和${rewardCoins}个金币！`,
           taskFlag: Number(after.tutorialTask.accepted),
           taskId: after.tutorialTask.taskId
         }
       : undefined;
     return {
-      addExp: completed.rewardExperience,
+      addExp: rewardExperience,
       ecode: 0,
       item: [
-        { num: completed.rewardExperience, type: 7 },
-        { num: completed.rewardCoins, type: 6 }
+        { num: rewardExperience, type: 7 },
+        { num: rewardCoins, type: 6 }
       ],
-      money: completed.rewardCoins,
+      money: rewardCoins,
       ...(task ? { task } : {})
     };
   }
@@ -1272,7 +1273,22 @@ export class ManorV7FlashAdapter {
     if (integer(params.type) === 10) {
       return {
         ecode: 0,
-        info: [4, 5, 6].map((id) => ({ id, cId: id, cName: ["水拔子", "青铜飞刀", "白银飞刀"][id - 4], num: 99, type: 10 }))
+        info: view.pasture.weaponInventory.map((entry) => {
+          const weapon = view.catalogs.tools.find((item) => (
+            item.area === "pasture" && item.id === entry.sourceId && item.itemType === 10
+          ));
+          const name = weapon?.name ?? `武器 ${entry.sourceId}`;
+          const desc = `可减少野生动物体力${wildAttackDamage("Gun", entry.sourceId)}点，并获得更多水晶奖励。`;
+          return {
+            id: entry.sourceId,
+            name,
+            desc,
+            num: entry.quantity,
+            type: 10,
+            cId: entry.sourceId,
+            cName: name
+          };
+        })
       };
     }
     return {
@@ -1998,9 +2014,12 @@ export class ManorV7FlashAdapter {
       return { cId: cropId, code: 1, direction: "出售成功", money: after.coins - before.coins };
     }
     if (action === "saleall") {
+      const cropIds = params.cIds === undefined
+        ? undefined
+        : positiveIntegerList(params.cIds, "作物编号");
       const { before, after } = this.service.performActionWithPrevious(
         user,
-        { type: "sell-all-produce" },
+        { type: "sell-all-produce", ...(cropIds === undefined ? {} : { cropIds }) },
         now
       );
       return { code: 1, direction: "", money: after.coins - before.coins };
@@ -2637,8 +2656,20 @@ export class ManorV7FlashAdapter {
     if (action === "planting") {
       const cropId = positiveInteger(params.cId, "种子编号");
       const place = flashPlace(params.place);
-      this.service.performAction(user, { type: "plant", landId: place + 1, cropId }, now);
-      return { cId: cropId, farmlandIndex: place, code: 1, poptype: 1, direction: "", exp: 1, levelUp: false };
+      const { before, after } = this.service.performActionWithPrevious(
+        user,
+        { type: "plant", landId: place + 1, cropId },
+        now
+      );
+      return {
+        cId: cropId,
+        farmlandIndex: place,
+        code: 1,
+        poptype: 1,
+        direction: "",
+        exp: after.farmExperience - before.farmExperience,
+        levelUp: false
+      };
     }
     if (action === "water") return this.#careLand(user, params, "water", now);
     if (action === "clearweed") return this.#careMany(user, params, "remove-weeds", "weed", now);
@@ -2713,6 +2744,7 @@ export class ManorV7FlashAdapter {
   #careLand(user: AccountUserView, params: FlashParams, action: "water", now: number) {
     const place = flashPlace(params.place);
     const ownerId = integer(params.ownerId);
+    const before = this.service.getView(user, now);
     let owner: ManorV7View;
     if (ownerId && ownerId !== stableFlashUserId(user.id)) {
       const friend = this.#friendByFlashId(user, ownerId, now);
@@ -2721,7 +2753,17 @@ export class ManorV7FlashAdapter {
       owner = this.service.performAction(user, { type: action, landId: place + 1 }, now);
     }
     const land = requireLand(owner, place);
-    return { farmlandIndex: place, code: 1, poptype: 1, direction: "浇水成功", money: 0, exp: 2, levelUp: false, humidity: land.watered ? 1 : 0 };
+    const player = this.service.getView(user, now);
+    return {
+      farmlandIndex: place,
+      code: 1,
+      poptype: 1,
+      direction: "浇水成功",
+      money: 0,
+      exp: player.farmExperience - before.farmExperience,
+      levelUp: false,
+      humidity: land.watered ? 1 : 0
+    };
   }
 
   #careMany(
@@ -2733,6 +2775,7 @@ export class ManorV7FlashAdapter {
   ) {
     const ownerId = integer(params.ownerId);
     const responses = flashPlaces(params.place).map((place) => {
+      const before = this.service.getView(user, now);
       let owner: ManorV7View;
       if (ownerId && ownerId !== stableFlashUserId(user.id)) {
         const friend = this.#friendByFlashId(user, ownerId, now);
@@ -2741,10 +2784,11 @@ export class ManorV7FlashAdapter {
         owner = this.service.performAction(user, { type: action, landId: place + 1 }, now);
       }
       const land = requireLand(owner, place);
+      const player = this.service.getView(user, now);
       return {
         code: 1,
         direction: field === "weed" ? "除草成功" : "除虫成功",
-        exp: 2,
+        exp: player.farmExperience - before.farmExperience,
         farmlandIndex: place,
         levelUp: false,
         money: 0,
@@ -2790,7 +2834,7 @@ export class ManorV7FlashAdapter {
       return {
         code: 1,
         direction: "",
-        exp: crop?.experience ?? 0,
+        exp: after.farmExperience - before.farmExperience,
         farmlandIndex: place,
         harvest: Math.max(0, afterAmount - beforeAmount),
         levelUp: false,
@@ -2967,8 +3011,8 @@ function flashRewardItem(reward: ManorV7RewardItem) {
     case "seed": return { eNum: reward.quantity, eParam: reward.sourceId, eType: 1 };
     case "decoration": return { eNum: reward.quantity, eParam: reward.sourceId, eType: 2 };
     case "tool": return { eNum: reward.quantity, eParam: reward.sourceId, eType: 3 };
-    case "coins": return { eNum: reward.quantity, eParam: 0, eType: 6 };
-    case "experience": return { eNum: reward.quantity, eParam: 0, eType: 7 };
+    case "coins": return { eNum: manorV7RewardAmount(reward.quantity), eParam: 0, eType: 6 };
+    case "experience": return { eNum: manorV7RewardAmount(reward.quantity), eParam: 0, eType: 7 };
   }
 }
 
@@ -3054,8 +3098,9 @@ function flashReceivedFlowers(view: ManorV7View) {
 
 function flashDailyPackage(view: ManorV7View, now: number, claimed = false) {
   const alreadyClaimed = view.rewardClaims.dailyPackageDay === manorV7DayKey(now);
+  const rewardCoins = manorV7RewardAmount(300);
   const item = [
-    { cId: 1, eNum: 300, eParam: 1, eType: "6", name: "金币", num: 300, per: "枚", store: "金币账户", type: "6" },
+    { cId: 1, eNum: rewardCoins, eParam: 1, eType: "6", name: "金币", num: rewardCoins, per: "枚", store: "金币账户", type: "6" },
     ...[1, 2, 3, 7].map((toolId) => ({ eNum: 1, eParam: toolId, eType: 3 }))
   ];
   const vipItem = [
@@ -3079,6 +3124,10 @@ function flashDailyPackage(view: ManorV7View, now: number, claimed = false) {
     vipItem: alreadyClaimed && !claimed ? [] : vipItem,
     vipText: "本站账号固定开放 7 级年费 VIP 权益"
   };
+}
+
+function flashSignInRewardName(reward: ReturnType<typeof manorV7DailySignInReward>): string {
+  return reward.kind === "coins" ? `金币 ${manorV7RewardAmount(reward.quantity)}` : reward.name;
 }
 
 function flashSignInStatus(view: ManorV7View, now: number) {
@@ -3745,14 +3794,14 @@ function flashSeedShop(view: ManorV7View) {
       cName: crop.name,
       cType: crop.cropType,
       cropExp: crop.experience,
-      expect: crop.baseYield * manorV7EffectiveCropSalePrice(crop.id, crop.salePrice) * crop.harvestCycles,
+      expect: crop.baseYield * crop.salePrice * crop.harvestCycles,
       growthCycle: crop.growthSeconds,
       high_sale: 0,
       maturingTime: crop.harvestCycles,
       output: crop.baseYield,
       price: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
       ...(crop.isVip ? { isvip: 1 } : {}),
-      sale: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
+      sale: crop.salePrice
     }));
 }
 
@@ -3897,7 +3946,7 @@ function flashProduceInventory(view: ManorV7View) {
         isLock: Number(Boolean(entry.locked)),
         lock: Number(Boolean(entry.locked)),
         level: crop?.originalLevel ?? 0,
-        price: crop ? manorV7EffectiveCropSalePrice(crop.id, crop.salePrice) : 0,
+        price: crop?.salePrice ?? 0,
         type: crop?.cropType ?? 1
       };
     }),

@@ -27,6 +27,7 @@ import {
   startManorV7Production
 } from "./actions.js";
 import { MANOR_V7_WILD_STAY_SECONDS, manorV7WildAnimal } from "./wild.js";
+import { grantManorV7Coins, grantManorV7Experience } from "./economy.js";
 
 export function transitionManorV7FriendStates(
   currentVisitor: ManorV7State,
@@ -248,7 +249,7 @@ export function transitionManorV7FriendStates(
     if (guard && drawManorV7Random(owner) < 0.3) {
       const penalty = Math.min(visitor.coins, 40 + Math.floor(drawManorV7Random(owner) * 41));
       visitor.coins -= penalty;
-      owner.coins += penalty;
+      grantManorV7Coins(owner, penalty);
       animalState.productThiefUserIds.push(visitorUserId);
       message = `被看守员发现，损失 ${penalty} 金币`;
       addManorV7Activity(owner, "pasture", `看守员阻止了${visitorDisplayName}偷取副产品`, now);
@@ -349,7 +350,7 @@ export function transitionManorV7FriendStates(
         1506,
         inventoryQuantity(visitor.pasture.materialInventory, 1506) + rewarded
       );
-      visitor.pastureExperience += rewarded;
+      grantManorV7Experience(visitor, "pasture", rewarded);
     }
     message = rewarded > 0
       ? `帮${ownerDisplayName}清理了 ${quantity} 份便便，获得 ${rewarded} 份便便`
@@ -366,7 +367,7 @@ export function transitionManorV7FriendStates(
     const cost = quantity * MANOR_V7_GRASS_PRICE;
     if (visitor.coins < cost) throw new Error("金币不足");
     visitor.coins -= cost;
-    visitor.pastureExperience += Math.floor(quantity / 10);
+    grantManorV7Experience(visitor, "pasture", Math.floor(quantity / 10));
     owner.pasture.grass = Math.round((owner.pasture.grass + quantity) * 1_000_000) / 1_000_000;
     message = `为${ownerDisplayName}购买了 ${quantity} 棵牧草`;
     addManorV7Activity(owner, "pasture", `${visitorDisplayName}为你购买了 ${quantity} 棵牧草`, now);
@@ -390,7 +391,7 @@ export function transitionManorV7FriendStates(
   if (action.type === "remove-mosquito") {
     if (!owner.pasture.mosquitoes.sourceUserIds.length) throw new Error("牧场没有蚊子");
     owner.pasture.mosquitoes.sourceUserIds.shift();
-    visitor.pastureExperience += 3;
+    grantManorV7Experience(visitor, "pasture", 3);
     message = `帮${ownerDisplayName}拍掉了蚊子`;
     addManorV7Activity(owner, "pasture", `${visitorDisplayName}帮忙拍掉了蚊子`, now);
     addManorV7Activity(visitor, "pasture", message, now);
@@ -400,8 +401,7 @@ export function transitionManorV7FriendStates(
   if (action.type === "catch-mouse") {
     if (!owner.pasture.mousePresent) throw new Error("牧场没有老鼠");
     owner.pasture.mousePresent = false;
-    const reward = 50 + Math.floor(drawManorV7Random(owner) * 51);
-    visitor.coins += reward;
+    const reward = grantManorV7Coins(visitor, 50 + Math.floor(drawManorV7Random(owner) * 51));
     message = `抓到老鼠，获得 ${reward} 金币`;
     addManorV7Activity(owner, "pasture", `${visitorDisplayName}帮忙抓走了老鼠`, now);
     addManorV7Activity(visitor, "pasture", message, now);
@@ -410,7 +410,7 @@ export function transitionManorV7FriendStates(
 
   if (action.type === "start-production") {
     const animal = startManorV7Production(owner, action.serial);
-    visitor.pastureExperience += 2;
+    grantManorV7Experience(visitor, "pasture", 2);
     message = `帮${ownerDisplayName}把${animal.name}送去生产`;
     addManorV7Activity(owner, "pasture", `${visitorDisplayName}帮忙把${animal.name}送去生产`, now);
     addManorV7Activity(visitor, "pasture", message, now);
@@ -429,7 +429,7 @@ export function transitionManorV7FriendStates(
       if (drawManorV7Random(owner) < caughtChance) {
         const penalty = Math.min(visitor.coins, 40 + Math.floor(drawManorV7Random(owner) * 41));
         visitor.coins -= penalty;
-        owner.coins += penalty;
+        grantManorV7Coins(owner, penalty);
         land.thiefUserIds.push(visitorUserId);
         message = `被看门动物发现，损失 ${penalty} 金币`;
         addManorV7Activity(owner, "farm", `看门动物阻止了${visitorDisplayName}摘取果实`, now);
@@ -480,7 +480,7 @@ export function transitionManorV7FriendStates(
     land.pests = false;
     message = `帮${ownerDisplayName}清除了害虫`;
   }
-  visitor.farmExperience += 2;
+  grantManorV7Experience(visitor, "farm", 2);
   addManorV7Activity(owner, "farm", `${visitorDisplayName}${message.slice(ownerDisplayName.length + 1)}`, now);
   addManorV7Activity(visitor, "farm", message, now);
   return finish(currentVisitor, currentOwner, visitor, owner, message, now);

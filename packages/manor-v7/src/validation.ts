@@ -23,6 +23,10 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "sell-produce": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-seed": return { type, cropId: integer(input.cropId), quantity: quantity(input.quantity) };
     case "sell-selected-seeds": return { type, cropIds: integerArray(input.cropIds) };
+    case "sell-all-produce": return {
+      type,
+      ...(input.cropIds === undefined ? {} : { cropIds: integerArray(input.cropIds) })
+    };
     case "set-produce-lock": return { type, cropId: integer(input.cropId), locked: boolean(input.locked) };
     case "unlock-fish":
     case "plant-fish":
@@ -74,7 +78,6 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "claim-daily-package":
     case "record-sign-in-visit":
     case "claim-sign-in":
-    case "sell-all-produce":
     case "sell-all-pasture-products":
     case "clear-mosquito":
     case "catch-own-mouse":

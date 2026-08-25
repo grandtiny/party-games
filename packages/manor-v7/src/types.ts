@@ -427,7 +427,7 @@ export type ManorV7Action =
   | { type: "sell-produce"; cropId: number; quantity: number }
   | { type: "sell-seed"; cropId: number; quantity: number }
   | { type: "sell-selected-seeds"; cropIds: number[] }
-  | { type: "sell-all-produce" }
+  | { type: "sell-all-produce"; cropIds?: number[] }
   | { type: "set-produce-lock"; cropId: number; locked: boolean }
   | { type: "unlock-fish"; fishId: number }
   | { type: "register-fish-pool" }
