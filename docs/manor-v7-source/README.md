@@ -12,11 +12,13 @@ pwsh -NoProfile -File scripts/test-manor-v7-source-inventory.ps1
 
 Files:
 
+- `FEATURE-MATRIX.md`: complete source-project capability matrix with implemented, partial, localized, deferred, and abandoned status.
 - `files.csv`: every V7 module file with hash, domain, category, kind, and integration policy.
 - `categories.csv`: counts and sizes grouped by runtime domain and policy.
 - `duplicates.csv`: byte-identical source files; duplication does not imply that business identities can be merged.
 - `config-files.csv`: the 20 PHP configuration files used only as rule reconstruction inputs.
 - `database-boundary.csv`: the seven mutable player-data tables, all explicitly excluded from migration.
+- `source-protocols.csv`: every farm and pasture entry allowlist module plus source handlers that are missing or unreachable from those allowlists.
 - `summary.csv`: source version and inventory totals.
 - `swf-symbols.csv`: root classes, placed characters, depths, symbols, exports, and bounds for every V7 SWF.
 - `swf-issues.csv`: SWF files that could not be structurally inspected; never silently treated as usable.

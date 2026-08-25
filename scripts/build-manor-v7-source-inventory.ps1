@@ -31,6 +31,8 @@ $moduleRoot = Join-Path $coreRoot "module"
 $configRoot = Join-Path $coreRoot "config"
 $commonPath = Join-Path $coreRoot "common.php"
 $installSqlPath = Join-Path $pluginRoot "install\qfarm.sql"
+$farmEntryPath = Join-Path $coreRoot "mync.php"
+$pastureEntryPath = Join-Path $coreRoot "mymc.php"
 
 $commonSource = Get-Content -LiteralPath $commonPath -Raw
 $versionMatch = [regex]::Match($commonSource, "define\('FARM_VERSION',\s*'(?<version>[^']+)'\)")
@@ -99,6 +101,46 @@ function Get-AssetClassification([string]$RelativePath, [string]$Extension) {
     Kind = $kind
     Policy = $policy
   }
+}
+
+function Get-ProtocolInventory(
+  [string]$Area,
+  [string]$EntryPath,
+  [string]$HandlerDirectory
+) {
+  $entrySource = Get-Content -LiteralPath $EntryPath -Raw -Encoding utf8
+  $allowlistMatch = [regex]::Match($entrySource, '(?s)\$mod_list\s*=\s*array\((?<body>.*?)\);')
+  if (-not $allowlistMatch.Success) {
+    throw "Protocol allowlist was not found in $EntryPath"
+  }
+
+  $declared = @([regex]::Matches($allowlistMatch.Groups["body"].Value, "'(?<module>[^']*)'") | ForEach-Object {
+    $_.Groups["module"].Value
+  } | Where-Object { $_ })
+  $declarationCounts = @{}
+  $declared | ForEach-Object { $declarationCounts[$_] = 1 + [int]$declarationCounts[$_] }
+  $handlers = @(Get-ChildItem -LiteralPath $HandlerDirectory -File -Filter "*.php" | ForEach-Object BaseName)
+
+  return @($declared + $handlers | Sort-Object -Unique | ForEach-Object {
+    $moduleName = $_
+    $allowlisted = $declarationCounts.ContainsKey($moduleName)
+    $handlerExists = $moduleName -in $handlers
+    $sourceCondition = if ($allowlisted -and $handlerExists) {
+      "allowed-handler-present"
+    } elseif ($allowlisted) {
+      "allowed-handler-missing"
+    } else {
+      "handler-not-allowlisted"
+    }
+    [pscustomobject][ordered]@{
+      area = $Area
+      module_name = $moduleName
+      declaration_count = if ($allowlisted) { $declarationCounts[$moduleName] } else { 0 }
+      allowlisted = $allowlisted.ToString().ToLowerInvariant()
+      handler_exists = $handlerExists.ToString().ToLowerInvariant()
+      source_condition = $sourceCondition
+    }
+  })
 }
 
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
@@ -175,6 +217,12 @@ $categoryRows = @($fileRows | Group-Object domain, category, integration_policy 
   }
 } | Sort-Object domain, category, integration_policy)
 
+$protocolRows = @(
+  Get-ProtocolInventory "farm" $farmEntryPath (Join-Path $coreRoot "source\nc\mod")
+  Get-ProtocolInventory "pasture" $pastureEntryPath (Join-Path $coreRoot "source\mc\mod")
+)
+$allowedProtocolRows = @($protocolRows | Where-Object allowlisted -eq "true")
+
 $summaryRows = @(
   [pscustomobject]@{ key = "source_version"; value = $sourceVersion }
   [pscustomobject]@{ key = "source_bundle_sha256"; value = ((Get-FileHash -LiteralPath $commonPath -Algorithm SHA256).Hash.ToLowerInvariant()) }
@@ -188,6 +236,12 @@ $summaryRows = @(
   [pscustomobject]@{ key = "duplicate_groups"; value = @($fileRows | Group-Object sha256 | Where-Object Count -gt 1).Count }
   [pscustomobject]@{ key = "config_files"; value = $configRows.Count }
   [pscustomobject]@{ key = "database_tables"; value = $databaseRows.Count }
+  [pscustomobject]@{ key = "source_protocol_rows"; value = $protocolRows.Count }
+  [pscustomobject]@{ key = "farm_allowed_protocols"; value = @($allowedProtocolRows | Where-Object area -eq "farm").Count }
+  [pscustomobject]@{ key = "pasture_allowed_protocols"; value = @($allowedProtocolRows | Where-Object area -eq "pasture").Count }
+  [pscustomobject]@{ key = "allowed_handlers_missing"; value = @($protocolRows | Where-Object source_condition -eq "allowed-handler-missing").Count }
+  [pscustomobject]@{ key = "handlers_not_allowlisted"; value = @($protocolRows | Where-Object source_condition -eq "handler-not-allowlisted").Count }
+  [pscustomobject]@{ key = "duplicate_protocol_declarations"; value = @($protocolRows | Where-Object { [int]$_.declaration_count -gt 1 }).Count }
 )
 
 $fileRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "files.csv") -NoTypeInformation -Encoding utf8
@@ -195,7 +249,7 @@ $duplicateRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "duplicates
 $configRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "config-files.csv") -NoTypeInformation -Encoding utf8
 $databaseRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "database-boundary.csv") -NoTypeInformation -Encoding utf8
 $categoryRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "categories.csv") -NoTypeInformation -Encoding utf8
+$protocolRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "source-protocols.csv") -NoTypeInformation -Encoding utf8
 $summaryRows | Export-Csv -LiteralPath (Join-Path $OutputDirectory "summary.csv") -NoTypeInformation -Encoding utf8
 
 Write-Host "Inventoried $($fileRows.Count) QQ Farm V7 module files from $sourceVersion"
-
