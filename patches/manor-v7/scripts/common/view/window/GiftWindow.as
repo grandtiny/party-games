@@ -5,7 +5,6 @@ package common.view.window
    import §_-Oq§.§_-Bn§;
    import §_-Oq§.§_-De§;
    import §_-R0§.§_-7S§;
-   import com.qzone.qui.containers.HBox;
    import com.qzone.qui.controls.Button;
    import common.Session;
    import common.Settings;
@@ -44,9 +43,7 @@ package common.view.window
       
       private var _tip:String;
       
-      private var vipGiftList:HBox;
-      
-      private var giftList:HBox;
+      private var rewardGrid:Sprite;
       
       private var vipTextField:TextField;
       
@@ -76,31 +73,8 @@ package common.view.window
       
       public function set giftItemList(param1:Array) : void
       {
-         var _loc4_:GiftItem = null;
-         var _loc5_:* = undefined;
-         var _loc2_:Object = super.data;
-         if(_loc2_ == null)
-         {
-            return;
-         }
-         var _loc3_:Boolean = false;
-         if(_loc2_.hasOwnProperty("big") == true && _loc2_["big"] == true)
-         {
-            _loc3_ = true;
-         }
          this.§_-JI§ = param1;
-         if(this.giftList != null)
-         {
-            this.giftList.removeAllElements();
-            this.giftList.height = _loc3_ ? 140 : 100;
-            _loc4_ = null;
-            for each(_loc5_ in param1)
-            {
-               _loc4_ = new GiftItem(_loc3_);
-               _loc4_.data = _loc5_;
-               this.giftList.addElement(_loc4_);
-            }
-         }
+         this.renderRewardGrid();
       }
       
       override public function onEffectEnd() : void
@@ -155,29 +129,32 @@ package common.view.window
       
       override protected function setSize() : void
       {
-         super.setSize();
+         var _loc1_:Object = super.data;
+         var _loc2_:Boolean = _loc1_ != null && _loc1_.hasOwnProperty("big") && _loc1_["big"] == true;
+         var _loc3_:int = (this.§_-JI§ == null ? 0 : this.§_-JI§.length) + (this.§_-NG§ == null ? 0 : this.§_-NG§.length);
+         var _loc4_:int = Math.ceil(_loc3_ / 3);
+         var _loc5_:Number = _loc2_ ? 140 : 95;
          this.directionTextField.y = 30;
+         this.directionTextField.width = width - 40;
+         this.directionTextField.x = 20;
+         this.vipTextField.width = width - 40;
+         this.vipTextField.x = 20;
+         this.vipTextField.y = this.directionTextField.y + Math.max(18,this.directionTextField.textHeight) + 6;
+         this.rewardGrid.x = 20;
+         this.rewardGrid.y = this.vipTextField.y;
+         if(this.vipTextField.text.length > 0)
+         {
+            this.rewardGrid.y += Math.max(16,this.vipTextField.textHeight) + 8;
+         }
+         height = Math.max(180,this.rewardGrid.y + _loc4_ * _loc5_ + 55);
+         super.setSize();
          this.confirmButton.x = (width - this.confirmButton.width) / 2;
          this.confirmButton.y = height - 40;
-         this.giftList.x = §_-De§.middle(width,this.giftList.width);
-         this.giftList.y = this.directionTextField.y + this.directionTextField.textHeight;
          if(this.txt)
          {
             this.txt.x = §_-De§.middle(width,this.txt.width);
-            this.txt.y = this.giftList.y;
+            this.txt.y = this.rewardGrid.y;
          }
-         this.vipTextField.y = this.giftList.y + this.giftList.height;
-         if(this.vipGiftList.visible == true)
-         {
-            this.vipGiftList.x = §_-De§.middle(width,this.vipGiftList.width);
-            this.vipGiftList.y = this.vipTextField.y + this.vipTextField.textHeight;
-            height = this.vipGiftList.y + this.vipGiftList.height + 50;
-         }
-         else
-         {
-            height = this.vipTextField.y + this.vipTextField.textHeight + 50;
-         }
-         this.confirmButton.y = height - 40;
          if(titleAlign == §_-7S§.CENTER)
          {
             panelTitle.x = §_-De§.middle(_width,panelTitle.width);
@@ -215,16 +192,10 @@ package common.view.window
          this.directionTextField.x = §_-De§.middle(width,this.directionTextField.width);
          this.directionTextField.y = 30;
          addChild(this.directionTextField);
-         this.giftList = new HBox(390,140);
-         this.giftList.§_-4R§ = §_-7S§.CENTER;
-         this.giftList.§_-Wd§ = §_-7S§.§_-8R§;
-         this.giftList.gapH = 35;
-         this.giftList.mouseChildren = false;
-         this.giftList.mouseEnabled = false;
-         this.giftList.horizontalScrollPolicy = "off";
-         this.giftList.verticalScrollPolicy = "off";
-         this.giftList.defaultSkin = null;
-         addChild(this.giftList);
+         this.rewardGrid = new Sprite();
+         this.rewardGrid.mouseChildren = false;
+         this.rewardGrid.mouseEnabled = false;
+         addChild(this.rewardGrid);
          this.vipTextField = new TextField();
          this.vipTextField.selectable = false;
          this.vipTextField.y = 215;
@@ -237,17 +208,6 @@ package common.view.window
          this.vipTextField.wordWrap = true;
          this.vipTextField.multiline = true;
          addChild(this.vipTextField);
-         this.vipGiftList = new HBox(390,140);
-         this.vipGiftList.§_-4R§ = §_-7S§.CENTER;
-         this.vipGiftList.§_-Wd§ = §_-7S§.§_-8R§;
-         this.vipGiftList.gapH = 35;
-         this.vipGiftList.mouseChildren = false;
-         this.vipGiftList.mouseEnabled = false;
-         this.vipGiftList.horizontalScrollPolicy = "off";
-         this.vipGiftList.verticalScrollPolicy = "off";
-         this.vipGiftList.defaultSkin = null;
-         this.vipGiftList.visible = false;
-         addChild(this.vipGiftList);
          this.confirmButton = new Button();
          this.confirmButton.defaultSkin = Utils.getClass("ButtonOrange");
          this.confirmButton.width = 65;
@@ -274,40 +234,49 @@ package common.view.window
       
       public function set vipGiftItemList(param1:Array) : void
       {
-         var _loc4_:GiftItem = null;
-         var _loc5_:* = undefined;
          this.§_-NG§ = param1;
-         if(this.vipGiftList == null)
+         this.renderRewardGrid();
+      }
+
+      private function renderRewardGrid() : void
+      {
+         var _loc1_:Object = null;
+         var _loc2_:Boolean = false;
+         var _loc3_:Array = null;
+         var _loc4_:Number = NaN;
+         var _loc5_:Number = NaN;
+         var _loc6_:Number = NaN;
+         var _loc7_:int = 0;
+         var _loc8_:GiftItem = null;
+         if(this.rewardGrid == null)
          {
             return;
          }
-         var _loc2_:Object = super.data;
-         if(_loc2_ == null)
+         while(this.rewardGrid.numChildren > 0)
          {
-            return;
+            this.rewardGrid.removeChildAt(0);
          }
-         var _loc3_:Boolean = false;
-         if(_loc2_.hasOwnProperty("big") == true && _loc2_["big"] == true)
+         _loc1_ = super.data;
+         _loc2_ = _loc1_ != null && _loc1_.hasOwnProperty("big") && _loc1_["big"] == true;
+         _loc3_ = [];
+         if(this.§_-JI§ != null)
          {
-            _loc3_ = true;
+            _loc3_ = _loc3_.concat(this.§_-JI§);
          }
-         if(param1 != null && param1.length > 0)
+         if(this.§_-NG§ != null)
          {
-            this.vipGiftList.removeAllElements();
-            this.vipGiftList.height = _loc3_ ? 140 : 100;
-            _loc4_ = null;
-            for each(_loc5_ in param1)
-            {
-               _loc4_ = new GiftItem(_loc3_);
-               _loc4_.data = _loc5_;
-               this.vipGiftList.addElement(_loc4_);
-            }
-            this.vipGiftList.visible = true;
+            _loc3_ = _loc3_.concat(this.§_-NG§);
          }
-         else
+         _loc4_ = width - 40;
+         _loc5_ = _loc4_ / 3;
+         _loc6_ = _loc2_ ? 140 : 95;
+         for(_loc7_ = 0; _loc7_ < _loc3_.length; _loc7_++)
          {
-            this.vipGiftList.removeAllElements();
-            this.vipGiftList.visible = false;
+            _loc8_ = new GiftItem(_loc2_);
+            _loc8_.data = _loc3_[_loc7_];
+            _loc8_.x = _loc7_ % 3 * _loc5_ + (_loc5_ - (_loc2_ ? 120 : 108)) / 2;
+            _loc8_.y = Math.floor(_loc7_ / 3) * _loc6_;
+            this.rewardGrid.addChild(_loc8_);
          }
       }
       
@@ -366,6 +335,7 @@ package common.view.window
                width = 385;
             }
          }
+         this.renderRewardGrid();
          this.setSize();
       }
       

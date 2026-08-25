@@ -89,13 +89,13 @@ if (@($featureRows | Where-Object status -notin $allowedFeatureStatuses).Count -
   throw "Feature matrix contains an unknown status"
 }
 $expectedStatusCounts = @{
-  "已实现" = 112
-  "部分实现" = 12
+  "已实现" = 114
+  "部分实现" = 11
   "特殊实现" = 23
-  "未实现" = 35
-  "放弃" = 44
-  "待确认" = 3
-  "源残留" = 6
+  "未实现" = 34
+  "放弃" = 45
+  "待确认" = 1
+  "源残留" = 7
 }
 foreach ($status in $expectedStatusCounts.Keys) {
   $actualCount = @($featureRows | Where-Object status -eq $status).Count
