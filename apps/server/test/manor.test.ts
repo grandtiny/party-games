@@ -428,11 +428,14 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(shop.statusCode, shop.body).toBe(200);
-      expect(shop.json()).toHaveLength(12);
+      expect(shop.json()).toHaveLength(15);
       expect((shop.json() as Array<{ fid: number }>).some((fish) => fish.fid === 15)).toBe(false);
       expect(shop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ fid: 2, lock: 2, type: 23 }),
-        expect.objectContaining({ fid: 16, lock: 1, type: 23 })
+        expect.objectContaining({ fid: 11, lock: 2, type: 23 }),
+        expect.objectContaining({ fid: 14, lock: 2, type: 23 }),
+        expect.objectContaining({ fid: 16, lock: 1, type: 23 }),
+        expect.objectContaining({ fid: 17, lock: 1, type: 23 })
       ]));
 
       const unlocked = await instance.app.inject({

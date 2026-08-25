@@ -174,7 +174,7 @@ const animals = entries(config.animals).map(({ key, body }) => {
 });
 
 const fishAssetDirectory = join(moduleRoot, "ui", "farm", "fish");
-const fishFiles = new Set(awaitImportFs.readdirSync(fishAssetDirectory));
+const fishFiles = new Set(awaitImportFs.readdirSync(fishAssetDirectory).map((name) => name.toLowerCase()));
 const fish = entries(config.fish).map(({ key, body }) => {
   const id = Number(field(body, "id", String(key)));
   const cycles = numberArray(body, "cycle");
@@ -183,7 +183,7 @@ const fish = entries(config.fish).map(({ key, body }) => {
   const visible = field(body, "show", "0") === "1";
   const hasFishAsset = fishFiles.has(`fish_${String(id).padStart(2, "0")}.swf`);
   const hasSeedAsset = fishFiles.has(`fish_seed_${String(id).padStart(2, "0")}.swf`);
-  const integrationPolicy = id === 1 ? "excluded-test" : hidden || !visible ? "excluded-hidden" : hasFishAsset && hasSeedAsset ? "core-candidate" : "blocked-assets";
+  const integrationPolicy = id === 1 ? "excluded-test" : hidden ? "excluded-hidden" : hasFishAsset && hasSeedAsset ? "core-candidate" : "blocked-assets";
   return {
     source_id: id,
     name: field(body, "crop_name"),

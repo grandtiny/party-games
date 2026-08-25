@@ -26101,6 +26101,25 @@ export const MANOR_V7_FISH = [
     "salePrice": 145
   },
   {
+    "id": 11,
+    "name": "彩虹鱼",
+    "cycleSeconds": [
+      43200,
+      93600,
+      151200
+    ],
+    "experience": 65,
+    "unlockCrystalType": 1,
+    "unlockCrystalAmount": 50,
+    "unlockCoins": 250000,
+    "matureHours": 42,
+    "baseYield": 28,
+    "poolSize": 1,
+    "isHidden": false,
+    "seedPrice": 1550,
+    "salePrice": 120
+  },
+  {
     "id": 12,
     "name": "宽带蝴蝶鱼",
     "cycleSeconds": [
@@ -26139,6 +26158,25 @@ export const MANOR_V7_FISH = [
     "salePrice": 350
   },
   {
+    "id": 14,
+    "name": "海豚",
+    "cycleSeconds": [
+      57600,
+      129600,
+      244800
+    ],
+    "experience": 285,
+    "unlockCrystalType": 0,
+    "unlockCrystalAmount": 0,
+    "unlockCoins": 500000,
+    "matureHours": 68,
+    "baseYield": 25,
+    "poolSize": 3,
+    "isHidden": false,
+    "seedPrice": 8200,
+    "salePrice": 700
+  },
+  {
     "id": 15,
     "name": "团圆鱼",
     "cycleSeconds": [
@@ -26175,6 +26213,25 @@ export const MANOR_V7_FISH = [
     "isHidden": false,
     "seedPrice": 1660,
     "salePrice": 115
+  },
+  {
+    "id": 17,
+    "name": "金鱼",
+    "cycleSeconds": [
+      28800,
+      57600,
+      90000
+    ],
+    "experience": 45,
+    "unlockCrystalType": 0,
+    "unlockCrystalAmount": 0,
+    "unlockCoins": 0,
+    "matureHours": 25,
+    "baseYield": 30,
+    "poolSize": 1,
+    "isHidden": false,
+    "seedPrice": 800,
+    "salePrice": 100
   }
 ] as const satisfies readonly ManorV7FishDefinition[];
 

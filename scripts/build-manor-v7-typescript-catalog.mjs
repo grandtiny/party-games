@@ -48,7 +48,6 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
-const specialFishIds = new Set([15]);
 const timings = new Map(
   parseCsv("catalog-timings.csv")
     .filter((row) => row.domain === "farm")
@@ -146,7 +145,9 @@ const landUpgrades = parseCsv("catalog-land-upgrades.csv").map((row) => ({
 }));
 
 const fish = parseCsv("catalog-fish.csv")
-  .filter((row) => row.integration_policy === "core-candidate" || specialFishIds.has(number(row.source_id)))
+  .filter((row) => (
+    number(row.source_id) !== 1 && bool(row.has_fish_asset) && bool(row.has_seed_asset)
+  ))
   .map((row) => ({
     id: number(row.source_id),
     name: row.name,

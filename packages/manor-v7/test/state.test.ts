@@ -58,7 +58,7 @@ describe("QQ Farm V7 domain", () => {
     expect(MANOR_V7_ANIMALS).toHaveLength(177);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(631);
-    expect(MANOR_V7_FISH).toHaveLength(13);
+    expect(MANOR_V7_FISH).toHaveLength(16);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
@@ -69,7 +69,13 @@ describe("QQ Farm V7 domain", () => {
         ...MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS
       ])
     );
-    expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
+    expect(MANOR_V7_FISH.filter((fish) => fish.isHidden)).toEqual([
+      expect.objectContaining({ id: 15, name: "团圆鱼" })
+    ]);
+    expect(manorV7Fish(11)).toMatchObject({ name: "彩虹鱼", isHidden: false });
+    expect(manorV7Fish(14)).toMatchObject({ name: "海豚", poolSize: 3, isHidden: false });
+    expect(manorV7Fish(17)).toMatchObject({ name: "金鱼", isHidden: false });
+    expect(() => manorV7Fish(1)).toThrow("鱼种不存在或未接入 V7 素材");
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
     expect(manorV7Crop(9)).toMatchObject({ name: "辣椒", seedPrice: 296, harvestCycles: 1 });
     expect(manorV7Crop(450)).toMatchObject({ name: "火舞草", originalLevel: 5, seedPrice: 210 });
