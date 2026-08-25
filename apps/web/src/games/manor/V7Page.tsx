@@ -1,4 +1,4 @@
-import { Camera, FlaskConical, LoaderCircle, PawPrint, Sprout } from "lucide-react";
+import { Camera, FlaskConical, LoaderCircle, PawPrint, Sprout, Volume2, VolumeX } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { getPlatformStatus } from "../../api";
 import { useAccount } from "../../platform/AccountContext";
@@ -15,12 +15,15 @@ const ManorTestTools = lazy(async () => {
   return { default: module.ManorTestTools };
 });
 
+const MANOR_MUTED_STORAGE_KEY = "party-games:manor-muted";
+
 export function ManorV7Page() {
   const { status: accountStatus } = useAccount();
   const playerRef = useRef<ManorRufflePlayerHandle>(null);
   const [scene, setScene] = useState<ManorRuffleScene>("farm");
   const [refreshToken, setRefreshToken] = useState(0);
   const [sceneReady, setSceneReady] = useState(false);
+  const [muted, setMuted] = useState(readManorMuted);
   const [snapshotPending, setSnapshotPending] = useState(false);
   const [snapshotNotice, setSnapshotNotice] = useState<{ kind: "success" | "error"; message: string }>();
   const [testToolsAvailable, setTestToolsAvailable] = useState(false);
@@ -28,6 +31,7 @@ export function ManorV7Page() {
   const canUseTestTools = testToolsAvailable && accountStatus?.user?.role === "owner";
 
   useEffect(() => installLegacyNavigationBridge(setScene), []);
+  useEffect(() => persistManorMuted(muted), [muted]);
   useEffect(() => {
     let active = true;
     void getPlatformStatus()
@@ -79,6 +83,16 @@ export function ManorV7Page() {
           >
             {snapshotPending ? <LoaderCircle className="is-spinning" size={18} /> : <Camera size={18} />}
           </button>
+          <button
+            className="manor-sound-button"
+            type="button"
+            aria-label={muted ? "开启庄园声音" : "关闭庄园声音"}
+            aria-pressed={muted}
+            title={muted ? "开启庄园声音" : "关闭庄园声音"}
+            onClick={() => setMuted((value) => !value)}
+          >
+            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
           {canUseTestTools ? (
             <button
               className="manor-test-toggle"
@@ -107,12 +121,29 @@ export function ManorV7Page() {
         <ManorRufflePlayer
           ref={playerRef}
           scene={scene}
+          muted={muted}
           refreshToken={refreshToken}
           onReadyChange={setSceneReady}
         />
       </div>
     </AppShell>
   );
+}
+
+function readManorMuted(): boolean {
+  try {
+    return window.localStorage.getItem(MANOR_MUTED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function persistManorMuted(muted: boolean): void {
+  try {
+    window.localStorage.setItem(MANOR_MUTED_STORAGE_KEY, String(muted));
+  } catch {
+    // Private browsing or storage policies must not prevent the game from loading.
+  }
 }
 
 function downloadBlob(blob: Blob, fileName: string): void {

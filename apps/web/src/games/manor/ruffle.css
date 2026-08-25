@@ -70,6 +70,16 @@
   padding: 0;
 }
 
+.manor-scene-tabs .manor-sound-button {
+  min-width: 44px;
+  padding: 0;
+}
+
+.manor-scene-tabs .manor-sound-button[aria-pressed="true"] {
+  color: #fff;
+  background: #695b46;
+}
+
 .manor-scene-tabs .manor-snapshot-button:disabled {
   cursor: wait;
   opacity: 0.5;

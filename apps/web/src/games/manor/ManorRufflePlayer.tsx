@@ -5,9 +5,12 @@ const RUFFLE_SCRIPT = "/vendor/ruffle/ruffle.js";
 const MODULE_ROOT = "/module";
 
 type RufflePlayerElement = HTMLElement & {
-  ruffle(): {
-    load(options: Record<string, unknown>): Promise<void>;
-  };
+  ruffle(): RufflePlayerController;
+};
+
+interface RufflePlayerController {
+  load(options: Record<string, unknown>): Promise<void>;
+  volume: number;
 };
 
 interface RuffleRuntime {
@@ -33,12 +36,14 @@ export interface ManorRufflePlayerHandle {
 
 interface ManorRufflePlayerProps {
   scene: ManorRuffleScene;
+  muted?: boolean;
   refreshToken?: number;
   onReadyChange?: (ready: boolean) => void;
 }
 
 export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRufflePlayerProps>(function ManorRufflePlayer({
   scene,
+  muted = false,
   refreshToken = 0,
   onReadyChange
 }, ref) {
@@ -47,6 +52,7 @@ export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRuffle
   const loadQueueRef = useRef<Promise<void>>(Promise.resolve());
   const generationRef = useRef(0);
   const mountedRef = useRef(true);
+  const mutedRef = useRef(muted);
   const [reloadToken, setReloadToken] = useState(0);
   const [error, setError] = useState<string>();
 
@@ -59,6 +65,12 @@ export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRuffle
       return captureCanvasPng(canvas);
     }
   }), []);
+
+  useEffect(() => {
+    mutedRef.current = muted;
+    const player = playerRef.current;
+    if (player) player.ruffle().volume = muted ? 0 : 1;
+  }, [muted]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -95,7 +107,9 @@ export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRuffle
       player.setAttribute("aria-label", `QQ${scene === "farm" ? "农场" : "牧场"} 7.0 游戏场景`);
       delete player.dataset.ruffleLoaded;
 
-      await player.ruffle().load({
+      const controller = player.ruffle();
+      controller.volume = mutedRef.current ? 0 : 1;
+      await controller.load({
         url: scene === "farm" ? `${MODULE_ROOT}/happyfarm3_v_101.swf` : `${MODULE_ROOT}/mcloader_v_28.swf`,
         parameters: scene === "farm" ? farmParameters() : pastureParameters(),
         autoplay: "on",
@@ -107,6 +121,7 @@ export const ManorRufflePlayer = forwardRef<ManorRufflePlayerHandle, ManorRuffle
         scale: "showAll",
         deviceFontRenderer: "canvas"
       });
+      controller.volume = mutedRef.current ? 0 : 1;
       if (mountedRef.current && generationRef.current === generation) {
         player.dataset.ruffleLoaded = "true";
         onReadyChange?.(true);
