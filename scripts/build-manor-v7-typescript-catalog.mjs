@@ -48,22 +48,6 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
-const specialAnimalIds = new Set([
-  1037,
-  1055,
-  1056,
-  1085,
-  1086,
-  1096,
-  1097,
-  1098,
-  1537,
-  1546,
-  1593,
-  1598,
-  1600,
-  1601
-]);
 const specialFishIds = new Set([15]);
 const timings = new Map(
   parseCsv("catalog-timings.csv")
@@ -92,9 +76,8 @@ const crops = parseCsv("catalog-crops.csv")
   }));
 
 const animals = parseCsv("catalog-animals.csv")
-  .filter((row) => (
-    row.integration_policy === "core-candidate" || specialAnimalIds.has(number(row.source_id))
-  ))
+  // The original pasture runtime needs both animation bundles for all six lifecycle states.
+  .filter((row) => row.asset_status === "complete-two-parts")
   .map((row) => {
     const maturitySeconds = number(row.maturity_seconds);
     const productionSeconds = number(row.production_seconds);

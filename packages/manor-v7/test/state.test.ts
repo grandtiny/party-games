@@ -48,19 +48,26 @@ const MANOR_V7_EXCLUDED_CROP_IDS = [
   262, 567, 570, 572,
   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
 ] as const;
+const MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS = [
+  1028, 1029, 1043, 1044, 1045, 1535, 1536, 1541, 1543, 1544
+] as const;
 
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
     expect(MANOR_V7_CROPS).toHaveLength(577);
-    expect(MANOR_V7_ANIMALS).toHaveLength(167);
+    expect(MANOR_V7_ANIMALS).toHaveLength(177);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
     expect(MANOR_V7_DECORATIONS).toHaveLength(631);
     expect(MANOR_V7_FISH).toHaveLength(13);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
+    expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden)).toHaveLength(24);
     expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden).map((animal) => animal.id)).toEqual(
-      expect.arrayContaining([1037, 1085, 1086, 1537, 1546, 1593])
+      expect.arrayContaining([
+        1037, 1085, 1086, 1537, 1546, 1593,
+        ...MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS
+      ])
     );
     expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
@@ -69,6 +76,12 @@ describe("QQ Farm V7 domain", () => {
     for (const cropId of MANOR_V7_EXCLUDED_CROP_IDS) {
       expect(() => manorV7Crop(cropId)).toThrow("作物不存在或未接入 V7 素材");
     }
+    for (const animalId of MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS) {
+      expect(manorV7Animal(animalId).isHidden).toBe(true);
+    }
+    expect(manorV7Animal(1028)).toMatchObject({ name: "喜鹊", byproductName: "喜鹊崽" });
+    expect(manorV7Animal(1544)).toMatchObject({ name: "白鹭", byproductName: "白鹭崽" });
+    expect(() => manorV7Animal(1565)).toThrow("动物不存在或未接入 V7 素材");
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
       house: "hutch",

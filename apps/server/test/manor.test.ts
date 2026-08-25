@@ -2128,7 +2128,15 @@ describe("QQ Farm V7 account persistence", () => {
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
       expect(initial.json().catalogs.crops).toHaveLength(577);
       expect(initial.json().catalogs.crops.filter((crop: { isHidden?: boolean }) => crop.isHidden)).toHaveLength(88);
-      expect(initial.json().catalogs.animals).toHaveLength(167);
+      expect(initial.json().catalogs.animals).toHaveLength(177);
+      expect(initial.json().catalogs.animals.filter((animal: { isHidden?: boolean }) => animal.isHidden)).toHaveLength(24);
+      expect(initial.json().catalogs.animals).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 1028, name: "喜鹊", isHidden: true }),
+        expect.objectContaining({ id: 1544, name: "白鹭", isHidden: true })
+      ]));
+      expect(initial.json().catalogs.animals).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 1565 })
+      ]));
       expect(initial.json().catalogs.tools).toHaveLength(91);
       expect(initial.json().catalogs.decorations).toHaveLength(631);
 
@@ -2146,6 +2154,19 @@ describe("QQ Farm V7 account persistence", () => {
       expect(seedShop.json()).not.toEqual(expect.arrayContaining([
         expect.objectContaining({ cId: 262 }),
         expect.objectContaining({ cId: 2001 })
+      ]));
+
+      const animalShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_animals",
+        headers: { cookie }
+      });
+      expect(animalShop.statusCode, animalShop.body).toBe(200);
+      expect(animalShop.json()).toHaveLength(153);
+      expect(animalShop.json()).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 1028 }),
+        expect.objectContaining({ cId: 1544 }),
+        expect.objectContaining({ cId: 1565 })
       ]));
 
       const cared = await first.app.inject({
