@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
+import { MANOR_V7_MATURITY_TIME_DIVISOR } from "@party-games/manor-v7";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import {
   AccountBootstrapRequestSchema,
@@ -1084,7 +1085,9 @@ export async function createApp(options: AppOptions) {
         "mccard_zh_CN_v_20120209.xml"
       ].flatMap((fileName) => {
         const filePath = resolve(manorV7ConfigPath, fileName);
-        return existsSync(filePath) ? [[fileName, readFileSync(filePath, "utf8")] as const] : [];
+        return existsSync(filePath)
+          ? [[fileName, localizeManorV7FlashConfig(fileName, readFileSync(filePath, "utf8"))] as const]
+          : [];
       })
     );
     if (manorV7ConfigTemplates.size) {
@@ -1150,6 +1153,49 @@ export async function createApp(options: AppOptions) {
     accountService,
     manorService
   };
+}
+
+function localizeManorV7FlashConfig(fileName: string, template: string): string {
+  if (fileName === "data_zh_CN_v_20120209.xml") {
+    return template
+      .replace(/("cropGrow"\s*:\s*")([^"]+)(")/gu, (_match, prefix, value, suffix) =>
+        `${prefix}${scaleFlashSecondsList(String(value), true)}${suffix}`
+      )
+      .replace(/("cycle"\s*:\s*")([^"]+)(")/gu, (_match, prefix, value, suffix) =>
+        `${prefix}${scaleFlashSecondsList(String(value))}${suffix}`
+      )
+      .replace(/("mature"\s*:\s*)([0-9.]+)/gu, (_match, prefix, value) =>
+        `${prefix}${Math.max(1 / 3_600, Number(value) / MANOR_V7_MATURITY_TIME_DIVISOR)}`
+      );
+  }
+  if (fileName === "mcdata_zh_CN_v_20120209.xml") {
+    return template.replace(/(<nextTime\s+value=")([^"]+)(")/gu, (_match, prefix, value, suffix) => {
+      const times = String(value).split(",").map((part) => Number.parseInt(part, 10));
+      if (times.length !== 6 || times.some((seconds) => !Number.isFinite(seconds))) return String(_match);
+      const originalMaturity = times[0]! + times[1]!;
+      const scaledCub = scaleFlashSeconds(times[0]!);
+      const scaledMaturity = scaleFlashSeconds(originalMaturity);
+      const scaledYoung = Math.max(1, scaledMaturity - scaledCub);
+      const scaledLifecycle = Math.max(scaledMaturity, times[5]! - originalMaturity + scaledMaturity);
+      return `${prefix}${[scaledCub, scaledYoung, times[2], times[3], times[4], scaledLifecycle].join(",")}${suffix}`;
+    });
+  }
+  return template;
+}
+
+function scaleFlashSecondsList(value: string, preserveSentinels = false): string {
+  return value
+    .split(",")
+    .map((part) => {
+      const seconds = Number.parseInt(part, 10);
+      if (!Number.isFinite(seconds) || preserveSentinels && seconds >= 1_000_000_000) return part;
+      return String(scaleFlashSeconds(seconds));
+    })
+    .join(",");
+}
+
+function scaleFlashSeconds(seconds: number): number {
+  return Math.max(1, Math.ceil(seconds / MANOR_V7_MATURITY_TIME_DIVISOR));
 }
 
 function messageOf(error: unknown): string {

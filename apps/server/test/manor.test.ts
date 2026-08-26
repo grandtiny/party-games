@@ -91,6 +91,14 @@ describe("QQ Farm V7 account persistence", () => {
       join(configPath, "load_main_v_20120209.xml"),
       '<data module="__MANOR_ORIGIN__/module/test.swf" api="__MANOR_ORIGIN__/api/manor/flash/farm?" />'
     );
+    writeFileSync(
+      join(configPath, "data_zh_CN_v_20120209.xml"),
+      '<data>{"cropGrow": "14400,28800,46800,64800,86400,2000000000", "cycle": "21600,50400,82800", "mature": 23}</data>'
+    );
+    writeFileSync(
+      join(configPath, "mcdata_zh_CN_v_20120209.xml"),
+      '<animals><animal><nextTime value="18000,18000,129600,15,28785,165600" /></animal></animals>'
+    );
     writeFileSync(join(modulePath, "test.swf"), "swf-test");
 
     const instance = await createApp({
@@ -109,6 +117,24 @@ describe("QQ Farm V7 account persistence", () => {
       expect(config.body).toContain('module="http://127.0.0.1:18081/module/test.swf"');
       expect(config.body).toContain('api="http://127.0.0.1:18081/api/manor/flash/farm?"');
       expect(config.body).not.toContain("__MANOR_ORIGIN__");
+
+      const cropConfig = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/config/data_zh_CN_v_20120209.xml",
+        headers: { host: "127.0.0.1:18081" }
+      });
+      expect(cropConfig.statusCode, cropConfig.body).toBe(200);
+      expect(cropConfig.body).toContain('"cropGrow": "4800,9600,15600,21600,28800,2000000000"');
+      expect(cropConfig.body).toContain('"cycle": "7200,16800,27600"');
+      expect(cropConfig.body).toContain('"mature": 7.666666666666667');
+
+      const animalConfig = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/config/mcdata_zh_CN_v_20120209.xml",
+        headers: { host: "127.0.0.1:18081" }
+      });
+      expect(animalConfig.statusCode, animalConfig.body).toBe(200);
+      expect(animalConfig.body).toContain('nextTime value="6000,6000,129600,15,28785,141600"');
 
       const module = await instance.app.inject({ method: "GET", url: "/module/test.swf" });
       expect(module.statusCode, module.body).toBe(200);
@@ -786,6 +812,9 @@ describe("QQ Farm V7 account persistence", () => {
         }
       });
       expect(fertilized.json().status).not.toHaveProperty("a");
+      expect(fertilized.json().status.updateTime - fertilized.json().status.plantTime).toBe(
+        instance.repository.getManorV7State(owner.userId)!.farm.lands[0]!.growthSeconds
+      );
 
       const shop = await instance.app.inject({
         method: "GET",
