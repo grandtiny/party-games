@@ -124,7 +124,7 @@ export function isManorV7RewardAvailable(reward: ManorV7RewardItem): boolean {
       toolDefinition.area === reward.area && toolDefinition.id === reward.sourceId
     ));
     case "decoration": return MANOR_V7_DECORATIONS.some((item) => (
-      item.area === reward.area && item.id === reward.sourceId
+      item.area === reward.area && item.id === reward.sourceId && item.isRenderable
     ));
     case "coins":
     case "experience":

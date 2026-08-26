@@ -48,41 +48,14 @@ function parseCsv(name) {
 
 const number = (value) => Number(value || 0);
 const bool = (value) => value === "true";
-const specialCropIds = new Set([448, 450]);
-const specialAnimalIds = new Set([
-  1037,
-  1055,
-  1056,
-  1085,
-  1086,
-  1096,
-  1097,
-  1098,
-  1537,
-  1546,
-  1593,
-  1598,
-  1600,
-  1601
-]);
-const specialFishIds = new Set([15]);
 const timings = new Map(
   parseCsv("catalog-timings.csv")
     .filter((row) => row.domain === "farm")
     .map((row) => [number(row.source_id), row.values.split(";").map(number).slice(0, 5)])
 );
 const crops = parseCsv("catalog-crops.csv")
-  .filter((row) =>
-    row.integration_policy === "core-candidate" ||
-    specialCropIds.has(number(row.source_id)) ||
-    (bool(row.hidden) && number(row.asset_files) >= 4) ||
-    (
-      row.integration_policy === "blocked-assets" &&
-      number(row.asset_files) >= 4 &&
-      (number(row.land_requirement) === 2 || bool(row.vip_only)) &&
-      !bool(row.hidden)
-    )
-  )
+  // The original SWF runtime supports crops without optional sprout or withered assets.
+  .filter((row) => number(row.crop_type) === 1 && number(row.asset_files) >= 4)
   .map((row) => ({
     id: number(row.source_id),
     name: row.name,
@@ -102,9 +75,8 @@ const crops = parseCsv("catalog-crops.csv")
   }));
 
 const animals = parseCsv("catalog-animals.csv")
-  .filter((row) => (
-    row.integration_policy === "core-candidate" || specialAnimalIds.has(number(row.source_id))
-  ))
+  // The original pasture runtime needs both animation bundles for all six lifecycle states.
+  .filter((row) => row.asset_status === "complete-two-parts")
   .map((row) => {
     const maturitySeconds = number(row.maturity_seconds);
     const productionSeconds = number(row.production_seconds);
@@ -149,8 +121,18 @@ const tools = parseCsv("catalog-tools.csv")
     available: bool(row.available)
   }));
 
+const avatars = parseCsv("catalog-avatars.csv")
+  .filter((row) => row.asset_status === "complete" && number(row.source_status) === 1)
+  .map((row) => ({
+    id: number(row.source_id),
+    sex: row.sex,
+    displayOrder: number(row.display_order),
+    assetPath: row.asset_path,
+    width: number(row.width),
+    height: number(row.height)
+  }));
+
 const decorations = parseCsv("catalog-decorations.csv")
-  .filter((row) => row.integration_policy === "deferred-cosmetic")
   .map((row) => ({
     area: row.area,
     id: number(row.source_id),
@@ -161,7 +143,9 @@ const decorations = parseCsv("catalog-decorations.csv")
     coinPrice: number(row.coin_price),
     premiumPrice: number(row.premium_price),
     experience: number(row.experience),
-    validSeconds: number(row.valid_seconds)
+    validSeconds: number(row.valid_seconds),
+    isHidden: bool(row.hidden),
+    isRenderable: row.asset_status === "complete"
   }));
 
 const landUpgrades = parseCsv("catalog-land-upgrades.csv").map((row) => ({
@@ -173,7 +157,9 @@ const landUpgrades = parseCsv("catalog-land-upgrades.csv").map((row) => ({
 }));
 
 const fish = parseCsv("catalog-fish.csv")
-  .filter((row) => row.integration_policy === "core-candidate" || specialFishIds.has(number(row.source_id)))
+  .filter((row) => (
+    number(row.source_id) !== 1 && bool(row.has_fish_asset) && bool(row.has_seed_asset)
+  ))
   .map((row) => ({
     id: number(row.source_id),
     name: row.name,
@@ -191,14 +177,15 @@ const fish = parseCsv("catalog-fish.csv")
   }));
 
 const output = `// Generated from docs/manor-v7-source. Do not edit by hand.\n` +
-  `import type { ManorV7AnimalDefinition, ManorV7CropDefinition, ManorV7DecorationDefinition, ManorV7FishDefinition, ManorV7LandUpgradeDefinition, ManorV7ToolDefinition } from "./types.js";\n\n` +
+  `import type { ManorV7AnimalDefinition, ManorV7AvatarDefinition, ManorV7CropDefinition, ManorV7DecorationDefinition, ManorV7FishDefinition, ManorV7LandUpgradeDefinition, ManorV7ToolDefinition } from "./types.js";\n\n` +
   `export const MANOR_V7_CROPS = ${JSON.stringify(crops, null, 2)} as const satisfies readonly ManorV7CropDefinition[];\n\n` +
   `export const MANOR_V7_ANIMALS = ${JSON.stringify(animals, null, 2)} as const satisfies readonly ManorV7AnimalDefinition[];\n\n` +
   `export const MANOR_V7_TOOLS = ${JSON.stringify(tools, null, 2)} as const satisfies readonly ManorV7ToolDefinition[];\n\n` +
+  `export const MANOR_V7_AVATARS = ${JSON.stringify(avatars, null, 2)} as const satisfies readonly ManorV7AvatarDefinition[];\n\n` +
   `export const MANOR_V7_DECORATIONS = ${JSON.stringify(decorations, null, 2)} as const satisfies readonly ManorV7DecorationDefinition[];\n\n` +
   `export const MANOR_V7_FISH = ${JSON.stringify(fish, null, 2)} as const satisfies readonly ManorV7FishDefinition[];\n\n` +
   `export const MANOR_V7_LAND_UPGRADES = ${JSON.stringify(landUpgrades, null, 2)} as const satisfies readonly ManorV7LandUpgradeDefinition[];\n`;
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, output, "utf8");
-console.log(`Generated ${crops.length} crops, ${animals.length} animals, ${fish.length} fish, ${tools.length} tools, ${decorations.length} decorations and ${landUpgrades.length} land upgrades`);
+console.log(`Generated ${crops.length} crops, ${animals.length} animals, ${fish.length} fish, ${tools.length} tools, ${avatars.length} avatars, ${decorations.length} decorations and ${landUpgrades.length} land upgrades`);

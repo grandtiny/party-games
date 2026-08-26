@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { brotliCompressSync } from "node:zlib";
 import {
   MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  MANOR_V7_LAND_EXPANSION_FUND_COINS,
+  MANOR_V7_LAND_EXPANSION_FUND_LEVEL,
   MANOR_V7_LOVESDAY_ANIMAL_ID,
   MANOR_V7_LOVESDAY_CROP_ID,
   MANOR_V7_LOVESDAY_SALE_MULTIPLIER,
@@ -12,6 +14,7 @@ import {
   manorV7DayKey,
   manorV7ExperienceForLevel,
   manorV7Fish,
+  manorV7RewardAmount,
   type ManorV7State
 } from "@party-games/manor-v7";
 import { describe, expect, it } from "vitest";
@@ -88,6 +91,14 @@ describe("QQ Farm V7 account persistence", () => {
       join(configPath, "load_main_v_20120209.xml"),
       '<data module="__MANOR_ORIGIN__/module/test.swf" api="__MANOR_ORIGIN__/api/manor/flash/farm?" />'
     );
+    writeFileSync(
+      join(configPath, "data_zh_CN_v_20120209.xml"),
+      '<data>{"cropGrow": "14400,28800,46800,64800,86400,2000000000", "cycle": "21600,50400,82800", "mature": 23}</data>'
+    );
+    writeFileSync(
+      join(configPath, "mcdata_zh_CN_v_20120209.xml"),
+      '<animals><animal><nextTime value="18000,18000,129600,15,28785,165600" /></animal></animals>'
+    );
     writeFileSync(join(modulePath, "test.swf"), "swf-test");
 
     const instance = await createApp({
@@ -106,6 +117,24 @@ describe("QQ Farm V7 account persistence", () => {
       expect(config.body).toContain('module="http://127.0.0.1:18081/module/test.swf"');
       expect(config.body).toContain('api="http://127.0.0.1:18081/api/manor/flash/farm?"');
       expect(config.body).not.toContain("__MANOR_ORIGIN__");
+
+      const cropConfig = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/config/data_zh_CN_v_20120209.xml",
+        headers: { host: "127.0.0.1:18081" }
+      });
+      expect(cropConfig.statusCode, cropConfig.body).toBe(200);
+      expect(cropConfig.body).toContain('"cropGrow": "4800,9600,15600,21600,28800,2000000000"');
+      expect(cropConfig.body).toContain('"cycle": "7200,16800,27600"');
+      expect(cropConfig.body).toContain('"mature": 7.666666666666667');
+
+      const animalConfig = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/config/mcdata_zh_CN_v_20120209.xml",
+        headers: { host: "127.0.0.1:18081" }
+      });
+      expect(animalConfig.statusCode, animalConfig.body).toBe(200);
+      expect(animalConfig.body).toContain('nextTime value="6000,6000,129600,15,28785,141600"');
 
       const module = await instance.app.inject({ method: "GET", url: "/module/test.swf" });
       expect(module.statusCode, module.body).toBe(200);
@@ -208,10 +237,15 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(seedShop.statusCode, seedShop.body).toBe(200);
-      expect(seedShop.json()).toHaveLength(317);
+      expect(seedShop.json()).toHaveLength(489);
       expect(seedShop.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ cId: 1, cName: "草莓", price: 605, sale: 27 }),
-        expect.objectContaining({ cId: 450, cName: "火舞草", price: 210, sale: 15 }),
+        expect.objectContaining({ cId: 1, cName: "草莓", price: 605, sale: manorV7RewardAmount(27) }),
+        expect.objectContaining({
+          cId: 450,
+          cName: "火舞草",
+          price: 210,
+          sale: manorV7RewardAmount(15)
+        }),
         expect.objectContaining({ cId: 460, cName: "园艺熊猫" }),
         expect.objectContaining({ cId: 601, cName: "园艺海星" })
       ]));
@@ -268,6 +302,34 @@ describe("QQ Farm V7 account persistence", () => {
       expect(selectedAvatar.statusCode, selectedAvatar.body).toBe(200);
       expect(selectedAvatar.json()).toEqual({ code: "1", id: 515000 });
 
+      const invalidAvatar = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=item&act=activeitem",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "mod=qqshow&act=activeItem&id=1"
+      });
+      expect(invalidAvatar.statusCode, invalidAvatar.body).toBe(200);
+      expect(invalidAvatar.json()).toMatchObject({
+        code: 0,
+        direction: "农场形象不存在或未接入 V7 素材"
+      });
+
+      const selectedFemaleAvatar = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=item&act=activeitem",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "mod=qqshow&act=activeItem&id=546375"
+      });
+      expect(selectedFemaleAvatar.json()).toEqual({ code: "1", id: 546375 });
+
+      const femaleQshowProfile = await instance.app.inject({
+        method: "POST",
+        url: "/mync.php?mod=user&act=qqshow",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "param=1"
+      });
+      expect(femaleQshowProfile.json()).toMatchObject({ code: "0", sex: "F", showtype: "0" });
+
       const decoratedFarm = await instance.app.inject({
         method: "GET",
         url: "/api/manor/flash/farm?qzonemod=user&act=run",
@@ -275,7 +337,19 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(decoratedFarm.statusCode, decoratedFarm.body).toBe(200);
       expect(decoratedFarm.json()).toMatchObject({
-        items: { 1: { itemId: 1 }, 2: { itemId: 2 }, 3: { itemId: 3 }, 4: { itemId: 4 }, 9: { itemId: 90020 }, 10: { itemId: 515000 } }
+        items: { 1: { itemId: 1 }, 2: { itemId: 2 }, 3: { itemId: 3 }, 4: { itemId: 4 }, 9: { itemId: 90020 }, 10: { itemId: 546375 } }
+      });
+
+      const visitor = await registerMember(instance.app, owner.cookie);
+      const friendFarm = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/farm?qzonemod=user&act=run&ownerId=${stableFlashUserId(owner.userId)}`,
+        headers: { cookie: visitor.cookie }
+      });
+      expect(friendFarm.statusCode, friendFarm.body).toBe(200);
+      expect(friendFarm.json()).toMatchObject({
+        items: { 10: { itemId: 546375 } },
+        user: { uId: stableFlashUserId(owner.userId), userName: "庄园主人" }
       });
 
       const clearedBoard = await instance.app.inject({
@@ -319,6 +393,7 @@ describe("QQ Farm V7 account persistence", () => {
       const funded: ManorV7State = structuredClone(current);
       funded.coins = 1_000_000;
       funded.farmExperience = manorV7ExperienceForLevel(40);
+      funded.rewardClaims.landExpansionFundClaimed = true;
       funded.revision += 1;
       funded.updatedAt = Date.now();
       instance.repository.updateManorV7State(owner.userId, current.revision, funded);
@@ -428,11 +503,15 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(shop.statusCode, shop.body).toBe(200);
-      expect(shop.json()).toHaveLength(12);
+      expect(shop.json()).toHaveLength(15);
       expect((shop.json() as Array<{ fid: number }>).some((fish) => fish.fid === 15)).toBe(false);
       expect(shop.json()).toEqual(expect.arrayContaining([
         expect.objectContaining({ fid: 2, lock: 2, type: 23 }),
-        expect.objectContaining({ fid: 16, lock: 1, type: 23 })
+        expect.objectContaining({ fid: 4, lock: 0, type: 23 }),
+        expect.objectContaining({ fid: 11, lock: 0, type: 23 }),
+        expect.objectContaining({ fid: 14, lock: 0, type: 23 }),
+        expect.objectContaining({ fid: 16, lock: 1, type: 23 }),
+        expect.objectContaining({ fid: 17, lock: 1, type: 23 })
       ]));
 
       const unlocked = await instance.app.inject({
@@ -442,7 +521,7 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "fid=2"
       });
       expect(unlocked.statusCode, unlocked.body).toBe(200);
-      expect(unlocked.json()).toMatchObject({ code: 1, fid: 2, money: -10_000 });
+      expect(unlocked.json()).toMatchObject({ code: 1, crystal_id: 0, crystal_num: 0, fid: 2, money: -10_000 });
 
       const bought = await instance.app.inject({
         method: "POST",
@@ -519,9 +598,99 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "fIds=2&num=15&flag=single"
       });
       expect(sold.statusCode, sold.body).toBe(200);
-      expect(sold.json()).toMatchObject({ code: 1, money: 1_350, name: "小丑鱼", number: 15 });
+      expect(sold.json()).toMatchObject({
+        code: 1,
+        money: manorV7RewardAmount(1_350),
+        name: "小丑鱼",
+        number: 15
+      });
       const final = await getManor(instance.app, owner.cookie);
-      expect(final).toMatchObject({ coins: 10_700, farm: { fishPool: { fish: [], produceInventory: [] } } });
+      expect(final).toMatchObject({
+        coins: 9_350 + manorV7RewardAmount(1_350),
+        farm: { fishPool: { fish: [], produceInventory: [] } }
+      });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("reports and charges the original fish crystal unlock requirement", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-fish-crystal-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Fish crystal V7 state missing");
+      const funded: ManorV7State = structuredClone(current);
+      funded.coins = 100_000;
+      funded.revision += 1;
+      funded.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, funded);
+
+      const lockedShop = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_fish_list",
+        headers: { cookie: owner.cookie }
+      });
+      expect(lockedShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ fid: 4, lock: 0 })
+      ]));
+
+      const rejected = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_fish_unlock",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "fid=4"
+      });
+      expect(rejected.json()).toMatchObject({ code: 0, direction: "水晶库存不足" });
+
+      const withoutCrystals = instance.repository.getManorV7State(owner.userId);
+      if (!withoutCrystals) throw new Error("Fish crystal V7 state missing after rejection");
+      const supplied: ManorV7State = structuredClone(withoutCrystals);
+      supplied.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 10 }];
+      supplied.revision += 1;
+      supplied.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, withoutCrystals.revision, supplied);
+
+      const availableShop = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_fish_list",
+        headers: { cookie: owner.cookie }
+      });
+      expect(availableShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ fid: 4, lock: 2 })
+      ]));
+
+      const crystalWarehouse = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?cgi_farm_get_usercrystal&type=9&phpye=phpye",
+        headers: { cookie: owner.cookie }
+      });
+      expect(crystalWarehouse.json()).toMatchObject({
+        ecode: 0,
+        info: [expect.objectContaining({ amount: 10, cId: 1, cName: "蓝水晶", type: 9 })]
+      });
+
+      const unlocked = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_fish_unlock",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "fid=4"
+      });
+      expect(unlocked.json()).toMatchObject({
+        code: 1,
+        crystal_id: 1,
+        crystal_num: 10,
+        fid: 4,
+        money: -50_000
+      });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 50_000,
+        farm: { fishPool: { unlockedFishIds: expect.arrayContaining([4]) } },
+        pasture: { wild: { crystalInventory: [] } }
+      });
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -590,6 +759,7 @@ describe("QQ Farm V7 account persistence", () => {
       if (!current) throw new Error("Farm V7 state missing before action protocol test");
       const funded: ManorV7State = structuredClone(current);
       funded.coins = 100_000;
+      funded.farm.toolInventory = [{ sourceId: 1, quantity: 1 }];
       funded.farm.lands[0]!.growthSeconds = manorV7Crop(funded.farm.lands[0]!.cropId!).growthSeconds;
       funded.revision += 1;
       funded.updatedAt = Date.now();
@@ -620,6 +790,31 @@ describe("QQ Farm V7 account persistence", () => {
         }
       });
       expect(harvested.json().status).not.toHaveProperty("a");
+
+      const fertilized = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=farmlandstatus&act=fertilize",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "place=0&tId=1"
+      });
+      expect(fertilized.statusCode, fertilized.body).toBe(200);
+      expect(fertilized.json()).toMatchObject({
+        code: 1,
+        farmlandIndex: 0,
+        tId: 1,
+        status: {
+          action: [],
+          cId: 6,
+          cropStatus: expect.any(Number),
+          fertilize: 3_600,
+          plantTime: expect.any(Number),
+          updateTime: expect.any(Number)
+        }
+      });
+      expect(fertilized.json().status).not.toHaveProperty("a");
+      expect(fertilized.json().status.updateTime - fertilized.json().status.plantTime).toBe(
+        instance.repository.getManorV7State(owner.userId)!.farm.lands[0]!.growthSeconds
+      );
 
       const shop = await instance.app.inject({
         method: "GET",
@@ -661,6 +856,7 @@ describe("QQ Farm V7 account persistence", () => {
       stocked.coins = 100;
       stocked.farm.produceInventory = [
         { sourceId: 1, quantity: 3 },
+        { sourceId: 2, quantity: 4 },
         { sourceId: 6, quantity: 2 }
       ];
       stocked.revision += 1;
@@ -676,6 +872,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(locked.statusCode, locked.body).toBe(200);
       expect(locked.json()).toMatchObject({
         code: 1,
+        crop: [{ cId: 1, isLock: 1 }],
         ecode: 0,
         post_data: { cId: "1", target: "lock" }
       });
@@ -691,18 +888,137 @@ describe("QQ Farm V7 account persistence", () => {
         expect.objectContaining({ cId: 6, isLock: 0, lock: 0 })
       ]));
 
+      const unlocked = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_get_repertory",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "target=unlock&cId=1"
+      });
+      expect(unlocked.statusCode, unlocked.body).toBe(200);
+      expect(unlocked.json()).toMatchObject({
+        code: 1,
+        crop: [{ cId: 1, isLock: 2 }],
+        ecode: 0,
+        post_data: { cId: "1", target: "unlock" }
+      });
+      expect(instance.repository.getManorV7State(owner.userId)?.farm.produceInventory)
+        .toEqual(expect.arrayContaining([expect.objectContaining({ sourceId: 1, locked: false })]));
+
+      const relocked = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_set_lock",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "crop=1%3A1"
+      });
+      expect(relocked.statusCode, relocked.body).toBe(200);
+      expect(relocked.json()).toMatchObject({ crop: [{ cId: 1, isLock: 1 }] });
+
       const sold = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/farm?mod=repertory&act=saleAll",
-        headers: { cookie: owner.cookie }
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "cIds=6"
       });
       const revenue = manorV7Crop(6).salePrice * 2;
       expect(sold.statusCode, sold.body).toBe(200);
       expect(sold.json()).toEqual({ code: 1, direction: "", money: revenue });
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
         coins: 100 + revenue,
-        farm: { produceInventory: [{ sourceId: 1, quantity: 3, locked: true }] }
+        farm: {
+          produceInventory: [
+            { sourceId: 1, quantity: 3, locked: true },
+            { sourceId: 2, quantity: 4 }
+          ]
+        }
       });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("returns the updated thief marker immediately after a Flash crop steal", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-steal-status-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+      prepareStealableOwnerState(instance.repository, owner.userId);
+
+      const stolen = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=farmlandstatus&act=scrounge",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `ownerId=${stableFlashUserId(owner.userId)}&place=0`
+      });
+      expect(stolen.statusCode, stolen.body).toBe(200);
+      expect(stolen.json()).toMatchObject({
+        code: 1,
+        farmlandIndex: 0,
+        harvest: expect.any(Number),
+        status: {
+          action: [],
+          cId: 6,
+          thief: { [String(stableFlashUserId(visitor.userId))]: 1 },
+          updateTime: expect.any(Number)
+        }
+      });
+      expect(stolen.json().harvest).toBeGreaterThan(0);
+      expect(stolen.json().status).not.toHaveProperty("a");
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("automatically grants the level-28 land expansion fund once and keeps the legacy route read-only", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-land-fund-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Farm V7 state missing before land fund test");
+      const eligible: ManorV7State = structuredClone(current);
+      eligible.coins = 100;
+      eligible.farmExperience = manorV7ExperienceForLevel(MANOR_V7_LAND_EXPANSION_FUND_LEVEL) - 1;
+      eligible.farm.lands[0]!.weeds = true;
+      eligible.revision += 1;
+      eligible.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, eligible);
+
+      const reachedLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=farmlandstatus&act=clearweed",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "place=0"
+      });
+      expect(reachedLevel.statusCode, reachedLevel.body).toBe(200);
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 100 + manorV7RewardAmount(MANOR_V7_LAND_EXPANSION_FUND_COINS),
+        rewardClaims: { landExpansionFundClaimed: true }
+      });
+
+      const status = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=cgi_farm_landext_fund",
+        headers: { cookie: owner.cookie }
+      });
+      expect(status.statusCode, status.body).toBe(200);
+      expect(status.json()).toEqual({ code: 1, flag: 1 });
+
+      const repeated = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_farm_landext_fund",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "op=1"
+      });
+      expect(repeated.statusCode, repeated.body).toBe(200);
+      expect(repeated.json()).toEqual({ code: 1, flag: 1, money: 0 });
+      expect(instance.repository.getManorV7State(owner.userId)?.coins)
+        .toBe(100 + manorV7RewardAmount(MANOR_V7_LAND_EXPANSION_FUND_COINS));
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -774,7 +1090,11 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(seedShop.statusCode, seedShop.body).toBe(200);
       expect(seedShop.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ cId: MANOR_V7_LOVESDAY_CROP_ID, price: 99, sale: 99 })
+        expect.objectContaining({
+          cId: MANOR_V7_LOVESDAY_CROP_ID,
+          price: 99,
+          sale: manorV7RewardAmount(99)
+        })
       ]));
 
       const produce = await instance.app.inject({
@@ -784,7 +1104,11 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(produce.statusCode, produce.body).toBe(200);
       expect(produce.json().crop).toEqual(expect.arrayContaining([
-        expect.objectContaining({ cId: MANOR_V7_LOVESDAY_CROP_ID, amount: 197, price: 99 })
+        expect.objectContaining({
+          cId: MANOR_V7_LOVESDAY_CROP_ID,
+          amount: 197,
+          price: manorV7RewardAmount(99)
+        })
       ]));
 
       const crop = manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID);
@@ -933,7 +1257,12 @@ describe("QQ Farm V7 account persistence", () => {
       expect(packageInfo.statusCode, packageInfo.body).toBe(200);
       expect(packageInfo.json()).toMatchObject({
         code: 1,
-        item: expect.arrayContaining([expect.objectContaining({ eNum: 300, eParam: 1, eType: "6" })]),
+        item: expect.arrayContaining([expect.objectContaining({
+          eNum: manorV7RewardAmount(300),
+          eParam: 1,
+          eType: "6"
+        })]),
+        vipItem: expect.arrayContaining([expect.objectContaining({ eNum: 100, eParam: 40, eType: 1 })]),
         title: "每日礼包"
       });
 
@@ -945,9 +1274,15 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie }
       });
       expect(packageClaim.statusCode, packageClaim.body).toBe(200);
-      expect(packageClaim.json()).toMatchObject({ code: 1, item: expect.arrayContaining([expect.objectContaining({ eNum: 300 })]) });
+      expect(packageClaim.json()).toMatchObject({
+        code: 1,
+        item: expect.arrayContaining([expect.objectContaining({ eNum: manorV7RewardAmount(300) })])
+      });
       const afterPackage = instance.repository.getManorV7State(owner.userId);
-      expect(afterPackage).toMatchObject({ coins: 300, revision: beforePackage.revision + 1 });
+      expect(afterPackage).toMatchObject({
+        coins: manorV7RewardAmount(300),
+        revision: beforePackage.revision + 1
+      });
       expect(afterPackage?.rewardClaims.dailyPackageDay).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
       const duplicatePackage = await instance.app.inject({
@@ -1308,7 +1643,10 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "payitem=60045-1-%E9%AD%94%E5%B9%BB%E4%B9%90%E5%9B%AD%E8%83%8C%E6%99%AF&itemId=45&exp=720"
       });
       expect(farmDecoration.statusCode, farmDecoration.body).toBe(200);
-      expect(farmDecoration.json()).toMatchObject({ code: 0, post_data: { itemId: 45, exp: 720 } });
+      expect(farmDecoration.json()).toMatchObject({
+        code: 0,
+        post_data: { itemId: 45, exp: manorV7RewardAmount(720) }
+      });
 
       for (const payitem of [
         "70001-2-%E6%99%AE%E9%80%9A%E7%BD%90%E5%A4%B4",
@@ -1332,7 +1670,10 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "payitem=60106-1-%E8%A5%BF%E9%83%A8%E6%98%A5%E8%89%B2&itemId=106&exp=180"
       });
       expect(pastureDecoration.statusCode, pastureDecoration.body).toBe(200);
-      expect(pastureDecoration.json()).toMatchObject({ code: 0, post_data: { itemId: 106, exp: 180 } });
+      expect(pastureDecoration.json()).toMatchObject({
+        code: 0,
+        post_data: { itemId: 106, exp: manorV7RewardAmount(180) }
+      });
 
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
         coins: 74_801,
@@ -1350,6 +1691,134 @@ describe("QQ Farm V7 account persistence", () => {
         },
         ownedDecorationIds: expect.arrayContaining([45, 106])
       });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps Flash profile logs, guestbooks and inventory scoped to the selected account", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-profile-scope-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+
+      const ownerState = instance.repository.getManorV7State(owner.userId);
+      const visitorState = instance.repository.getManorV7State(visitor.userId);
+      if (!ownerState || !visitorState) throw new Error("V7 profile scope state missing");
+      const createdAt = Date.now() - 5_000;
+      const preparedOwner: ManorV7State = structuredClone(ownerState);
+      preparedOwner.farm.produceInventory = [
+        { sourceId: 2, quantity: 13 },
+        { sourceId: 40, quantity: 25 }
+      ];
+      preparedOwner.farm.fishPool.produceInventory = [{ sourceId: 2, quantity: 8 }];
+      preparedOwner.activities = [{ id: 1, area: "farm", message: "OWNER_PROFILE_ACTIVITY", createdAt }];
+      preparedOwner.nextActivityId = 2;
+      preparedOwner.revision += 1;
+      preparedOwner.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, ownerState.revision, preparedOwner);
+
+      const preparedVisitor: ManorV7State = structuredClone(visitorState);
+      preparedVisitor.activities = [{ id: 1, area: "farm", message: "VISITOR_PROFILE_ACTIVITY", createdAt }];
+      preparedVisitor.nextActivityId = 2;
+      preparedVisitor.revision += 1;
+      preparedVisitor.updatedAt = Date.now();
+      instance.repository.updateManorV7State(visitor.userId, visitorState.revision, preparedVisitor);
+
+      const ownerFlashId = stableFlashUserId(owner.userId);
+      const visitorFlashId = stableFlashUserId(visitor.userId);
+      const profile = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=chat&act=getAllInfo",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}&ownerId=${ownerFlashId}&msg=1`
+      });
+      expect(profile.statusCode, profile.body).toBe(200);
+      expect(profile.json()).toMatchObject({
+        user: {
+          headPicBig: "/assets/manor/v7-swf/module/ui/npc/feedsNPC/pengyouHead.jpg",
+          uId: ownerFlashId,
+          uName: "庄园主人"
+        },
+        log: [expect.objectContaining({ cn: "OWNER_PROFILE_ACTIVITY", msg: "OWNER_PROFILE_ACTIVITY" })],
+        repertory: expect.arrayContaining([
+          expect.objectContaining({ cId: 2, cName: "白萝卜", harvestNumber: 13, scroungeNumber: 0 }),
+          expect.objectContaining({ cId: 40, cName: "牧草", harvestNumber: 25, scroungeNumber: 0 })
+        ])
+      });
+      expect(JSON.stringify(profile.json())).not.toContain("VISITOR_PROFILE_ACTIVITY");
+
+      const feeds = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=hydra_feeds_select",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uin=${ownerFlashId}`
+      });
+      expect(feeds.statusCode, feeds.body).toBe(200);
+      expect(feeds.json()).toEqual({
+        data: [{
+          cn: "OWNER_PROFILE_ACTIVITY",
+          content: "OWNER_PROFILE_ACTIVITY",
+          msg: "OWNER_PROFILE_ACTIVITY",
+          t: Math.floor(createdAt / 1_000),
+          time: Math.floor(createdAt / 1_000)
+        }],
+        ecode: 0
+      });
+
+      const cropHistory = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_get_rep_history",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(cropHistory.json()).toEqual(expect.arrayContaining([
+        { cId: 2, cName: "白萝卜", harvestNumber: 13, scroungeNumber: 0 },
+        { cId: 40, cName: "牧草", harvestNumber: 25, scroungeNumber: 0 }
+      ]));
+
+      const fishHistory = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_fish_getall",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}`
+      });
+      expect(fishHistory.json()).toEqual({
+        repertory: [{ cid: 2, cName: "小丑鱼", hn: 8, sn: 0 }]
+      });
+
+      const sentToOwner = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=chat&act=sendChat",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `toId=${ownerFlashId}&showId=${ownerFlashId}&isReply=0&msg=TO_OWNER_BOARD`
+      });
+      expect(sentToOwner.statusCode, sentToOwner.body).toBe(200);
+      expect(sentToOwner.json().chat).toEqual([
+        expect.objectContaining({ fromId: visitorFlashId, fromName: "来访好友", msg: "TO_OWNER_BOARD" })
+      ]);
+
+      const ownerBoard = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=chat&act=getAllInfo",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${ownerFlashId}&msg=1`
+      });
+      expect(ownerBoard.json().chat).toEqual([
+        expect.objectContaining({ fromId: visitorFlashId, msg: "TO_OWNER_BOARD" })
+      ]);
+
+      const visitorBoard = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=chat&act=getAllInfo",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `uId=${visitorFlashId}&msg=1`
+      });
+      expect(visitorBoard.json().chat).toEqual([]);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -1439,13 +1908,13 @@ describe("QQ Farm V7 account persistence", () => {
       expect(crossPurchase.statusCode, crossPurchase.body).toBe(200);
       expect(crossPurchase.json()).toMatchObject({ code: 1, itemId: 4, local: 1, money: -500, url_params: "" });
 
-      const hutch = await buy("130009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, -799_000);
+      const hutch = await buy("130009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, -795_000);
       expect(hutch).toMatchObject({ 2: { id: 102, lv: 9 }, itemId: 9, itemType: 13 });
       const shed = await buy("140009-1-%E7%AA%9D%E6%A3%9A%E5%8D%87%E7%BA%A7", 1, -850_000);
       expect(shed).toMatchObject({ 3: { id: 103, lv: 9 }, itemId: 9, itemType: 14 });
 
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: 1_291_499,
+        coins: 1_295_499,
         ownedDecorationIds: expect.arrayContaining([109]),
         pasture: {
           guards: [expect.objectContaining({ id: 1, active: true })],
@@ -1485,6 +1954,7 @@ describe("QQ Farm V7 account persistence", () => {
       const prepared: ManorV7State = structuredClone(current);
       prepared.coins = 2_000_000;
       prepared.farmExperience = manorV7ExperienceForLevel(40);
+      prepared.rewardClaims.landExpansionFundClaimed = true;
       prepared.revision += 1;
       prepared.updatedAt = Date.now();
       instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
@@ -1984,10 +2454,10 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "harvesttype=1&type=1002"
       });
       expect(harvested.statusCode, harvested.body).toBe(200);
-      expect(harvested.json()).toEqual([8, [], [[1002, 12]]]);
+      expect(harvested.json()).toEqual([manorV7RewardAmount(8), [], [[1002, 12]]]);
 
       const state = await getManor(instance.app, owner.cookie);
-      expect(state).toMatchObject({ coins: 10_770, pasture: { grass: 24 } });
+      expect(state).toMatchObject({ coins: 13_970, pasture: { grass: 24 } });
       expect(state.pasture.productInventory).toEqual(
         expect.arrayContaining([expect.objectContaining({ sourceId: 1002, quantity: 12 })])
       );
@@ -2011,7 +2481,7 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "harvesttype=2&serial=1&serialIndex=1"
       });
       expect(adultHarvest.statusCode, adultHarvest.body).toBe(200);
-      expect(adultHarvest.json()).toEqual([28, [1], []]);
+      expect(adultHarvest.json()).toEqual([manorV7RewardAmount(28), [1], []]);
       const afterAdultHarvest = instance.repository.getManorV7State(owner.userId);
       expect(afterAdultHarvest).toMatchObject({
         coins: beforeAdultHarvest.coins,
@@ -2026,7 +2496,13 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(adultRepertory.statusCode, adultRepertory.body).toBe(200);
       expect(adultRepertory.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ amount: 1, cId: 11002, cName: "兔子", price: 1460, type: 3 })
+        expect.objectContaining({
+          amount: 1,
+          cId: 11002,
+          cName: "兔子",
+          price: manorV7RewardAmount(1_460),
+          type: 3
+        })
       ]));
 
       const soldAdult = await instance.app.inject({
@@ -2036,9 +2512,9 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "cId=11002&num=1"
       });
       expect(soldAdult.statusCode, soldAdult.body).toBe(200);
-      expect(soldAdult.json()).toMatchObject({ cId: 11002, money: 1460 });
+      expect(soldAdult.json()).toMatchObject({ cId: 11002, money: manorV7RewardAmount(1_460) });
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: 12_230,
+        coins: 21_270,
         pasture: { harvestedAnimalInventory: [] }
       });
 
@@ -2078,6 +2554,62 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(decoratedBootstrap.statusCode, decoratedBootstrap.body).toBe(200);
       expect(decoratedBootstrap.json()).toMatchObject({ items: { 1: { id: 109 } } });
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps pasture house upgrade queries read-only and charges only after confirmation", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-house-upgrade-query-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await getManor(instance.app, owner.cookie);
+      const current = instance.repository.getManorV7State(owner.userId);
+      if (!current) throw new Error("Pasture V7 state missing before house upgrade query test");
+      const prepared: ManorV7State = structuredClone(current);
+      prepared.coins = 10_000;
+      prepared.pastureExperience = manorV7ExperienceForLevel(2);
+      prepared.pasture.shedLevel = 0;
+      prepared.revision += 1;
+      prepared.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, prepared);
+
+      const beforeQuery = instance.repository.getManorV7State(owner.userId);
+      if (!beforeQuery) throw new Error("Pasture V7 state missing after house upgrade preparation");
+      const query = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_up_animalhouse",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "act=query&level=0&type=2&newitem=1"
+      });
+      expect(query.statusCode, query.body).toBe(200);
+      expect(query.json()).toEqual({ ecode: 0, iscdtime: false, level: 2, money: 5_000, qd: 0 });
+      const afterQuery = instance.repository.getManorV7State(owner.userId);
+      expect(afterQuery).toMatchObject({
+        coins: beforeQuery.coins,
+        pasture: { shedLevel: 0 }
+      });
+      if (!afterQuery) throw new Error("Pasture V7 state missing after house upgrade query");
+
+      const upgrade = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_up_animalhouse",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "type=2&newitem=1"
+      });
+      expect(upgrade.statusCode, upgrade.body).toBe(200);
+      expect(upgrade.json()).toMatchObject({
+        3: { id: 103, lv: 1 },
+        code: 1,
+        ecode: 0,
+        money: 0
+      });
+      expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
+        coins: 10_000,
+        pasture: { shedLevel: 1 }
+      });
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -2126,11 +2658,70 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(initial.json().farm.lands).toHaveLength(24);
       expect(initial.json().farm.lands.filter((land: { unlocked: boolean }) => land.unlocked)).toHaveLength(6);
-      expect(initial.json().catalogs.crops).toHaveLength(405);
+      expect(initial.json().catalogs.crops).toHaveLength(577);
       expect(initial.json().catalogs.crops.filter((crop: { isHidden?: boolean }) => crop.isHidden)).toHaveLength(88);
-      expect(initial.json().catalogs.animals).toHaveLength(167);
+      expect(initial.json().catalogs.animals).toHaveLength(177);
+      expect(initial.json().catalogs.animals.filter((animal: { isHidden?: boolean }) => animal.isHidden)).toHaveLength(24);
+      expect(initial.json().catalogs.animals).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 1028, name: "喜鹊", isHidden: true }),
+        expect.objectContaining({ id: 1544, name: "白鹭", isHidden: true })
+      ]));
+      expect(initial.json().catalogs.animals).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 1565 })
+      ]));
       expect(initial.json().catalogs.tools).toHaveLength(91);
-      expect(initial.json().catalogs.decorations).toHaveLength(631);
+      expect(initial.json().catalogs.decorations).toHaveLength(821);
+
+      const farmDecorationShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=item&act=shop",
+        headers: { cookie }
+      });
+      expect(farmDecorationShop.statusCode, farmDecorationShop.body).toBe(200);
+      expect(farmDecorationShop.json()).toHaveLength(514);
+      expect(farmDecorationShop.json()).not.toEqual(expect.arrayContaining(
+        [1, 11, 21, 627, 669].map((itemId) => expect.objectContaining({ itemId }))
+      ));
+
+      const pastureDecorationShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_items",
+        headers: { cookie }
+      });
+      expect(pastureDecorationShop.statusCode, pastureDecorationShop.body).toBe(200);
+      expect(pastureDecorationShop.json()).toHaveLength(115);
+      expect(pastureDecorationShop.json()).not.toEqual(expect.arrayContaining(
+        [124, 157].map((itemId) => expect.objectContaining({ itemId }))
+      ));
+
+      const seedShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/farm?mod=repertory&act=getSeedInfo",
+        headers: { cookie }
+      });
+      expect(seedShop.statusCode, seedShop.body).toBe(200);
+      expect(seedShop.json()).toHaveLength(489);
+      expect(seedShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 9, cName: "辣椒", price: 296 }),
+        expect.objectContaining({ cId: 1017, cName: "茶树" })
+      ]));
+      expect(seedShop.json()).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 262 }),
+        expect.objectContaining({ cId: 2001 })
+      ]));
+
+      const animalShop = await first.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_animals",
+        headers: { cookie }
+      });
+      expect(animalShop.statusCode, animalShop.body).toBe(200);
+      expect(animalShop.json()).toHaveLength(153);
+      expect(animalShop.json()).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ cId: 1028 }),
+        expect.objectContaining({ cId: 1544 }),
+        expect.objectContaining({ cId: 1565 })
+      ]));
 
       const cared = await first.app.inject({
         method: "POST",
@@ -2240,6 +2831,36 @@ describe("QQ Farm V7 account persistence", () => {
         beast: { info: [expect.objectContaining({ type: 1, blood: 50, status: 2 })] }
       });
 
+      const homepageWildState = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/pasture?mod=cgi_farm_hpage_beast&ownerId=${stableFlashUserId(visitor.userId)}&isfarm=0`,
+        headers: { cookie: owner.cookie }
+      });
+      expect(homepageWildState.json()).toMatchObject({
+        ecode: 0,
+        steal: [],
+        info: [expect.objectContaining({
+          fid: stableFlashUserId(owner.userId),
+          nick: "庄园主人",
+          type: 1
+        })],
+        return: [expect.objectContaining({ id: 1, type: 1, status: 1 })]
+      });
+
+      const initialWildNicknames = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/pasture?mod=cgi_farm_beast_getnick&ownerId=${stableFlashUserId(visitor.userId)}&isfarm=0`,
+        headers: { cookie: owner.cookie }
+      });
+      expect(initialWildNicknames.json()).toEqual({
+        ecode: 0,
+        info: [{
+          fid: stableFlashUserId(owner.userId),
+          nick: "庄园主人",
+          attack: {}
+        }]
+      });
+
       const visitorViewedByOwner = await instance.app.inject({
         method: "GET",
         url: `/api/manor/flash/pasture?mod=cgi_enter&uId=${stableFlashUserId(visitor.userId)}`,
@@ -2272,6 +2893,24 @@ describe("QQ Farm V7 account persistence", () => {
       reversedMixedAreaState.updatedAt = Date.now();
       instance.repository.updateManorV7State(visitor.userId, mixedAreaState.revision, reversedMixedAreaState);
 
+      const weapons = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_get_usercrystal&type=10&phpye=phpye",
+        headers: { cookie: visitor.cookie }
+      });
+      expect(weapons.json()).toEqual({
+        ecode: 0,
+        info: [{
+          cId: 7,
+          cName: "黄金飞刀",
+          desc: "可减少野生动物体力35点，并获得更多水晶奖励。",
+          id: 7,
+          name: "黄金飞刀",
+          num: 1,
+          type: 10
+        }]
+      });
+
       const attacked = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_farm_attack_beast",
@@ -2281,6 +2920,20 @@ describe("QQ Farm V7 account persistence", () => {
       const attackBody = attacked.json();
       expect(attackBody).toMatchObject({ ecode: 0, result: 1, leftblood: 15, subblood: 35, addmoral: 1 });
       expect(attackBody.drop).toEqual([expect.objectContaining({ type: 9, id: 1, num: 1 })]);
+
+      const attackedWildNicknames = await instance.app.inject({
+        method: "GET",
+        url: `/api/manor/flash/pasture?mod=cgi_farm_beast_getnick&ownerId=${stableFlashUserId(visitor.userId)}&isfarm=0`,
+        headers: { cookie: visitor.cookie }
+      });
+      expect(attackedWildNicknames.json()).toEqual({
+        ecode: 0,
+        info: [{
+          fid: stableFlashUserId(owner.userId),
+          nick: "庄园主人",
+          attack: { [String(stableFlashUserId(visitor.userId))]: "来访好友" }
+        }]
+      });
 
       const picked = await instance.app.inject({
         method: "POST",
@@ -2304,7 +2957,11 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "id=1&num=1"
       });
-      expect(soldCrystal.json()).toMatchObject({ code: 1, ecode: 0, money: 10 });
+      expect(soldCrystal.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        money: manorV7RewardAmount(10)
+      });
       const crystalsAfterSale = await instance.app.inject({
         method: "GET",
         url: "/api/manor/flash/pasture?mod=cgi_farm_get_usercrystal&type=9",
@@ -2331,7 +2988,11 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "slotid=0&type=1"
       });
-      expect(reward.json()).toMatchObject({ ecode: 0, money: 500, drop: [expect.objectContaining({ type: 9, id: 1 })] });
+      expect(reward.json()).toMatchObject({
+        ecode: 0,
+        money: manorV7RewardAmount(500),
+        drop: [expect.objectContaining({ type: 9, id: 1 })]
+      });
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -2357,7 +3018,7 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(cared.statusCode, JSON.stringify(cared.json())).toBe(200);
       expect(cared.json()).toMatchObject({
-        visitor: { owner: { userId: visitor.userId }, farmExperience: 2 },
+        visitor: { owner: { userId: visitor.userId }, farmExperience: manorV7RewardAmount(2) },
         owner: { owner: { userId: owner.userId } }
       });
       expect(cared.json().owner.farm.lands[1]).toMatchObject({ weeds: false });
@@ -2572,7 +3233,12 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "act=2"
       });
-      expect(completedTask.json()).toMatchObject({ addExp: 50, ecode: 0, money: 50, task: { taskId: 1 } });
+      expect(completedTask.json()).toMatchObject({
+        addExp: manorV7RewardAmount(50),
+        ecode: 0,
+        money: manorV7RewardAmount(50),
+        task: { taskId: 1 }
+      });
 
       const levelReward = await instance.app.inject({
         method: "POST",
@@ -2611,7 +3277,11 @@ describe("QQ Farm V7 account persistence", () => {
         headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
         payload: "opt=1"
       });
-      expect(giftClaim.json()).toMatchObject({ code: 1, ecode: 0, money: 1_000 });
+      expect(giftClaim.json()).toMatchObject({
+        code: 1,
+        ecode: 0,
+        money: manorV7RewardAmount(1_000)
+      });
       const giftDuplicate = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_return_gift",
@@ -2658,7 +3328,7 @@ describe("QQ Farm V7 account persistence", () => {
         direction: "兑换成功",
         ecode: 0,
         item: expect.any(Array),
-        money: 5_000,
+        money: manorV7RewardAmount(5_000),
         vipItem: expect.any(Array)
       });
       const duplicateCode = await instance.app.inject({
@@ -2780,11 +3450,13 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "place=0"
       });
       const afterScarify = instance.repository.getManorV7State(owner.userId);
-      expect(afterScarify?.farmExperience).toBe(readyToScarify.farmExperience + 3);
+      expect(afterScarify?.farmExperience).toBe(
+        readyToScarify.farmExperience + manorV7RewardAmount(3)
+      );
       expect(afterScarify?.farm.seedInventory).toHaveLength(1);
       expect(scarified.json()).toMatchObject({
         code: 1,
-        exp: 3,
+        exp: manorV7RewardAmount(3),
         farmlandIndex: 0,
         randsend: { id: expect.any(String), name: expect.any(String), num: expect.any(Number), type: 1 }
       });
@@ -3234,9 +3906,13 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "actid=2&op=1"
       });
       expect(carnivalGift.statusCode, carnivalGift.body).toBe(200);
-      expect(carnivalGift.json()).toEqual({ code: 1, money: 20_000, reward: 0 });
+      expect(carnivalGift.json()).toEqual({
+        code: 1,
+        money: manorV7RewardAmount(20_000),
+        reward: 0
+      });
       expect(instance.repository.getManorV7State(owner.userId)).toMatchObject({
-        coins: exchangeReady.coins + 20_000,
+        coins: exchangeReady.coins + manorV7RewardAmount(20_000),
         seasonal: {
           halloweenCandies: 0,
           halloweenCookies: 0,
@@ -3310,7 +3986,7 @@ describe("QQ Farm V7 account persistence", () => {
       expect(ceremonyGift.json()).toEqual({ code: 1, ecode: 0, type: 3 });
       const ceremonyState = instance.repository.getManorV7State(owner.userId);
       expect(ceremonyState).toMatchObject({
-        coins: exchangeReady.coins + 20_000 + 99_999,
+        coins: exchangeReady.coins + manorV7RewardAmount(20_000) + manorV7RewardAmount(99_999),
         seasonal: { reunionFishGiftClaimed: true },
         farm: {
           fishPool: {
@@ -3349,9 +4025,20 @@ describe("QQ Farm V7 account persistence", () => {
         url: "/api/manor/test/grant-resource",
         payload: { resource: "coins", amount: 100 }
       });
+      const setLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/set-level",
+        payload: { area: "farm", level: 28 }
+      });
+      const prepareAcceptanceData = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/prepare-acceptance-data"
+      });
       expect(platform.json()).toMatchObject({ manorTestToolsEnabled: false });
       expect(advanceTime.statusCode).toBe(404);
       expect(grantResource.statusCode).toBe(404);
+      expect(setLevel.statusCode).toBe(404);
+      expect(prepareAcceptanceData.statusCode).toBe(404);
     } finally {
       await instance.app.close();
       rmSync(directory, { recursive: true, force: true });
@@ -3386,6 +4073,21 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(forbidden.statusCode).toBe(401);
 
+      const forbiddenLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/set-level",
+        headers: { cookie: member.cookie },
+        payload: { area: "farm", level: 28 }
+      });
+      expect(forbiddenLevel.statusCode).toBe(401);
+
+      const forbiddenAcceptanceData = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/prepare-acceptance-data",
+        headers: { cookie: member.cookie }
+      });
+      expect(forbiddenAcceptanceData.statusCode).toBe(401);
+
       const initial = await getManor(instance.app, owner.cookie);
       const grant = await instance.app.inject({
         method: "POST",
@@ -3405,8 +4107,91 @@ describe("QQ Farm V7 account persistence", () => {
       expect(advance.statusCode, advance.body).toBe(200);
       expect(advance.json()).toMatchObject({ message: "庄园时间已推进 7 天" });
 
+      const farmLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/set-level",
+        headers: { cookie: owner.cookie },
+        payload: { area: "farm", level: 28 }
+      });
+      expect(farmLevel.statusCode, farmLevel.body).toBe(200);
+      expect(farmLevel.json()).toMatchObject({
+        message: "农场等级已设置为 28 级",
+        view: { farmLevel: 28, pastureLevel: 0 }
+      });
+
+      const pastureLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/set-level",
+        headers: { cookie: owner.cookie },
+        payload: { area: "pasture", level: 60 }
+      });
+      expect(pastureLevel.statusCode, pastureLevel.body).toBe(200);
+      expect(pastureLevel.json()).toMatchObject({
+        message: "牧场等级已设置为 60 级",
+        view: { farmLevel: 28, pastureLevel: 60 }
+      });
+
+      const invalidLevel = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/set-level",
+        headers: { cookie: owner.cookie },
+        payload: { area: "farm", level: 101 }
+      });
+      expect(invalidLevel.statusCode).toBe(400);
+
+      const prepareAcceptanceData = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/prepare-acceptance-data",
+        headers: { cookie: owner.cookie }
+      });
+      expect(prepareAcceptanceData.statusCode, prepareAcceptanceData.body).toBe(200);
+      expect(prepareAcceptanceData.json()).toMatchObject({
+        message: expect.stringContaining("巡检数据已准备"),
+        view: {
+          farm: {
+            seedInventory: expect.arrayContaining([{ sourceId: 2, quantity: 7 }]),
+            produceInventory: expect.arrayContaining([
+              { sourceId: 2, quantity: 13 },
+              { sourceId: 40, quantity: 25 }
+            ]),
+            fishPool: {
+              seedInventory: expect.arrayContaining([{ sourceId: 2, quantity: 4 }]),
+              produceInventory: expect.arrayContaining([{ sourceId: 2, quantity: 8 }])
+            }
+          },
+          pasture: {
+            cubInventory: expect.arrayContaining([{ sourceId: 1001, quantity: 3 }]),
+            productInventory: expect.arrayContaining([{ sourceId: 1001, quantity: 6 }]),
+            harvestedAnimalInventory: expect.arrayContaining([{ sourceId: 1002, quantity: 2 }]),
+            toolInventory: expect.arrayContaining([{ sourceId: 1, quantity: 4 }]),
+            weaponInventory: expect.arrayContaining([{ sourceId: 4, quantity: 3 }])
+          }
+        }
+      });
+
+      const prepareAgain = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/test/prepare-acceptance-data",
+        headers: { cookie: owner.cookie }
+      });
+      expect(prepareAgain.statusCode, prepareAgain.body).toBe(200);
+      expect(prepareAgain.json().view.activities.filter((activity: { message: string }) => (
+        activity.message === "[巡检样本] 收获了 13 个白萝卜"
+      ))).toHaveLength(1);
+
+      const pastureMaterials = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_farm_getusercrop",
+        headers: { cookie: owner.cookie }
+      });
+      expect(pastureMaterials.statusCode, pastureMaterials.body).toBe(200);
+      expect(pastureMaterials.json()).toEqual([]);
+
       const persisted = await getManor(instance.app, owner.cookie);
-      expect(persisted.coins).toBe(initial.coins + 1_234);
+      expect(persisted.coins).toBe(
+        initial.coins + 1_234 + manorV7RewardAmount(MANOR_V7_LAND_EXPANSION_FUND_COINS)
+      );
+      expect(persisted).toMatchObject({ farmLevel: 28, pastureLevel: 60 });
       expect(persisted.farm.lands[0]).toMatchObject({ harvestable: true });
     } finally {
       await instance.app.close();

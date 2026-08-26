@@ -1,14 +1,16 @@
 import {
-  MANOR_V7_ANIMALS,
+  MANOR_V7_ANIMALS as MANOR_V7_GENERATED_ANIMALS,
+  MANOR_V7_AVATARS,
   MANOR_V7_CROPS as MANOR_V7_GENERATED_CROPS,
-  MANOR_V7_DECORATIONS,
-  MANOR_V7_FISH,
+  MANOR_V7_DECORATIONS as MANOR_V7_GENERATED_DECORATIONS,
+  MANOR_V7_FISH as MANOR_V7_GENERATED_FISH,
   MANOR_V7_LAND_UPGRADES,
   MANOR_V7_TOOLS
 } from "./catalog.generated.js";
 import type {
   ManorV7AnimalDefinition,
   ManorV7Area,
+  ManorV7AvatarDefinition,
   ManorV7CropDefinition,
   ManorV7DecorationDefinition,
   ManorV7FishDefinition,
@@ -19,24 +21,68 @@ import {
   manorV7EffectiveCropSalePrice,
   manorV7EffectiveCropSeedPrice
 } from "./seasonal.js";
+import { manorV7RewardAmount } from "./economy.js";
+
+export const MANOR_V7_MATURITY_TIME_DIVISOR = 3;
+
+function scaledMaturitySeconds(seconds: number): number {
+  return Math.max(1, Math.ceil(seconds / MANOR_V7_MATURITY_TIME_DIVISOR));
+}
 
 export const MANOR_V7_CROPS: readonly ManorV7CropDefinition[] = MANOR_V7_GENERATED_CROPS.map((crop) => ({
   ...crop,
   seedPrice: manorV7EffectiveCropSeedPrice(crop.id, crop.seedPrice),
-  salePrice: manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)
+  salePrice: manorV7RewardAmount(manorV7EffectiveCropSalePrice(crop.id, crop.salePrice)),
+  experience: manorV7RewardAmount(crop.experience),
+  growthSeconds: scaledMaturitySeconds(crop.growthSeconds),
+  stageSeconds: crop.stageSeconds.map(scaledMaturitySeconds)
 }));
+
+export const MANOR_V7_ANIMALS: readonly ManorV7AnimalDefinition[] = MANOR_V7_GENERATED_ANIMALS.map((animal) => ({
+  ...animal,
+  productPrice: manorV7RewardAmount(animal.productPrice),
+  byproductPrice: manorV7RewardAmount(animal.byproductPrice),
+  animalHarvestExperience: manorV7RewardAmount(animal.animalHarvestExperience),
+  byproductHarvestExperience: manorV7RewardAmount(animal.byproductHarvestExperience),
+  cubSeconds: scaledMaturitySeconds(animal.cubSeconds),
+  maturitySeconds: scaledMaturitySeconds(animal.maturitySeconds),
+  lifecycleSeconds: scaledMaturitySeconds(animal.maturitySeconds) + animal.productionSeconds
+}));
+
+export const MANOR_V7_FISH: readonly ManorV7FishDefinition[] = MANOR_V7_GENERATED_FISH.map((fish) => ({
+  ...fish,
+  experience: manorV7RewardAmount(fish.experience),
+  salePrice: manorV7RewardAmount(fish.salePrice),
+  cycleSeconds: fish.cycleSeconds.map(scaledMaturitySeconds),
+  matureHours: scaledMaturitySeconds(fish.matureHours * 3_600) / 3_600
+}));
+
+export const MANOR_V7_DECORATIONS: readonly ManorV7DecorationDefinition[] = MANOR_V7_GENERATED_DECORATIONS.map(
+  (decoration) => ({
+    ...decoration,
+    experience: manorV7RewardAmount(decoration.experience)
+  })
+);
 
 const cropMap = new Map<number, ManorV7CropDefinition>(MANOR_V7_CROPS.map((item) => [item.id, item]));
 const animalMap = new Map<number, ManorV7AnimalDefinition>(MANOR_V7_ANIMALS.map((item) => [item.id, item]));
+const avatarMap = new Map<number, ManorV7AvatarDefinition>(MANOR_V7_AVATARS.map((item) => [item.id, item]));
 const fishMap = new Map<number, ManorV7FishDefinition>(MANOR_V7_FISH.map((item) => [item.id, item]));
-const defaultFarmDecorations = [
-  { area: "farm", id: 1, name: "田园风光", setName: "QQ农场", itemType: 1, originalLevel: 0, coinPrice: 0, premiumPrice: 50, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 2, name: "茅草屋", setName: "QQ农场", itemType: 2, originalLevel: 0, coinPrice: 0, premiumPrice: 40, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 3, name: "木桩栅栏", setName: "QQ农场", itemType: 3, originalLevel: 0, coinPrice: 0, premiumPrice: 25, experience: 0, validSeconds: 1 },
-  { area: "farm", id: 4, name: "茅草狗屋", setName: "QQ农场", itemType: 4, originalLevel: 0, coinPrice: 0, premiumPrice: 20, experience: 0, validSeconds: 1 }
-] as const satisfies readonly ManorV7DecorationDefinition[];
 const defaultPastureDecorations = [
-  { area: "pasture", id: 105, name: "默认牧场", setName: "QQ牧场", itemType: 101, originalLevel: 0, coinPrice: 0, premiumPrice: 0, experience: 0, validSeconds: 1 }
+  {
+    area: "pasture",
+    id: 105,
+    name: "默认牧场",
+    setName: "QQ牧场",
+    itemType: 101,
+    originalLevel: 0,
+    coinPrice: 0,
+    premiumPrice: 0,
+    experience: 0,
+    validSeconds: 1,
+    isHidden: true,
+    isRenderable: true
+  }
 ] as const satisfies readonly ManorV7DecorationDefinition[];
 
 export const MANOR_V7_BOARD_IDS = [
@@ -53,6 +99,12 @@ export function manorV7Crop(id: number): ManorV7CropDefinition {
 export function manorV7Animal(id: number): ManorV7AnimalDefinition {
   const item = animalMap.get(id);
   if (!item) throw new Error("动物不存在或未接入 V7 素材");
+  return item;
+}
+
+export function manorV7Avatar(id: number): ManorV7AvatarDefinition {
+  const item = avatarMap.get(id);
+  if (!item) throw new Error("农场形象不存在或未接入 V7 素材");
   return item;
 }
 
@@ -99,8 +151,7 @@ export function manorV7PastureGuard(id: number): ManorV7ToolDefinition {
 }
 
 export function manorV7Decoration(area: ManorV7Area, id: number): ManorV7DecorationDefinition {
-  const item = defaultFarmDecorations.find((candidate) => candidate.area === area && candidate.id === id)
-    ?? defaultPastureDecorations.find((candidate) => candidate.area === area && candidate.id === id)
+  const item = defaultPastureDecorations.find((candidate) => candidate.area === area && candidate.id === id)
     ?? MANOR_V7_DECORATIONS.find((candidate) => candidate.area === area && candidate.id === id);
   if (!item) throw new Error("装扮不存在");
   return item;
@@ -123,9 +174,7 @@ export function manorV7LandUpgrade(tier: Exclude<ManorV7LandTier, "normal">, upg
 }
 
 export {
-  MANOR_V7_ANIMALS,
-  MANOR_V7_DECORATIONS,
-  MANOR_V7_FISH,
+  MANOR_V7_AVATARS,
   MANOR_V7_LAND_UPGRADES,
   MANOR_V7_TOOLS
 };

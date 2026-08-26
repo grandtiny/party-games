@@ -70,6 +70,16 @@
   padding: 0;
 }
 
+.manor-scene-tabs .manor-sound-button {
+  min-width: 44px;
+  padding: 0;
+}
+
+.manor-scene-tabs .manor-sound-button[aria-pressed="true"] {
+  color: #fff;
+  background: #695b46;
+}
+
 .manor-scene-tabs .manor-snapshot-button:disabled {
   cursor: wait;
   opacity: 0.5;
@@ -94,6 +104,7 @@
 .manor-test-tools {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
   gap: 18px;
   width: min(1100px, calc(100vw - 16px));
@@ -171,6 +182,10 @@
   padding: 0 8px;
 }
 
+.manor-test-tools__levels select {
+  width: 88px;
+}
+
 .manor-test-tools input {
   width: 112px;
   padding: 0 8px;
@@ -184,7 +199,7 @@
 
 .manor-test-tools__notice {
   align-self: center;
-  max-width: 220px;
+  max-width: 360px;
   color: #f2cf73;
   font-size: 13px;
 }

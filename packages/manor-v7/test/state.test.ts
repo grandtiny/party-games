@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MANOR_V7_ANIMALS,
+  MANOR_V7_AVATARS,
   MANOR_V7_BAD_ACTION_DAILY_LIMIT,
   MANOR_V7_CANDY_OFFERING_DAILY_LIMIT,
   MANOR_V7_CROPS,
@@ -11,6 +12,8 @@ import {
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
   MANOR_V7_HOUSE_UPGRADES,
+  MANOR_V7_LAND_EXPANSION_FUND_COINS,
+  MANOR_V7_LAND_EXPANSION_FUND_LEVEL,
   MANOR_V7_LAND_COUNT,
   MANOR_V7_LOVESDAY_ANIMAL_ID,
   MANOR_V7_LOVESDAY_CROP_ID,
@@ -24,17 +27,20 @@ import {
   inventoryQuantity,
   manorV7DailySignInReward,
   manorV7Animal,
+  manorV7Avatar,
   manorV7Crop,
   manorV7Decoration,
   manorV7DecorationCoinPrice,
   manorV7ExperienceForLevel,
   manorV7Fish,
   manorV7HouseCapacity,
+  isManorV7RewardAvailable,
   manorV7LevelForExperience,
   manorV7LandUpgrade,
   manorV7MaxProductionCount,
   manorV7PastureGuard,
   manorV7ProductionCycleDuration,
+  manorV7RewardAmount,
   manorV7SpecialFeedCropId,
   manorV7ToolCoinPrice,
   migrateManorV7State,
@@ -44,32 +50,98 @@ import {
   type ManorV7State
 } from "../src/index.js";
 
+const MANOR_V7_EXCLUDED_CROP_IDS = [
+  262, 567, 570, 572,
+  2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+] as const;
+const MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS = [
+  1028, 1029, 1043, 1044, 1045, 1535, 1536, 1541, 1543, 1544
+] as const;
+
 describe("QQ Farm V7 domain", () => {
   it("uses the complete audited V7 runtime catalog", () => {
-    expect(MANOR_V7_CROPS).toHaveLength(405);
-    expect(MANOR_V7_ANIMALS).toHaveLength(167);
+    expect(MANOR_V7_CROPS).toHaveLength(577);
+    expect(MANOR_V7_ANIMALS).toHaveLength(177);
+    expect(MANOR_V7_AVATARS).toHaveLength(326);
+    expect(MANOR_V7_AVATARS.filter((avatar) => avatar.sex === "M")).toHaveLength(167);
+    expect(MANOR_V7_AVATARS.filter((avatar) => avatar.sex === "F")).toHaveLength(159);
+    expect(MANOR_V7_AVATARS.every((avatar) => avatar.width === 140 && avatar.height === 226)).toBe(true);
     expect(MANOR_V7_TOOLS).toHaveLength(91);
-    expect(MANOR_V7_DECORATIONS).toHaveLength(631);
-    expect(MANOR_V7_FISH).toHaveLength(13);
+    expect(MANOR_V7_DECORATIONS).toHaveLength(821);
+    expect(MANOR_V7_FISH).toHaveLength(16);
     expect(MANOR_V7_CROPS.filter((crop) => crop.landRequirement === 2)).toHaveLength(12);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isVip)).toHaveLength(84);
     expect(MANOR_V7_CROPS.filter((crop) => crop.isHidden)).toHaveLength(88);
+    expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden)).toHaveLength(24);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => decoration.isHidden)).toHaveLength(190);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => decoration.isRenderable)).toHaveLength(816);
+    expect(MANOR_V7_DECORATIONS.filter((decoration) => (
+      !decoration.isHidden && decoration.isRenderable
+    ))).toHaveLength(629);
     expect(MANOR_V7_ANIMALS.filter((animal) => animal.isHidden).map((animal) => animal.id)).toEqual(
-      expect.arrayContaining([1037, 1085, 1086, 1537, 1546, 1593])
+      expect.arrayContaining([
+        1037, 1085, 1086, 1537, 1546, 1593,
+        ...MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS
+      ])
     );
-    expect(manorV7Fish(15)).toMatchObject({ name: "团圆鱼", isHidden: true });
+    expect(MANOR_V7_FISH.filter((fish) => fish.isHidden)).toEqual([
+      expect.objectContaining({ id: 15, name: "团圆鱼" })
+    ]);
+    expect(manorV7Fish(11)).toMatchObject({ name: "彩虹鱼", isHidden: false });
+    expect(manorV7Fish(14)).toMatchObject({ name: "海豚", poolSize: 3, isHidden: false });
+    expect(manorV7Fish(17)).toMatchObject({ name: "金鱼", isHidden: false });
+    expect(() => manorV7Fish(1)).toThrow("鱼种不存在或未接入 V7 素材");
     expect(manorV7Crop(1)).toMatchObject({ name: "草莓", seedPrice: 605, harvestCycles: 2 });
+    expect(manorV7Crop(9)).toMatchObject({ name: "辣椒", seedPrice: 296, harvestCycles: 1 });
     expect(manorV7Crop(450)).toMatchObject({ name: "火舞草", originalLevel: 5, seedPrice: 210 });
+    for (const cropId of MANOR_V7_EXCLUDED_CROP_IDS) {
+      expect(() => manorV7Crop(cropId)).toThrow("作物不存在或未接入 V7 素材");
+    }
+    for (const animalId of MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS) {
+      expect(manorV7Animal(animalId).isHidden).toBe(true);
+    }
+    expect(manorV7Animal(1028)).toMatchObject({ name: "喜鹊", byproductName: "喜鹊崽" });
+    expect(manorV7Animal(1544)).toMatchObject({ name: "白鹭", byproductName: "白鹭崽" });
+    expect(() => manorV7Animal(1565)).toThrow("动物不存在或未接入 V7 素材");
+    expect(manorV7Avatar(515000)).toMatchObject({ sex: "M", assetPath: "ui/qqshow/0/0/515000_0_0.png" });
+    expect(manorV7Avatar(546375)).toMatchObject({ sex: "F", assetPath: "ui/qqshow/3/75/546375_0_0.png" });
+    expect(() => manorV7Avatar(1)).toThrow("农场形象不存在或未接入 V7 素材");
     expect(manorV7Animal(1002)).toMatchObject({
       name: "兔子",
       house: "hutch",
       purchasePrice: 1200,
+      cubSeconds: 6_000,
+      maturitySeconds: 12_000,
+      productionSeconds: 129_600,
       productionCooldownSeconds: 28_785,
-      lifecycleSeconds: 165_600
+      lifecycleSeconds: 141_600
     });
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
-    expect(manorV7Fish(2)).toMatchObject({ name: "小丑鱼", seedPrice: 650, salePrice: 90 });
-    expect(manorV7Decoration("farm", 1)).toMatchObject({ name: "田园风光", itemType: 1 });
+    expect(manorV7Crop(2)).toMatchObject({
+      growthSeconds: 12_000,
+      stageSeconds: [2_400, 4_800, 8_400, 12_000, 12_000]
+    });
+    expect(manorV7Fish(2)).toMatchObject({
+      name: "小丑鱼",
+      cycleSeconds: [7_200, 16_800, 27_600],
+      matureHours: 23 / 3,
+      seedPrice: 650,
+      salePrice: manorV7RewardAmount(90)
+    });
+    expect(manorV7Decoration("farm", 1)).toMatchObject({
+      name: "田园风光",
+      itemType: 1,
+      isHidden: true,
+      isRenderable: true
+    });
+    expect(manorV7Decoration("pasture", 157)).toMatchObject({
+      name: "欢度春节",
+      isHidden: true,
+      isRenderable: true
+    });
+    for (const id of [21, 26, 31, 627, 669]) {
+      expect(manorV7Decoration("farm", id).isRenderable).toBe(false);
+    }
   });
 
   it("initializes and resets the persisted seasonal activity state", () => {
@@ -155,7 +227,7 @@ describe("QQ Farm V7 domain", () => {
       halloweenCookies: 0,
       halloweenCarnivalGiftClaimed: true
     });
-    expect(state.coins).toBe(coinsBeforeHalloween + 20_000);
+    expect(state.coins).toBe(coinsBeforeHalloween + manorV7RewardAmount(20_000));
     expect(inventoryQuantity(state.pasture.cubInventory, 1038)).toBe(1);
     expect(inventoryQuantity(state.farm.seedInventory, 166)).toBe(1);
     expect(state.decorationOwnerships).toEqual(expect.arrayContaining([
@@ -187,7 +259,7 @@ describe("QQ Farm V7 domain", () => {
     initial.farm.produceInventory = [{ sourceId: 450, quantity: 2_000 }];
     const exchanged = transitionManorV7State(initial, { type: "claim-reunion-fish-gift" }, now);
 
-    expect(exchanged.coins).toBe(99_999);
+    expect(exchanged.coins).toBe(manorV7RewardAmount(99_999));
     expect(exchanged.seasonal.reunionFishGiftClaimed).toBe(true);
     expect(inventoryQuantity(exchanged.farm.produceInventory, 450)).toBe(1);
     expect(inventoryQuantity(exchanged.farm.seedInventory, 448)).toBe(5);
@@ -421,11 +493,11 @@ describe("QQ Farm V7 domain", () => {
       { type: "upgrade-house", house: "hutch", useVip: true },
       4_500
     );
-    expect(upgraded.coins).toBe(901_000);
+    expect(upgraded.coins).toBe(905_000);
     expect(upgraded.pasture.hutchLevel).toBe(9);
 
     const paid = transitionManorV7State(upgraded, { type: "upgrade-house", house: "shed" }, 4_500);
-    expect(paid.coins).toBe(51_000);
+    expect(paid.coins).toBe(55_000);
     expect(paid.pasture.shedLevel).toBe(9);
 
     const underleveled = createManorV7State(4_500);
@@ -443,8 +515,8 @@ describe("QQ Farm V7 domain", () => {
     expect(initial.tutorialTask).toEqual({ taskId: 0, accepted: true });
     const completedHelp = transitionManorV7State(initial, { type: "complete-tutorial-task" }, now);
     expect(completedHelp).toMatchObject({
-      coins: 50,
-      pastureExperience: 50,
+      coins: manorV7RewardAmount(50),
+      pastureExperience: manorV7RewardAmount(50),
       tutorialTask: { taskId: 1, accepted: true }
     });
     expect(completedHelp.tasks).toEqual(initial.tasks);
@@ -487,7 +559,7 @@ describe("QQ Farm V7 domain", () => {
 
     const gifted = transitionManorV7State(guided, { type: "claim-vip-return-gift" }, now);
     expect(gifted.rewardClaims.vipReturnGiftClaimed).toBe(true);
-    expect(gifted.coins - guided.coins).toBe(1_000);
+    expect(gifted.coins - guided.coins).toBe(manorV7RewardAmount(1_000));
     expect(inventoryQuantity(gifted.farm.seedInventory, 1)).toBe(2);
     expect(() => transitionManorV7State(gifted, { type: "claim-vip-return-gift" }, now))
       .toThrow("VIP 回归礼包已经领取");
@@ -503,7 +575,7 @@ describe("QQ Farm V7 domain", () => {
     const initialFertilizers = inventoryQuantity(state.farm.toolInventory, 1);
     const redeemed = transitionManorV7State(state, { type: "redeem-code", code: " manor2026 " }, now);
     expect(redeemed.redeemedCodes).toEqual(["MANOR2026"]);
-    expect(redeemed.coins).toBe(state.coins + 5_000);
+    expect(redeemed.coins).toBe(state.coins + manorV7RewardAmount(5_000));
     expect(inventoryQuantity(redeemed.farm.seedInventory, 1)).toBe(initialSeeds + 5);
     expect(inventoryQuantity(redeemed.farm.toolInventory, 1)).toBe(initialFertilizers + 3);
     expect(() => transitionManorV7State(redeemed, { type: "redeem-code", code: "MANOR2026" }, now))
@@ -521,6 +593,23 @@ describe("QQ Farm V7 domain", () => {
     expect(state.pasture.grass).toBe(20);
     expect(toManorV7View(state, { userId: "u1", displayName: "玩家" }, 1_000).version)
       .toBe("7.0 Beta1 Build 20120209.1000");
+  });
+
+  it("grants the land expansion fund once when farm level first reaches the land-upgrade threshold", () => {
+    const now = 1_500;
+    const initial = createManorV7State(now);
+    initial.coins = 100;
+    initial.farmExperience = manorV7ExperienceForLevel(MANOR_V7_LAND_EXPANSION_FUND_LEVEL) - 1;
+    initial.farm.lands[0]!.weeds = true;
+
+    const granted = transitionManorV7State(initial, { type: "remove-weeds", landId: 1 }, now);
+    expect(granted.rewardClaims.landExpansionFundClaimed).toBe(true);
+    expect(granted.coins).toBe(100 + manorV7RewardAmount(MANOR_V7_LAND_EXPANSION_FUND_COINS));
+    expect(granted.activities[0]?.message).toContain("土地扩建基金");
+
+    const advanced = advanceManorV7State(granted, now + 1_000);
+    expect(advanced.coins).toBe(granted.coins);
+    expect(advanced.activities.filter((activity) => activity.message.includes("土地扩建基金"))).toHaveLength(1);
   });
 
   it("expires, unequips and renews decorations without mixing farm and pasture IDs", () => {
@@ -573,6 +662,60 @@ describe("QQ Farm V7 domain", () => {
       .toHaveLength(2);
   });
 
+  it("keeps hidden decorations reward-only and preserves blocked legacy ownerships without rendering them", () => {
+    const now = 100_000;
+    const state = createManorV7State(now);
+    state.coins = 1_000_000;
+    state.farmExperience = manorV7ExperienceForLevel(60);
+
+    expect(() => transitionManorV7State(
+      state,
+      { type: "buy-decoration", area: "farm", decorationId: 11 },
+      now
+    )).toThrow("该装扮只能通过活动或奖励获得");
+
+    const withHiddenOwnership = structuredClone(state);
+    withHiddenOwnership.decorationOwnerships.push({ area: "farm", decorationId: 11, validUntil: 0 });
+    const equippedHidden = transitionManorV7State(
+      withHiddenOwnership,
+      { type: "equip-decoration", area: "farm", decorationId: 11 },
+      now
+    );
+    expect(equippedHidden.farm.selectedDecorationIds).toContain(11);
+
+    const withBlockedOwnership = structuredClone(equippedHidden);
+    withBlockedOwnership.decorationOwnerships.push({ area: "farm", decorationId: 627, validUntil: 0 });
+    withBlockedOwnership.farm.selectedDecorationIds.push(627);
+    const synchronized = advanceManorV7State(withBlockedOwnership, now + 1);
+    expect(synchronized.decorationOwnerships).toContainEqual({
+      area: "farm",
+      decorationId: 627,
+      validUntil: 0
+    });
+    expect(synchronized.farm.selectedDecorationIds).not.toContain(627);
+    expect(isManorV7RewardAvailable({
+      kind: "decoration",
+      area: "farm",
+      sourceId: 627,
+      quantity: 1
+    })).toBe(false);
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "buy-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "renew-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
+    expect(() => transitionManorV7State(
+      synchronized,
+      { type: "equip-decoration", area: "farm", decorationId: 627 },
+      now + 1
+    )).toThrow("该装扮素材不完整，暂不可使用");
+  });
+
   it("persists farm boards and avatars independently from regular decorations", () => {
     const initial = createManorV7State(2_000);
     const withBoard = transitionManorV7State(initial, { type: "set-board", boardId: 90020 }, 2_000);
@@ -583,13 +726,22 @@ describe("QQ Farm V7 domain", () => {
       selectedAvatarId: 515000
     });
 
-    const clearedBoard = transitionManorV7State(withAvatar, { type: "set-board", boardId: null }, 2_000);
+    const withFemaleAvatar = transitionManorV7State(
+      withAvatar,
+      { type: "set-avatar", avatarId: 546375 },
+      2_000
+    );
+    expect(withFemaleAvatar.farm.selectedAvatarId).toBe(546375);
+
+    const clearedBoard = transitionManorV7State(withFemaleAvatar, { type: "set-board", boardId: null }, 2_000);
     const clearedAvatar = transitionManorV7State(clearedBoard, { type: "set-avatar", avatarId: null }, 2_000);
     expect(clearedAvatar.farm).toMatchObject({ selectedBoardId: null, selectedAvatarId: null });
     expect(() => transitionManorV7State(initial, { type: "set-board", boardId: 1 }, 2_000))
       .toThrow("告示牌不存在");
     expect(() => transitionManorV7State(initial, { type: "set-board", boardId: 90019 }, 2_000))
       .toThrow("告示牌不存在");
+    expect(() => transitionManorV7State(initial, { type: "set-avatar", avatarId: 1 }, 2_000))
+      .toThrow("农场形象不存在或未接入 V7 素材");
   });
 
   it("advances crops deterministically and closes the harvest-sale-plant loop", () => {
@@ -617,6 +769,21 @@ describe("QQ Farm V7 domain", () => {
     };
     const planted = transitionManorV7State(withSeed, { type: "plant", landId: 1, cropId: 2 }, 1_001_000);
     expect(planted.farm.lands[0]?.cropId).toBe(2);
+  });
+
+  it("closes the purchase, planting and harvest loop for a partial-stage source crop", () => {
+    const now = 2_000;
+    const crop = manorV7Crop(9);
+    let state = createManorV7State(now);
+    state.coins = crop.seedPrice;
+    state.farmExperience = manorV7ExperienceForLevel(crop.originalLevel);
+
+    state = transitionManorV7State(state, { type: "buy-seed", cropId: crop.id, quantity: 1 }, now);
+    state = transitionManorV7State(state, { type: "plant", landId: 5, cropId: crop.id }, now);
+    state.farm.lands[4]!.growthSeconds = crop.growthSeconds;
+    state = transitionManorV7State(state, { type: "harvest", landId: 5 }, now);
+
+    expect(inventoryQuantity(state.farm.produceInventory, crop.id)).toBe(crop.baseYield);
   });
 
   it("sells every produce entry atomically at its own catalog price", () => {
@@ -647,7 +814,10 @@ describe("QQ Farm V7 domain", () => {
       claimed: true
     });
 
-    expect(manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID)).toMatchObject({ seedPrice: 99, salePrice: 99 });
+    expect(manorV7Crop(MANOR_V7_LOVESDAY_CROP_ID)).toMatchObject({
+      seedPrice: 99,
+      salePrice: manorV7RewardAmount(99)
+    });
     const bought = transitionManorV7State(
       initial,
       { type: "buy-seed", cropId: MANOR_V7_LOVESDAY_CROP_ID, quantity: 1 },
@@ -713,6 +883,7 @@ describe("QQ Farm V7 domain", () => {
     initial.coins = 50;
     initial.farm.produceInventory = [
       { sourceId: 1, quantity: 3 },
+      { sourceId: 2, quantity: 4 },
       { sourceId: 6, quantity: 2 }
     ];
 
@@ -720,9 +891,12 @@ describe("QQ Farm V7 domain", () => {
     expect(() => transitionManorV7State(locked, { type: "sell-produce", cropId: 1, quantity: 1 }, 2_100))
       .toThrow("锁定的农产品不能出售");
 
-    const sold = transitionManorV7State(locked, { type: "sell-all-produce" }, 2_100);
+    const sold = transitionManorV7State(locked, { type: "sell-all-produce", cropIds: [6] }, 2_100);
     expect(sold.coins).toBe(50 + manorV7Crop(6).salePrice * 2);
-    expect(sold.farm.produceInventory).toEqual([{ sourceId: 1, quantity: 3, locked: true }]);
+    expect(sold.farm.produceInventory).toEqual([
+      { sourceId: 1, quantity: 3, locked: true },
+      { sourceId: 2, quantity: 4 }
+    ]);
   });
 
   it("sells one seed quantity or every selected seed at the original half-price rule", () => {
@@ -735,12 +909,14 @@ describe("QQ Farm V7 domain", () => {
     ];
 
     const single = transitionManorV7State(initial, { type: "sell-seed", cropId: 1, quantity: 1 }, now);
-    expect(single.coins).toBe(10 + Math.ceil(manorV7Crop(1).seedPrice / 2));
+    expect(single.coins).toBe(10 + manorV7RewardAmount(Math.ceil(manorV7Crop(1).seedPrice / 2)));
     expect(inventoryQuantity(single.farm.seedInventory, 1)).toBe(2);
 
     const selected = transitionManorV7State(single, { type: "sell-selected-seeds", cropIds: [1, 6] }, now);
     expect(selected.coins).toBe(
-      single.coins + Math.ceil(manorV7Crop(1).seedPrice / 2) * 2 + Math.ceil(manorV7Crop(6).seedPrice / 2) * 2
+      single.coins
+        + manorV7RewardAmount(Math.ceil(manorV7Crop(1).seedPrice / 2) * 2)
+        + manorV7RewardAmount(Math.ceil(manorV7Crop(6).seedPrice / 2) * 2)
     );
     expect(selected.farm.seedInventory).toEqual([]);
   });
@@ -917,14 +1093,15 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(caught.message).toContain("看守员");
     expect(caught.visitor.coins).toBeLessThan(500);
-    expect(caught.visitor.coins + caught.owner.coins).toBe(visitor.coins + owner.coins);
+    const penalty = visitor.coins - caught.visitor.coins;
+    expect(caught.owner.coins - owner.coins).toBe(manorV7RewardAmount(penalty));
   });
 
   it("shares two VIP sign-in cards per Shanghai calendar day", () => {
     const now = Date.UTC(2026, 7, 22, 2, 0, 0);
     const initial = createManorV7State(now);
     const packaged = transitionManorV7State(initial, { type: "claim-daily-package" }, now);
-    expect(packaged.coins).toBe(300);
+    expect(packaged.coins).toBe(manorV7RewardAmount(300));
     expect(packaged.rewardClaims.dailyPackageDay).toBe("2026-08-22");
     expect(packaged.farm.toolInventory).toEqual([
       { sourceId: 1, quantity: 1 },
@@ -1040,8 +1217,25 @@ describe("QQ Farm V7 domain", () => {
     const harvested = transitionManorV7State(matured, { type: "harvest-fish", serial: 1 }, matured.updatedAt);
     expect(inventoryQuantity(harvested.farm.fishPool.produceInventory, 2)).toBe(15);
     const sold = transitionManorV7State(harvested, { type: "sell-fish", fishId: 2, quantity: 15 }, harvested.updatedAt);
-    expect(sold.coins).toBe(10_700);
+    expect(sold.coins).toBe(9_350 + manorV7Fish(2).salePrice * 15);
     expect(sold.farm.fishPool.produceInventory).toEqual([]);
+  });
+
+  it("requires and consumes the original crystal cost when unlocking fish", () => {
+    const now = 6_600;
+    const initial = createManorV7State(now);
+    expect(() => transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now))
+      .toThrow("金币不足");
+    initial.coins = 100_000;
+
+    expect(() => transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now))
+      .toThrow("水晶库存不足");
+
+    initial.pasture.wild.crystalInventory = [{ sourceId: 1, quantity: 10 }];
+    const unlocked = transitionManorV7State(initial, { type: "unlock-fish", fishId: 4 }, now);
+    expect(unlocked.coins).toBe(50_000);
+    expect(unlocked.pasture.wild.crystalInventory).toEqual([]);
+    expect(unlocked.farm.fishPool.unlockedFishIds).toContain(4);
   });
 
   it("harvests adult animals into inventory before they are sold", () => {
@@ -1081,6 +1275,15 @@ describe("QQ Farm V7 domain", () => {
     expect(sold.coins).toBe(500 + animal.byproductPrice * 4 + animal.productPrice * 2);
     expect(sold.pasture.productInventory).toEqual([]);
     expect(sold.pasture.harvestedAnimalInventory).toEqual([]);
+  });
+
+  it("clears legacy farm avatar ids that are outside the audited catalog", () => {
+    const legacy = createManorV7State(7_500);
+    legacy.farm.selectedAvatarId = 1;
+
+    const migrated = migrateManorV7State(legacy, 7_500);
+
+    expect(migrated.farm.selectedAvatarId).toBeNull();
   });
 
   it("migrates saves created before adult animal inventory was added", () => {
@@ -1137,7 +1340,8 @@ describe("QQ Farm V7 domain", () => {
       signInRewardIds: [],
       signInStreak: 0,
       signInStreakRewardDays: [],
-      vipReturnGiftClaimed: false
+      vipReturnGiftClaimed: false,
+      landExpansionFundClaimed: false
     });
     expect(migrated.seasonal).toEqual({
       animalDrops: [],
@@ -1224,6 +1428,7 @@ describe("QQ Farm V7 domain", () => {
     delete legacy.rewardClaims.signInRewardDay;
     delete legacy.rewardClaims.signInRewardIds;
     delete legacy.rewardClaims.signInStreakRewardDays;
+    delete legacy.rewardClaims.landExpansionFundClaimed;
 
     const migrated = migrateManorV7State(legacy, 8_500);
     expect(migrated.rewardClaims).toMatchObject({
@@ -1232,7 +1437,8 @@ describe("QQ Farm V7 domain", () => {
       signInRewardId: 2,
       signInRewardIds: [2],
       signInStreak: 4,
-      signInStreakRewardDays: []
+      signInStreakRewardDays: [],
+      landExpansionFundClaimed: false
     });
   });
 
@@ -1301,7 +1507,7 @@ describe("QQ Farm V7 domain", () => {
       now
     );
     expect(cared.owner.farm.lands[1]!.weeds).toBe(false);
-    expect(cared.visitor.farmExperience).toBe(2);
+    expect(cared.visitor.farmExperience).toBe(manorV7RewardAmount(2));
   });
 
   it("steals one animal byproduct per visitor and production round", () => {
@@ -1361,7 +1567,7 @@ describe("QQ Farm V7 domain", () => {
       now
     );
     expect(started.owner.pasture.animals[1]).toMatchObject({ productionActive: true, productionProgressSeconds: 0 });
-    expect(started.visitor.pastureExperience).toBe(visitor.pastureExperience + 2);
+    expect(started.visitor.pastureExperience).toBe(visitor.pastureExperience + manorV7RewardAmount(2));
   });
 
   it("limits friend weeds and pests to 50 per day and resets the allowance next day", () => {
@@ -1444,7 +1650,8 @@ describe("QQ Farm V7 domain", () => {
     );
     expect(caught.message).toContain("损失");
     expect(caught.visitor.coins).toBeLessThan(500);
-    expect(caught.visitor.coins + caught.owner.coins).toBe(500);
+    const penalty = visitor.coins - caught.visitor.coins;
+    expect(caught.owner.coins - owner.coins).toBe(manorV7RewardAmount(penalty));
     expect(caught.visitor.farm.produceInventory).toEqual([]);
 
     const expiredAt = now + 24 * 60 * 60 * 1_000;
@@ -1470,26 +1677,25 @@ describe("QQ Farm V7 domain", () => {
     const own = createManorV7State(now);
     own.farm.fishPool.opened = true;
     own.farm.fishPool.fish = [{ serial: 1, fishId: fish.id, growthSeconds: 0, stolen: 0, thiefUserIds: [], fedStage: 0 }];
-    own.farm.fishPool.toolInventory = [{ sourceId: 1, quantity: 2 }];
+    own.farm.fishPool.toolInventory = [{ sourceId: 1, quantity: 3 }];
 
     const firstFeed = transitionManorV7State(own, { type: "fertilize-fish", serial: 1, toolId: 1 }, now);
     expect(firstFeed.farm.fishPool.fish[0]).toMatchObject({ fedStage: 1, growthSeconds: 7_200 });
-    expect(() => transitionManorV7State(
+
+    // The fixed 7,200-second fish-food effect now crosses the shortened first stage.
+    const secondFeed = transitionManorV7State(
       firstFeed,
+      { type: "fertilize-fish", serial: 1, toolId: 1 },
+      now
+    );
+    expect(secondFeed.farm.fishPool.fish[0]).toMatchObject({ fedStage: 2, growthSeconds: 14_400 });
+    expect(() => transitionManorV7State(
+      secondFeed,
       { type: "fertilize-fish", serial: 1, toolId: 1 },
       now
     )).toThrow("当前生长阶段已经使用过鱼食");
 
-    const secondStageAt = now + (fish.cycleSeconds[0]! - 7_200) * 1_000;
-    const secondStage = advanceManorV7State(firstFeed, secondStageAt);
-    const secondFeed = transitionManorV7State(
-      secondStage,
-      { type: "fertilize-fish", serial: 1, toolId: 1 },
-      secondStageAt
-    );
-    expect(secondFeed.farm.fishPool.fish[0]?.fedStage).toBe(2);
-
-    const matureAt = secondStageAt + fish.cycleSeconds.at(-1)! * 1_000;
+    const matureAt = now + (fish.cycleSeconds.at(-1)! - 14_400) * 1_000;
     const matureOwner = advanceManorV7State(secondFeed, matureAt);
     const stolen = transitionManorV7FriendStates(
       createManorV7State(matureAt),
@@ -1621,8 +1827,8 @@ describe("QQ Farm V7 domain", () => {
       result.visitor, result.owner, "visitor", "访客", "owner", "主人", { type: "catch-mouse" }, now
     );
     expect(result.owner.pasture.mousePresent).toBe(false);
-    expect(result.visitor.coins - beforeCoins).toBeGreaterThanOrEqual(50);
-    expect(result.visitor.coins - beforeCoins).toBeLessThanOrEqual(100);
+    expect(result.visitor.coins - beforeCoins).toBeGreaterThanOrEqual(manorV7RewardAmount(50));
+    expect(result.visitor.coins - beforeCoins).toBeLessThanOrEqual(manorV7RewardAmount(100));
   });
 
   it("keeps crop growth speed while care delays reduce final yield by at most half", () => {
@@ -1948,7 +2154,7 @@ describe("QQ Farm V7 domain", () => {
       { type: "sell-wild-crystal", crystalId: 1, quantity: 2 },
       now
     );
-    expect(sold.coins).toBe(120);
+    expect(sold.coins).toBe(100 + manorV7RewardAmount(20));
     expect(sold.pasture.wild.crystalInventory).toEqual([{ sourceId: 1, quantity: 1 }]);
     expect(() => transitionManorV7State(
       sold,

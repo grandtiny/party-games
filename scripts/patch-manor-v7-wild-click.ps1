@@ -46,12 +46,15 @@ $pastureGiftIconPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\m
 $pastureGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\GiftWindow.as"
 $pastureMainCommandPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\control\MainCommand.as"
 $dailyPackagePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-VT§.as"
+$farmWildToolPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\Tool_Wild.as"
 $farmProfileBarPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-PB§.as"
 $dailyPackageModelPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-VB§\§_-2S§.as"
 $farmGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\GiftWindow.as"
+$farmGiftItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\GiftItem.as"
 $farmVipReturnGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\common\view\window\VipReturnGiftWindow.as"
 $farmFriendPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\friend\§_-OE§.as"
 $profileWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-42§\§_-1D§.as"
+$profileDataPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-42§\§_-5R§.as"
 $bagControllerPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 $warehouseModulePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\warehouse\ModuleWarehouse.as"
 $farmShopPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\shop\§_-OZ§.as"
@@ -65,7 +68,7 @@ $farmFriendVipPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mod
 $temporarySwf = Join-Path ([System.IO.Path]::GetDirectoryName($outputSwf)) "Master2_v_86.wild-module-patched.swf"
 $temporaryFarmSwf = Join-Path ([System.IO.Path]::GetDirectoryName($farmOutputSwf)) "main3_v_140.daily-package-patched.swf"
 
-foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $shopSeedTilePatchSource, $shopToolPatchSource, $shopTinPatchSource, $shopDiyPatchSource, $pastureSelectPatchSource, $pastureNameTextPatchSource, $pastureFlopGiftPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureGiftWindowPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $farmProfileBarPatchSource, $dailyPackageModelPatchSource, $farmGiftWindowPatchSource, $farmVipReturnGiftWindowPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmBuySeedPatchSource, $farmSeedTilePatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
+foreach ($path in @($JpexsJar, $inputSwf, $farmInputSwf, $farmConfigPath, $pastureConfigPath, $patchSource, $shopSeedPatchSource, $shopSeedTilePatchSource, $shopToolPatchSource, $shopTinPatchSource, $shopDiyPatchSource, $pastureSelectPatchSource, $pastureNameTextPatchSource, $pastureFlopGiftPatchSource, $leftInfoPatchSource, $pastureGiftIconPatchSource, $pastureGiftWindowPatchSource, $pastureMainCommandPatchSource, $dailyPackagePatchSource, $farmWildToolPatchSource, $farmProfileBarPatchSource, $dailyPackageModelPatchSource, $farmGiftWindowPatchSource, $farmGiftItemPatchSource, $farmVipReturnGiftWindowPatchSource, $farmFriendPatchSource, $profileWindowPatchSource, $profileDataPatchSource, $bagControllerPatchSource, $warehouseModulePatchSource, $farmShopPatchSource, $farmApplicationPatchSource, $farmBuyItemPatchSource, $farmBuyDiyPatchSource, $farmBuySeedPatchSource, $farmSeedTilePatchSource, $farmLandWindowPatchSource, $farmFriendVipPatchSource)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Required patch input is missing: $path"
   }
@@ -112,18 +115,24 @@ $farmArguments = @(
   $temporaryFarmSwf,
   "§_-Gt§.§_-VT§",
   $dailyPackagePatchSource,
+  "§_-Gt§.Tool_Wild",
+  $farmWildToolPatchSource,
   "§_-Gt§.§_-PB§",
   $farmProfileBarPatchSource,
   "§_-VB§.§_-2S§",
   $dailyPackageModelPatchSource,
   "common.view.window.GiftWindow",
   $farmGiftWindowPatchSource,
+  "common.view.window.GiftItem",
+  $farmGiftItemPatchSource,
   "common.view.window.VipReturnGiftWindow",
   $farmVipReturnGiftWindowPatchSource,
   "module.friend.§_-OE§",
   $farmFriendPatchSource,
   "§_-42§.§_-1D§",
   $profileWindowPatchSource,
+  "§_-42§.§_-5R§",
+  $profileDataPatchSource,
   "§_-1T§.§_-D3§",
   $bagControllerPatchSource,
   "module.warehouse.ModuleWarehouse",

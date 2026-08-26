@@ -24,8 +24,7 @@ export function manorV7EffectiveCropSalePrice(cropId: number, standardPrice: num
 }
 
 export function manorV7CropSaleQuote(cropId: number, standardPrice: number, quantity: number): ManorV7SaleQuote {
-  const unitPrice = manorV7EffectiveCropSalePrice(cropId, standardPrice);
-  return saleQuote(unitPrice, quantity, cropId === MANOR_V7_LOVESDAY_CROP_ID);
+  return saleQuote(standardPrice, quantity, cropId === MANOR_V7_LOVESDAY_CROP_ID);
 }
 
 export function manorV7PastureProductSaleQuote(

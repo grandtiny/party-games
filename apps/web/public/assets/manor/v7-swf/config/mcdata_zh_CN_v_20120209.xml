@@ -1244,7 +1244,7 @@
 				<l>“羊”在古代与“祥”相通，表示吉祥。</l> 
 			</info>
 		</animal>
-		<animal childNum="24" house="窝" id="1499" name="孔雀" price="5000" product="孔雀蛋" sf="0" sound="1" u="根">
+		<animal childNum="24" house="窝" id="1499" name="孔雀" price="5000" product="孔雀蛋" sf="0" sound="0" u="根">
 			<nextText value="幼仔,成长期,生产期,生产期,待产期,收获期" /> 
 			<nextTime value="37800,37800,237600,15,43185,313200" /> 
 			<tip>孔雀（英文：peacock ）属鸡形目，雉科，又名越鸟，被视为“百鸟之王”，是美丽的观赏鸟，也是吉祥、善良、美丽、华贵的象征。</tip> 
@@ -1263,7 +1263,7 @@
 				<l>桂圆大米同食治失眠心悸。</l> 
 			</info>
 		</animal>
-		<animal childNum="24" house="窝" id="1498" name="小花母猪" price="5000" product="小花母猪崽" sf="0" sound="1" u="根">
+		<animal childNum="24" house="窝" id="1498" name="小花母猪" price="5000" product="小花母猪崽" sf="0" sound="0" u="根">
 			<nextText value="幼仔,成长期,生产期,生产期,待产期,收获期" /> 
 			<nextTime value="37800,37800,237600,15,43185,313200" /> 
 			<tip>小花母猪</tip> 
@@ -1272,7 +1272,7 @@
 				<l>如果天堂太拥挤，我们就一起去地狱猖獗。</l> 
 			</info>
 		</animal>
-		<animal childNum="24" house="窝" id="1497" name="北极熊" price="5000" product="北极熊崽" sf="0" sound="1" u="根">
+		<animal childNum="24" house="窝" id="1497" name="北极熊" price="5000" product="北极熊崽" sf="0" sound="0" u="根">
 			<nextText value="幼仔,成长期,生产期,生产期,待产期,收获期" /> 
 			<nextTime value="37800,37800,237600,15,43185,313200" /> 
 			<tip>北极熊</tip> 
@@ -2382,7 +2382,7 @@
 				<l>也许你担心自己吃小亏，但要相信人生有大福。</l> 
 			</info>
 		</animal>
-		<animal childNum="16" house="窝" id="1010" name="仓鼠" price="14100" product="仓鼠崽" sf="0" sound="1" u="只" v="1">
+		<animal childNum="16" house="窝" id="1010" name="仓鼠" price="14100" product="仓鼠崽" sf="0" sound="0" u="只" v="1">
 			<nextText value="幼仔,成长期,生产期,生产期,待产期,收获期" /> 
 			<nextTime value="41400,41400,403200,15,50385,486000" /> 
 			<tip>仓鼠（英文：hamster ） 长相奇特，小巧玲珑，活泼灵敏，十分逗人喜爱，而且无异味，具有玩赏价值，适宜做宠物饲养。</tip> 

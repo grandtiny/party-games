@@ -5,13 +5,16 @@ import {
   MANOR_V7_FISH,
   MANOR_V7_TOOLS,
   manorV7Animal,
+  manorV7Avatar,
   manorV7Board,
   manorV7Crop,
   manorV7Decoration,
   manorV7Fish,
+  manorV7LandUpgrade,
   manorV7PastureGuard,
   manorV7Tool
 } from "./catalog.js";
+import { grantManorV7Coins, manorV7RewardAmount } from "./economy.js";
 import type {
   ManorV7Action,
   ManorV7Activity,
@@ -71,6 +74,8 @@ export const MANOR_V7_MOSQUITO_ACTION_DAILY_LIMIT = 25;
 export const MANOR_V7_MANURE_COLLECTION_DAILY_LIMIT = 100;
 export const MANOR_V7_SPECIAL_FEED_DAILY_LIMIT = 30;
 export const MANOR_V7_DOG_FOOD_DAY_SECONDS = 24 * 60 * 60;
+export const MANOR_V7_LAND_EXPANSION_FUND_LEVEL = manorV7LandUpgrade("red", 0).level;
+export const MANOR_V7_LAND_EXPANSION_FUND_COINS = 200_000;
 
 export const MANOR_V7_RESEARCH_RULES = {
   hutch: [
@@ -257,7 +262,8 @@ export function createManorV7State(now: number): ManorV7State {
       signInRewardIds: [],
       signInStreak: 0,
       signInStreakRewardDays: [],
-      vipReturnGiftClaimed: false
+      vipReturnGiftClaimed: false,
+      landExpansionFundClaimed: false
     },
     researchGuideSeen: false,
     tutorialTask: { taskId: 0, accepted: true },
@@ -323,6 +329,7 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
   }
   state.farm.selectedBoardId ??= null;
   state.farm.selectedAvatarId ??= null;
+  if (!validAvatarId(state.farm.selectedAvatarId)) state.farm.selectedAvatarId = null;
   state.pasture.harvestedAnimalInventory ??= [];
   state.pasture.cubInventory ??= [];
   state.pasture.materialInventory ??= [];
@@ -368,7 +375,8 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     signInRewardIds: [],
     signInStreak: 0,
     signInStreakRewardDays: [],
-    vipReturnGiftClaimed: false
+    vipReturnGiftClaimed: false,
+    landExpansionFundClaimed: false
   };
   state.rewardClaims.signInStreak ??= state.rewardClaims.signInDay ? 1 : 0;
   state.rewardClaims.signInRewardDay ??= state.rewardClaims.signInRewardId
@@ -379,6 +387,7 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     : [];
   state.rewardClaims.signInStreakRewardDays ??= [];
   state.rewardClaims.vipReturnGiftClaimed ??= false;
+  state.rewardClaims.landExpansionFundClaimed ??= false;
   state.researchGuideSeen ??= true;
   state.tutorialTask ??= { taskId: MANOR_V7_TUTORIAL_TASKS.length, accepted: false };
   state.levelRewardClaims ??= {
@@ -435,6 +444,7 @@ export function advanceManorV7State(
   advanceResearch(state, elapsed, now);
   advanceWildlife(state, now);
   synchronizeDecorationOwnerships(state, now);
+  grantLandExpansionFundIfEligible(state, now);
   state.updatedAt = now;
   state.revision += 1;
   validateManorV7State(state);
@@ -449,6 +459,7 @@ export function transitionManorV7State(
 ): ManorV7State {
   const state = advanceManorV7State(current, now, options);
   applyManorV7Action(state, action, now);
+  grantLandExpansionFundIfEligible(state, now);
   state.revision = current.revision + 1;
   state.updatedAt = now;
   validateManorV7State(state);
@@ -597,6 +608,24 @@ export function addManorV7Activity(
   state.activities = [activity, ...state.activities].slice(0, MANOR_V7_ACTIVITY_LIMIT);
 }
 
+export function grantLandExpansionFundIfEligible(state: ManorV7State, now: number): boolean {
+  if (
+    state.rewardClaims.landExpansionFundClaimed ||
+    manorV7LevelForExperience(state.farmExperience) < MANOR_V7_LAND_EXPANSION_FUND_LEVEL
+  ) {
+    return false;
+  }
+  state.rewardClaims.landExpansionFundClaimed = true;
+  const rewardCoins = grantManorV7Coins(state, MANOR_V7_LAND_EXPANSION_FUND_COINS);
+  addManorV7Activity(
+    state,
+    "farm",
+    `达到 ${MANOR_V7_LAND_EXPANSION_FUND_LEVEL} 级，获得土地扩建基金 ${rewardCoins} 金币`,
+    now
+  );
+  return true;
+}
+
 export function drawManorV7Random(state: ManorV7State): number {
   const roll = nextRandom(state.randomState);
   state.randomState = roll.state;
@@ -624,7 +653,7 @@ export function progressManorV7Task(state: ManorV7State, key: string, amount: nu
   if (task.progress >= definition.target) {
     task.completed = true;
     task.claimed = true;
-    state.coins += definition.rewardCoins;
+    grantManorV7Coins(state, definition.rewardCoins);
   }
 }
 
@@ -670,6 +699,7 @@ export function validateManorV7State(state: ManorV7State): void {
     state.rewardClaims.signInStreakRewardDays.some((days) => !validStreakSignInRewardDay(days)) ||
     new Set(state.rewardClaims.signInStreakRewardDays).size !== state.rewardClaims.signInStreakRewardDays.length ||
     typeof state.rewardClaims.vipReturnGiftClaimed !== "boolean" ||
+    typeof state.rewardClaims.landExpansionFundClaimed !== "boolean" ||
     typeof state.researchGuideSeen !== "boolean" ||
     !Number.isInteger(state.tutorialTask.taskId) || state.tutorialTask.taskId < 0 ||
     state.tutorialTask.taskId > MANOR_V7_TUTORIAL_TASKS.length ||
@@ -804,8 +834,12 @@ function synchronizeDecorationOwnerships(state: ManorV7State, now: number): void
     ownership.validUntil === 0 || ownership.validUntil > now
   ));
   const activeKeys = new Set(current.map((ownership) => `${ownership.area}:${ownership.decorationId}`));
-  state.farm.selectedDecorationIds = state.farm.selectedDecorationIds.filter((id) => activeKeys.has(`farm:${id}`));
-  state.pasture.selectedDecorationIds = state.pasture.selectedDecorationIds.filter((id) => activeKeys.has(`pasture:${id}`));
+  state.farm.selectedDecorationIds = state.farm.selectedDecorationIds.filter((id) => (
+    activeKeys.has(`farm:${id}`) && manorV7Decoration("farm", id).isRenderable
+  ));
+  state.pasture.selectedDecorationIds = state.pasture.selectedDecorationIds.filter((id) => (
+    activeKeys.has(`pasture:${id}`) && manorV7Decoration("pasture", id).isRenderable
+  ));
   state.ownedDecorationIds = [...new Set(current.map((ownership) => ownership.decorationId))]
     .sort((left, right) => left - right);
 }
@@ -955,7 +989,13 @@ function validBoardId(value: number | null): boolean {
 }
 
 function validAvatarId(value: number | null): boolean {
-  return value === null || (Number.isInteger(value) && value > 0 && value <= 1_000_000);
+  if (value === null) return true;
+  try {
+    manorV7Avatar(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function validClaimDay(value: string | null): boolean {
@@ -1268,7 +1308,7 @@ function toTaskViews(tasks: readonly ManorV7TaskState[]): ManorV7TaskView[] {
   return tasks.map((task) => {
     const definition = MANOR_V7_TASK_DEFINITIONS.find((item) => item.key === task.key);
     if (!definition) throw new Error("V7 任务定义不存在");
-    return { ...task, ...definition };
+    return { ...task, ...definition, rewardCoins: manorV7RewardAmount(definition.rewardCoins) };
   });
 }
 

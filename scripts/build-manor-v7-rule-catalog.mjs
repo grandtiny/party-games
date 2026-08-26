@@ -174,7 +174,7 @@ const animals = entries(config.animals).map(({ key, body }) => {
 });
 
 const fishAssetDirectory = join(moduleRoot, "ui", "farm", "fish");
-const fishFiles = new Set(awaitImportFs.readdirSync(fishAssetDirectory));
+const fishFiles = new Set(awaitImportFs.readdirSync(fishAssetDirectory).map((name) => name.toLowerCase()));
 const fish = entries(config.fish).map(({ key, body }) => {
   const id = Number(field(body, "id", String(key)));
   const cycles = numberArray(body, "cycle");
@@ -183,7 +183,7 @@ const fish = entries(config.fish).map(({ key, body }) => {
   const visible = field(body, "show", "0") === "1";
   const hasFishAsset = fishFiles.has(`fish_${String(id).padStart(2, "0")}.swf`);
   const hasSeedAsset = fishFiles.has(`fish_seed_${String(id).padStart(2, "0")}.swf`);
-  const integrationPolicy = id === 1 ? "excluded-test" : hidden || !visible ? "excluded-hidden" : hasFishAsset && hasSeedAsset ? "core-candidate" : "blocked-assets";
+  const integrationPolicy = id === 1 ? "excluded-test" : hidden ? "excluded-hidden" : hasFishAsset && hasSeedAsset ? "core-candidate" : "blocked-assets";
   return {
     source_id: id,
     name: field(body, "crop_name"),
@@ -211,6 +211,21 @@ function decorations(path, area, hiddenSet) {
     const coinPrice = Number(field(body, "price", "0"));
     const premiumPrice = Number(field(body, "FBPrice", "0"));
     const hidden = hiddenSet.has(id);
+    const assetDirectory = area === "farm"
+      ? join(moduleRoot, "ui", "farm", "diy")
+      : join(moduleRoot, "mc", "farm", "diy");
+    const mainAsset = area === "farm" ? `${id}.swf` : `z1_${id}_1.swf`;
+    const previewAsset = area === "farm" ? `${id}.jpg` : `z1_${id}_1_shop.jpg`;
+    const detailAsset = area === "farm" ? `${id}b.jpg` : null;
+    const hasMainAsset = existsSync(join(assetDirectory, mainAsset));
+    const hasPreviewAsset = existsSync(join(assetDirectory, previewAsset));
+    const hasDetailAsset = detailAsset === null || existsSync(join(assetDirectory, detailAsset));
+    const missingAssets = [
+      hasMainAsset ? null : "main",
+      hasPreviewAsset ? null : "preview",
+      hasDetailAsset ? null : "detail",
+    ].filter(Boolean);
+    const assetStatus = missingAssets.length === 0 ? "complete" : `missing-${missingAssets.join("+")}`;
     return {
       area,
       source_id: id,
@@ -224,7 +239,15 @@ function decorations(path, area, hiddenSet) {
       experience: Number(field(body, "exp", "0")),
       valid_seconds: Number(field(body, "itemValidTime", "0")),
       hidden,
-      integration_policy: hidden ? "excluded-hidden" : "deferred-cosmetic",
+      has_main_asset: hasMainAsset,
+      has_preview_asset: hasPreviewAsset,
+      has_detail_asset: hasDetailAsset,
+      asset_status: assetStatus,
+      integration_policy: assetStatus !== "complete"
+        ? "blocked-assets"
+        : hidden
+          ? "hidden-cosmetic"
+          : "shop-candidate",
     };
   });
 }
@@ -292,12 +315,20 @@ const summary = [
   { key: "config_bundle_sha256", value: configHash.digest("hex") },
   { key: "crop_rows", value: crops.length },
   { key: "crop_core_candidates", value: crops.filter((row) => row.integration_policy === "core-candidate").length },
+  { key: "crop_runtime_definitions", value: crops.filter((row) => row.crop_type === 1 && row.asset_files >= 4).length },
   { key: "animal_rows", value: animals.length },
   { key: "animal_core_candidates", value: animals.filter((row) => row.integration_policy === "core-candidate").length },
+  { key: "animal_runtime_definitions", value: animals.filter((row) => row.asset_status === "complete-two-parts").length },
   { key: "fish_rows", value: fish.length },
   { key: "fish_core_candidates", value: fish.filter((row) => row.integration_policy === "core-candidate").length },
+  { key: "fish_runtime_definitions", value: fish.filter((row) => row.source_id !== 1 && row.has_fish_asset && row.has_seed_asset).length },
   { key: "farm_decoration_rows", value: decorationRows.filter((row) => row.area === "farm").length },
   { key: "pasture_decoration_rows", value: decorationRows.filter((row) => row.area === "pasture").length },
+  { key: "decoration_runtime_definitions", value: decorationRows.length },
+  { key: "decoration_renderable_definitions", value: decorationRows.filter((row) => row.asset_status === "complete").length },
+  { key: "decoration_shop_candidates", value: decorationRows.filter((row) => row.integration_policy === "shop-candidate").length },
+  { key: "decoration_hidden_candidates", value: decorationRows.filter((row) => row.integration_policy === "hidden-cosmetic").length },
+  { key: "decoration_blocked_assets", value: decorationRows.filter((row) => row.integration_policy === "blocked-assets").length },
   { key: "farm_tool_rows", value: toolRows.filter((row) => row.area === "farm").length },
   { key: "pasture_tool_rows", value: toolRows.filter((row) => row.area === "pasture").length },
   { key: "timing_rows", value: timing.length },

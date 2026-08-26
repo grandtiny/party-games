@@ -1,5 +1,6 @@
 export * from "./types.js";
 export * from "./catalog.js";
+export * from "./economy.js";
 export * from "./pasture-lifecycle.js";
 export * from "./state.js";
 export * from "./actions.js";

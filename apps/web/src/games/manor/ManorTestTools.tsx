@@ -1,7 +1,12 @@
-import type { ManorTestResource } from "@party-games/shared";
-import { FastForward, Gift, X } from "lucide-react";
+import type { ManorTestResource, ManorTestSetLevelRequest } from "@party-games/shared";
+import { Database, FastForward, Gauge, Gift, X } from "lucide-react";
 import { useState } from "react";
-import { advanceManorTestTime, grantManorTestResource } from "../../api";
+import {
+  advanceManorTestTime,
+  grantManorTestResource,
+  prepareManorTestAcceptanceData,
+  setManorTestLevel
+} from "../../api";
 
 export function ManorTestTools({
   onClose,
@@ -12,6 +17,8 @@ export function ManorTestTools({
 }) {
   const [resource, setResource] = useState<ManorTestResource>("coins");
   const [amount, setAmount] = useState(100_000);
+  const [levelArea, setLevelArea] = useState<ManorTestSetLevelRequest["area"]>("farm");
+  const [level, setLevel] = useState(28);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
 
@@ -84,6 +91,53 @@ export function ManorTestTools({
         >
           <Gift size={16} />
           发放
+        </button>
+      </div>
+      <div className="manor-test-tools__group manor-test-tools__levels">
+        <strong><Gauge size={16} />设置等级</strong>
+        <label>
+          <span>区域</span>
+          <select
+            value={levelArea}
+            disabled={busy}
+            onChange={(event) => setLevelArea(event.target.value as ManorTestSetLevelRequest["area"])}
+          >
+            <option value="farm">农场</option>
+            <option value="pasture">牧场</option>
+          </select>
+        </label>
+        <label>
+          <span>目标等级</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={level}
+            disabled={busy}
+            onChange={(event) => setLevel(Number(event.target.value))}
+          />
+        </label>
+        <button
+          className="manor-test-tools__submit"
+          type="button"
+          disabled={busy || !Number.isInteger(level) || level < 0 || level > 100}
+          onClick={() => void runMutation(() => setManorTestLevel({ area: levelArea, level }))}
+        >
+          <Gauge size={16} />
+          设置
+        </button>
+      </div>
+      <div className="manor-test-tools__group">
+        <strong><Database size={16} />巡检数据</strong>
+        <button
+          className="manor-test-tools__submit"
+          type="button"
+          disabled={busy}
+          onClick={() => void runMutation(prepareManorTestAcceptanceData)}
+        >
+          <Database size={16} />
+          准备数据
         </button>
       </div>
       {notice ? <output className="manor-test-tools__notice">{notice}</output> : null}

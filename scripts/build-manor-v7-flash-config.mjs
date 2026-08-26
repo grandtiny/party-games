@@ -34,7 +34,7 @@ for (const [sourceName, outputName] of outputs) {
     .replaceAll("$url/mymc.php?mod=", apiPath)
     .replaceAll("$url", originToken)
     .replace(/(?<![\w/.-])module\//g, `${moduleRoot}/`)
-    .replace(/(?<![\w/.-])icon\//g, `${moduleRoot}/icon/`));
+    .replace(/(?<![\w/.-])icon\//g, `${moduleRoot}/icon/`), sourceName);
 
   if (xml.includes("$url") || xml.includes("mync.php") || xml.includes("mymc.php")) {
     throw new Error(`Generated ${outputName} still contains a legacy runtime URL`);
@@ -42,11 +42,24 @@ for (const [sourceName, outputName] of outputs) {
   await writeFile(join(outputRoot, outputName), `${xml.trim()}\n`, "utf8");
 }
 
-function applyLocalFeatureFlags(xml) {
-  return xml
+function applyLocalFeatureFlags(xml, sourceName) {
+  const localized = xml
     .replace("<adSeedTabOpen>1</adSeedTabOpen>", "<adSeedTabOpen>0</adSeedTabOpen>")
     .replace("<snsAdAllowLvl>0</snsAdAllowLvl>", "<snsAdAllowLvl>999</snsAdAllowLvl>")
     .replace(/<shopLinkTip value="交流论坛" url="[^"]*"\s*\/>/u, '<shopLinkTip value="" url=""/>');
+  if (sourceName !== "mc_data.php") return localized;
+
+  let replacements = 0;
+  const withValidSoundFlags = localized.replace(
+    /<animal\b[^>]*\bid="(?:1010|1497|1498|1499)"[^>]*>/gu,
+    (animal) => {
+      const patched = animal.replace('sound="1"', 'sound="0"');
+      if (patched !== animal) replacements += 1;
+      return patched;
+    }
+  );
+  if (replacements !== 4) throw new Error(`Expected to disable four missing animal sounds, disabled ${replacements}`);
+  return withValidSoundFlags;
 }
 
 await populateBoardConfig();

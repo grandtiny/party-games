@@ -151,6 +151,9 @@ try {
         await clickStage(cdp, 974, 39);
         await delay(2_500);
         interactionReports.push(await captureScene(cdp, "desktop-shop", "farm"));
+        await clickStage(cdp, 451, 196);
+        await delay(2_500);
+        interactionReports.push(await captureScene(cdp, "desktop-shop-seeds", "farm"));
         await clickStage(cdp, 365, 170);
         await delay(2_500);
         interactionReports.push(await captureScene(cdp, "desktop-shop-fish", "farm"));

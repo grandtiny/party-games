@@ -110,14 +110,13 @@ package §_-Gt§
 
       private function bindWildClick() : void
       {
-         this.§_-6s§.addEventListener(MouseEvent.MOUSE_DOWN,this.onWildIconClick,false,0,true);
+         this.§_-6s§.addEventListener(MouseEvent.CLICK,this.onWildIconClick,false,0,true);
       }
 
       private function onWildIconClick(param1:MouseEvent) : void
       {
-         trace("MANOR_WILD_ICON_DOWN");
          param1.stopPropagation();
-         dispatchEvent(new MouseEvent(MouseEvent.MOUSE_DOWN,true));
+         dispatchEvent(new MouseEvent(MouseEvent.CLICK,true));
       }
       
       public function set §_-5Z§(param1:String) : void

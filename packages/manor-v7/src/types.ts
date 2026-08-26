@@ -71,6 +71,15 @@ export interface ManorV7ToolDefinition {
   available: boolean;
 }
 
+export interface ManorV7AvatarDefinition {
+  id: number;
+  sex: "M" | "F";
+  displayOrder: number;
+  assetPath: string;
+  width: number;
+  height: number;
+}
+
 export interface ManorV7DecorationDefinition {
   area: ManorV7Area;
   id: number;
@@ -82,6 +91,8 @@ export interface ManorV7DecorationDefinition {
   premiumPrice: number;
   experience: number;
   validSeconds: number;
+  isHidden: boolean;
+  isRenderable: boolean;
 }
 
 export interface ManorV7DecorationOwnership {
@@ -386,6 +397,7 @@ export interface ManorV7State {
     signInStreak: number;
     signInStreakRewardDays: number[];
     vipReturnGiftClaimed: boolean;
+    landExpansionFundClaimed: boolean;
   };
   researchGuideSeen: boolean;
   tutorialTask: { taskId: number; accepted: boolean };
@@ -415,7 +427,7 @@ export type ManorV7Action =
   | { type: "sell-produce"; cropId: number; quantity: number }
   | { type: "sell-seed"; cropId: number; quantity: number }
   | { type: "sell-selected-seeds"; cropIds: number[] }
-  | { type: "sell-all-produce" }
+  | { type: "sell-all-produce"; cropIds?: number[] }
   | { type: "set-produce-lock"; cropId: number; locked: boolean }
   | { type: "unlock-fish"; fishId: number }
   | { type: "register-fish-pool" }
@@ -490,7 +502,14 @@ export type ManorV7Action =
   | { type: "adopt-wild-animal"; slotId: number; animalType: number }
   | { type: "claim-wild-return"; slotId: number }
   | { type: "donate-wild-animal"; slotId: number }
-  | { type: "attack-wild-animal"; serial: number; attackType: string; weaponId: number }
+  | {
+      type: "attack-wild-animal";
+      serial: number;
+      attackType: string;
+      weaponId: number;
+      attackerUserId?: string;
+      attackerDisplayName?: string;
+    }
   | { type: "sell-wild-crystal"; crystalId: number; quantity: number }
   | { type: "pickup-wild-crystal"; serial: number };
 
