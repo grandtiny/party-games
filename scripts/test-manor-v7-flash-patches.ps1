@@ -8,6 +8,7 @@ $wildToolPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-Gt§\Too
 $profileDataPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-42§\§_-5R§.as"
 $giftWindowPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\view\window\GiftWindow.as"
 $giftItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\view\window\GiftItem.as"
+$bagControllerPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 
 $patchScript = Get-Content -LiteralPath $patchScriptPath -Raw -Encoding UTF8
 $seedPage = Get-Content -LiteralPath $seedPagePath -Raw -Encoding UTF8
@@ -15,6 +16,7 @@ $wildTool = Get-Content -LiteralPath $wildToolPath -Raw -Encoding UTF8
 $profileData = Get-Content -LiteralPath $profileDataPath -Raw -Encoding UTF8
 $giftWindow = Get-Content -LiteralPath $giftWindowPath -Raw -Encoding UTF8
 $giftItem = Get-Content -LiteralPath $giftItemPath -Raw -Encoding UTF8
+$bagController = Get-Content -LiteralPath $bagControllerPath -Raw -Encoding UTF8
 
 if ($patchScript.Contains('"framework.base.§_-Eh§"')) {
   throw "The shared farm tile base must not be recompiled because it breaks protected members in original subclasses"
@@ -75,6 +77,15 @@ if (-not $giftItem.Contains('new TextFormat("SimSun",13')) {
 }
 if (-not $giftItem.Contains('this.§_-a5§.wordWrap = true;')) {
   throw "The daily gift item label must wrap long reward names"
+}
+if (-not $bagController.Contains('this.bagView.addEventListener(§_-SF§.§_-ZN§,this.onBagItemClick,false,1000,true);')) {
+  throw "The farm bag controller must intercept fertilizer package clicks before the normal tool cursor"
+}
+if (-not $bagController.Contains('"openPackage":1')) {
+  throw "The farm bag controller must request an explicit package-open transaction"
+}
+if (-not $bagController.Contains('this.model.dirty = true;') -or -not $bagController.Contains('this.model.reload();')) {
+  throw "The farm bag controller must reload inventory after opening a package"
 }
 
 Write-Host "QQ Farm V7 Flash patch verification passed"

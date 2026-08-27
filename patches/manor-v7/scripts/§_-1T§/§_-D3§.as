@@ -1,6 +1,8 @@
 package §_-1T§
 {
    import §_-0H§.BagItem;
+   import §_-3i§.§_-Ep§;
+   import §_-Iw§.§_-SF§;
    import §_-Iw§.§_-Yj§;
    import §_-JM§.§_-1R§;
    import §_-JM§.§_-3§;
@@ -8,6 +10,9 @@ package §_-1T§
    import flash.events.Event;
    import flash.utils.setTimeout;
    import framework.base.§_-Gy§;
+   import framework.net.NetHelper;
+   import framework.net.§_-99§;
+   import framework.net.vo.§_-P9§;
    import module.§_-Im§;
    
    public class §_-D3§ extends §_-Gy§
@@ -18,6 +23,8 @@ package §_-1T§
       private var showFishAfterReload:Boolean;
 
       private var selectFishOnFirstLoad:Boolean;
+
+      private var openingToolPackage:Boolean;
       
       private var bagView:§_-2o§;
       
@@ -29,6 +36,7 @@ package §_-1T§
          this.§_-Ub§ = false;
          this.showFishAfterReload = false;
          this.selectFishOnFirstLoad = true;
+         this.openingToolPackage = false;
          this.bagView = null;
          this.bagModel = null;
       }
@@ -47,6 +55,7 @@ package §_-1T§
             if(this.bagView == null)
             {
                this.bagView = new §_-2o§(this);
+               this.bagView.addEventListener(§_-SF§.§_-ZN§,this.onBagItemClick,false,1000,true);
                if(module != null && module.container != null)
                {
                   module.container.addChild(this.bagView);
@@ -90,6 +99,70 @@ package §_-1T§
       private function onBuyItemSuccess(param1:§_-Yj§) : void
       {
          this.markBoughtItem(param1 == null ? null : param1.data);
+      }
+
+      private function onBagItemClick(param1:§_-SF§) : void
+      {
+         if(param1 == null || param1.data == null)
+         {
+            return;
+         }
+         var _loc2_:BagItem = param1.data as BagItem;
+         if(_loc2_ == null || _loc2_._type.toString() != §_-Ac§.§_-Ux§ || _loc2_._cId < 9101 || _loc2_._cId > 9106)
+         {
+            return;
+         }
+         param1.stopImmediatePropagation();
+         if(this.openingToolPackage)
+         {
+            return;
+         }
+         this.openingToolPackage = true;
+         NetHelper.sendRequest(§_-99§.§_-JC§,{
+            "tId":_loc2_._cId,
+            "number":1,
+            "type":3,
+            "openPackage":1
+         },this.onToolPackageOpened,this.onToolPackageOpenFailed);
+      }
+
+      private function onToolPackageOpened(param1:§_-Ep§) : void
+      {
+         this.openingToolPackage = false;
+         var _loc2_:Object = this.responseData(param1);
+         if(_loc2_ == null || int(_loc2_["code"]) != 1)
+         {
+            this.showToolPackageMessage(_loc2_ != null && _loc2_["direction"] != null ? String(_loc2_["direction"]) : "礼包打开失败");
+            return;
+         }
+         this.model.dirty = true;
+         this.model.reload();
+         this.showToolPackageMessage(String(_loc2_["direction"]));
+      }
+
+      private function onToolPackageOpenFailed(param1:§_-Ep§) : void
+      {
+         this.openingToolPackage = false;
+         var _loc2_:Object = this.responseData(param1);
+         this.showToolPackageMessage(_loc2_ != null && _loc2_["direction"] != null ? String(_loc2_["direction"]) : "礼包打开失败，请重试");
+      }
+
+      private function responseData(param1:§_-Ep§) : Object
+      {
+         if(param1 == null || param1.result == null)
+         {
+            return null;
+         }
+         var _loc2_:§_-P9§ = param1.result as §_-P9§;
+         return _loc2_ == null ? null : _loc2_.m_extra;
+      }
+
+      private function showToolPackageMessage(param1:String) : void
+      {
+         this.openFloat(§_-Ac§.§_-Rf§,{
+            "text":param1,
+            "parent":this.module.app.farmView.stage
+         });
       }
       
       public function markBoughtItem(param1:Object) : void

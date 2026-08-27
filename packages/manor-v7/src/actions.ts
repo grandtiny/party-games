@@ -7,6 +7,7 @@ import {
   manorV7Decoration,
   manorV7DecorationCoinPrice,
   manorV7Fish,
+  manorV7FarmToolPackage,
   manorV7LandUpgrade,
   manorV7PastureGuard,
   manorV7Tool,
@@ -168,6 +169,26 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (!inventory) throw new Error("该工具需要使用专用购买入口");
       setInventoryQuantity(inventory, tool.id, inventoryQuantity(inventory, tool.id) + action.quantity);
       addManorV7Activity(state, action.area, `购买了 ${action.quantity} 个${tool.name}`, now);
+      break;
+    }
+    case "open-tool-package": {
+      const packageDefinition = manorV7FarmToolPackage(action.packageId);
+      const packageTool = manorV7ToolByType("farm", packageDefinition.packageId, 3);
+      const rewardTool = manorV7ToolByType("farm", packageDefinition.toolId, 3);
+      const available = inventoryQuantity(state.farm.toolInventory, packageDefinition.packageId);
+      if (available < 1) throw new Error("礼包库存不足");
+      setInventoryQuantity(state.farm.toolInventory, packageDefinition.packageId, available - 1);
+      setInventoryQuantity(
+        state.farm.toolInventory,
+        packageDefinition.toolId,
+        inventoryQuantity(state.farm.toolInventory, packageDefinition.toolId) + packageDefinition.quantity
+      );
+      addManorV7Activity(
+        state,
+        "farm",
+        `打开了${packageTool.name}，获得 ${packageDefinition.quantity} 个${rewardTool.name}`,
+        now
+      );
       break;
     }
     case "buy-farm-dog": {

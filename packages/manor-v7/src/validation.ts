@@ -51,6 +51,7 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
       ...(input.itemType === undefined ? {} : { itemType: integer(input.itemType) }),
       ...(input.useVip === undefined ? {} : { useVip: boolean(input.useVip) })
     };
+    case "open-tool-package": return { type, packageId: integer(input.packageId) };
     case "buy-farm-dog": return { type, dogId: integer(input.dogId) };
     case "buy-dog-food": {
       const days = integer(input.days);

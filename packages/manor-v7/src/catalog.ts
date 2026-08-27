@@ -90,6 +90,15 @@ export const MANOR_V7_BOARD_IDS = [
   90030, 90031, 90032, 90473, 90474, 90475
 ] as const;
 
+export const MANOR_V7_FARM_TOOL_PACKAGES = [
+  { packageId: 9101, toolId: 2, quantity: 7 },
+  { packageId: 9102, toolId: 3, quantity: 7 },
+  { packageId: 9103, toolId: 7, quantity: 7 },
+  { packageId: 9104, toolId: 31, quantity: 7 },
+  { packageId: 9105, toolId: 32, quantity: 7 },
+  { packageId: 9106, toolId: 33, quantity: 7 }
+] as const;
+
 export function manorV7Crop(id: number): ManorV7CropDefinition {
   const item = cropMap.get(id);
   if (!item) throw new Error("作物不存在或未接入 V7 素材");
@@ -125,6 +134,12 @@ export function manorV7ToolByType(area: ManorV7Area, id: number, itemType: numbe
     candidate.area === area && candidate.id === id && candidate.itemType === itemType
   ));
   if (!item) throw new Error("工具不存在");
+  return item;
+}
+
+export function manorV7FarmToolPackage(packageId: number) {
+  const item = MANOR_V7_FARM_TOOL_PACKAGES.find((candidate) => candidate.packageId === packageId);
+  if (!item) throw new Error("工具礼包不存在");
   return item;
 }
 
