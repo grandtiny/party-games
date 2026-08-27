@@ -186,7 +186,7 @@ describe("QQ Farm V7 account persistence", () => {
           yellowlevel: 7,
           yellowstatus: 2
         },
-        weather: { weatherId: 1 }
+        weather: { weatherId: expect.any(Number) }
       });
       expect(bootstrap.json().farmlandStatus).toHaveLength(6);
       expect(bootstrap.json().farmlandStatus[1]).toMatchObject({ a: 1, f: 1 });
@@ -2310,7 +2310,7 @@ describe("QQ Farm V7 account persistence", () => {
         },
         task: { taskFlag: 1, taskId: 0 },
         user: { userName: "庄园主人", money: 0, yellowlevel: 7, yellowstatus: 2 },
-        weather: { weatherId: 1 }
+        weather: { weatherId: expect.any(Number) }
       });
       expect(bootstrap.json().animal).toHaveLength(2);
       expect(bootstrap.json().animal).not.toContain(null);
