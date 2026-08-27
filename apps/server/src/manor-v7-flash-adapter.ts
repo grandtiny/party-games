@@ -20,6 +20,7 @@ import {
   manorV7MaxProductionCount,
   manorV7DailySignInReward,
   manorV7EffectiveCropSeedPrice,
+  manorV7FarmToolPackage,
   manorV7PastureGuard,
   manorV7RedeemCode,
   manorV7RewardAmount,
@@ -2521,6 +2522,23 @@ export class ManorV7FlashAdapter {
     if (action === "buytool") {
       const type = positiveInteger(params.type, "工具类型");
       const toolId = positiveInteger(params.tId, "工具编号");
+      if (integer(params.openPackage) === 1) {
+        if (type !== 3) throw new Error("该道具不是工具礼包");
+        const packageDefinition = manorV7FarmToolPackage(toolId);
+        const after = this.service.performAction(user, { type: "open-tool-package", packageId: toolId }, now);
+        const reward = after.catalogs.tools.find((item) => (
+          item.area === "farm" && item.itemType === 3 && item.id === packageDefinition.toolId
+        ));
+        return {
+          code: 1,
+          direction: `礼包已打开，获得 ${packageDefinition.quantity} 个${reward?.name ?? "化肥"}。`,
+          number: packageDefinition.quantity,
+          packageId: packageDefinition.packageId,
+          tId: packageDefinition.toolId,
+          tName: reward?.name ?? "化肥",
+          type: 3
+        };
+      }
       const quantity = positiveInteger(params.number, "购买数量");
       const before = view;
       const after = type === 4

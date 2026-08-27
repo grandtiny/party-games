@@ -438,6 +438,7 @@ export type ManorV7Action =
   | { type: "harvest-fish"; serial: number }
   | { type: "sell-fish"; fishId: number; quantity: number }
   | { type: "buy-tool"; area: ManorV7Area; toolId: number; quantity: number; itemType?: number; useVip?: boolean }
+  | { type: "open-tool-package"; packageId: number }
   | { type: "buy-farm-dog"; dogId: number }
   | { type: "buy-dog-food"; days: 1 | 7 }
   | { type: "set-active-dog"; dogId: number | null }

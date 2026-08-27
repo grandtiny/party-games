@@ -9,6 +9,7 @@ import {
   MANOR_V7_DECORATIONS,
   MANOR_V7_DAILY_SIGN_IN_LIMIT,
   MANOR_V7_FISH,
+  MANOR_V7_FARM_TOOL_PACKAGES,
   MANOR_V7_FLOWERS,
   MANOR_V7_HIDDEN_SEED_IDS,
   MANOR_V7_HOUSE_UPGRADES,
@@ -2069,6 +2070,42 @@ describe("QQ Farm V7 domain", () => {
     expect(inventoryQuantity(vip.farm.toolInventory, 2)).toBe(1);
     expect(vip.ownedDecorationIds).toContain(45);
     expect(vip.farm.lands[4]).toMatchObject({ tier: "black" });
+  });
+
+  it("opens every farm fertilizer 5+2 package without partially changing inventory", () => {
+    const now = 91_000;
+    for (const packageDefinition of MANOR_V7_FARM_TOOL_PACKAGES) {
+      const state = createManorV7State(now);
+      state.farm.toolInventory = [
+        { sourceId: packageDefinition.packageId, quantity: 1 },
+        { sourceId: packageDefinition.toolId, quantity: 2 }
+      ];
+
+      const opened = transitionManorV7State(
+        state,
+        { type: "open-tool-package", packageId: packageDefinition.packageId },
+        now
+      );
+
+      expect(inventoryQuantity(opened.farm.toolInventory, packageDefinition.packageId)).toBe(0);
+      expect(inventoryQuantity(opened.farm.toolInventory, packageDefinition.toolId)).toBe(9);
+      expect(inventoryQuantity(state.farm.toolInventory, packageDefinition.packageId)).toBe(1);
+      expect(inventoryQuantity(state.farm.toolInventory, packageDefinition.toolId)).toBe(2);
+    }
+
+    const empty = createManorV7State(now);
+    const before = structuredClone(empty.farm.toolInventory);
+    expect(() => transitionManorV7State(
+      empty,
+      { type: "open-tool-package", packageId: 9101 },
+      now
+    )).toThrow("礼包库存不足");
+    expect(empty.farm.toolInventory).toEqual(before);
+    expect(() => transitionManorV7State(
+      empty,
+      { type: "open-tool-package", packageId: 9999 },
+      now
+    )).toThrow("工具礼包不存在");
   });
 
   it("closes the wild-animal adoption, release, return and crystal loop", () => {
