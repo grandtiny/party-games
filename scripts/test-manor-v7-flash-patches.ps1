@@ -4,6 +4,7 @@ Set-StrictMode -Version Latest
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $patchScriptPath = Join-Path $repositoryRoot "scripts\patch-manor-v7-wild-click.ps1"
 $seedPagePath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-W§\§_-Qq§.as"
+$toolItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-W§\ToolItem.as"
 $wildToolPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-Gt§\Tool_Wild.as"
 $profileDataPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-42§\§_-5R§.as"
 $giftWindowPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\view\window\GiftWindow.as"
@@ -12,6 +13,7 @@ $bagControllerPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-1T�
 
 $patchScript = Get-Content -LiteralPath $patchScriptPath -Raw -Encoding UTF8
 $seedPage = Get-Content -LiteralPath $seedPagePath -Raw -Encoding UTF8
+$toolItem = Get-Content -LiteralPath $toolItemPath -Raw -Encoding UTF8
 $wildTool = Get-Content -LiteralPath $wildToolPath -Raw -Encoding UTF8
 $profileData = Get-Content -LiteralPath $profileDataPath -Raw -Encoding UTF8
 $giftWindow = Get-Content -LiteralPath $giftWindowPath -Raw -Encoding UTF8
@@ -38,6 +40,15 @@ if ($seedPage.Contains('ExternalInterface.call("window.open"')) {
 }
 if (-not $patchScript.Contains('"§_-Gt§.Tool_Wild"')) {
   throw "The farm wild-animal tool patch must be part of the JPEXS replacement chain"
+}
+if (-not $patchScript.Contains('"§_-W§.ToolItem"')) {
+  throw "The farm tool-item patch must be part of the JPEXS replacement chain"
+}
+if (-not $toolItem.Contains('Math.max(this.width + 10,100)')) {
+  throw "The farm tool-item price field must fit six-digit coin prices"
+}
+if (-not $toolItem.Contains('this._priceText.x = (this.width - this._priceText.width) / 2;')) {
+  throw "The farm tool-item price field must remain centered in its tile"
 }
 if (-not $wildTool.Contains('addEventListener(MouseEvent.CLICK,this.onWildIconClick')) {
   throw "The wild-animal icon must listen for the click event used by the toolbar"
