@@ -295,7 +295,7 @@ package mc.view.main.window.shop
          this._btnConfirm.y = 77;
          this._btnConfirm.label = "确定";
          this._btnConfirm.textColor = 16777215;
-         this._btnConfirm.addEventListener(MouseEvent.CLICK,this.okButtonClick);
+         this._btnConfirm.addEventListener(MouseEvent.CLICK,this.confirmButtonClick);
          _loc1_.addChild(this._btnConfirm);
          this.cancelButton = new LipiButton();
          this.cancelButton.bgAlpha = 0;
@@ -359,28 +359,13 @@ package mc.view.main.window.shop
          this.linkText.x = _loc3_.width + this.rbtnDiy.width + 20;
          this.linkText.y = this.boxLoc["n1"];
          _loc1_.addChild(this.linkText);
-         var _loc4_:Boolean = false;
-         var _loc5_:Boolean = false;
-         var _loc6_:Object = MData.getInstance().mainData.host;
          this.rbtnDiy.enabled = false;
-         if(_loc6_["money"] < data["price"])
-         {
-            _loc4_ = true;
-            this.rbtnJB.enabled = false;
-         }
-         else
-         {
-            this.rbtnJB.enabled = true;
-            this.radioGroup.selectedTarget = this.rbtnJB;
-            this.rbtnJB.selected = true;
-         }
+         this.rbtnJB.enabled = true;
+         this.radioGroup.selectedTarget = this.rbtnJB;
+         this.rbtnJB.selected = true;
          if(data["FBPrice"] != 0)
          {
             _loc7_ = int(data["FBPrice"]);
-            if(_loc6_._yellowstatus >= 1)
-            {
-               _loc7_ = int(data["FBPrice"]);
-            }
             if(this.rbtnQB.parent == null)
             {
                _loc1_.addChild(this.rbtnQB);
@@ -410,27 +395,8 @@ package mc.view.main.window.shop
                this.rbtnCFT.parent.removeChild(this.rbtnCFT);
             }
          }
-         if(_loc4_)
-         {
-            this._btnConfirm.enable = false;
-         }
-         else
-         {
-            this._btnConfirm.enable = true;
-         }
+         this._btnConfirm.enable = true;
          this._directionText.text = "";
-         if(_loc4_ && !_loc5_)
-         {
-            this._directionText.text = "您的金币不足。";
-         }
-         else if(!_loc4_ && _loc5_)
-         {
-            this._directionText.text = "您的元宝不足。";
-         }
-         else if(_loc4_ && _loc5_)
-         {
-            this._directionText.text = "您的元宝和金币都不足。";
-         }
          this.addDashedLine(_loc1_);
       }
 
@@ -501,14 +467,6 @@ package mc.view.main.window.shop
       private function linkHandler(param1:TextEvent) : void
       {
          ExternalInterface.call("window.open",param1.text);
-      }
-
-      private function okButtonClick(param1:MouseEvent) : void
-      {
-         if(this._btnConfirm.enable)
-         {
-            this.useGoldBuy();
-         }
       }
 
       private function operation(param1:Event) : void
