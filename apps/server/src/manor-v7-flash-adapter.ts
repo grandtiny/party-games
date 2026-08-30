@@ -673,14 +673,29 @@ export class ManorV7FlashAdapter {
     const ownerId = positiveInteger(params.ownerId, "好友编号");
     const friend = this.#friendByFlashId(user, ownerId, now);
     const serials = positiveIntegerList(params.index, "鱼编号");
-    return serials.map((serial) => {
+    const results = serials.map((serial) => {
+      const before = this.service.getView(user, now);
       const result = this.service.performFriendAction(user, friend.userId, { type: "steal-fish", serial }, now);
       const fish = result.owner.farm.fishPool.fish.find((item) => item.serial === serial);
       if (!fish) throw new Error("鱼不存在");
-      const definition = manorV7Fish(fish.fishId);
-      const remaining = Math.max(0, definition.baseYield - fish.stolen);
-      return { code: 1, direction: result.message, fid: fish.fishId, i: serial, l: remaining, o: definition.baseYield };
+      const beforeQuantity = before.farm.fishPool.produceInventory
+        .find((item) => item.sourceId === fish.fishId)?.quantity ?? 0;
+      const afterQuantity = result.visitor.farm.fishPool.produceInventory
+        .find((item) => item.sourceId === fish.fishId)?.quantity ?? 0;
+      const status = flashFishState(result.owner, fish);
+      return {
+        code: 1,
+        direction: result.message,
+        fid: fish.fishId,
+        harvest: Math.max(0, afterQuantity - beforeQuantity),
+        index: serial,
+        i: serial,
+        l: status.l,
+        o: status.o,
+        status: { l: status.l, o: status.o, p: status.p }
+      };
     });
+    return results.length === 1 ? results[0] : results;
   }
 
   #fertilizeFish(user: AccountUserView, params: FlashParams, now: number) {

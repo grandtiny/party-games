@@ -749,6 +749,92 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("returns the original single and batch fish-steal payloads used by harvest animations", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-fish-steal-protocol-test-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const visitor = await registerMember(instance.app, owner.cookie);
+      await getManor(instance.app, owner.cookie);
+      await getManor(instance.app, visitor.cookie);
+
+      const ownerState = instance.repository.getManorV7State(owner.userId);
+      if (!ownerState) throw new Error("Friend fish pond V7 state missing before steal protocol test");
+      const fish = manorV7Fish(16);
+      const mature: ManorV7State = structuredClone(ownerState);
+      mature.farm.fishPool.opened = true;
+      mature.farm.fishPool.fish = [41, 42, 43].map((serial) => ({
+        serial,
+        fishId: fish.id,
+        growthSeconds: fish.cycleSeconds.at(-1)!,
+        stolen: 0,
+        thiefUserIds: [],
+        fedStage: fish.cycleSeconds.length
+      }));
+      mature.revision += 1;
+      mature.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, ownerState.revision, mature);
+
+      const ownerFlashId = stableFlashUserId(owner.userId);
+      const single = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_fish_steal",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `ownerId=${ownerFlashId}&index=41`
+      });
+      expect(single.statusCode, single.body).toBe(200);
+      expect(Array.isArray(single.json())).toBe(false);
+      expect(single.json()).toMatchObject({
+        code: 1,
+        fid: fish.id,
+        harvest: expect.any(Number),
+        index: 41,
+        i: 41,
+        status: {
+          l: expect.any(Number),
+          o: fish.baseYield,
+          p: expect.any(Number)
+        }
+      });
+      expect(single.json().harvest).toBeGreaterThan(0);
+
+      const batch = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/farm?mod=cgi_fish_steal",
+        headers: { cookie: visitor.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: `ownerId=${ownerFlashId}&index=42,43`
+      });
+      expect(batch.statusCode, batch.body).toBe(200);
+      expect(batch.json()).toEqual([
+        expect.objectContaining({
+          code: 1,
+          harvest: expect.any(Number),
+          index: 42,
+          status: expect.objectContaining({ l: expect.any(Number), o: fish.baseYield, p: expect.any(Number) })
+        }),
+        expect.objectContaining({
+          code: 1,
+          harvest: expect.any(Number),
+          index: 43,
+          status: expect.objectContaining({ l: expect.any(Number), o: fish.baseYield, p: expect.any(Number) })
+        })
+      ]);
+      expect(batch.json().every((item: { harvest: number }) => item.harvest > 0)).toBe(true);
+
+      const visitorState = instance.repository.getManorV7State(visitor.userId);
+      expect(visitorState?.farm.fishPool.produceInventory).toEqual([
+        {
+          sourceId: fish.id,
+          quantity: single.json().harvest
+            + batch.json().reduce((total: number, item: { harvest: number }) => total + item.harvest, 0)
+        }
+      ]);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("returns original action fields for immediate harvest updates and buys coin decorations through the SWF route", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-action-protocol-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
