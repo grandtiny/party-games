@@ -109,5 +109,11 @@ if (-not $pastureDiyWindow.Contains('this._btnConfirm.addEventListener(MouseEven
 if ($pastureDiyWindow.Contains('this._btnConfirm.enable = false;')) {
   throw "The pasture decoration confirm button must not be disabled from stale client-side coin data"
 }
+if ($pastureDiyWindow.Contains('_loc1_.addChild(this.linkText);')) {
+  throw "The pasture decoration window must not add the empty text field that intercepts payment clicks"
+}
+if (-not $pastureDiyWindow.Contains('this.rbtnJB.useHandCursor = true;')) {
+  throw "The pasture decoration coin option must expose a clickable cursor"
+}
 
 Write-Host "QQ Farm V7 Flash patch verification passed"

@@ -57,8 +57,6 @@ package mc.view.main.window.shop
 
       private var radioGroup:RadioGroup;
 
-      private var linkText:TextField;
-
       private var cancelButton:LipiButton;
 
       private var _directionText:TextField;
@@ -323,6 +321,8 @@ package mc.view.main.window.shop
          this.rbtnDiy.y = this.boxLoc["n1"];
          this.rbtnJB = new RadioButton("金币买");
          this.setRaidoStyle(this.rbtnJB);
+         this.rbtnJB.buttonMode = true;
+         this.rbtnJB.useHandCursor = true;
          this.rbtnJB.x = 68;
          this.rbtnJB.y = this.boxLoc["n2"];
          this.rbtnQB = new RadioButton("元宝买");
@@ -354,11 +354,6 @@ package mc.view.main.window.shop
             _loc1_.addChild(this.rbtnJB);
          }
          this.radioGroup.addTarget(this.rbtnJB);
-         this.linkText = new TextField();
-         this.linkText.htmlText = "";
-         this.linkText.x = _loc3_.width + this.rbtnDiy.width + 20;
-         this.linkText.y = this.boxLoc["n1"];
-         _loc1_.addChild(this.linkText);
          this.rbtnDiy.enabled = false;
          this.rbtnJB.enabled = true;
          this.radioGroup.selectedTarget = this.rbtnJB;
