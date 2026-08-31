@@ -3476,6 +3476,8 @@ package mc.control
       private function buyDiyFn(param1:Object) : void
       {
          var _loc2_:Object = null;
+         var _loc3_:Array = null;
+         var _loc4_:Object = null;
          if(this.checkErrorReturn(param1))
          {
             return;
@@ -3488,6 +3490,19 @@ package mc.control
             this.addFB(param1);
             this.addExp(param1);
             this.addLevelReward(param1);
+            if(this.mainData.diyInfo != null)
+            {
+               _loc3_ = this.mainData.diyInfo;
+               for each(_loc4_ in _loc3_)
+               {
+                  if(int(_loc4_["itemId"]) == int(param1.post_data["itemId"]))
+                  {
+                     _loc4_["owned"] = 1;
+                     break;
+                  }
+               }
+               this.mainData.diyInfo = _loc3_.concat();
+            }
             if(this.mainData.me)
             {
                _loc2_ = this.mainData.items;

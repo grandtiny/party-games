@@ -11,6 +11,8 @@ $giftWindowPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\vie
 $giftItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\view\window\GiftItem.as"
 $bagControllerPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-1T§\§_-D3§.as"
 $pastureDiyWindowPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopDiyWindow.as"
+$pastureDiyItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopDiyItem.as"
+$pastureMainCommandPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\mc\control\MainCommand.as"
 
 $patchScript = Get-Content -LiteralPath $patchScriptPath -Raw -Encoding UTF8
 $seedPage = Get-Content -LiteralPath $seedPagePath -Raw -Encoding UTF8
@@ -21,6 +23,8 @@ $giftWindow = Get-Content -LiteralPath $giftWindowPath -Raw -Encoding UTF8
 $giftItem = Get-Content -LiteralPath $giftItemPath -Raw -Encoding UTF8
 $bagController = Get-Content -LiteralPath $bagControllerPath -Raw -Encoding UTF8
 $pastureDiyWindow = Get-Content -LiteralPath $pastureDiyWindowPath -Raw -Encoding UTF8
+$pastureDiyItem = Get-Content -LiteralPath $pastureDiyItemPath -Raw -Encoding UTF8
+$pastureMainCommand = Get-Content -LiteralPath $pastureMainCommandPath -Raw -Encoding UTF8
 
 if ($patchScript.Contains('"framework.base.§_-Eh§"')) {
   throw "The shared farm tile base must not be recompiled because it breaks protected members in original subclasses"
@@ -114,6 +118,15 @@ if ($pastureDiyWindow.Contains('_loc1_.addChild(this.linkText);')) {
 }
 if (-not $pastureDiyWindow.Contains('this.rbtnJB.useHandCursor = true;')) {
   throw "The pasture decoration coin option must expose a clickable cursor"
+}
+if (-not $patchScript.Contains('"mc.view.main.window.shop.ShopDiyItem"')) {
+  throw "The pasture decoration shop item patch must be part of the JPEXS replacement chain"
+}
+if (-not $pastureDiyItem.Contains('已购买') -or -not $pastureDiyItem.Contains('this.mouseEnabled = !_loc4_;')) {
+  throw "Owned pasture decorations must be labeled and disabled in the shop"
+}
+if (-not $pastureMainCommand.Contains('_loc4_["owned"] = 1;')) {
+  throw "A successful pasture decoration purchase must refresh the cached shop ownership state"
 }
 
 Write-Host "QQ Farm V7 Flash patch verification passed"
