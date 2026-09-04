@@ -12,6 +12,7 @@ import {
   manorV7Animal,
   manorV7Crop,
   manorV7DayKey,
+  manorV7Decoration,
   manorV7ExperienceForLevel,
   manorV7Fish,
   manorV7RewardAmount,
@@ -2684,9 +2685,10 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(decorationShop.statusCode, decorationShop.body).toBe(200);
       expect(decorationShop.json()).toEqual(expect.arrayContaining([
-        expect.objectContaining({ itemId: 109, itemName: "qzone五周年套装", price: 1 })
+        expect.objectContaining({ itemId: 109, itemName: "qzone五周年套装", owned: 0, price: 1 })
       ]));
 
+      const decorationExperience = manorV7Decoration("pasture", 109).experience;
       const boughtDecoration = await instance.app.inject({
         method: "POST",
         url: "/api/manor/flash/pasture?mod=cgi_buy_item",
@@ -2694,7 +2696,22 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "itemId=109&skinBool=0&msgBool=0"
       });
       expect(boughtDecoration.statusCode, boughtDecoration.body).toBe(200);
-      expect(boughtDecoration.json()).toMatchObject({ code: 1, money: -1, post_data: { itemId: 109 } });
+      expect(boughtDecoration.json()).toMatchObject({
+        addExp: decorationExperience,
+        code: 1,
+        money: -1,
+        post_data: { itemId: 109 }
+      });
+
+      const updatedDecorationShop = await instance.app.inject({
+        method: "GET",
+        url: "/api/manor/flash/pasture?mod=cgi_get_items",
+        headers: { cookie: owner.cookie }
+      });
+      expect(updatedDecorationShop.statusCode, updatedDecorationShop.body).toBe(200);
+      expect(updatedDecorationShop.json()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ itemId: 109, owned: 1 })
+      ]));
 
       const decorationInventory = await instance.app.inject({
         method: "GET",

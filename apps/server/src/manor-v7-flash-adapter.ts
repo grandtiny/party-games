@@ -1885,6 +1885,7 @@ export class ManorV7FlashAdapter {
       code: 1,
       direction: "",
       exp: item.experience,
+      addExp: after.pastureExperience - before.pastureExperience,
       FB: 0,
       money: after.coins - before.coins,
       post_data: {
@@ -3597,19 +3598,27 @@ function flashPastureDecorationShop(view: ManorV7View) {
   return view.catalogs.decorations
     .filter((item) => item.area === "pasture" && !item.isHidden && item.isRenderable)
     .sort((left, right) => left.originalLevel - right.originalLevel || left.id - right.id)
-    .map((item) => ({
-      itemId: item.id,
-      itemName: item.name,
-      itemType: item.itemType,
-      price: manorV7DecorationCoinPrice(item),
-      FBPrice: 0,
-      YFBPrice: 0,
-      exp: item.experience,
-      level: item.originalLevel,
-      validTime: item.validSeconds,
-      skin: "0",
-      msg: "0"
-    }));
+    .map((item) => {
+      const ownership = view.decorationOwnerships.find((candidate) => (
+        candidate.area === "pasture" &&
+        candidate.decorationId === item.id &&
+        (candidate.validUntil === 0 || candidate.validUntil > view.serverTime)
+      ));
+      return {
+        itemId: item.id,
+        itemName: item.name,
+        itemType: item.itemType,
+        price: manorV7DecorationCoinPrice(item),
+        FBPrice: 0,
+        YFBPrice: 0,
+        exp: item.experience,
+        level: item.originalLevel,
+        validTime: item.validSeconds,
+        owned: Number(Boolean(ownership)),
+        skin: "0",
+        msg: "0"
+      };
+    });
 }
 
 function flashPastureDecorationInventory(view: ManorV7View) {
