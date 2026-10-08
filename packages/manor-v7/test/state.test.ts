@@ -1753,7 +1753,8 @@ describe("QQ Farm V7 domain", () => {
       { type: "use-research-hourglass", house: "hutch", toolId: 43 },
       now
     );
-    expect(accelerated.pasture.research.hutch.remainingSeconds).toBe(rule.seconds - 43_200);
+    expect(started.pasture.research.hutch.remainingSeconds).toBe(28_800);
+    expect(accelerated.pasture.research.hutch.remainingSeconds).toBe(0);
     expect(accelerated.pasture.toolInventory).toEqual([{ sourceId: 1, quantity: 2 }]);
 
     const completedAt = now + accelerated.pasture.research.hutch.remainingSeconds * 1_000;
@@ -1763,6 +1764,39 @@ describe("QQ Farm V7 domain", () => {
     expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeGreaterThanOrEqual(1);
     expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeLessThanOrEqual(2);
     expect(collected.pasture.research.hutch).toEqual({ animalId: null, remainingSeconds: 0 });
+  });
+
+  it("shortens both research houses to one third and completes them on time", () => {
+    const now = 70_000;
+    for (const house of ["hutch", "shed"] as const) {
+      for (const [index, rule] of MANOR_V7_RESEARCH_RULES[house].entries()) {
+        const state = createManorV7State(now);
+        state.coins = 1_000_000;
+        const started = transitionManorV7State(state, {
+          type: "start-research", house, animalId: rule.animalId
+        }, now);
+        const seconds = [28_800, 33_600, 40_800][index]!;
+        expect(started.pasture.research[house].remainingSeconds).toBe(seconds);
+        expect(() => transitionManorV7State(started, { type: "collect-research", house }, now + (seconds - 1) * 1_000))
+          .toThrow("科研尚未完成");
+        const collected = transitionManorV7State(started, { type: "collect-research", house }, now + seconds * 1_000);
+        expect(inventoryQuantity(collected.pasture.cubInventory, rule.animalId)).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  it("converts saved research timers only once", () => {
+    const now = 70_000;
+    const legacy = createManorV7State(now);
+    delete (legacy.pasture as Partial<typeof legacy.pasture>).researchTimeScaled;
+    legacy.pasture.research.hutch = { animalId: 1096, remainingSeconds: 54_000 };
+    legacy.pasture.research.shed = { animalId: 1598, remainingSeconds: 0 };
+    const migrated = migrateManorV7State(legacy, now);
+    expect(migrated.pasture.research.hutch.remainingSeconds).toBe(18_000);
+    expect(migrated.pasture.research.shed.remainingSeconds).toBe(0);
+    expect(migrateManorV7State(migrated, now)).toEqual(migrated);
+    expect(advanceManorV7State(migrated, now + 3_600_000).pasture.research.hutch.remainingSeconds).toBe(14_400);
+    expect(migrateManorV7State(createManorV7State(now), now).pasture.research.hutch.remainingSeconds).toBe(0);
   });
 
   it("cleans one manure sprite per action even after the daily reward limit is reached", () => {

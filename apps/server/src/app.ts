@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
-import { MANOR_V7_MATURITY_TIME_DIVISOR } from "@party-games/manor-v7";
+import { MANOR_V7_MATURITY_TIME_DIVISOR, MANOR_V7_RESEARCH_RULES } from "@party-games/manor-v7";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import {
   AccountBootstrapRequestSchema,
@@ -1169,6 +1169,12 @@ function localizeManorV7FlashConfig(fileName: string, template: string): string 
       );
   }
   if (fileName === "mcdata_zh_CN_v_20120209.xml") {
+    const researchRules = [...MANOR_V7_RESEARCH_RULES.hutch, ...MANOR_V7_RESEARCH_RULES.shed];
+    template = template.replace(/<animal\b[^>]*>/gu, (tag) => {
+      const id = Number(/\bid="(\d+)"/u.exec(tag)?.[1]);
+      const rule = researchRules.find((item) => item.animalId === id);
+      return rule ? tag.replace(/\belapse="\d+"/u, `elapse="${rule.seconds}"`) : tag;
+    });
     return template.replace(/(<nextTime\s+value=")([^"]+)(")/gu, (_match, prefix, value, suffix) => {
       const times = String(value).split(",").map((part) => Number.parseInt(part, 10));
       if (times.length !== 6 || times.some((seconds) => !Number.isFinite(seconds))) return String(_match);
