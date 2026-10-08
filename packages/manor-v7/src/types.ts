@@ -375,6 +375,7 @@ export interface ManorV7State {
     productInventory: ManorV7InventoryEntry[];
     harvestedAnimalInventory: ManorV7InventoryEntry[];
     guards: ManorV7PastureGuardState[];
+    researchTimeScaled: boolean;
     research: { hutch: ManorV7ResearchSlotState; shed: ManorV7ResearchSlotState };
     specialFeed: { day: string | null; remaining: number };
     mosquitoActions: { day: string | null; remaining: number };

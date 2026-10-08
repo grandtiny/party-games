@@ -98,7 +98,7 @@ describe("QQ Farm V7 account persistence", () => {
     );
     writeFileSync(
       join(configPath, "mcdata_zh_CN_v_20120209.xml"),
-      '<animals><animal><nextTime value="18000,18000,129600,15,28785,165600" /></animal></animals>'
+      '<animals><animal id="1096" elapse="86400"><nextTime value="18000,18000,129600,15,28785,165600" /></animal><animal id="1600" elapse="122400" /><animal id="1601" elapse="100800" /></animals>'
     );
     writeFileSync(join(modulePath, "test.swf"), "swf-test");
 
@@ -136,6 +136,9 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(animalConfig.statusCode, animalConfig.body).toBe(200);
       expect(animalConfig.body).toContain('nextTime value="6000,6000,129600,15,28785,141600"');
+      expect(animalConfig.body).toContain('id="1096" elapse="28800"');
+      expect(animalConfig.body).toContain('id="1600" elapse="33600"');
+      expect(animalConfig.body).toContain('id="1601" elapse="40800"');
 
       const module = await instance.app.inject({ method: "GET", url: "/module/test.swf" });
       expect(module.statusCode, module.body).toBe(200);

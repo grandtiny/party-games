@@ -77,16 +77,18 @@ export const MANOR_V7_DOG_FOOD_DAY_SECONDS = 24 * 60 * 60;
 export const MANOR_V7_LAND_EXPANSION_FUND_LEVEL = manorV7LandUpgrade("red", 0).level;
 export const MANOR_V7_LAND_EXPANSION_FUND_COINS = 200_000;
 
+const MANOR_V7_RESEARCH_TIME_DIVISOR = 3;
+
 export const MANOR_V7_RESEARCH_RULES = {
   hutch: [
-    { animalId: 1096, coins: 18_000, seconds: 24 * 60 * 60 },
-    { animalId: 1097, coins: 18_700, seconds: 28 * 60 * 60 },
-    { animalId: 1098, coins: 19_000, seconds: 34 * 60 * 60 }
+    { animalId: 1096, coins: 18_000, seconds: 24 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR },
+    { animalId: 1097, coins: 18_700, seconds: 28 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR },
+    { animalId: 1098, coins: 19_000, seconds: 34 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR }
   ],
   shed: [
-    { animalId: 1598, coins: 18_500, seconds: 24 * 60 * 60 },
-    { animalId: 1600, coins: 18_900, seconds: 28 * 60 * 60 },
-    { animalId: 1601, coins: 19_500, seconds: 34 * 60 * 60 }
+    { animalId: 1598, coins: 18_500, seconds: 24 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR },
+    { animalId: 1600, coins: 18_900, seconds: 28 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR },
+    { animalId: 1601, coins: 19_500, seconds: 34 * 60 * 60 / MANOR_V7_RESEARCH_TIME_DIVISOR }
   ]
 } as const;
 
@@ -232,6 +234,7 @@ export function createManorV7State(now: number): ManorV7State {
       productInventory: [],
       harvestedAnimalInventory: [],
       guards: [],
+      researchTimeScaled: true,
       research: {
         hutch: { animalId: null, remainingSeconds: 0 },
         shed: { animalId: null, remainingSeconds: 0 }
@@ -340,6 +343,12 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     hutch: { animalId: null, remainingSeconds: 0 },
     shed: { animalId: null, remainingSeconds: 0 }
   };
+  if (!state.pasture.researchTimeScaled) {
+    for (const slot of Object.values(state.pasture.research)) {
+      slot.remainingSeconds = Math.ceil(slot.remainingSeconds / MANOR_V7_RESEARCH_TIME_DIVISOR);
+    }
+    state.pasture.researchTimeScaled = true;
+  }
   state.pasture.specialFeed ??= { day: manorV7DayKey(now), remaining: MANOR_V7_SPECIAL_FEED_DAILY_LIMIT };
   state.pasture.mosquitoActions ??= {
     day: manorV7DayKey(now),
