@@ -18,6 +18,7 @@ import {
   manorV7LandUpgrade,
   manorV7LevelReward,
   manorV7MaxProductionCount,
+  manorV7ProductionCycleDuration,
   manorV7DailySignInReward,
   manorV7EffectiveCropSeedPrice,
   manorV7FarmToolPackage,
@@ -3448,12 +3449,15 @@ function flashPastureAnimal(animal: ManorV7AnimalView, nowMs: number) {
       ? 3
       : status === 4
         ? 5
+        : status === 3
+          ? 3
         : status === 5 && animal.productionCount < manorV7MaxProductionCount(animal.animal)
           ? 3
           : 6;
-  // The original client decrements growTimeNext for every non-harvest state.
-  // Status 3 is a manual action gate, so zero would make it become status 6 locally.
-  const growTimeNext = status === 3 ? 12_993 : Math.floor(animal.remainingSeconds);
+  const growTimeNext = Math.ceil(animal.remainingSeconds);
+  const cycleIndex = Math.max(0, animal.productionCount - Number(
+    animal.productionActive && animal.productionProgressSeconds >= animal.animal.productionActionSeconds
+  ));
   return {
     buyTime: Math.max(0, Math.floor(nowMs / 1000 - animal.growthSeconds)),
     cId: animal.animalId,
@@ -3463,6 +3467,11 @@ function flashPastureAnimal(animal: ManorV7AnimalView, nowMs: number) {
     hungry: Number(animal.hungry),
     postTime: Math.floor(nowMs / 1000 - animal.productionProgressSeconds),
     productNum: Math.max(0, animal.pendingProduct - animal.stolenProduct),
+    productionCount: animal.productionCount,
+    maxProductionCount: manorV7MaxProductionCount(animal.animal),
+    productionCooldownSeconds: Math.max(0,
+      manorV7ProductionCycleDuration(animal.animal, cycleIndex) - animal.animal.productionActionSeconds
+    ),
     serial: animal.serial,
     status,
     statusNext,

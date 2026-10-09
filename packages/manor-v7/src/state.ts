@@ -173,6 +173,7 @@ export function manorV7HouseCapacity(house: ManorV7AnimalHouse, level: number): 
 }
 
 export function createManorV7State(now: number): ManorV7State {
+  const starterAnimal = manorV7Animal(1002);
   const initialCrops = new Map<number, { cropId: number; growthSeconds: number; weeds?: boolean; pests?: boolean }>([
     [1, { cropId: 6, growthSeconds: 36_030 }],
     [2, { cropId: 1, growthSeconds: 14_400, weeds: true }],
@@ -226,8 +227,8 @@ export function createManorV7State(now: number): ManorV7State {
       shedLevel: 0,
       nextAnimalSerial: 3,
       animals: [
-        { serial: 1, animalId: 1002, growthSeconds: 165_600, productionActive: false, productionProgressSeconds: 0, productionCount: 5, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] },
-        { serial: 2, animalId: 1002, growthSeconds: 36_001, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] }
+        { serial: 1, animalId: 1002, growthSeconds: starterAnimal.lifecycleSeconds, productionActive: false, productionProgressSeconds: 0, productionCount: manorV7MaxProductionCount(starterAnimal), pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] },
+        { serial: 2, animalId: 1002, growthSeconds: starterAnimal.maturitySeconds, productionActive: false, productionProgressSeconds: 0, productionCount: 0, pendingProduct: 0, stolenProduct: 0, productThiefUserIds: [] }
       ],
       cubInventory: [],
       materialInventory: [],
@@ -329,8 +330,14 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
         (animal.productionProgressSeconds - original.productionActionSeconds) / Math.max(1, oldCooldown)
       );
     }
-    if (legacy.productionCount >= manorV7MaxProductionCount(definition)) {
-      animal.growthSeconds = Math.max(animal.growthSeconds, definition.lifecycleSeconds);
+    if (animal.growthSeconds >= definition.maturitySeconds) {
+      // Derive elapsed production from completed rounds, including saves already migrated to faster cycles.
+      const completedCycles = Math.max(0, legacy.productionCount! - Number(
+        legacy.productionActive && animal.productionProgressSeconds >= definition.productionActionSeconds
+      ));
+      animal.growthSeconds = definition.maturitySeconds + Math.min(definition.productionSeconds,
+        completedCycles * definition.productionCycleSeconds + animal.productionProgressSeconds
+      );
     }
     animal.growthSeconds = Math.min(animal.growthSeconds, definition.lifecycleSeconds);
   }

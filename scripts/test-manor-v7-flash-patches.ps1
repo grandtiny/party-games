@@ -129,4 +129,15 @@ if (-not $pastureMainCommand.Contains('_loc4_["owned"] = 1;')) {
   throw "A successful pasture decoration purchase must refresh the cached shop ownership state"
 }
 
+if (-not $pastureMainCommand.Contains('&& _loc4_.status != 3')) {
+  throw "Waiting for manual production must not advance the animal timer"
+}
+if (-not $pastureMainCommand.Contains('++_loc4_.productionCount;') -or
+    -not $pastureMainCommand.Contains('_loc4_.productionCount >= _loc4_.maxProductionCount ? 6 : 3;')) {
+  throw "The pasture timer must decide harvest readiness from completed production rounds"
+}
+if (-not $pastureMainCommand.Contains('_loc4_.growTimeNext = _loc4_.productionCooldownSeconds;')) {
+  throw "The pasture timer must use the server-provided cooldown, including the shorter final round"
+}
+
 Write-Host "QQ Farm V7 Flash patch verification passed"

@@ -803,7 +803,7 @@ package mc.control
          while(_loc3_ < _loc2_.length)
          {
             _loc4_ = _loc2_[_loc3_];
-            if(_loc4_ != null && !_loc4_.hungry && _loc4_.status != FarmData.ANIMAL_SHOUHUO)
+            if(_loc4_ != null && !_loc4_.hungry && _loc4_.status != FarmData.ANIMAL_SHOUHUO && _loc4_.status != 3)
             {
                --_loc4_.growTimeNext;
                ++_loc4_.growTime;
@@ -811,11 +811,25 @@ package mc.control
                {
                   if(_loc4_.status == FarmData.ANIMAL_SHENGCHAN)
                   {
+                     ++_loc4_.productionCount;
                      _loc5_ = GetCropID.getChidNum(_loc4_.cId);
                      MData.getInstance().productData.addProduct(_loc4_.cId,_loc5_,false,true);
                   }
                   _loc4_.status = _loc4_.statusNext;
-                  GetCropID.setNext(_loc4_);
+                  if(_loc4_.status == 3)
+                  {
+                     _loc4_.statusNext = 3;
+                     _loc4_.growTimeNext = 0;
+                  }
+                  else if(_loc4_.status == 5)
+                  {
+                     _loc4_.statusNext = _loc4_.productionCount >= _loc4_.maxProductionCount ? 6 : 3;
+                     _loc4_.growTimeNext = _loc4_.productionCooldownSeconds;
+                  }
+                  else
+                  {
+                     GetCropID.setNext(_loc4_);
+                  }
                   this.mainData.nextStatusAnimal = _loc4_;
                   return;
                }
