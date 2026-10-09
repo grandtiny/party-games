@@ -221,7 +221,7 @@ export class ManorV7FlashAdapter {
         : { code: 1, flag: Number(claimed) };
     }
     if (moduleName === "cgi_pasture_signin" || moduleName === "cgi_signin") {
-      return this.#claimSignIn(user, params, now);
+      return this.#claimSignIn(user, params, now, "farm");
     }
     if (moduleName === "cgi_up_task") return this.#tutorialTask(user, params, now);
     if (moduleName === "cgi_levelup") return this.#claimLevelRewards(user, "farm", params, now);
@@ -303,28 +303,31 @@ export class ManorV7FlashAdapter {
     };
   }
 
-  #claimSignIn(user: AccountUserView, params: FlashParams, now: number) {
+  #claimSignIn(user: AccountUserView, params: FlashParams, now: number, area: "farm" | "pasture" = "pasture") {
     const flag = integer(params.flag) ?? 2;
     if (flag === 1) {
-      const days = positiveInteger(params.days, "连续登录天数");
-      const reward = manorV7StreakSignInReward(days);
-      this.service.performAction(user, { type: "claim-sign-in-streak-reward", days }, now);
+      const before = this.#recordSignInVisit(user, now);
+      const days = pendingStreakSignInRewardDays(before, now) ?? positiveInteger(params.days, "连续登录天数");
+      const reward = manorV7StreakSignInReward(days, area);
+      const after = this.service.performAction(user, { type: "claim-sign-in-streak-reward", days, area }, now);
       return {
         code: 1,
         direction: `连续登录奖励领取成功，获得${flashSignInRewardName(reward)}。`,
         ecode: 0,
         id: reward.id,
+        bonus: pendingStreakSignInRewardDays(after, now) === null ? 0 : 1,
+        rewardDays: days,
         timestamp: Math.floor(now / 1_000)
       };
     }
     if (flag !== 2) throw new Error("签到类型无效");
-    const after = this.service.performAction(user, { type: "claim-sign-in" }, now);
+    const after = this.service.performAction(user, { type: "claim-sign-in", area }, now);
     const rewardIds = after.rewardClaims.signInRewardDay === manorV7DayKey(now)
       ? after.rewardClaims.signInRewardIds
       : [];
     const rewardId = rewardIds.at(-1);
     if (!rewardId) throw new Error("签到奖励生成失败");
-    const reward = manorV7DailySignInReward(rewardId);
+    const reward = manorV7DailySignInReward(rewardId, area);
     return {
       canNum: Math.max(0, MANOR_V7_DAILY_SIGN_IN_LIMIT - rewardIds.length),
       code: 1,
@@ -1385,7 +1388,7 @@ export class ManorV7FlashAdapter {
     const existingSerials = new Set(before.pasture.animals.map((animal) => animal.serial));
     const after = this.service.performAction(user, { type: "buy-animal", animalId, quantity }, now);
     return {
-      addExp: quantity * 5,
+      addExp: after.pastureExperience - before.pastureExperience,
       animal: after.pasture.animals.filter((animal) => !existingSerials.has(animal.serial)).map((animal) => flashPastureAnimal(animal, after.serverTime)),
       code: 0,
       money: before.coins - after.coins,
@@ -1407,7 +1410,7 @@ export class ManorV7FlashAdapter {
       now
     );
     return {
-      addExp: quantity * 5,
+      addExp: after.pastureExperience - before.pastureExperience,
       animal: after.pasture.animals
         .filter((animal) => !existingSerials.has(animal.serial))
         .map((animal) => flashPastureAnimal(animal, after.serverTime)),
@@ -1590,8 +1593,9 @@ export class ManorV7FlashAdapter {
     const ownerId = integer(params.uId);
     if (ownerId && ownerId !== stableFlashUserId(user.id)) {
       const friend = this.#friendByFlashId(user, ownerId, now);
+      const before = this.service.getView(user, now);
       const result = this.service.performFriendAction(user, friend.userId, { type: "catch-mouse" }, now);
-      return { code: 1, money: 0, tip: result.message };
+      return { code: 1, money: result.visitor.coins - before.coins, tip: result.message };
     }
     const before = this.service.getView(user, now);
     const after = this.service.performAction(user, { type: "catch-own-mouse" }, now);
@@ -1610,18 +1614,17 @@ export class ManorV7FlashAdapter {
     const type = integer(params.type) ?? 0;
     if (type === 2) {
       const friend = this.#friendByFlashId(user, positiveInteger(params.uId, "好友编号"), now);
-      const beforeCoins = this.service.getView(user, now).coins;
+      const before = this.service.getView(user, now);
       const result = this.service.performFriendAction(
         user,
         friend.userId,
         { type: "buy-grass-for-friend", quantity },
         now
       );
-      const cost = beforeCoins - result.visitor.coins;
-      const purchased = Math.floor(cost / MANOR_V7_GRASS_PRICE);
+      const cost = before.coins - result.visitor.coins;
       const total = result.owner.pasture.grass;
       return {
-        addExp: Math.floor(purchased / 10),
+        addExp: result.visitor.pastureExperience - before.pastureExperience,
         added: 0,
         alert: `成功为${friend.displayName}购买牧草，共花费金币 ${cost}。`,
         animal: result.owner.pasture.animals.map((animal) => flashPastureAnimal(animal, result.owner.serverTime)),
@@ -1706,22 +1709,26 @@ export class ManorV7FlashAdapter {
   #startPastureProduction(user: AccountUserView, params: FlashParams, now: number) {
     const serial = positiveInteger(params.serial, "动物编号");
     const ownerId = integer(params.uId);
+    const before = this.service.getView(user, now);
+    let experience = 0;
     let view: ManorV7View;
     if (ownerId && ownerId !== stableFlashUserId(user.id)) {
       const friend = this.#friendByFlashId(user, ownerId, now);
-      view = this.service.performFriendAction(
+      const result = this.service.performFriendAction(
         user,
         friend.userId,
         { type: "start-production", serial },
         now
-      ).owner;
+      );
+      view = result.owner;
+      experience = result.visitor.pastureExperience - before.pastureExperience;
     } else {
       view = this.service.performAction(user, { type: "start-production", serial }, now);
     }
     const animal = view.pasture.animals.find((item) => item.serial === serial);
     if (!animal) throw new Error("动物不存在");
     return {
-      addExp: 0,
+      addExp: experience,
       animal: flashPastureAnimal(animal, view.serverTime),
       code: 0,
       ecode: 0,
@@ -1799,13 +1806,15 @@ export class ManorV7FlashAdapter {
     const type = integer(params.type);
     const ownerId = integer(params.uId);
     if (type === 1) {
+      const before = this.service.getView(user, now);
+      let after: ManorV7View;
       if (ownerId && ownerId !== stableFlashUserId(user.id)) {
         const friend = this.#friendByFlashId(user, ownerId, now);
-        this.service.performFriendAction(user, friend.userId, { type: "remove-mosquito" }, now);
+        after = this.service.performFriendAction(user, friend.userId, { type: "remove-mosquito" }, now).visitor;
       } else {
-        this.service.performAction(user, { type: "clear-mosquito" }, now);
+        after = this.service.performAction(user, { type: "clear-mosquito" }, now);
       }
-      return { addExp: 3, cId: 1, num: 1, pos: integer(params.pos) ?? 0 };
+      return { addExp: after.pastureExperience - before.pastureExperience, cId: 1, num: 1, pos: integer(params.pos) ?? 0 };
     }
     if (type !== 2) return flashFailure("清理类型无效");
     if (ownerId && ownerId !== stableFlashUserId(user.id)) {
@@ -1822,6 +1831,7 @@ export class ManorV7FlashAdapter {
       const afterQuantity = result.visitor.pasture.materialInventory.find((entry) => entry.sourceId === 1506)?.quantity ?? 0;
       return {
         num: Math.max(0, beforeOwner.pasture.manure - result.owner.pasture.manure),
+        addExp: result.visitor.pastureExperience - before.pastureExperience,
         pos: integer(params.pos) ?? 0,
         repNum: afterQuantity - beforeQuantity,
         type: 2
@@ -1833,6 +1843,7 @@ export class ManorV7FlashAdapter {
     const afterQuantity = after.pasture.materialInventory.find((entry) => entry.sourceId === 1506)?.quantity ?? 0;
     return {
       num: Math.max(0, before.pasture.manure - after.pasture.manure),
+      addExp: after.pastureExperience - before.pastureExperience,
       pos: integer(params.pos) ?? 0,
       repNum: afterQuantity - beforeQuantity,
       type: 2
@@ -3207,10 +3218,7 @@ function activeSignInStreak(view: ManorV7View, now: number): number {
 
 function pendingStreakSignInRewardDays(view: ManorV7View, now: number): number | null {
   const streak = activeSignInStreak(view, now);
-  const milestone = streak >= 7 ? 7 : streak === 5 ? 5 : streak === 3 ? 3 : null;
-  return milestone !== null && !view.rewardClaims.signInStreakRewardDays.includes(milestone)
-    ? milestone
-    : null;
+  return [3, 5, 7].find((days) => days <= streak && !view.rewardClaims.signInStreakRewardDays.includes(days)) ?? null;
 }
 
 function flashPasturePackage(view: ManorV7View) {

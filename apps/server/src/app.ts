@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import fastifyCompress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
-import { MANOR_V7_MATURITY_TIME_DIVISOR, MANOR_V7_RESEARCH_RULES } from "@party-games/manor-v7";
+import { MANOR_V7_MATURITY_TIME_DIVISOR, MANOR_V7_RESEARCH_RULES, manorV7RewardAmount } from "@party-games/manor-v7";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import {
   AccountBootstrapRequestSchema,
@@ -1156,6 +1156,12 @@ export async function createApp(options: AppOptions) {
 }
 
 function localizeManorV7FlashConfig(fileName: string, template: string): string {
+  if (fileName === "addon_v_20120209.xml" || fileName === "mcini_main_v_20120209.xml") {
+    return template.replace(/<(?:cardsGameReward|gift)\b[^>]*>/gu, (tag) => {
+      if (!/\btype\s*=\s*"6"|\bcla="GoldCardsGame"/u.test(tag)) return tag;
+      return tag.replace(/\bnum\s*=\s*"(\d+)"/u, (_match, amount) => `num="${manorV7RewardAmount(Number(amount))}"`);
+    });
+  }
   if (fileName === "data_zh_CN_v_20120209.xml") {
     return template
       .replace(/("cropGrow"\s*:\s*")([^"]+)(")/gu, (_match, prefix, value, suffix) =>
@@ -1182,8 +1188,10 @@ function localizeManorV7FlashConfig(fileName: string, template: string): string 
       const scaledCub = scaleFlashSeconds(times[0]!);
       const scaledMaturity = scaleFlashSeconds(originalMaturity);
       const scaledYoung = Math.max(1, scaledMaturity - scaledCub);
-      const scaledLifecycle = Math.max(scaledMaturity, times[5]! - originalMaturity + scaledMaturity);
-      return `${prefix}${[scaledCub, scaledYoung, times[2], times[3], times[4], scaledLifecycle].join(",")}${suffix}`;
+      const scaledProduction = scaleFlashSeconds(times[2]!);
+      const scaledCooldown = Math.max(0, scaleFlashSeconds(times[3]! + times[4]!) - times[3]!);
+      const scaledLifecycle = scaledMaturity + scaledProduction;
+      return `${prefix}${[scaledCub, scaledYoung, scaledProduction, times[3], scaledCooldown, scaledLifecycle].join(",")}${suffix}`;
     });
   }
   return template;

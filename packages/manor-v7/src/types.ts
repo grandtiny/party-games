@@ -376,6 +376,7 @@ export interface ManorV7State {
     harvestedAnimalInventory: ManorV7InventoryEntry[];
     guards: ManorV7PastureGuardState[];
     researchTimeScaled: boolean;
+    productionTimeScaled: boolean;
     research: { hutch: ManorV7ResearchSlotState; shed: ManorV7ResearchSlotState };
     specialFeed: { day: string | null; remaining: number };
     mosquitoActions: { day: string | null; remaining: number };
@@ -458,8 +459,8 @@ export type ManorV7Action =
   | { type: "pay-pasture-guard"; guardId: number; days: number }
   | { type: "claim-daily-package" }
   | { type: "record-sign-in-visit" }
-  | { type: "claim-sign-in" }
-  | { type: "claim-sign-in-streak-reward"; days: number }
+  | { type: "claim-sign-in"; area?: ManorV7Area }
+  | { type: "claim-sign-in-streak-reward"; days: number; area?: ManorV7Area }
   | { type: "accept-tutorial-task" }
   | { type: "complete-tutorial-task" }
   | { type: "claim-level-rewards"; area: ManorV7Area; throughLevel: number }

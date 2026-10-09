@@ -50,6 +50,7 @@ import {
   transitionManorV7State,
   type ManorV7State
 } from "../src/index.js";
+import { MANOR_V7_ANIMALS as originalAnimals } from "../src/catalog.generated.js";
 
 const MANOR_V7_EXCLUDED_CROP_IDS = [
   262, 567, 570, 572,
@@ -113,9 +114,9 @@ describe("QQ Farm V7 domain", () => {
       purchasePrice: 1200,
       cubSeconds: 6_000,
       maturitySeconds: 12_000,
-      productionSeconds: 129_600,
-      productionCooldownSeconds: 28_785,
-      lifecycleSeconds: 141_600
+      productionSeconds: 43_200,
+      productionCooldownSeconds: 9_585,
+      lifecycleSeconds: 55_200
     });
     expect(manorV7Animal(1502)).toMatchObject({ name: "牛", house: "shed" });
     expect(manorV7Crop(2)).toMatchObject({
@@ -1007,6 +1008,35 @@ describe("QQ Farm V7 domain", () => {
     expect(inventoryQuantity(harvested.pasture.harvestedAnimalInventory, animal.id)).toBe(1);
   });
 
+  it("shortens production cycles without changing yield counts and migrates active cooldown once", () => {
+    for (const animal of MANOR_V7_ANIMALS) {
+      const original = originalAnimals.find((item) => item.id === animal.id)!;
+      expect(manorV7MaxProductionCount(animal)).toBe(manorV7MaxProductionCount(original));
+      expect(animal.productionCycleSeconds).toBe(Math.ceil(original.productionCycleSeconds / 3));
+      expect(animal.baseYield).toBe(original.baseYield);
+    }
+    const now = 5_000;
+    const state = createManorV7State(now);
+    state.pasture.productionTimeScaled = false;
+    const target = state.pasture.animals[1]!;
+    Object.assign(target, {
+      growthSeconds: 12_000,
+      productionActive: true,
+      productionCount: 1,
+      productionProgressSeconds: 15 + 28_785 / 2,
+      pendingProduct: 12
+    });
+    const migrated = migrateManorV7State(state, now);
+    expect(migrated.pasture.animals[1]).toMatchObject({
+      productionActive: true,
+      productionCount: 1,
+      productionProgressSeconds: 15 + 9_585 / 2,
+      pendingProduct: 12
+    });
+    expect(migrateManorV7State(migrated, now)).toEqual(migrated);
+    expect(advanceManorV7State(migrated, now + 1_000).pasture.animals[1]?.pendingProduct).toBe(12);
+  });
+
   it("moves grass from farm inventory into the pasture without charging coins", () => {
     const initial = createManorV7State(6_000);
     initial.coins = 1_000;
@@ -1155,6 +1185,47 @@ describe("QQ Farm V7 domain", () => {
       signInStreak: 1,
       signInStreakRewardDays: []
     });
+  });
+
+  it.each([
+    { randomState: 0, id: 5, kind: "seed", sourceId: 172, quantity: 1 },
+    { randomState: 478, id: 9, kind: "crystal", sourceId: 5, quantity: 1 },
+    { randomState: 1293, id: 23, kind: "farm-tool", sourceId: 2, quantity: 1 },
+    { randomState: 1972, id: 1, kind: "grass", sourceId: 40, quantity: 50 },
+    { randomState: 2243, id: 3, kind: "coins", sourceId: 0, quantity: 100 }
+  ])("grants the farm card $id to its matching $kind inventory", (reward) => {
+    const now = Date.UTC(2026, 7, 22, 2);
+    const initial = createManorV7State(now);
+    initial.randomState = reward.randomState;
+    const claimed = transitionManorV7State(initial, { type: "claim-sign-in", area: "farm" }, now);
+    expect(claimed.rewardClaims.signInRewardId).toBe(reward.id);
+    expect(manorV7DailySignInReward(reward.id, "farm")).toMatchObject({ kind: reward.kind, quantity: reward.quantity });
+    if (reward.kind === "coins") {
+      expect(claimed.coins - initial.coins).toBe(manorV7RewardAmount(reward.quantity));
+    } else {
+      const inventory = reward.kind === "seed" ? claimed.farm.seedInventory
+        : reward.kind === "farm-tool" ? claimed.farm.toolInventory
+        : reward.kind === "grass" ? claimed.farm.produceInventory
+        : claimed.pasture.wild.crystalInventory;
+      expect(inventoryQuantity(inventory, reward.sourceId)).toBe(reward.quantity);
+    }
+  });
+
+  it("allows missed farm streak seeds to be claimed once across both areas", () => {
+    const start = Date.UTC(2026, 7, 1, 2);
+    let state = createManorV7State(start);
+    for (let day = 1; day <= 8; day += 1) {
+      state = transitionManorV7State(state, { type: "record-sign-in-visit" }, start + (day - 1) * 86_400_000);
+    }
+    const now = start + 7 * 86_400_000;
+    for (const [days, seedId] of [[3, 174], [5, 139], [7, 166]] as const) {
+      state = transitionManorV7State(state, { type: "claim-sign-in-streak-reward", area: "farm", days }, now);
+      expect(inventoryQuantity(state.farm.seedInventory, seedId)).toBe(1);
+      expect(() => transitionManorV7State(state, {
+        type: "claim-sign-in-streak-reward", area: "pasture", days
+      }, now)).toThrow("已经领取");
+    }
+    expect(state.rewardClaims.signInStreakRewardDays).toEqual([3, 5, 7]);
   });
 
   it("grants original 3, 5 and 7 day pasture sign-in rewards once per streak", () => {
