@@ -1037,6 +1037,30 @@ describe("QQ Farm V7 domain", () => {
     expect(advanceManorV7State(migrated, now + 1_000).pasture.animals[1]?.pendingProduct).toBe(12);
   });
 
+  it.each([false, true])("repairs old elapsed lifetime without skipping production when previously scaled=%s", (scaled) => {
+    const now = 5_000;
+    const state = createManorV7State(now);
+    state.pasture.productionTimeScaled = scaled;
+    const target = state.pasture.animals[1]!;
+    Object.assign(target, {
+      growthSeconds: 100_000,
+      productionActive: false,
+      productionCount: 1,
+      productionProgressSeconds: 0,
+      pendingProduct: 0
+    });
+    const migrated = migrateManorV7State(state, now);
+    expect(migrated.pasture.animals[1]).toMatchObject({ growthSeconds: 21_600, productionCount: 1 });
+    const waiting = advanceManorV7State(migrated, now + 86_400_000);
+    expect(waiting.pasture.animals[1]?.growthSeconds).toBe(21_600);
+    expect(toManorV7View(waiting, { userId: "u1", displayName: "玩家" }, waiting.updatedAt)
+      .pasture.animals[1]?.visualState).toBe("production-ready");
+    expect(() => transitionManorV7State(waiting, { type: "harvest-animals", serial: target.serial }, waiting.updatedAt))
+      .toThrow("生产次数尚未完成");
+    expect(transitionManorV7State(waiting, { type: "start-production", serial: target.serial }, waiting.updatedAt)
+      .pasture.animals[1]?.productionActive).toBe(true);
+  });
+
   it("moves grass from farm inventory into the pasture without charging coins", () => {
     const initial = createManorV7State(6_000);
     initial.coins = 1_000;

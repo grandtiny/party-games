@@ -2468,10 +2468,10 @@ describe("QQ Farm V7 account persistence", () => {
       expect(bootstrap.json().animal[0]).toMatchObject({ cId: 1002, serial: 1, status: 6 });
       expect(bootstrap.json().animal[1]).toMatchObject({
         cId: 1002,
-        growTimeNext: 12_993,
+        growTimeNext: 0,
         serial: 2,
         status: 3,
-        statusNext: 6
+        statusNext: 3
       });
 
       const profile = await instance.app.inject({
@@ -2505,7 +2505,10 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(production.statusCode, production.body).toBe(200);
       expect(production.json(), production.body).toMatchObject({
-        animal: { cId: 1002, growTimeNext: 15, serial: 2, status: 4, statusNext: 5 },
+        animal: {
+          cId: 1002, growTimeNext: 15, serial: 2, status: 4, statusNext: 5,
+          productionCount: 0, maxProductionCount: 5, productionCooldownSeconds: 9_585
+        },
         code: 0,
         ecode: 0,
         serial: 2
@@ -2529,6 +2532,7 @@ describe("QQ Farm V7 account persistence", () => {
       if (!activeProduction) throw new Error("Pasture V7 state missing during production");
       const readyForNextProduction: ManorV7State = structuredClone(activeProduction);
       Object.assign(readyForNextProduction.pasture.animals[1]!, {
+        growthSeconds: 100_000,
         pendingProduct: 0,
         productionActive: false,
         productionCount: 1,
@@ -2549,11 +2553,24 @@ describe("QQ Farm V7 account persistence", () => {
       expect(refreshedReadyForNextProduction.statusCode, refreshedReadyForNextProduction.body).toBe(200);
       expect(refreshedReadyForNextProduction.json().animal[1]).toMatchObject({
         cId: 1002,
-        growTimeNext: 12_993,
+        growTime: 21_600,
+        growTimeNext: 0,
         serial: 2,
         status: 3,
-        statusNext: 6
+        statusNext: 3,
+        productionCount: 1,
+        maxProductionCount: 5,
+        productionCooldownSeconds: 9_585
       });
+
+      const prematureHarvest = await instance.app.inject({
+        method: "POST",
+        url: "/api/manor/flash/pasture?mod=cgi_harvest_product",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "harvesttype=2&serial=2&serialIndex=2"
+      });
+      expect(prematureHarvest.body).toContain("生产次数尚未完成");
+      expect(instance.repository.getManorV7State(owner.userId)?.pasture.animals[1]?.productionCount).toBe(1);
 
       const friendFlags = await instance.app.inject({
         method: "POST",
