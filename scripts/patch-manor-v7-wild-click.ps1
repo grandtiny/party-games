@@ -43,10 +43,14 @@ $shopDiyItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\vi
 $pastureSelectPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\farm\packBar\SelectWindow.as"
 $pastureNameTextPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\head\NameText.as"
 $pastureFlopGiftPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\FlopGift\FlopGiftWindow.as"
+$pastureFlopDataPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\FlopGift\FlopGiftData.as"
+$farmCardsModelPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\cardsgame\CardsGameModel.as"
+$farmCardsControllerPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\module\cardsgame\CardsGameController.as"
 $leftInfoPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\LeftInfo.as"
 $pastureGiftIconPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\MyIconBar.as"
 $pastureGiftWindowPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\leftInfo\GiftWindow.as"
 $pastureMainCommandPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\control\MainCommand.as"
+$pastureFarmCommandPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\control\FarmCommand.as"
 $dailyPackagePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-VT§.as"
 $farmWildToolPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\Tool_Wild.as"
 $farmProfileBarPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-Gt§\§_-PB§.as"
@@ -109,7 +113,11 @@ $arguments = @(
   "mc.view.main.leftInfo.GiftWindow",
   $pastureGiftWindowPatchSource,
   "mc.control.MainCommand",
-  $pastureMainCommandPatchSource
+  $pastureMainCommandPatchSource,
+  "mc.control.FarmCommand",
+  $pastureFarmCommandPatchSource,
+  "mc.view.main.leftInfo.FlopGift.FlopGiftData",
+  $pastureFlopDataPatchSource
 )
 $farmArguments = @(
   "-jar",
@@ -159,7 +167,11 @@ $farmArguments = @(
   "common.view.window.§_-LI§",
   $farmLandWindowPatchSource,
   "module.friend.§_-Zk§",
-  $farmFriendVipPatchSource
+  $farmFriendVipPatchSource,
+  "module.cardsgame.CardsGameModel",
+  $farmCardsModelPatchSource,
+  "module.cardsgame.CardsGameController",
+  $farmCardsControllerPatchSource
 )
 
 try {

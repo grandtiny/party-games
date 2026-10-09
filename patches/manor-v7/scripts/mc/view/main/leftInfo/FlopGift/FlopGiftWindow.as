@@ -142,7 +142,7 @@ package mc.view.main.leftInfo.FlopGift
                "text":str
             };
             ViewControl.getInstance().dispatchEvent(windowEvent);
-            this._flopData.flopGetGift = 0;
+            this._flopData.flopGetGift = int(data["bonus"]);
             this._flopData.flopTime = this._flopData.flopTime;
          }
       }
@@ -578,17 +578,7 @@ package mc.view.main.leftInfo.FlopGift
       
       private function setCardsGift() : void
       {
-         var _loc1_:XML = null;
-         _loc1_ = INI.getInstance().data.flopGifts[0];
-         if(this._flopData.flopDate == int(_loc1_.gift[0].@days))
-         {
-            this._flopData.flopLoginGift(this._flopData.flopDate);
-         }
-         else if(this._flopData.flopDate == int(_loc1_.gift[1].@days))
-         {
-            this._flopData.flopLoginGift(this._flopData.flopDate);
-         }
-         else if(this._flopData.flopDate >= int(_loc1_.gift[2].@days))
+         if(this._flopData.flopDate >= 3)
          {
             this._flopData.flopLoginGift(this._flopData.flopDate);
          }

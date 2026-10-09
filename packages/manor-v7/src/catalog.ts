@@ -46,7 +46,10 @@ export const MANOR_V7_ANIMALS: readonly ManorV7AnimalDefinition[] = MANOR_V7_GEN
   byproductHarvestExperience: manorV7RewardAmount(animal.byproductHarvestExperience),
   cubSeconds: scaledMaturitySeconds(animal.cubSeconds),
   maturitySeconds: scaledMaturitySeconds(animal.maturitySeconds),
-  lifecycleSeconds: scaledMaturitySeconds(animal.maturitySeconds) + animal.productionSeconds
+  productionSeconds: scaledMaturitySeconds(animal.productionSeconds),
+  productionCycleSeconds: scaledMaturitySeconds(animal.productionCycleSeconds),
+  productionCooldownSeconds: Math.max(0, scaledMaturitySeconds(animal.productionCycleSeconds) - animal.productionActionSeconds),
+  lifecycleSeconds: scaledMaturitySeconds(animal.maturitySeconds) + scaledMaturitySeconds(animal.productionSeconds)
 }));
 
 export const MANOR_V7_FISH: readonly ManorV7FishDefinition[] = MANOR_V7_GENERATED_FISH.map((fish) => ({

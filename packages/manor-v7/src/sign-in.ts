@@ -1,3 +1,5 @@
+import type { ManorV7Area } from "./types.js";
+
 interface ManorV7SignInRewardBase {
   id: number;
   name: string;
@@ -11,6 +13,8 @@ export type ManorV7SignInRewardDefinition = ManorV7SignInRewardBase & (
   | { kind: "crystal"; sourceId: number }
   | { kind: "pasture-tool"; sourceId: number }
   | { kind: "grass"; sourceId: 40 }
+  | { kind: "seed"; sourceId: number }
+  | { kind: "farm-tool"; sourceId: number }
 );
 
 export const MANOR_V7_DAILY_SIGN_IN_LIMIT = 2;
@@ -44,15 +48,45 @@ export const MANOR_V7_STREAK_SIGN_IN_REWARDS = [
   { id: 17, name: "千年龟 1 只", kind: "animal", quantity: 1, sourceId: 1035, days: 7 }
 ] as const satisfies readonly ManorV7SignInRewardDefinition[];
 
-export function manorV7DailySignInReward(id: number): ManorV7SignInRewardDefinition {
-  const reward = MANOR_V7_DAILY_SIGN_IN_REWARDS.find((item) => item.id === id);
+export const MANOR_V7_FARM_DAILY_SIGN_IN_REWARDS: readonly ManorV7SignInRewardDefinition[] = [
+  { id: 1, name: "牧草果实 50 个", kind: "grass", quantity: 50, sourceId: 40 },
+  { id: 2, name: "牧草果实 200 个", kind: "grass", quantity: 200, sourceId: 40 },
+  { id: 3, name: "金币 100", kind: "coins", quantity: 100 },
+  { id: 4, name: "金币 500", kind: "coins", quantity: 500 },
+  { id: 5, name: "宋梅种子 1 个", kind: "seed", quantity: 1, sourceId: 172 },
+  { id: 6, name: "夜来香种子 1 个", kind: "seed", quantity: 1, sourceId: 173 },
+  { id: 7, name: "金银花种子 1 个", kind: "seed", quantity: 1, sourceId: 176 },
+  { id: 8, name: "黄花魁种子 1 个", kind: "seed", quantity: 1, sourceId: 175 },
+  ...MANOR_V7_DAILY_SIGN_IN_REWARDS.filter((reward) => reward.kind === "crystal"),
+  { id: 20, name: "英雄大象种子 1 个", kind: "seed", quantity: 1, sourceId: 404 },
+  { id: 22, name: "普通化肥 1 袋", kind: "farm-tool", quantity: 1, sourceId: 1 },
+  { id: 23, name: "高速化肥 1 袋", kind: "farm-tool", quantity: 1, sourceId: 2 },
+  { id: 24, name: "急速化肥 1 袋", kind: "farm-tool", quantity: 1, sourceId: 3 },
+  { id: 25, name: "疯狂摇滚猫种子 1 个", kind: "seed", quantity: 1, sourceId: 402 },
+  { id: 26, name: "河马新娘种子 1 个", kind: "seed", quantity: 1, sourceId: 403 },
+  { id: 27, name: "绵羊海盗种子 1 个", kind: "seed", quantity: 1, sourceId: 405 }
+];
+
+export const MANOR_V7_FARM_STREAK_SIGN_IN_REWARDS: readonly ManorV7SignInRewardDefinition[] = [
+  { id: 15, name: "晚香玉种子 1 个", kind: "seed", quantity: 1, sourceId: 174, days: 3 },
+  { id: 16, name: "糖槭树花种子 1 个", kind: "seed", quantity: 1, sourceId: 139, days: 5 },
+  { id: 17, name: "七彩果种子 1 个", kind: "seed", quantity: 1, sourceId: 166, days: 7 }
+];
+
+export function manorV7DailySignInRewards(area: ManorV7Area): readonly ManorV7SignInRewardDefinition[] {
+  return area === "farm" ? MANOR_V7_FARM_DAILY_SIGN_IN_REWARDS : MANOR_V7_DAILY_SIGN_IN_REWARDS;
+}
+
+export function manorV7DailySignInReward(id: number, area: ManorV7Area = "pasture"): ManorV7SignInRewardDefinition {
+  const reward = manorV7DailySignInRewards(area).find((item) => item.id === id);
   if (!reward) throw new Error("每日签到奖励不存在");
   return reward;
 }
 
-export function manorV7StreakSignInReward(days: number): ManorV7SignInRewardDefinition {
+export function manorV7StreakSignInReward(days: number, area: ManorV7Area = "pasture"): ManorV7SignInRewardDefinition {
   const milestone = days >= 7 ? 7 : days;
-  const reward = MANOR_V7_STREAK_SIGN_IN_REWARDS.find((item) => item.days === milestone);
+  const rewards = area === "farm" ? MANOR_V7_FARM_STREAK_SIGN_IN_REWARDS : MANOR_V7_STREAK_SIGN_IN_REWARDS;
+  const reward = rewards.find((item) => item.days === milestone);
   if (!reward) throw new Error("当前没有连续登录额外奖励");
   return reward;
 }

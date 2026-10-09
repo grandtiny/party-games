@@ -78,13 +78,14 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "feed-grass-from-inventory": return { type, quantity: quantity(input.quantity) };
     case "claim-daily-package":
     case "record-sign-in-visit":
-    case "claim-sign-in":
     case "sell-all-pasture-products":
     case "clear-mosquito":
     case "catch-own-mouse":
       return { type };
+    case "claim-sign-in":
+      return { type, area: input.area === undefined ? "pasture" : area(input.area) };
     case "claim-sign-in-streak-reward":
-      return { type, days: integer(input.days) };
+      return { type, days: integer(input.days), area: input.area === undefined ? "pasture" : area(input.area) };
     case "accept-tutorial-task":
     case "complete-tutorial-task":
     case "show-research-guide":

@@ -43,7 +43,7 @@ import {
 import { manorV7MaxProductionCount } from "./pasture-lifecycle.js";
 import {
   MANOR_V7_DAILY_SIGN_IN_LIMIT,
-  MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  manorV7DailySignInRewards,
   MANOR_V7_SIGN_IN_ONLY_ANIMAL_IDS,
   manorV7StreakSignInReward,
   type ManorV7SignInRewardDefinition
@@ -703,7 +703,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       if (state.rewardClaims.signInRewardIds.length >= MANOR_V7_DAILY_SIGN_IN_LIMIT) {
         throw new Error("今日签到翻牌次数已经用完");
       }
-      const available = MANOR_V7_DAILY_SIGN_IN_REWARDS.filter(
+      const area = action.area ?? "pasture";
+      const available = manorV7DailySignInRewards(area).filter(
         (reward) => !state.rewardClaims.signInRewardIds.includes(reward.id)
       );
       const reward = available[Math.floor(drawManorV7Random(state) * available.length)] ?? available[0];
@@ -712,27 +713,24 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       state.rewardClaims.signInRewardDay = day;
       state.rewardClaims.signInRewardId = reward.id;
       state.rewardClaims.signInRewardIds.push(reward.id);
-      addManorV7Activity(state, "pasture", `完成每日签到：${reward.name}`, now);
+      addManorV7Activity(state, area, `完成每日签到：${reward.name}`, now);
       break;
     }
     case "claim-sign-in-streak-reward": {
       recordSignInVisit(state, now);
-      const reward = manorV7StreakSignInReward(action.days);
+      const area = action.area ?? "pasture";
+      const reward = manorV7StreakSignInReward(action.days, area);
       const milestone = reward.days;
       if (!milestone || state.rewardClaims.signInStreak < milestone) {
         throw new Error("连续登录天数不足");
       }
-      const currentMilestone = state.rewardClaims.signInStreak >= 7
-        ? 7
-        : state.rewardClaims.signInStreak;
-      if (milestone !== currentMilestone) throw new Error("当前没有该连续登录奖励");
       if (state.rewardClaims.signInStreakRewardDays.includes(milestone)) {
         throw new Error("连续登录奖励已经领取");
       }
       awardSignInReward(state, reward);
       state.rewardClaims.signInStreakRewardDays.push(milestone);
       state.rewardClaims.signInStreakRewardDays.sort((left, right) => left - right);
-      addManorV7Activity(state, "pasture", `领取连续登录 ${milestone} 天奖励：${reward.name}`, now);
+      addManorV7Activity(state, area, `领取连续登录 ${milestone} 天奖励：${reward.name}`, now);
       break;
     }
     case "accept-tutorial-task": {
@@ -1465,7 +1463,11 @@ function awardSignInReward(state: ManorV7State, reward: ManorV7SignInRewardDefin
     grantManorV7Coins(state, reward.quantity);
     return;
   }
-  const inventory = reward.kind === "grass"
+  const inventory = reward.kind === "seed"
+    ? state.farm.seedInventory
+    : reward.kind === "farm-tool"
+    ? state.farm.toolInventory
+    : reward.kind === "grass"
     ? state.farm.produceInventory
     : reward.kind === "animal"
       ? state.pasture.cubInventory
@@ -1473,6 +1475,8 @@ function awardSignInReward(state: ManorV7State, reward: ManorV7SignInRewardDefin
         ? state.pasture.wild.crystalInventory
         : state.pasture.toolInventory;
   if (reward.kind === "animal") manorV7Animal(reward.sourceId);
+  if (reward.kind === "seed") manorV7Crop(reward.sourceId);
+  if (reward.kind === "farm-tool") manorV7Tool("farm", reward.sourceId);
   if (reward.kind === "crystal") manorV7WildCrystal(reward.sourceId);
   if (reward.kind === "pasture-tool") {
     const tool = manorV7Tool("pasture", reward.sourceId);

@@ -15,6 +15,7 @@ import {
   manorV7Tool
 } from "./catalog.js";
 import { grantManorV7Coins, manorV7RewardAmount } from "./economy.js";
+import { MANOR_V7_ANIMALS as originalAnimals } from "./catalog.generated.js";
 import type {
   ManorV7Action,
   ManorV7Activity,
@@ -46,6 +47,7 @@ import {
 import {
   MANOR_V7_DAILY_SIGN_IN_LIMIT,
   MANOR_V7_DAILY_SIGN_IN_REWARDS,
+  MANOR_V7_FARM_DAILY_SIGN_IN_REWARDS,
   MANOR_V7_STREAK_SIGN_IN_REWARDS
 } from "./sign-in.js";
 import { MANOR_V7_MAX_LEVEL_REWARD, MANOR_V7_TUTORIAL_TASKS } from "./rewards.js";
@@ -235,6 +237,7 @@ export function createManorV7State(now: number): ManorV7State {
       harvestedAnimalInventory: [],
       guards: [],
       researchTimeScaled: true,
+      productionTimeScaled: true,
       research: {
         hutch: { animalId: null, remainingSeconds: 0 },
         shed: { animalId: null, remainingSeconds: 0 }
@@ -317,11 +320,21 @@ export function migrateManorV7State(value: unknown, now: number): ManorV7State {
     legacy.productionCount = Math.min(legacy.productionCount!, manorV7MaxProductionCount(definition));
     legacy.productionActive = typeof legacy.productionActive === "boolean" ? legacy.productionActive : false;
     if (!legacy.productionActive) animal.productionProgressSeconds = 0;
+    if (!state.pasture.productionTimeScaled && legacy.productionActive && animal.productionProgressSeconds >= definition.productionActionSeconds) {
+      const original = originalAnimals.find((item) => item.id === animal.animalId)!;
+      const cycleIndex = Math.max(0, legacy.productionCount! - 1);
+      const oldCooldown = manorV7ProductionCycleDuration(original, cycleIndex) - original.productionActionSeconds;
+      const newCooldown = manorV7ProductionCycleDuration(definition, cycleIndex) - definition.productionActionSeconds;
+      animal.productionProgressSeconds = definition.productionActionSeconds + newCooldown * Math.min(1,
+        (animal.productionProgressSeconds - original.productionActionSeconds) / Math.max(1, oldCooldown)
+      );
+    }
     if (legacy.productionCount >= manorV7MaxProductionCount(definition)) {
       animal.growthSeconds = Math.max(animal.growthSeconds, definition.lifecycleSeconds);
     }
     animal.growthSeconds = Math.min(animal.growthSeconds, definition.lifecycleSeconds);
   }
+  state.pasture.productionTimeScaled = true;
   state.farm.fishPool ??= createFishPool();
   state.farm.fishPool.toolInventory ??= [];
   for (const fish of state.farm.fishPool.fish) {
@@ -1012,7 +1025,8 @@ function validClaimDay(value: string | null): boolean {
 }
 
 function validDailySignInRewardId(value: number): boolean {
-  return MANOR_V7_DAILY_SIGN_IN_REWARDS.some((reward) => reward.id === value);
+  return [...MANOR_V7_DAILY_SIGN_IN_REWARDS, ...MANOR_V7_FARM_DAILY_SIGN_IN_REWARDS]
+    .some((reward) => reward.id === value);
 }
 
 function validStreakSignInRewardDay(value: number): boolean {
