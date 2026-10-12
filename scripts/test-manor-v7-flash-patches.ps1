@@ -5,6 +5,7 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $patchScriptPath = Join-Path $repositoryRoot "scripts\patch-manor-v7-wild-click.ps1"
 $seedPagePath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-W§\§_-Qq§.as"
 $toolItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-W§\ToolItem.as"
+$cropItemPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-W§\CropItem.as"
 $wildToolPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-Gt§\Tool_Wild.as"
 $profileDataPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\§_-42§\§_-5R§.as"
 $giftWindowPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\common\view\window\GiftWindow.as"
@@ -17,6 +18,7 @@ $pastureMainCommandPath = Join-Path $repositoryRoot "patches\manor-v7\scripts\mc
 $patchScript = Get-Content -LiteralPath $patchScriptPath -Raw -Encoding UTF8
 $seedPage = Get-Content -LiteralPath $seedPagePath -Raw -Encoding UTF8
 $toolItem = Get-Content -LiteralPath $toolItemPath -Raw -Encoding UTF8
+$cropItem = Get-Content -LiteralPath $cropItemPath -Raw -Encoding UTF8
 $wildTool = Get-Content -LiteralPath $wildToolPath -Raw -Encoding UTF8
 $profileData = Get-Content -LiteralPath $profileDataPath -Raw -Encoding UTF8
 $giftWindow = Get-Content -LiteralPath $giftWindowPath -Raw -Encoding UTF8
@@ -138,6 +140,19 @@ if (-not $pastureMainCommand.Contains('++_loc4_.productionCount;') -or
 }
 if (-not $pastureMainCommand.Contains('_loc4_.growTimeNext = _loc4_.productionCooldownSeconds;')) {
   throw "The pasture timer must use the server-provided cooldown, including the shorter final round"
+}
+
+if (-not $patchScript.Contains('"§_-W§.CropItem"')) {
+  throw "The crop card patch must be part of the JPEXS replacement chain"
+}
+if (-not $cropItem.Contains('_loc2_.width = 30;') -or
+    -not $cropItem.Contains('_loc2_.height = 20;') -or
+    -not $cropItem.Contains('_loc1_.x = 34;')) {
+  throw "The organic crop badge must stay inside its card instead of covering adjacent products"
+}
+if (-not $cropItem.Contains('§_-Bn§.removeChild(this,this._icon);') -or
+    -not $cropItem.Contains('this._icon = null;')) {
+  throw "Reused crop cards must remove their previous badge"
 }
 
 Write-Host "QQ Farm V7 Flash patch verification passed"

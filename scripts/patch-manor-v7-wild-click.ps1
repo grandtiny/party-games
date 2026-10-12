@@ -37,6 +37,7 @@ $shopSeedPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\
 $shopSeedTilePatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopSeedTile.as"
 $shopToolPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopToolWindow.as"
 $farmToolItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\ToolItem.as"
+$farmCropItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\§_-W§\CropItem.as"
 $shopTinPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopTinWindow.as"
 $shopDiyPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopDiyWindow.as"
 $shopDiyItemPatchSource = Join-Path $projectRoot "patches\manor-v7\scripts\mc\view\main\window\shop\ShopDiyItem.as"
@@ -161,6 +162,8 @@ $farmArguments = @(
   $farmBuySeedPatchSource,
   "§_-W§.ToolItem",
   $farmToolItemPatchSource,
+  "§_-W§.CropItem",
+  $farmCropItemPatchSource,
   # Recompiling this base class changes its protected namespace and breaks original subclasses.
   "§_-W§.§_-Qq§",
   $farmSeedTilePatchSource,
