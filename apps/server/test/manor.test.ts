@@ -262,7 +262,9 @@ describe("QQ Farm V7 account persistence", () => {
           sale: manorV7RewardAmount(15)
         }),
         expect.objectContaining({ cId: 460, cName: "园艺熊猫" }),
-        expect.objectContaining({ cId: 601, cName: "园艺海星" })
+        expect.objectContaining({ cId: 601, cName: "园艺海星" }),
+        expect.objectContaining({ cId: 702, cName: "扶桑神树", cLevel: 53, price: 5948, expect: 446_000 }),
+        expect.objectContaining({ cId: 709, cName: "福袋树", cLevel: 48, price: 5555, expect: 388_800 })
       ]));
 
       const produceInventory = await instance.app.inject({
