@@ -2703,7 +2703,7 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "harvesttype=1&type=1002"
       });
       expect(harvested.statusCode, harvested.body).toBe(200);
-      expect(harvested.json()).toEqual([manorV7RewardAmount(8), [], [[1002, 12]]]);
+      expect(harvested.json()).toEqual([manorV7Animal(1002).byproductHarvestExperience, [], [[1002, 12]]]);
 
       const state = await getManor(instance.app, owner.cookie);
       expect(state).toMatchObject({ coins: 13_970, pasture: { grass: 24 } });
@@ -2730,7 +2730,7 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "harvesttype=2&serial=1&serialIndex=1"
       });
       expect(adultHarvest.statusCode, adultHarvest.body).toBe(200);
-      expect(adultHarvest.json()).toEqual([manorV7RewardAmount(28), [1], []]);
+      expect(adultHarvest.json()).toEqual([manorV7Animal(1002).animalHarvestExperience, [1], []]);
       const afterAdultHarvest = instance.repository.getManorV7State(owner.userId);
       expect(afterAdultHarvest).toMatchObject({
         coins: beforeAdultHarvest.coins,

@@ -112,6 +112,8 @@ describe("QQ Farm V7 domain", () => {
       name: "兔子",
       house: "hutch",
       purchasePrice: 1200,
+      animalHarvestExperience: manorV7RewardAmount(28 * 3),
+      byproductHarvestExperience: manorV7RewardAmount(8 * 3),
       cubSeconds: 6_000,
       maturitySeconds: 12_000,
       productionSeconds: 43_200,
