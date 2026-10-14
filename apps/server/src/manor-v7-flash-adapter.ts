@@ -632,7 +632,7 @@ export class ManorV7FlashAdapter {
     });
     const results = harvests.map(({ serial, definition, quantity }) => {
       this.service.performAction(user, { type: "harvest-fish", serial }, now);
-      return { code: 1, exp: definition.experience, i: serial, o: quantity };
+      return { code: 1, addExp: definition.experience, exp: definition.experience, i: serial, o: quantity };
     });
     return results.length === 1 ? results[0] : results;
   }
@@ -2713,6 +2713,7 @@ export class ManorV7FlashAdapter {
         code: 1,
         poptype: 1,
         direction: "",
+        addExp: after.farmExperience - before.farmExperience,
         exp: after.farmExperience - before.farmExperience,
         levelUp: false
       };
@@ -2742,6 +2743,7 @@ export class ManorV7FlashAdapter {
         farmlandIndex: place,
         code: 1,
         direction: "",
+        addExp: after.farmExperience - before.farmExperience,
         exp: after.farmExperience - before.farmExperience,
         levelUp: false,
         ...(crop && quantity > 0 ? {
@@ -2806,6 +2808,7 @@ export class ManorV7FlashAdapter {
       poptype: 1,
       direction: "浇水成功",
       money: 0,
+      addExp: player.farmExperience - before.farmExperience,
       exp: player.farmExperience - before.farmExperience,
       levelUp: false,
       humidity: land.watered ? 1 : 0
@@ -2834,6 +2837,7 @@ export class ManorV7FlashAdapter {
       return {
         code: 1,
         direction: field === "weed" ? "除草成功" : "除虫成功",
+        addExp: player.farmExperience - before.farmExperience,
         exp: player.farmExperience - before.farmExperience,
         farmlandIndex: place,
         levelUp: false,
@@ -2880,6 +2884,7 @@ export class ManorV7FlashAdapter {
       return {
         code: 1,
         direction: "",
+        addExp: after.farmExperience - before.farmExperience,
         exp: after.farmExperience - before.farmExperience,
         farmlandIndex: place,
         harvest: Math.max(0, afterAmount - beforeAmount),

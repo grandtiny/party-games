@@ -598,7 +598,12 @@ describe("QQ Farm V7 account persistence", () => {
         payload: "index=1"
       });
       expect(harvested.statusCode, harvested.body).toBe(200);
-      expect(harvested.json()).toMatchObject({ code: 1, i: 1, o: 15 });
+      expect(harvested.json()).toMatchObject({
+        addExp: manorV7Fish(2).experience,
+        code: 1,
+        i: 1,
+        o: 15
+      });
 
       const repertory = await instance.app.inject({
         method: "GET",
@@ -876,6 +881,7 @@ describe("QQ Farm V7 account persistence", () => {
       });
       expect(harvested.statusCode, harvested.body).toBe(200);
       expect(harvested.json()).toMatchObject({
+        addExp: manorV7Crop(6).experience,
         code: 1,
         farmlandIndex: 0,
         status: {
@@ -3716,6 +3722,7 @@ describe("QQ Farm V7 account persistence", () => {
       );
       expect(afterScarify?.farm.seedInventory).toHaveLength(1);
       expect(scarified.json()).toMatchObject({
+        addExp: manorV7RewardAmount(3),
         code: 1,
         exp: manorV7RewardAmount(3),
         farmlandIndex: 0,
