@@ -21,7 +21,10 @@ import {
   manorV7EffectiveCropSalePrice,
   manorV7EffectiveCropSeedPrice
 } from "./seasonal.js";
-import { manorV7RewardAmount } from "./economy.js";
+import {
+  manorV7PastureProductionExperience,
+  manorV7RewardAmount
+} from "./economy.js";
 
 export const MANOR_V7_MATURITY_TIME_DIVISOR = 3;
 
@@ -42,8 +45,8 @@ export const MANOR_V7_ANIMALS: readonly ManorV7AnimalDefinition[] = MANOR_V7_GEN
   ...animal,
   productPrice: manorV7RewardAmount(animal.productPrice),
   byproductPrice: manorV7RewardAmount(animal.byproductPrice),
-  animalHarvestExperience: manorV7RewardAmount(animal.animalHarvestExperience),
-  byproductHarvestExperience: manorV7RewardAmount(animal.byproductHarvestExperience),
+  animalHarvestExperience: manorV7PastureProductionExperience(animal.animalHarvestExperience),
+  byproductHarvestExperience: manorV7PastureProductionExperience(animal.byproductHarvestExperience),
   cubSeconds: scaledMaturitySeconds(animal.cubSeconds),
   maturitySeconds: scaledMaturitySeconds(animal.maturitySeconds),
   productionSeconds: scaledMaturitySeconds(animal.productionSeconds),
