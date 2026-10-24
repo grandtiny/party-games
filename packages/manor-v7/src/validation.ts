@@ -109,6 +109,7 @@ export function parseManorV7Action(value: unknown): ManorV7Action {
     case "harvest-animals":
       return { type, ...(input.serial === undefined ? {} : { serial: integer(input.serial) }) };
     case "start-production":
+      return { type, serial: integer(input.serial), ...(input.all === undefined ? {} : { all: boolean(input.all) }) };
     case "collect-product":
     case "sell-animal":
     case "donate-animal":

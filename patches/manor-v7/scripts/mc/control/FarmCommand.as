@@ -603,7 +603,7 @@ package mc.control
             _loc4_ = this.mainData.host["userName"];
             if(this.mainData.me)
             {
-               _loc5_ = {"serial":_loc2_.serial};
+               _loc5_ = {"serial":_loc2_.serial,"all":1};
             }
             else
             {
@@ -980,6 +980,7 @@ package mc.control
          var _loc2_:String = null;
          var _loc3_:Animal = null;
          var _loc4_:Array = null;
+         var producedAnimal:Object = null;
          if(!param1.hasOwnProperty("animal") && this.checkErrorReturn(param1,EventRecorder.MC_POST_PRODUCT))
          {
             return;
@@ -1011,9 +1012,16 @@ package mc.control
          }
          if(!param1.hasOwnProperty("errorType"))
          {
-            setTimeout(this.op,500,param1);
+            for each(producedAnimal in (param1.hasOwnProperty("animals") ? param1.animals : [param1.animal]))
+            {
+               setTimeout(this.op,500,{"animal":producedAnimal});
+               this.mainData.animalShengChanData = producedAnimal;
+            }
          }
-         this.mainData.animalShengChanData = param1.animal;
+         else
+         {
+            this.mainData.animalShengChanData = param1.animal;
+         }
          this.addExp(param1);
          if(this.mainData.me)
          {

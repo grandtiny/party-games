@@ -1713,6 +1713,7 @@ export class ManorV7FlashAdapter {
     const before = this.service.getView(user, now);
     let experience = 0;
     let view: ManorV7View;
+    let startedAnimals: ManorV7View["pasture"]["animals"] | undefined;
     if (ownerId && ownerId !== stableFlashUserId(user.id)) {
       const friend = this.#friendByFlashId(user, ownerId, now);
       const result = this.service.performFriendAction(
@@ -1724,13 +1725,22 @@ export class ManorV7FlashAdapter {
       view = result.owner;
       experience = result.visitor.pastureExperience - before.pastureExperience;
     } else {
-      view = this.service.performAction(user, { type: "start-production", serial }, now);
+      const all = integer(params.all) === 1;
+      const result = this.service.performActionWithPrevious(user, { type: "start-production", serial, all }, now);
+      view = result.after;
+      if (all) {
+        const readySerials = new Set(result.before.pasture.animals
+          .filter((item) => item.visualState === "production-ready").map((item) => item.serial));
+        startedAnimals = view.pasture.animals.filter((item) => readySerials.has(item.serial)
+          && item.visualState === "production-action");
+      }
     }
     const animal = view.pasture.animals.find((item) => item.serial === serial);
     if (!animal) throw new Error("动物不存在");
     return {
       addExp: experience,
       animal: flashPastureAnimal(animal, view.serverTime),
+      ...(startedAnimals ? { animals: startedAnimals.map((item) => flashPastureAnimal(item, view.serverTime)) } : {}),
       code: 0,
       ecode: 0,
       serial

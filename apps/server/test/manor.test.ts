@@ -2439,6 +2439,46 @@ describe("QQ Farm V7 account persistence", () => {
     }
   });
 
+  it("starts all ready pasture animals in one drag and returns each updated animation state", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-batch-production-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      await instance.app.inject({ method: "GET", url: "/api/manor/flash/pasture?mod=cgi_enter", headers: { cookie: owner.cookie } });
+      const state = instance.repository.getManorV7State(owner.userId)!;
+      const seeded = structuredClone(state);
+      seeded.pasture.animals.push({ ...seeded.pasture.animals[1]!, serial: 3 });
+      seeded.revision += 1;
+      instance.repository.updateManorV7State(owner.userId, state.revision, seeded);
+      const request = {
+        method: "POST" as const,
+        url: "/api/manor/flash/pasture?mod=cgi_post_product",
+        headers: { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" },
+        payload: "serial=2&all=1"
+      };
+      const production = await instance.app.inject(request);
+      expect(production.statusCode, production.body).toBe(200);
+      expect(production.json()).toMatchObject({
+        code: 0, addExp: 0, serial: 2,
+        animal: { serial: 2, status: 4 },
+        animals: [{ serial: 2, status: 4 }, { serial: 3, status: 4 }]
+      });
+      const refreshed = await instance.app.inject({
+        method: "GET", url: "/api/manor/flash/pasture?mod=cgi_enter", headers: { cookie: owner.cookie }
+      });
+      expect(refreshed.json().animal).toMatchObject([
+        { serial: 1, status: 6 }, { serial: 2, status: 4 }, { serial: 3, status: 4 }
+      ]);
+      const repeated = await instance.app.inject(request);
+      expect(repeated.json().animals).toBeUndefined();
+      expect(instance.repository.getManorV7State(owner.userId)!.pasture.animals
+        .filter((animal) => animal.serial !== 1).map((animal) => animal.productionCount)).toEqual([0, 0]);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("serves the authenticated original pasture bootstrap and persistent actions", async () => {
     const directory = mkdtempSync(join(tmpdir(), "party-games-manor-pasture-flash-test-"));
     const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
