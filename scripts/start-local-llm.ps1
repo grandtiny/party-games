@@ -54,7 +54,7 @@ function Get-LocalCpaConfig {
 
   $candidatePath = $ConfiguredPath
   if ([string]::IsNullOrWhiteSpace($candidatePath)) {
-    $candidatePath = "C:\Code\30_Tools\cli\CLIProxyAPI_6.10.9_windows_amd64\config.yaml"
+    $candidatePath = "C:\Code\tools\cli\CLIProxyAPI_6.10.9_windows_amd64\config.yaml"
   }
   if (-not (Test-Path -LiteralPath $candidatePath)) {
     return [PSCustomObject]@{

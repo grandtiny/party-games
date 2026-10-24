@@ -1,6 +1,6 @@
 param(
   [string]$SourceRoot = $env:MANOR_V7_SOURCE_PATH,
-  [string]$JpexsJar = "C:\Code\30_Tools\jpexs\26.2.1\app\ffdec.jar",
+  [string]$JpexsJar = "C:\Code\tools\jpexs\26.2.1\app\ffdec.jar",
   [string]$InventoryDirectory,
   [string]$RuntimeDirectory
 )
