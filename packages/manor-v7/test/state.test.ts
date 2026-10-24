@@ -925,6 +925,38 @@ describe("QQ Farm V7 domain", () => {
     expect(selected.farm.seedInventory).toEqual([]);
   });
 
+  it("starts all ready animals together without skipping production requirements", () => {
+    const now = 5_000;
+    const initial = createManorV7State(now);
+    const rabbit = manorV7Animal(1002);
+    const other = manorV7Animal(1001);
+    const ready = { ...initial.pasture.animals[1]!, growthSeconds: rabbit.maturitySeconds };
+    initial.pasture.animals = [
+      { ...ready, serial: 1 },
+      { ...ready, serial: 2, animalId: other.id, growthSeconds: other.maturitySeconds },
+      { ...ready, serial: 3, growthSeconds: 0 },
+      { ...ready, serial: 4, productionActive: true, productionProgressSeconds: 5 },
+      { ...ready, serial: 5, productionCount: 1, pendingProduct: rabbit.baseYield },
+      { ...ready, serial: 6, productionCount: manorV7MaxProductionCount(rabbit) },
+      { ...ready, serial: 7, productionActive: true, productionCount: 1, productionProgressSeconds: 100 }
+    ];
+    initial.pasture.grass = 400;
+    const started = transitionManorV7State(initial, { type: "start-production", serial: 1, all: true }, now);
+    expect(started.pasture.animals.slice(0, 2)).toEqual(initial.pasture.animals.slice(0, 2)
+      .map((animal) => ({ ...animal, productionActive: true, productionProgressSeconds: 0 })));
+    expect(started.pasture.animals.slice(2)).toEqual(initial.pasture.animals.slice(2));
+    expect(started.pastureExperience).toBe(initial.pastureExperience);
+    expect(() => transitionManorV7State(started, { type: "start-production", serial: 1, all: true }, now))
+      .toThrow("正在生产或冷却");
+    expect(() => transitionManorV7State(initial, { type: "start-production", serial: 3, all: true }, now))
+      .toThrow("尚未成熟");
+    initial.pasture.grass = 0;
+    expect(() => transitionManorV7State(initial, { type: "start-production", serial: 1, all: true }, now))
+      .toThrow("没有牧草");
+    expect(initial.pasture.animals[0]?.productionActive).toBe(false);
+    expect(initial.pasture.animals[1]?.productionActive).toBe(false);
+  });
+
   it("runs the original manual production lifecycle before an animal can be harvested", () => {
     const now = 5_000;
     const initial = createManorV7State(now);

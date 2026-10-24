@@ -936,7 +936,18 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     }
     case "start-production": {
       const animal = startManorV7Production(state, action.serial);
-      addManorV7Activity(state, "pasture", `把${animal.name}送去生产`, now);
+      let count = 1;
+      if (action.all) {
+        for (const target of state.pasture.animals) {
+          const definition = manorV7Animal(target.animalId);
+          if (target.productionActive || target.pendingProduct > 0
+            || target.growthSeconds < definition.maturitySeconds
+            || target.productionCount >= manorV7MaxProductionCount(definition)) continue;
+          startManorV7Production(state, target.serial);
+          count += 1;
+        }
+      }
+      addManorV7Activity(state, "pasture", count > 1 ? `把${count}只动物一起送去生产` : `把${animal.name}送去生产`, now);
       break;
     }
     case "collect-product": {

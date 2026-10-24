@@ -476,7 +476,7 @@ export type ManorV7Action =
   | { type: "claim-spring-festival-gift" }
   | { type: "claim-reunion-fish-gift" }
   | { type: "redeem-code"; code: string }
-  | { type: "start-production"; serial: number }
+  | { type: "start-production"; serial: number; all?: boolean }
   | { type: "collect-product"; serial: number }
   | { type: "collect-products"; animalId?: number }
   | { type: "harvest-animals"; serial?: number }
