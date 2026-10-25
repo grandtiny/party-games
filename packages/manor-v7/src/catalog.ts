@@ -111,6 +111,23 @@ export function manorV7Crop(id: number): ManorV7CropDefinition {
   return item;
 }
 
+export function manorV7CropTiming(
+  crop: ManorV7CropDefinition,
+  tier: ManorV7LandTier
+): Pick<ManorV7CropDefinition, "growthSeconds" | "stageSeconds"> {
+  if (tier !== "black" || crop.landRequirement === 2) return crop;
+  // Match Flash idState/remainTime: black land shortens non-black crops by 20%,
+  // with maturity rounded down to ten minutes (durations below ten minutes stay intact).
+  const shortened = Math.floor(crop.growthSeconds * 0.8);
+  const remainder = shortened % 600;
+  const growthSeconds = shortened > remainder ? shortened - remainder : shortened;
+  return {
+    growthSeconds,
+    stageSeconds: crop.stageSeconds.map((seconds, index) => index === crop.stageSeconds.length - 1
+      ? growthSeconds : Math.floor(seconds * 0.8))
+  };
+}
+
 export function manorV7Animal(id: number): ManorV7AnimalDefinition {
   const item = animalMap.get(id);
   if (!item) throw new Error("动物不存在或未接入 V7 素材");

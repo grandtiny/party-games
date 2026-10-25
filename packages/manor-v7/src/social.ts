@@ -1,4 +1,4 @@
-import { manorV7Animal, manorV7Crop, manorV7Fish, manorV7ToolByType } from "./catalog.js";
+import { manorV7Animal, manorV7Crop, manorV7CropTiming, manorV7Fish, manorV7ToolByType } from "./catalog.js";
 import {
   addManorV7Activity,
   advanceManorV7State,
@@ -422,7 +422,7 @@ export function transitionManorV7FriendStates(
   const crop = manorV7Crop(land.cropId);
 
   if (action.type === "steal-crop") {
-    if (land.harvests >= crop.harvestCycles || land.growthSeconds < crop.growthSeconds) throw new Error("作物尚未成熟");
+    if (land.harvests >= crop.harvestCycles || land.growthSeconds < manorV7CropTiming(crop, land.tier).growthSeconds) throw new Error("作物尚未成熟");
     if (land.thiefUserIds.includes(visitorUserId)) throw new Error("这一季作物已经偷过了");
     if (owner.farm.dog.activeId !== null && owner.farm.dog.feedSeconds > 0) {
       const caughtChance = owner.farm.dog.activeId > 1 ? 0.4 : 0.2;
