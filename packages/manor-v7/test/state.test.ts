@@ -30,6 +30,7 @@ import {
   manorV7Animal,
   manorV7Avatar,
   manorV7Crop,
+  manorV7CropTiming,
   manorV7Decoration,
   manorV7DecorationCoinPrice,
   manorV7ExperienceForLevel,
@@ -61,6 +62,43 @@ const MANOR_V7_RESTORED_HIDDEN_ANIMAL_IDS = [
 ] as const;
 
 describe("QQ Farm V7 domain", () => {
+  it("keeps normal/red land and black-only crops on their existing growth schedule", () => {
+    const crop = manorV7Crop(172);
+    const blackOnly = MANOR_V7_CROPS.find((item) => item.landRequirement === 2)!;
+    for (const [definition, tier] of [[crop, "normal"], [crop, "red"], [blackOnly, "black"]] as const) {
+      expect(manorV7CropTiming(definition, tier)).toMatchObject({
+        growthSeconds: definition.growthSeconds,
+        stageSeconds: definition.stageSeconds
+      });
+    }
+  });
+
+  it("uses black-land maturity for fertilizer, natural growth, stealing and later seasons", () => {
+    const now = 5_000;
+    const initial = createManorV7State(now);
+    const crop = manorV7Crop(172);
+    const land = initial.farm.lands[0]!;
+    Object.assign(land, { cropId: crop.id, tier: "black", growthSeconds: 25_800, harvests: 0 });
+    initial.farm.toolInventory = [{ sourceId: 1, quantity: 1 }];
+    const fertilized = transitionManorV7State(initial, { type: "fertilize", landId: land.id, toolId: 1 }, now);
+    // Flash rounds black-land maturity down to a ten-minute boundary: 37,200 * 0.8 -> 29,400.
+    expect(fertilized.farm.lands[0]?.growthSeconds).toBe(29_400);
+    expect(toManorV7View(fertilized, { userId: "owner", displayName: "主人" }, now).farm.lands[0])
+      .toMatchObject({ harvestable: true, visualState: "mature", remainingSeconds: 0 });
+    const natural = advanceManorV7State(initial, now + 3_600_000);
+    expect(natural.farm.lands[0]?.growthSeconds).toBe(29_400);
+    const visitor = createManorV7State(now);
+    const stolen = transitionManorV7FriendStates(visitor, fertilized, "visitor", "访客", "owner", "主人",
+      { type: "steal-crop", landId: land.id }, now);
+    expect(inventoryQuantity(stolen.visitor.farm.produceInventory, crop.id)).toBeGreaterThan(0);
+    const harvested = transitionManorV7State(fertilized, { type: "harvest", landId: land.id }, now);
+    expect(inventoryQuantity(harvested.farm.produceInventory, crop.id)).toBeGreaterThan(0);
+    expect(harvested.farm.lands[0]).toMatchObject({ harvests: 1, growthSeconds: 23_040 });
+    const nextSeason = advanceManorV7State(harvested, now + 6_360_000);
+    expect(toManorV7View(nextSeason, { userId: "owner", displayName: "主人" }, nextSeason.updatedAt).farm.lands[0])
+      .toMatchObject({ harvestable: true, remainingSeconds: 0 });
+  });
+
   it("uses the complete audited V7 runtime catalog", () => {
     expect(MANOR_V7_CROPS).toHaveLength(577);
     expect(MANOR_V7_ANIMALS).toHaveLength(177);

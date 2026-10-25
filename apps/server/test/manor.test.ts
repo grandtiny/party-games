@@ -23,6 +23,47 @@ import { createApp } from "../src/app.js";
 import { stableFlashUserId } from "../src/manor-v7-flash-adapter.js";
 
 describe("QQ Farm V7 account persistence", () => {
+  it("returns harvestable black-land crops immediately after fertilizer and preserves them on refresh", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "party-games-manor-black-fertilizer-"));
+    const instance = await createApp({ databasePath: join(directory, "test.sqlite"), logger: false });
+    try {
+      const owner = await bootstrapOwner(instance.app);
+      const headers = { cookie: owner.cookie, "content-type": "application/x-www-form-urlencoded" };
+      await instance.app.inject({ method: "GET", url: "/api/manor/flash/farm?mod=user&act=run", headers });
+      const current = instance.repository.getManorV7State(owner.userId)!;
+      const seeded = structuredClone(current);
+      Object.assign(seeded.farm.lands[0]!, {
+        cropId: 172, tier: "black", growthSeconds: 25_800, harvests: 0,
+        watered: true, weeds: false, pests: false, yieldPenaltyPercent: 0
+      });
+      seeded.farm.toolInventory = [{ sourceId: 1, quantity: 1 }];
+      seeded.revision += 1;
+      seeded.updatedAt = Date.now();
+      instance.repository.updateManorV7State(owner.userId, current.revision, seeded);
+      const fertilized = await instance.app.inject({
+        method: "POST", url: "/api/manor/flash/farm?mod=farmlandstatus&act=fertilize",
+        headers, payload: "place=0&tId=1"
+      });
+      expect(fertilized.statusCode, fertilized.body).toBe(200);
+      expect(fertilized.json()).toMatchObject({
+        code: 1, farmlandIndex: 0,
+        status: { cId: 172, bitmap: 2, cropStatus: 6, output: 32, leavings: 32 }
+      });
+      const refreshed = await instance.app.inject({ method: "GET", url: "/api/manor/flash/farm?mod=user&act=run", headers });
+      expect(refreshed.json().farmlandStatus[0]).toMatchObject({ a: 172, b: 6, k: 32, m: 32 });
+      const harvested = await instance.app.inject({
+        method: "POST", url: "/api/manor/flash/farm?mod=farmlandstatus&act=harvest", headers, payload: "place=0"
+      });
+      expect(harvested.json()).toMatchObject({ code: 1, status: { harvestTimes: 1, output: 0 } });
+      const saved = instance.repository.getManorV7State(owner.userId)!;
+      expect(saved.farm.produceInventory).toContainEqual(expect.objectContaining({ sourceId: 172, quantity: 32 }));
+      expect(saved.farm.toolInventory.find((item) => item.sourceId === 1)?.quantity ?? 0).toBe(0);
+    } finally {
+      await instance.app.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("keeps the locally completable Lovesday modules inside an active time window", () => {
     const farmConfig = readFileSync(
       new URL("../../web/public/assets/manor/v7-swf/config/addon_v_20120209.xml", import.meta.url),

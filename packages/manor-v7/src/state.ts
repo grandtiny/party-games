@@ -8,6 +8,7 @@ import {
   manorV7Avatar,
   manorV7Board,
   manorV7Crop,
+  manorV7CropTiming,
   manorV7Decoration,
   manorV7Fish,
   manorV7LandUpgrade,
@@ -447,7 +448,8 @@ export function advanceManorV7State(
     if (!land.cropId) continue;
     const crop = manorV7Crop(land.cropId);
     if (land.harvests >= crop.harvestCycles) continue;
-    const growableSeconds = Math.min(elapsed, Math.max(0, crop.growthSeconds - land.growthSeconds));
+    const maturity = manorV7CropTiming(crop, land.tier).growthSeconds;
+    const growableSeconds = Math.min(elapsed, Math.max(0, maturity - land.growthSeconds));
     const careSeverity = Number(land.weeds) + Number(land.pests) + Number(!land.watered) * 2;
     if (careSeverity > 0 && growableSeconds > 0) {
       land.yieldPenaltyPercent = Math.min(
@@ -455,7 +457,7 @@ export function advanceManorV7State(
         round(land.yieldPenaltyPercent + growableSeconds / 300 * careSeverity)
       );
     }
-    land.growthSeconds = Math.min(crop.growthSeconds, land.growthSeconds + elapsed);
+    land.growthSeconds = Math.min(maturity, land.growthSeconds + elapsed);
   }
 
   for (const fish of state.farm.fishPool.fish) {
@@ -1143,12 +1145,13 @@ function toLandView(land: ManorV7State["farm"]["lands"][number]): ManorV7LandVie
   if (!land.cropId) return { ...land, visualState: "empty", remainingSeconds: 0, harvestable: false, effectiveYield: 0 };
   const crop = manorV7Crop(land.cropId);
   const final = land.harvests >= crop.harvestCycles;
-  const visualState = final ? "withered" : cropVisualState(crop.stageSeconds, crop.growthSeconds, land.growthSeconds);
+  const timing = manorV7CropTiming(crop, land.tier);
+  const visualState = final ? "withered" : cropVisualState(timing.stageSeconds, timing.growthSeconds, land.growthSeconds);
   return {
     ...land,
     crop,
     visualState,
-    remainingSeconds: final ? 0 : Math.max(0, crop.growthSeconds - land.growthSeconds),
+    remainingSeconds: final ? 0 : Math.max(0, timing.growthSeconds - land.growthSeconds),
     harvestable: visualState === "mature",
     effectiveYield: manorV7EffectiveYield(land)
   };

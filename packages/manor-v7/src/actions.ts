@@ -4,6 +4,7 @@ import {
   manorV7Avatar,
   manorV7Board,
   manorV7Crop,
+  manorV7CropTiming,
   manorV7Decoration,
   manorV7DecorationCoinPrice,
   manorV7Fish,
@@ -264,7 +265,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       const quantity = inventoryQuantity(state.farm.toolInventory, key);
       if (quantity < 1) throw new Error("化肥库存不足");
       const crop = manorV7Crop(land.cropId!);
-      land.growthSeconds = Math.min(crop.growthSeconds, land.growthSeconds + effectSeconds);
+      land.growthSeconds = Math.min(manorV7CropTiming(crop, land.tier).growthSeconds, land.growthSeconds + effectSeconds);
       land.fertilizedSeconds += effectSeconds;
       setInventoryQuantity(state.farm.toolInventory, key, quantity - 1);
       addManorV7Activity(state, "farm", `对第 ${land.id} 块土地使用了${tool?.name ?? "好友化肥"}`, now);
@@ -273,7 +274,8 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
     case "harvest": {
       const land = cropLand(state, action.landId);
       const crop = manorV7Crop(land.cropId!);
-      if (land.harvests >= crop.harvestCycles || land.growthSeconds < crop.growthSeconds) throw new Error("作物尚未成熟");
+      const timing = manorV7CropTiming(crop, land.tier);
+      if (land.harvests >= crop.harvestCycles || land.growthSeconds < timing.growthSeconds) throw new Error("作物尚未成熟");
       const yieldAmount = Math.max(1, manorV7EffectiveYield(land) - land.stolen);
       setInventoryQuantity(state.farm.produceInventory, crop.id, inventoryQuantity(state.farm.produceInventory, crop.id) + yieldAmount);
       state.farmExperience += crop.experience;
@@ -281,7 +283,7 @@ export function applyManorV7Action(state: ManorV7State, action: ManorV7Action, n
       land.stolen = 0;
       land.thiefUserIds = [];
       if (land.harvests < crop.harvestCycles) {
-        land.growthSeconds = crop.stageSeconds[3] ?? crop.growthSeconds * 0.75;
+        land.growthSeconds = timing.stageSeconds[3] ?? timing.growthSeconds * 0.75;
         land.watered = false;
         land.weeds = false;
         land.pests = false;
